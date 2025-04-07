@@ -19,7 +19,7 @@ auto Skeleton::Bind() -> void
 
 auto Sleketon::ConditionRun() -> bool
 {
-  return true;
+    return true;
 }
 
 auto Skeleton::Connect() -> void
