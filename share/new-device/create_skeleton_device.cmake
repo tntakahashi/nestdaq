@@ -17,7 +17,7 @@ foreach(ldev IN ITEMS ${Device})
     # file(WRITE <filename> <content> ...)
     file(WRITE "${CMAKE_INSTALL_PREFIX}/${ldev}.${lsuffix}" "${OutputContent}")
   endforeach() # foreach(lsuffix IN ITEMS h;cxx)
-endforeach() # foreach(ldev IN ITEMS "${DEVICE}")
+endforeach() # foreach(ldev IN ITEMS "${Device}")
 
 file(READ "${CMAKE_CURRENT_LIST_DIR}/skeleton/CMakeLists.txt" InputContent)
 string(REPLACE "Skeleton" "${Device}" OutputContent "${InputContent}")
