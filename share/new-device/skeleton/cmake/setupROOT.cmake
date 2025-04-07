@@ -1,0 +1,8 @@
+find_package(ROOT REQUIRED COMPONENTS RIO RHTTP Hist)
+
+# ROOT dictionary
+if(ROOT_FOUND)
+  message(STATUS "ROOT found")
+  message(STATUS "ROOT_INCLUDE_DIRS ${ROOT_INCLUDE_DIRS}")
+  message(STATUS "ROOT_LIBRARIES ${ROOT_LIBRARIES}")
+endif()
