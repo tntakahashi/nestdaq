@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-PREFIX=""
+PREFIX=$(pwd)/my-nestdaq-device
 DEVICE=""
 
 print_help() {
@@ -8,8 +8,9 @@ cat << EOS
 Usage: $(basename "$0") [options]
 
 Options:
-  -p,--prefix        A perfix that points to the installation directory
-  -d,--device        device name. 
+  -p,--prefix        Perfix that points to the installation directory
+                     (default = <current working directory>/my-nestdaq-device)
+  -d,--device        Device name. 
                      If there are multiple devices, use "A;B;C" like in a cmake list.
   -h,--help          Show this help message
 EOS
@@ -56,6 +57,12 @@ while [[ $# -gt 0 ]]; do
       ;;
   esac
 done
+
+if [[ -z "$DEVICE" ]]; then
+  echo "Error: --device option is not set."
+  print_help
+  exit 1
+fi
 
 # echo "PREFIX = ${PREFIX}"
 # echo "DEVICE = ${DEVICE}"
