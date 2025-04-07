@@ -9,7 +9,7 @@ include(cmake/setupFairMQandBoost.cmake)
 include(cmake/setupROOT.cmake)
 
 #==============================================================================
-foreach(lvar IN ITEMS DeviceListPlaceHolder)
+foreach(lvar IN ITEMS Skeleton)
 
   set(EXEC ${lvar})
   add_executable(${EXEC} 

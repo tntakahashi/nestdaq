@@ -20,7 +20,7 @@ foreach(ldev IN ITEMS ${Device})
 endforeach() # foreach(ldev IN ITEMS "${DEVICE}")
 
 file(READ "${CMAKE_CURRENT_LIST_DIR}/skeleton/CMakeLists.txt" InputContent)
-string(REPLACE "DeviceListPlaceHolder" "${Device}" OutputContent "${InputContent}")
+string(REPLACE "Skeleton" "${Device}" OutputContent "${InputContent}")
 file(WRITE "${CMAKE_INSTALL_PREFIX}/CMakeLists.txt" "${OutputContent}")
 
 file(REMOVE_RECURSE "${CMAKE_INSTALL_PREFIX}/cmake")
