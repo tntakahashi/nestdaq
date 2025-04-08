@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-PREFIX=$(pwd)/my_nestdaq_device
-PROJECT=""
+PREFIX=$(pwd)/my_nestdaq_impl
+PROJECT="my_nestdaq_impl"
 DEVICE=""
 
 print_help() {
@@ -10,9 +10,10 @@ Usage: $(basename "$0") [options]
 
 Options:
   --prefix           Perfix that points to the directory path to which files are output
-                     (default = <current working directory>/my_nestdaq_device)
-  --project          Project name.
-  --device           Device name. 
+                     (default = <current working directory>/my_nestdaq_impl)
+  --project          Project name used in cmake.
+                     (default = my_nestdaq_impl)
+  --device           NestDAQ Device name. 
                      If there are multiple devices, use "A;B;C" like in a cmake list.
   -h,--help          Show this help message
 EOS
@@ -74,8 +75,15 @@ if [[ -z "$DEVICE" ]]; then
   exit 1
 fi
 
-# echo "PREFIX = ${PREFIX}"
-# echo "DEVICE = ${DEVICE}"
+if [[ -z "$PROJECT" ]]; then
+  echo "Error: --project option is not set."
+  print_help
+  exit 1
+fi
+
+# echo "PREFIX  = ${PREFIX}"
+# echo "PROJECT = ${PROJECT}"
+# echo "DEVICE  = ${DEVICE}"
 
 #echo \
 cmake \
