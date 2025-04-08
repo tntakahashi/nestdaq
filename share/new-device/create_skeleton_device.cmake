@@ -2,6 +2,7 @@
 
 # cmake \
 # -DCMAKE_INSTALL_PREFIX=<path-to-output> \
+# -DProject=<project-name> \
 # -DDevice=<device-name>  \
 #  -P new-device/create_skeleton_device.cmake
 
@@ -20,7 +21,8 @@ foreach(ldev IN ITEMS ${Device})
 endforeach() # foreach(ldev IN ITEMS "${Device}")
 
 file(READ "${CMAKE_CURRENT_LIST_DIR}/skeleton/CMakeLists.txt" InputContent)
-string(REPLACE "Skeleton" "${Device}" OutputContent "${InputContent}")
+string(REPLACE "skeleton_project" "${Project}" Content1 "${InputContent}")
+string(REPLACE "Skeleton" "${Device}" OutputContent "${Content1}")
 file(WRITE "${CMAKE_INSTALL_PREFIX}/CMakeLists.txt" "${OutputContent}")
 
 file(REMOVE_RECURSE "${CMAKE_INSTALL_PREFIX}/cmake")

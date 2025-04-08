@@ -37,6 +37,17 @@ else()
   message(WARNING "FairMQ not found")
 endif()
 
+# set FairMQ_LIBRARIES based on your FairMQ_VERSION
+if ((FairMQ_VERSION VERSION_GREATER_EQUAL 1.8.0)
+  AND (FairMQ_VERSION VERSION_LESS_EQUAL 1.8.9))
+  set(FairMQ_LIBRARIES "fairmq;FairLogger")
+elseif (((FairMQ_VERSION VERSION_GREATER_EQUAL 1.4.55)
+  AND (FairMQ_VERSION VERSION_LESS_EQUAL 1.4.56))
+  OR (FairMQ_VERSION VERSION_EQUAL 1.5.0))
+  set(FairMQ_LIBRARIES "FairMQ;FairMQStateMachine;FairLogger")
+else()
+  message(FATAL_ERROR "Unsupported FairMQ version ${FairMQ_VERSION}")
+endif()
 
 message(STATUS "Boost_INCLUDE_DIRS: ${Boost_INCLUDE_DIRS}")
 message(STATUS "Boost_LIBRARY_DIRS: ${Boost_LIBRARY_DIRS}")

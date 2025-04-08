@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.11)
 
-project(nestdaq LANGUAGES CXX C)
+project(skeleton_project LANGUAGES CXX C)
 
 message(STATUS "PROJECT_NAME: ${PROJECT_NAME}")
 
@@ -26,30 +26,13 @@ foreach(lvar IN ITEMS Skeleton)
   target_link_directories(${EXEC} PUBLIC
     ${Boost_LIBRARY_DIRS}; 
     ${FairMQ_LIBDIR};
-#    ${FairLogger_LIBDIR};
   )
 
-  if ((FairMQ_VERSION VERSION_GREATER_EQUAL 1.8.0)
-    AND (FairMQ_VERSION VERSION_LESS_EQUAL 1.8.9))
-    target_link_libraries(${EXEC} PUBLIC 
-      ${Boost_LIBRARIES};  
-      fairmq;
-      FairLogger;
-      stdc++fs;
-    )
-  elseif (((FairMQ_VERSION VERSION_GREATER_EQUAL 1.4.55)
-    AND (FairMQ_VERSION VERSION_LESS_EQUAL 1.4.56))
-    OR (FairMQ_VERSION VERSION_EQUAL 1.5.0))
-    target_link_libraries(${EXEC} PUBLIC 
-      ${Boost_LIBRARIES};  
-      FairMQ;
-      FairMQStateMachine;
-      FairLogger;
-      stdc++fs;
-    )
-  else()
-    message(FATAL_ERROR "Unsupported FairMQ version ${FairMQ_VERSION}")
-  endif()
+  target_link_libraries(${EXEC} PUBLIC 
+    ${Boost_LIBRARIES};  
+    ${FairMQ_LIBRARIES};  # defined in cmake/setupFairMQandBoost.cmake
+    stdc++fs;
+  )
 
   install(TARGETS
     ${EXEC};
