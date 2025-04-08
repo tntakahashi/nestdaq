@@ -71,6 +71,4 @@ fi
 cmake \
   -DCMAKE_INSTALL_PREFIX=${PREFIX} \
   -DDevice=${DEVICE} \
-  -P ./new-device/create_skeleton_device.cmake
-
-#-P @CMAKE_INSTALL_FULL_DATADIR@/new-device/create_skeleton_device.cmake
+  -P @CMAKE_INSTALL_FULL_DATADIR@/new-device/create_skeleton_device.cmake

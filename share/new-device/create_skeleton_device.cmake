@@ -6,7 +6,7 @@
 #  -P new-device/create_skeleton_device.cmake
 
 foreach(ldev IN ITEMS ${Device})
-  message("ldev = ${ldev}")
+#  message("ldev = ${ldev}")
   foreach(lsuffix IN ITEMS h;cxx)
     # file(READ <filename> <out-var> [...])
     file(READ "${CMAKE_CURRENT_LIST_DIR}/skeleton/Skeleton.${lsuffix}" InputContent)

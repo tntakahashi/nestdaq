@@ -1,23 +1,25 @@
+#include <memory>
+
 #include <fairmq/runDevice.h>
 
 #include "Skeleton.h"
 
 namespace po = boost::program_options;
 
-auto addCustomOptions(po &options) -> void
+auto addCustomOptions(po::options_description &options) -> void
 {
 }
 
-auto getDevice(const fair::mq::ProgOptions &) -> std::unique_ptr<fair::mq::Device>;
+auto getDevice(fair::mq::ProgOptions &) -> std::unique_ptr<fair::mq::Device>
 {
-    return std::make_unique<Skeleton>;
+    return std::make_unique<Skeleton>();
 }
 
 auto Skeleton::Bind() -> void
 {
 }
 
-auto Sleketon::ConditionRun() -> bool
+auto Skeleton::ConditionalRun() -> bool
 {
     return true;
 }
@@ -43,6 +45,10 @@ auto Skeleton::PreRun() -> void
 }
 
 auto Skeleton::Reset() -> void
+{
+}
+
+auto Skeleton::ResetTask() -> void
 {
 }
 

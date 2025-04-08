@@ -7,19 +7,19 @@ class Skeleton : public fair::mq::Device
 {
 public:
     Skeleton() = default;
-    ~Skeleton() override = defauilt;
+    ~Skeleton() override = default;
 
 protected:
-    auto Bind() override -> void;
-    auto ConditionalRun() override -> void;
-    auto Connect() override -> void;
-    auto Init() override -> void;
-    auto InitTask() override -> void;
-    auto PostRun() override -> void;
-    auto PreRun() override -> void;
-    auto Reset() override -> void;
-    auto ResetTask() override -> void;
-    auto Run() override -> void;
+    auto Bind() -> void override;
+    auto ConditionalRun() -> bool override;
+    auto Connect() -> void override;
+    auto Init() -> void override;
+    auto InitTask() -> void override;
+    auto PostRun() -> void override;
+    auto PreRun() -> void override;
+    auto Reset() -> void override;
+    auto ResetTask() -> void override;
+    auto Run() -> void override;
 };
 
 #endif
