@@ -31,7 +31,6 @@ foreach(lvar IN ITEMS Skeleton)
   target_link_libraries(${EXEC} PUBLIC 
     ${Boost_LIBRARIES};  
     ${FairMQ_LIBRARIES};  # defined in cmake/setupFairMQandBoost.cmake
-    stdc++fs;
   )
 
   install(TARGETS
