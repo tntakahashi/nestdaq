@@ -1,6 +1,8 @@
 #ifndef Skeleton_h
 #define Skeleton_h
 
+#include <string>
+
 #include <fairmq/Device.h>
 
 class Skeleton : public fair::mq::Device
@@ -20,6 +22,12 @@ protected:
     auto Reset() -> void override;
     auto ResetTask() -> void override;
     auto Run() -> void override;
+
+private:
+    std::string fInputChanneLName;
+    std::string fOutputChannelName;
+    std::string fDQMChannelName;
+    int fPollTimeoutMS{0};
 };
 
 #endif
