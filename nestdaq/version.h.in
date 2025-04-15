@@ -22,6 +22,7 @@ static constexpr std::string_view NESTDAQ_BUILD_TYPE("@CMAKE_BUILD_TYPE@");
 static constexpr std::string_view NESTDAQ_GIT_COMMIT_DATE("@GIT_COMMIT_DATE@");
 
 static constexpr std::string_view NESTDAQ_GIT_BRANCH("@GIT_BRANCH@");
+static constexpr std::string_view NESTEAQ_GIT_REMOTE_URL("@GIT_REMOTE_URL@");
 static constexpr uint64_t NESTDAQ_GIT_COMMIT_COUNT = @COMMIT_COUNT@;
 static constexpr uint64_t NESTDAQ_GIT_COMMIT_HASH  = 0x@COMMIT_HASH@; 
 static constexpr std::string_view NESTDAQ_GIT_COMMIT_HASH_STRING("@COMMIT_HASH@"); 

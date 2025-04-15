@@ -92,8 +92,22 @@ if(GIT_FOUND AND EXISTS "${CMAKE_SOURCE_DIR}/.git")
     if(GIT_BRANCH STREQUAL "HEAD")
         # Detached HEAD state
         set(GIT_BRANCH "detached")
+        set(GIT_REMOTE_URL "N/A")
+    else()
+        execute_process(
+            COMMAND ${GIT_EXECUTABLE} remote get-url $(${GIT_EXECUTABLE} --get branch.${GIT_BRANCH}.remote)
+            OUTPUT_VARIABLE GIT_REMOTE_URL
+            OUTPUT_STRIP_TRAILING_WHITESPACE
+        )
     endif()
 
+    # Get the Git commit date and time
+    execute_process(
+        COMMAND ${GIT_EXECUTABLE} log -1 --format=%cd
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        OUTPUT_VARIABLE GIT_COMMIT_DATE
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
 else()
     message(WARNING "Git not found or not a repository, using default version.")
 endif()
@@ -111,15 +125,7 @@ message(STATUS "  Commit Count    : ${COMMIT_COUNT}")
 message(STATUS "  Commit Hash     : ${COMMIT_HASH}")
 message(STATUS "  Dirty           : ${DIRTY_FLAG}")
 message(STATUS "  Branch Name     : ${GIT_BRANCH}")
-
-
-# Get the Git commit date and time
-execute_process(
-    COMMAND git log -1 --format=%cd
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-    OUTPUT_VARIABLE GIT_COMMIT_DATE
-    OUTPUT_STRIP_TRAILING_WHITESPACE
-)
+message(STATUS "  Remote URL      : ${GIT_REMOTE_URL}")
 
 # Show the commit date and time
 message(STATUS "Last Git Commit Date: ${GIT_COMMIT_DATE}")
