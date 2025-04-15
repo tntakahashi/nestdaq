@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.11)
 
+include(cmake/GitHelper.cmake)
+
 project(nestdaq LANGUAGES CXX C)
 
 message(STATUS "PROJECT_NAME: ${PROJECT_NAME}")
@@ -123,6 +125,7 @@ message(STATUS "FairLogger_LIBDIR: ${FairLogger_LIBDIR}")
 
 
 #------------------------------------------------------------------------------
+add_subdirectory(nestdaq)
 add_subdirectory(plugins)
 add_subdirectory(examples)
 add_subdirectory(controller)
