@@ -3,15 +3,13 @@
 
 message(STATUS "========== include Boost.cmake ==========")
 
-find_package(Boost ${Boost_VERSION} QUIET filesystem iostreams thread program_options)
+find_package(Boost ${Boost_VERSION} QUIET)
 
 if(Boost_FOUND)
-  message(STATUS "Found Boost ${Boost_VERSION}")
+  message(STATUS "Found Boost")
 
 else()
   message(STATUS "Boost not found. --- fetching from GitHub")
-
-  include(ExternalProject)
 
   if(DEFINED ENV{CMAKE_BUILD_PARALLEL_LEVEL})
       set(PARALLEL_JOBS $ENV{CMAKE_BUILD_PARALLEL_LEVEL})
@@ -23,6 +21,7 @@ else()
 
   #message(STATUS "Parallel jobs = ${PARALLEL_JOBS}")
 
+  include(ExternalProject)
   ExternalProject_Add(boost_b2
       GIT_REPOSITORY         https://github.com/boostorg/boost.git
       GIT_TAG                ${BOOST_GIT_TAG}
