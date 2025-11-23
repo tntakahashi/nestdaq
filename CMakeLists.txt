@@ -34,6 +34,8 @@ message("CMAKE_CXX_FLAGS_RELWITHDEBINFO: ${CMAKE_CXX_FLAGS_RELWITHDEBINFO}")
 message("CMAKE_CXX_FLAGS_RELEASE:        ${CMAKE_CXX_FLAGS_RELEASE}")
 message("CMAKE_CXX_FLAGS_MINSIZEREL:     ${CMAKE_CXX_FLAGS_MINSIZEREL}")
 message("CMAKE_BUILD_TYPE:               ${CMAKE_BUILD_TYPE}")
+message("CMAKE_EXE_LINKER_FLAGS:         ${CMAKE_EXE_LINKER_FLAGS}")
+message("CMAKE_SHARED_LINKER_FLAGS:      ${CMAKE_SHARED_LINKER_FLAGS}")
 message("")
 
 #------------------------------------------------------------------------------
@@ -45,26 +47,31 @@ message("CMAKE_INSTALL_BINDIR:     ${CMAKE_INSTALL_BINDIR}")
 message("CMAKE_INSTALL_DATADIR:    ${CMAKE_INSTALL_DATADIR}")
 message("")
 
-find_package(Threads REQUIRED)
 
 #------------------------------------------------------------------------------
 # RPATH handling
+set(CMAKE_SKIP_BUILD_RPATH FALSE)
+set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
-set(CMAKE_BUILD_WIDTH_INSTALL_RPATH TRUE)
-message("CMAKE_EXE_LINKER_FLAGS:    ${CMAKE_EXE_LINKER_FLAGS}")
-message("CMAKE_SHARED_LINKER_FLAGS: ${CMAKE_SHARED_LINKER_FLAGS}")
+if(APPLE)
+    set(CMAKE_INSTALL_RPATH "@loader_path/../${CMAKE_INSTALL_LIBDIR}")
+elseif(UNIX)
+    set(CMAKE_INSTALL_RPATH "$ORIGIN/../${CMAKE_INSTALL_LIBDIR}")
+endif()
 
 #------------------------------------------------------------------------------
-incldue(cmake/Boost.cmake)
-incldue(cmake/ZeroMQ.cmake)
-include(cmake/FairLogger.cmake)
-include(cmake/FairMQ.cmake)
+find_package(Threads REQUIRED)
 
-
-#------------------------------------------------------------------------------
-add_subdirectory(nestdaq)
-add_subdirectory(plugins)
-add_subdirectory(examples)
-add_subdirectory(controller)
-add_subdirectory(share)
-add_subdirectory(scripts)
+include(cmake/ZeroMQ.cmake)
+# include(cmake/Boost.cmake)
+# include(cmake/FairLogger.cmake)
+# include(cmake/FairMQ.cmake)
+# 
+# 
+# #------------------------------------------------------------------------------
+# add_subdirectory(nestdaq)
+# add_subdirectory(plugins)
+# add_subdirectory(examples)
+# add_subdirectory(controller)
+# add_subdirectory(share)
+# add_subdirectory(scripts)
