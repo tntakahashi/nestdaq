@@ -63,7 +63,7 @@ endif()
 find_package(Threads REQUIRED)
 
 include(cmake/ZeroMQ.cmake)
-# include(cmake/Boost.cmake)
+include(cmake/Boost.cmake)
 # include(cmake/FairLogger.cmake)
 # include(cmake/FairMQ.cmake)
 # 

@@ -1,51 +1,61 @@
 # 1. Find the insalled Boost package using find_package()
-# 2. Use Boost from a bundled git submodle (if present) 
-# 3. Use FetchContent to fetch and build Boost from GitHub
+# 2. If the package is not found, fetch and build Boost from GitHub by ExternalProject_Add()
 
+message(STATUS "========== include Boost.cmake ==========")
 
-# =========================================================
-# 1. Try to find an installed Boost 
-# =========================================================
 find_package(Boost ${Boost_VERSION} QUIET filesystem iostreams thread program_options)
 
 if(Boost_FOUND)
-  message(STATUS "Found system Boost: ${Boost_VERSION}")
+  message(STATUS "Found Boost ${Boost_VERSION}")
 
 else()
-  message(STATUS "Boost not found in system --- checking submodule...")
+  message(STATUS "Boost not found. --- fetching from GitHub")
 
-  # =========================================================
-  # 2. Use Boost from a git submodule (if available)
-  # =========================================================
-  set(BOOST_SUBMODULE_PATH "${CMAKE_SOURCE_DIR}/external/boost")
+  include(ExternalProject)
 
-  if(EXISTS "${BOOST_SUBMODULE_PATH}/CMakeLists.txt" OR EXISTS ${BOOST_SUBMODULE_PATH/boost}")
-    message(STATUS "Using Boost submodule at ${BOOST_SUBMODULE_PATH}")
-
-    message(STATUS "BOOST_IOSTREAMS_ENABLE_ZLIB:  ${BOOST_IOSTREAMS_ENABLE_ZLIB}")
-    message(STATUS "BOOST_IOSTREAMS_ENABLE_BZIP2: ${BOOST_IOSTREAMS_ENABLE_BZIP2}")
-    message(STATUS "BOOST_IOSTREAMS_ENABLE_ZSTD:  ${BOOST_IOSTREAMS_ENABLE_ZSTD}")
-    add_subdirectory(${BOOST_SUBMODULE_PATH} EXCLUDE_FROM_ALL)
-
+  if(DEFINED ENV{CMAKE_BUILD_PARALLEL_LEVEL})
+      set(PARALLEL_JOBS $ENV{CMAKE_BUILD_PARALLEL_LEVEL})
   else()
-    message(STATUS "No Boost submodule --- fetching from GitHub")
-
-    # =========================================================
-    # 3. Use FetchContent to fetch and build Boost from GitHub
-    # =========================================================
-    include(FetchContent)
-    FetchContent_Declare(
-      boost
-      GIT_REPOSITORY https://github.com/boostorg/boost.git
-      GIT_TAG ${BOOST_GIT_TAG}
-    )
-    # boost uses nestd submodules --- ensure they are feched
-    set(FETCHCONTENT_QUIET FALSE)
-    set(BOOST_ENABLE_CMAKE ON CACHE BOOL "" FORCE)
-    message(STATUS "BOOST_IOSTREAMS_ENABLE_ZLIB:  ${BOOST_IOSTREAMS_ENABLE_ZLIB}")
-    message(STATUS "BOOST_IOSTREAMS_ENABLE_BZIP2: ${BOOST_IOSTREAMS_ENABLE_BZIP2}")
-    message(STATUS "BOOST_IOSTREAMS_ENABLE_ZSTD:  ${BOOST_IOSTREAMS_ENABLE_ZSTD}")
-
-    FetchContent_MakeAvailable(boost)
+      # fallback
+      include(ProcessorCount)
+      ProcessorCount(PARALLEL_JOBS)
   endif()
+
+  #message(STATUS "Parallel jobs = ${PARALLEL_JOBS}")
+
+  ExternalProject_Add(boost_b2
+      GIT_REPOSITORY         https://github.com/boostorg/boost.git
+      GIT_TAG                ${BOOST_GIT_TAG}
+      GIT_PROGRESS           TRUE
+      GIT_SUBMODULES_RECURSE TRUE
+
+      UPDATE_COMMAND ""  
+
+      CONFIGURE_COMMAND 
+        ${CMAKE_COMMAND} -E chdir <SOURCE_DIR>
+        ./bootstrap.sh --prefix=<INSTALL_DIR>
+
+      BUILD_COMMAND
+        ${CMAKE_COMMAND} -E chdir <SOURCE_DIR>
+        ./b2 --prefix=<INSTALL_DIR>
+             --build-dir=<BINARY_DIR>
+             -j${PARALLEL_JOBS}
+             link=shared
+             threading=multi
+             runtime-link=shared
+
+      INSTALL_COMMAND 
+        ${CMAKE_COMMAND} -E chdir <SOURCE_DIR>
+        ./b2 --prefix=<INSTALL_DIR>
+             --build-dir=<BINARY_DIR>
+             --j${PARALLEL_JOBS}
+             install
+
+      INSTALL_DIR ${CMAKE_INSTALL_PREFIX}
+  )
+
+  set(BOOST_ROOT ${CMAKE_INSTALL_PREFIX})
 endif()
+
+
+message(STATUS "========== include Boost.cmake done ==========")
