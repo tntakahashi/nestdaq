@@ -46,7 +46,7 @@ target_link_directories(${EXEC} PUBLIC
 )
 
 if ((FairMQ_VERSION VERSION_GREATER_EQUAL 1.8.0)
-  AND (FairMQ_VERSION VERSION_LESS_EQUAL 1.8.9))
+  AND (FairMQ_VERSION VERSION_LESS_EQUAL 1.10.0))
   target_link_libraries(${EXEC} PUBLIC
     ${Boost_LIBRARIES};
     fairmq;

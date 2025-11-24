@@ -99,9 +99,9 @@ include(cmake/opentelemetry-cpp.cmake)
 # 
 # 
 # #------------------------------------------------------------------------------
-# add_subdirectory(nestdaq)
-# add_subdirectory(plugins)
-# add_subdirectory(examples)
-# add_subdirectory(controller)
-# add_subdirectory(share)
-# add_subdirectory(scripts)
+add_subdirectory(nestdaq)
+add_subdirectory(plugins)
+add_subdirectory(examples)
+add_subdirectory(controller)
+add_subdirectory(share)
+add_subdirectory(scripts)
