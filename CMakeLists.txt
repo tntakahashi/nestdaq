@@ -62,10 +62,25 @@ endif()
 #------------------------------------------------------------------------------
 find_package(Threads REQUIRED)
 
+if(NOT ZeroMQ_VERSION)
+  set(ZeroMQ_VERSION "4.3.5")
+endif()
 include(cmake/ZeroMQ.cmake)
+
+if(NOT Boost_VERSION)
+  set(Boost_VERSION "1.85.0")
+endif()
 include(cmake/Boost.cmake)
+
+if(NOT FairLogger_VERSION)
+  set(FairLogger_VERSION "2.3.0")
+endif()
 include(cmake/FairLogger.cmake)
-# include(cmake/FairMQ.cmake)
+
+if(NOT FairMQ_VERSION)
+  set(FairMQ_VERSION "1.10.0")
+endif()
+include(cmake/FairMQ.cmake)
 # 
 # 
 # #------------------------------------------------------------------------------

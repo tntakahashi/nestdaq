@@ -2,8 +2,10 @@
 # 2. If the package is not found, fetch and build Boost from GitHub by ExternalProject_Add()
 
 message(STATUS "========== include Boost.cmake ==========")
+set(Boost_GIT_TAG "boost-${Boost_VERSION}")
 
-find_package(Boost ${Boost_VERSION} QUIET)
+
+find_package(Boost) # ${Boost_VERSION} QUIET)
 
 if(Boost_FOUND)
   message(STATUS "Found Boost")
@@ -19,16 +21,18 @@ else()
       ProcessorCount(PARALLEL_JOBS)
   endif()
 
-  #message(STATUS "Parallel jobs = ${PARALLEL_JOBS}")
-
   include(ExternalProject)
-  ExternalProject_Add(boost_b2
+  ExternalProject_Add(
+      boost
       GIT_REPOSITORY         https://github.com/boostorg/boost.git
-      GIT_TAG                ${BOOST_GIT_TAG}
-      GIT_PROGRESS           TRUE
-      GIT_SUBMODULES_RECURSE TRUE
+      GIT_TAG                ${Boost_GIT_TAG}
 
-      UPDATE_COMMAND ""  
+      UPDATE_COMMAND "" # skip update command 
+
+      # - <SOURCE_DIR>
+      # - <BINARY_DIR>
+      # - <INSTALL_DIR>
+      # These are the placeholders 
 
       CONFIGURE_COMMAND 
         ${CMAKE_COMMAND} -E chdir <SOURCE_DIR>
@@ -42,6 +46,7 @@ else()
              link=shared
              threading=multi
              runtime-link=shared
+             cxxstd=${CMAKE_CXX_STANDARD}
 
       INSTALL_COMMAND 
         ${CMAKE_COMMAND} -E chdir <SOURCE_DIR>
@@ -53,7 +58,7 @@ else()
       INSTALL_DIR ${CMAKE_INSTALL_PREFIX}
   )
 
-  set(BOOST_ROOT ${CMAKE_INSTALL_PREFIX})
+  set(Boost_DIR ${CMAKE_INSTALL_PREFIX})
 endif()
 
 

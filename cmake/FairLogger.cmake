@@ -2,6 +2,7 @@
 # 2. If the package is not found, fetch and build Boost from GitHub
 
 message(STATUS "========== include FairLogger.cmake ==========")
+set(FairLogger_GIT_TAG "v${FairLogger_VERSION}")
 
 # FairLogger uses CMAKE_SOURCE_DIR internally. 
 # FetchContent causes this variable to point to the parent project's root rather than FairLogger's own source directory.
@@ -22,39 +23,23 @@ else()
   endif()
   
   include(ExternalProject)
-  ExternalProject_Add(FairLogger
+  ExternalProject_Add(
+    FairLogger
     GIT_REPOSITORY https://github.com/FairRootGroup/FairLogger.git
-    GIT_TAG        ${FAIRLOGGER_GIT_TAG}
-    GIT_PROGRESS   TRUE
+    GIT_TAG        ${FairLogger_GIT_TAG}
 
-    UPDATE_COMMAND ""
+    DEPENDS boost
 
-    CONFIGURE_COMMAND
-      ${CMAKE_COMMAND} 
-        -DEXTERNAL_FMT=OFF 
-        -DCMAKE_BUILD_TYPE=Release
-        -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
-        -DCMAKE_CXX_STANDARD=${CMAKE_CXX_STANDARD}
-        -DCMAKE_EXE_LINKER_FLAGS=${CMAKE_EXE_LINKER_FLAGS}
-        -DCMAKE_SHARED_LINKER_FLAGS=${CMAKE_SHARED_LINKER_FLAGS}
-        -S <SOURCE_DIR> 
-        -B <BINARY_DIR>
-
-    BUILD_COMMAND
-      ${CMAKE_COMMAND} --build <BINARY_DIR> -j${PARALLEL_JOBS}
-    
-    INSTALL_COMMAND
-      ${CMAKE_COMMAND} --install <BINARY_DIR>
+    CMAKE_ARGS
+      -DEXTERNAL_FMT=OFF 
+      -DCMAKE_BUILD_TYPE=Release
+      -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
+      -DCMAKE_PREFIX_PATH=${CMAKE_INSTALL_PREFIX}
+      -DCMAKE_CXX_STANDARD=${CMAKE_CXX_STANDARD}
+      -DCMAKE_EXE_LINKER_FLAGS=${CMAKE_EXE_LINKER_FLAGS}
+      -DCMAKE_SHARED_LINKER_FLAGS=${CMAKE_SHARED_LINKER_FLAGS}
   )
-  set(FairLogger_ROOT ${CMAKE_INSTALL_PREFIX})
+  set(FairLogger_DIR ${CMAKE_INSTALL_PREFIX})
 endif()
 
 message(STATUS "========== include FairLogger.cmake done ==========")
-
-#  CMAKE_ARGS
-#    -DEXTERNAL_FMT=OFF 
-#    -DCMAKE_BUILD_TYPE=Release
-#    -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
-#    -DCMAKE_CXX_STANDARD=${CMAKE_CXX_STANDARD}
-#    -DCMAKE_EXE_LINKER_FLAGS=${CMAKE_EXE_LINKER_FLAGS}
-#    -DCMAKE_SHARED_LINKER_FLAGS=${CMAKE_SHARED_LINKER_FLAGS}
