@@ -81,6 +81,16 @@ if(NOT FairMQ_VERSION)
   set(FairMQ_VERSION "1.10.0")
 endif()
 include(cmake/FairMQ.cmake)
+
+if(NOT hiredis_VERSION)
+  set(hiredis_VERSION "1.3.0")
+endif()
+include(cmake/hiredis.cmake)
+
+if(NOT redis_plus_plus_VERSION)
+  set(redis_plus_plus_VERSION "1.3.15")
+endif()
+include(cmake/redis_plus_plus.cmake)
 # 
 # 
 # #------------------------------------------------------------------------------
