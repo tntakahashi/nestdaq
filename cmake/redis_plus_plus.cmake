@@ -5,11 +5,11 @@ message(STATUS "========== include redis_plus_plus.cmake ==========")
 
 set(redis_plus_plus_GIT_TAG "${redis_plus_plus_VERSION}")
 
-find_package(redis_plus_plus ${redis_plus_plus_VERSION} QUIET)
-if(redis_plus_plus_FOUND)
-  message(STATUS "Found redis_plus_plus")
+find_package(redis++ ${redis_plus_plus_VERSION} QUIET)
+if(redis++_FOUND)
+  message(STATUS "Found redis++")
 else()
-  message(STATUS "redis_plus_plus not found. --- fetch from GitHub")
+  message(STATUS "redis++ not found. --- fetch from GitHub")
   if(DEFINED ENV{CMAKE_BUILD_PARALLEL_LEVEL})
     set(PARALLEL_JOBS $ENV{CMAKE_BUILD_PARALLEL_LEVEL})
   else()
@@ -27,6 +27,7 @@ else()
     DEPENDS hiredis
 
     CMAKE_ARGS
+      -DCMAKE_BUILD_TYPE=Release
       -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
       -DCMAKE_PREFIX_PATH=${CMAKE_INSTALL_PREFIX}
       -DREDIS_PLUS_PLUS_CXX_STANDARD=${CMAKE_CXX_STANDARD}

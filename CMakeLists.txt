@@ -91,6 +91,11 @@ if(NOT redis_plus_plus_VERSION)
   set(redis_plus_plus_VERSION "1.3.15")
 endif()
 include(cmake/redis_plus_plus.cmake)
+
+if(NOT opentelemetry-cpp_VERSION)
+  set(opentelemetry-cpp_VERSION "1.24.0")
+endif()
+include(cmake/opentelemetry-cpp.cmake)
 # 
 # 
 # #------------------------------------------------------------------------------
