@@ -26,22 +26,22 @@ static constexpr std::string_view kSinkKey{"otel-log-sink"};
 
 static auto ConverteSeverity(fair::Severity severity) -> opentelemetry::logs::Severity
 {
-  switch (severity) {
+    switch (severity) {
     case fair::Severity::fatal:
     case fair::Severity::critical:
-      return opentelemetry::logs::kFatal;
+        return opentelemetry::logs::kFatal;
 
     case fair::Severity::error:
-      return opentelemetry::logs::kError;
+        return opentelemetry::logs::kError;
 
     case fair::Severity::alarm
-    case fair::Severity::important:
+        case fair::Severity::important:
     case fair::Severity::warn:
-      return opentelemetry::logs::kWarn;
+        return opentelemetry::logs::kWarn;
 
     case fair::Severity::state:
     case fair::Severity::info:
-      return opentelemetry::logs::kInfo;
+        return opentelemetry::logs::kInfo;
 
     case fair::Severity::detail:
     case fair::Severity::debug:
@@ -49,38 +49,38 @@ static auto ConverteSeverity(fair::Severity severity) -> opentelemetry::logs::Se
     case fair::Severity::debug2:
     case fair::Severity::debug3:
     case fair::Severity::debug4:
-      return opentelemetry::logs::kDebug;
+        return opentelemetry::logs::kDebug;
 
     case fair::Severity::trace:
-      return opentelemetry::logs::kTrace;
-    
+        return opentelemetry::logs::kTrace;
+
     case fair::Severity::nolog:
     default:
-      return opentelemetry::logs::Severity::kInvalid;
-  }
+        return opentelemetry::logs::Severity::kInvalid;
+    }
 }
 
 FairLoggerOpenTelemetrySink::FairLoggerOpenTelemetrySink()
 {
     // =========== fair Logger AddCustomSink ==========
-    fair::Logger::AddCustomSink(kSinkKey.data(), 
-                                fair::Severity::trace, 
-                                [this](const std::string& content, const fair::LogMetaData& metaData){
-      auto provider  = opentelemetry::logs::Provider::GetLoggerProvider();
-      auto logger    = provider->GetLogger(kLoggerName, kLibraryName, kLibraryVersion, kSchemaUrl);
-      auto logRecord = logger->CreateLogRecord();
+    fair::Logger::AddCustomSink(kSinkKey.data(),
+                                fair::Severity::trace,
+    [this](const std::string& content, const fair::LogMetaData& metaData) {
+        auto provider  = opentelemetry::logs::Provider::GetLoggerProvider();
+        auto logger    = provider->GetLogger(kLoggerName, kLibraryName, kLibraryVersion, kSchemaUrl);
+        auto logRecord = logger->CreateLogRecord();
 
-      if (logRecord) {
-        logRecord->SetSeverity(ConvertSeverity(metaData.severity));
-        logRecord->SetBody(opentelemetry::nostd::string_view(content.data(), content.size()));
-        logRecord->SetTimestamp(std::chrono::system_clock::time_point(std::chrono::seconds(metaData.timestamp) + std::chrono::microseconds(metaData.us)));
-        if (std::stoi(metaData.line.data())>0) {
-          logRecord->SetAttribute(opentelemetry::trace::SemanticConventions::kCodeFilepath, metaData.file.data());
-          logRecord->SetAttribute(opentelemetry::trace::SemanticConventions::kCodeLineon,   std::stoi(metaData.line.data()));
+        if (logRecord) {
+            logRecord->SetSeverity(ConvertSeverity(metaData.severity));
+            logRecord->SetBody(opentelemetry::nostd::string_view(content.data(), content.size()));
+            logRecord->SetTimestamp(std::chrono::system_clock::time_point(std::chrono::seconds(metaData.timestamp) + std::chrono::microseconds(metaData.us)));
+            if (std::stoi(metaData.line.data())>0) {
+                logRecord->SetAttribute(opentelemetry::trace::SemanticConventions::kCodeFilepath, metaData.file.data());
+                logRecord->SetAttribute(opentelemetry::trace::SemanticConventions::kCodeLineon,   std::stoi(metaData.line.data()));
+            }
+            logRocord->SetAttribute(opentelemetry::trace::SemanticConventions::kThreadId, std::this_thread::get_id());
+            logger->EmitLogRecord(std::move(logRecord));
         }
-        logRocord->SetAttribute(opentelemetry::trace::SemanticConventions::kThreadId, std::this_thread::get_id());
-        logger->EmitLogRecord(std::move(logRecord));
-      }
     });
 }
 
