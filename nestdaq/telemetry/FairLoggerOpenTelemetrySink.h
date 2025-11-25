@@ -1,5 +1,7 @@
 #pragma once
 
+#include <chrono>
+
 #include <string>
 #include <string_view>
 
@@ -64,15 +66,34 @@ namespace nestdaq {
 
 class FairLoggerOpenTelemetrySink {
 public:
-  FairLoggerOpenTelemetrySink(std::string_view colletorEndpoint, bool useSslCredentials, bool consoleDebug);
+  struct OptionKey {
+    static constexpr std::string_view otel_exporter_otlp_grpc_endpoint          {"otel_exporter_otlp_grpc_endpoint"};
+    static constexpr std::string_view otel_exporter_otlp_grpc_ssl_enable        {"otel_exporter_otlp_grpc_ssl_enable"};
+    static constexpr std::string_view otel_exporter_otlp_grpc_certificate       {"otel_exporter_otlp_grpc_certificate"}; 
+    static constexpr std::string_view otel_exporter_otlp_grpc_certificate_string{"otel_exporter_otlp_grpc_certificate_string"};
+    static constexpr std::string_view otel_exporter_otlp_grpc_headers           {"otel_exporter_otlp_grpc_headers"};
 
+    static constexpr std::string_view otel_exporter_otlp_timeout                {"otel_exporter_otlp_timeout"};
+
+    static constexpr std::string_view otel_exporter_otlp_http_endpoint          {"otel_exporter_otlp_http_endpoint"};
+    static constexpr std::string_view otel_exporter_otlp_http_content_type      {"otel_exporter_otlp_http_content_type"};
+    static constexpr std::string_view otel_exporter_otlp_http_headers           {"otel_exporter_otlp_http_headers"};
+
+//    static constexpr std::string_view otel_exporter_otlp_file_pattern           {"otel_exporter_otlp_file_pattern"};
+//    static constexpr std::string_view otel_exporter_otlp_file_alias_pattern     {"otel_exporter_otlp_file_alias_pattern"};
+//    static constexpr std::string_view olel_exporter_otlp_file_flush_interval    {"otel_exporter_otlp_file_flush_interval"};
+//    static constexpr std::string_view otel_exporter_otlp_file_flush_count       {"otel_exporter_otlp_file_flush_count"};
+//    static constexpr std::string_view otel_exporter_otlp_file_size              {"otel_exporter_otlp_file_size"};
+//    static constexpr std::string_view otel_exporter_otlp_file_rotate            {"otel_exporter_otlp_file_rotate"};
+  };
+
+
+  FairLoggerOpenTelemetrySink();
+
+  static auto AddProgramOptions() -> void;
   
 
 private:
-  std::string fCollectorEndPoint;
-  bool fUseSslCredentials{false};
-  bool fConsoleDebug{false};
-
 
 };
 
