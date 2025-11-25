@@ -2,6 +2,10 @@
 
 #include <string_view>
 
+namespace fair::mq {
+class ProgramOptions;
+}
+
 namespace nestdaq {
 
 class OpenTelemetryInitializer {
@@ -34,14 +38,15 @@ public:
 
 
     static auto AddProgramOptions() -> void;
-    static auto Initialize() -> void;
+    static auto Initialize(const fair::mq::ProgramOptions& config) -> void;
 
 private:
-    OpenTelemetryInitializer();
+    OpenTelemetryInitializer(const fair::mq::ProgramOptions& config);
     auto SetupLogs() -> void;
     auto SetupMetrics() -> void;
-    auto SetupTrace() -> void;
+    auto SetupTraces() -> void;
 
+    fair::mq::ProgramOptions& fConfig;
 };
 
 } // namespace

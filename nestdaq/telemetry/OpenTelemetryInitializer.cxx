@@ -1,5 +1,6 @@
-
 #include <fairmq/ProgramOptions.h>
+
+#include <opentelemetry/trace/semantic_conventions.h>
 
 #include <opentelemetry/exporters/ostream/log_record_exporter_factory.h>
 #include <opentelemetry/exporters/otlp/otlp_grpc_log_record_exporter_factory.h>
@@ -12,7 +13,7 @@
 #include <opentelemetry/sdk/logs/simple_log_record_processor_factory.h>
 #include <openteneletry/sdk/version/version.h>
 
-#include <opentelemetry/trace/semantic_conventions.h>
+
 #include <opentelemetry/exporters/ostream/span_exporter_factory.h>
 #include <opentelemetry/sdk/trace/exporter.h>
 #include <opentelemetry/sdk/trace/processor.h>
@@ -24,6 +25,46 @@
 
 
 namespace nestdaq {
+
+using opt = OpenTelemetryInitializer::OptionKey;
+
+auto GetGrpcExporterOptions(const fair::mq::ProgramOptions& config) -> opentelemetry::exporter::otlp::OtlpGrpcExporterOptions
+{
+    opentelemetry::exporter::otlp::OtlpGrpcExporterOptions opts;
+    if (auto key = opt::otel_exporter_otlp_grpc_endpoint.data(); config.count(key)>0) {
+      opts.endpoint = xconfig[key];
+    }
+    if (auto key = opt::otel_exporter_otlp_grpc_ssl_enable.data(); config.count(key)>0) {
+      opts.use_ssl_credentials = config[key];
+    }
+    if (auto key = opt::otel_exporter_otlp_grpc_certificate.data(); config.count(key)>0) {
+      opts.ssl_credentials = config[key];
+    }
+    if (auto key = opt::otel_exporter_otlp_grpc_certificate_string.data(); config.count(key)>0) {
+      opts.ssl_credentials_as_string = config[key];
+    }
+    if (auto key = opt::otel_exporter_otlp_grpc_headers.data(); config.count(key)>0) {
+      opts.metadata = config[key];
+    }
+    return opts;
+}
+
+auto GetHttpExporterOptions(const fair::mq::ProgramOptions& config) -> opentelemetry::exporter::otlp::HttpGrpcExporterOptions
+{
+    auto opts = GetHttpExportOptions(config);
+    opentelemetry::exporter::otlp::OtlpHttpExporterOptions httpOpts;
+    if (auto key = opt::otel_exporter_otlp_http_endpoint.data(); config.count(key)>0) {
+      opts.url = config[key];
+    }
+    if (auto key = opt::otel_exporter_otlp_http_content_type.data(); config.count(key)>0) {
+      opts.content_type = config[key];0
+    }
+    if (auto key = ope::otel_exporter_otlp_http_headers.dat(); fConfig.count(key)>0) {
+      opts.headers = config[key];
+    }
+
+}
+
 
 auto OpenTelemetryInitializer::AddProgramOptions() -> void
 {
@@ -93,22 +134,32 @@ auto OpenTelemetryInitializer::AddProgramOptions() -> void
 
 }
 
-auto OpenTelemetryInitializer::Initialize() -> void
+auto OpenTelemetryInitializer::Initialize(const fair::mq::ProgramOptions& config) -> void
 {
-    static auto instance = OpenTelemetryInitializer();
+    static auto instance = OpenTelemetryInitializer(config);
 }
 
-auto OpenTelemetryInitializer::OpenTelemetryInitializer()
+OpenTelemetryInitializer::OpenTelemetryInitializer(const fair::mq::ProgramOptions& config)
+  : fConfig(config)
 {
-    SetupTrace();
+    SetupTraces();
     SetupLogs();
     SetupMetrics();
 
 }
 
-auto OpenTelemetryInitializer::SetupMLogs() -> void
+auto OpenTelemetryInitializer::SetupLogs() -> void
 {
+    // ===== ostream exporter =====
+    std::unique_ptr<opentelemetry::sdk::logs::LogRecordExporter> ostreamExporter = std::make_unique<opentelemetry::exporter::OstreamSpanExporter>();
 
+    // ===== GRPC exporter =====
+    auto grpcOpts = GetGrpcExporterOptions(fConfig);
+    std::unique_ptr<opentelemetry::sdk::trace::SpanExporter> grpcEporter = std::make_unique<opentelemetry::exporter::OtlpGrpcSpanExporter>(grpcOpts);
+
+    // ===== HTTP exporter =====
+    auto httpOpts = GetHttpExporterOptions(fConfig);
+    std::unique_ptr<opentelemetry::sdk::trace::SpanExporter> httpExporter = std::make_unique<opentelemetry::exporter::OtlpHttpSpanExporter>(httpOps);
 }
 
 auto OpenTelemetryInitializer::SetupMetrics() -> void
@@ -116,9 +167,21 @@ auto OpenTelemetryInitializer::SetupMetrics() -> void
 
 }
 
-auto OpenTelemetryInitializer::SetupTrace() -> void
+auto OpenTelemetryInitializer::SetupTraces() -> void
 {
+    // ===== ostream exporter =====
+    std::unique_ptr<opentelemetry::sdk::trace::SpanExporter> ostreamExporter = std::make_unique<opentelemetry::exporter::OstreamSpanExporter>();
 
+    // ===== GRPC exporter =====
+    auto grpcOpts = GetGrpcExporterOptions(fConfig);
+    std::unique_ptr<opentelemetry::sdk::trace::SpanExporter> grpcEporter = std::make_unique<opentelemetry::exporter::OtlpGrpcSpanExporter>(grpcOpts);
+
+    // ===== HTTP exporter =====
+    auto httpOpts = GetHttpExporterOptions(fConfig);
+    std::unique_ptr<opentelemetry::sdk::trace::SpanExporter> httpExporter = std::make_unique<opentelemetry::exporter::OtlpHttpSpanExporter>(httpOpts);
+
+//  auto provider = opentelemetetry::trace::Provider::GetTraceProvider();
+//  auto tracer   = provider->GetTracer();
 }
 
 } // namespace nestdaq
