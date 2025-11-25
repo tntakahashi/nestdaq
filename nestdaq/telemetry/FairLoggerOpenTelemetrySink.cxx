@@ -2,16 +2,9 @@
 
 #include <fairLogger/Logger.h>
 
-#include <opentelemetry/exporters/otlp/otlp_grpc_log_record_exporter_factory.h>
-#include <opentelemetry/exporters/otlp/otlp_http_log_record_exporter_factory.h>
 
 #include <opentelemetry/logs/severity.h>
 #include <opentelemetry/logs/provider.h>
-#include <opentelemetry/sdk/logs/exporter.h>
-#include <opentelemetry/sdk/logs/logger_provider_factory.h>
-#include <opentelemetry/sdk/logs/processor.h>
-#include <opentelemetry/sdk/logs/provider.h>
-#include <opentelemetry/sdk/logs/simple_log_record_processor_factory.h>
 
 #include <openteneletry/sdk/version/version.h>
 #include <opentelemetry/trace/semantic_conventions.h>

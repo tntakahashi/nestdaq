@@ -100,12 +100,24 @@ auto OpenTelemetryInitializer::Initialize() -> void
 
 auto OpenTelemetryInitializer::OpenTelemetryInitializer()
 {
-  
-  // log
-  {
-  }  
+  SetupTrace();
+  SetupLogs();
+  SetupMetrics();
 
-  
+}
+
+auto OpenTelemetryInitializer::SetupMLogs() -> void
+{
+
+}
+
+auto OpenTelemetryInitializer::SetupMetrics() -> void
+{
+
+}
+
+auto OpenTelemetryInitializer::SetupTrace() -> void
+{
 
 }
 

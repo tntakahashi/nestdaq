@@ -38,7 +38,9 @@ public:
 
 private:
   OpenTelemetryInitializer();
-  
+  auto SetupLogs() -> void;
+  auto SetupMetrics() -> void; 
+  auto SetupTrace() -> void;
 
 };
   
