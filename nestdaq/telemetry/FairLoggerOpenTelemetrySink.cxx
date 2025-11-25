@@ -107,7 +107,7 @@ auto FairLoggerOpenTelemetrySink::AddProgramOptions() -> void
        "OTLP GRPC endpoint to connect to"))
       (opt::otel_exporter_otlp_grpc_ssl_enable.data(),
        bpo::value<std::string>->default_value("false"), 
-       "whether the endpoint is SSL enabled")
+       "Whether the endpoint is SSL enabled")
       (opt::otel_exporter_otlp_grpc_certificate.data(),
        bpo::value<std::string>(), 
        "SSL Certificate file path")
@@ -130,7 +130,38 @@ auto FairLoggerOpenTelemetrySink::AddProgramOptions() -> void
        "Data format used -- JSON or Binary")
       (opt::otel_exporter_otlp_headers.data(),
        bpo::value<std::string>(),
-       "http headers");
+       "http headers")
+
+      (opt::otel_exporter_otlp_file_pattern_trace.data(),
+       bpo::value<std::string>()->default_value("trace-%N.json"), 
+       "File pattern to use (for trace)")
+      (opt::otel_exporter_otlp_file_pattern_metrics.data(),
+       bpo::value<std::string>()->default_value("metrics-%N.jsonl"),
+       "File pattern to use (for metrics)")
+      (opt::otel_exporter_otlp_file_pattern_logs.data(),
+       bpo::value<std::string>()->default_value("logs-%N.jsonl")
+       "File pattern to use (for logs)")
+      (opt::otel_exporter_otlp_file_alias_pattern_trace.data(),
+       bpo::value<std::string>()->default_value("trace-latest.jsonl"),
+       "File which always point to the latest file (for trace)")
+      (opt::otel_exporter_otlp_file_alias_pattern_metrics.data(),
+       bpo::value<std::string>()->default_value("metrics-latest.jsonl"),
+       "File which always point to the latest file (for metrics)")
+      (opt::otel_exporter_otlp_file_alias_pattern_logs.data(),
+       bpo::value<std::string>()->default_value("logs-latest.jsonl")
+       "File which always point to the latest file (for logs)")
+      (opt::otel_exporter_otlp_file_flush_interval.data(), 
+       bpo::value<std::string>()->default_value("30s"),
+       "Interval to force flush ostream")
+      (opt::otel_exporter_otlp_file_flush_count.data(),
+       bpo::value<std::string>()->default_value("256"),
+       "Force flush ostrem every flush_count records")
+      (opt::otel_exporter_otlp_file_size.data(),
+       bpo::value<std::string>()->default_value("20MB"), 
+       "File size to rotate log files")
+      (opt::otel_exporter_otlp_rorate_size.data(), 
+       bpo::value<std::string>(),
+       "Rotate count");
 
 }
 
