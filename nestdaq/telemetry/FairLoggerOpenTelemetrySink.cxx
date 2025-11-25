@@ -29,6 +29,8 @@ static constexpr std::string_view kLibraryName{"NestDAQ"};
 static constexpr std::string_view kLibraryVersion{NESTDAQ_VERSION};
 static constexpr std::string_view kSchemaUrl{""};
 
+static constexpr std::string_view kSinkKey{"otel-log-sink"};
+
 static auto ConverteSeverity(fair::Severity severity) -> opentelemetry::logs::Severity
 {
   switch (severity) {
@@ -68,7 +70,7 @@ static auto ConverteSeverity(fair::Severity severity) -> opentelemetry::logs::Se
 FairLoggerOpenTelemetrySink::FairLoggerOpenTelemetrySink()
 {
     // =========== fair Logger AddCustomSink ==========
-    fair::Logger::AddCustomSink("otel-log-sink", 
+    fair::Logger::AddCustomSink(kSinkKey.data(), 
                                 fair::Severity::trace, 
                                 [this](const std::string& content, const fair::LogMetaData& metaData){
       auto provider  = opentelemetry::logs::Provider::GetLoggerProvider();
@@ -89,6 +91,14 @@ FairLoggerOpenTelemetrySink::FairLoggerOpenTelemetrySink()
     });
 }
 
+FairLoggerOpenTelemetrySink::~FairLoggerOpenTelemetrySink()
+{
+    fair::Logger::RemoveCustomSink(kSinkKey.data());
+}
 
+auto FairLoggerOpenTelemetrySink::Initialize() -> void
+{
+    static auto instance = FairLoggerOpenTelemetrySink();
+}
 
 } // namespace nestdaq

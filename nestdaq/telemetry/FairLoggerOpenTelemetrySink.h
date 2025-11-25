@@ -64,9 +64,11 @@ namespace nestdaq {
 
 class FairLoggerOpenTelemetrySink {
 public:
-  FairLoggerOpenTelemetrySink();
+  ~FairLoggerOpenTelemetrySink();
+  static auto Initialize() -> void;
 
 private:
+  FairLoggerOpenTelemetrySink();
 
 };
 

@@ -39,7 +39,7 @@ auto OpenTelemetryInitializer::AddProgramOptions() -> void
        "http headers")
 
       (opt::otel_exporter_otlp_file_pattern_trace.data(),
-       bpo::value<std::string>()->default_value("trace-%N.json"), 
+       bpo::value<std::string>()->default_value("trace-%N.jsonl"), 
        "File pattern to use (for trace)")
       (opt::otel_exporter_otlp_file_pattern_metrics.data(),
        bpo::value<std::string>()->default_value("metrics-%N.jsonl"),
@@ -68,6 +68,16 @@ auto OpenTelemetryInitializer::AddProgramOptions() -> void
       (opt::otel_exporter_otlp_rorate_size.data(), 
        bpo::value<std::string>(),
        "Rotate count");
+
+}
+
+auto OpenTelemetryInitializer::Initialize() -> void
+{
+  static auto instance = OpenTelemetryInitializer();
+}
+
+auto OpenTelemetryInitializer::OpenTelemetryInitializer()
+{
 
 }
 

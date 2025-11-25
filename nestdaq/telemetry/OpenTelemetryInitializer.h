@@ -32,7 +32,12 @@ public:
     static constexpr std::string_view otel_exporter_otlp_file_rotate             {"otel_exporter_otlp_file_rotate"};
   };
 
+
   static auto AddProgramOptions() -> void;
+  static auto Initialize() -> void;
+
+private:
+  OpenTelemetryInitializer();
   
 
 };
