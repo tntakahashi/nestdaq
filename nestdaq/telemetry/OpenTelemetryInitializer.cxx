@@ -155,11 +155,11 @@ auto OpenTelemetryInitializer::SetupLogs() -> void
 
     // ===== GRPC exporter =====
     auto grpcOpts = GetGrpcExporterOptions(fConfig);
-    std::unique_ptr<opentelemetry::sdk::trace::SpanExporter> grpcEporter = std::make_unique<opentelemetry::exporter::OtlpGrpcSpanExporter>(grpcOpts);
+    std::unique_ptr<opentelemetry::sdk::logs::LogRecordExporter> grpcEporter = std::make_unique<opentelemetry::exporter::OtlpGrpcLogRecordExporter>(grpcOpts);
 
     // ===== HTTP exporter =====
     auto httpOpts = GetHttpExporterOptions(fConfig);
-    std::unique_ptr<opentelemetry::sdk::trace::SpanExporter> httpExporter = std::make_unique<opentelemetry::exporter::OtlpHttpSpanExporter>(httpOps);
+    std::unique_ptr<opentelemetry::sdk::logs::LogRecordExporter> httpExporter = std::make_unique<opentelemetry::exporter::OtlpHttpLogRecordExporter>(httpOps);
 }
 
 auto OpenTelemetryInitializer::SetupMetrics() -> void
