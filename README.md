@@ -3,9 +3,11 @@ A streaming DAQ implementation for the particle measurements
 
 
 ## Tested system
-| System | Version | Compiler                 | CMake                          |
-| ---    | ---     | ---                      | ---                            | 
-| CentOS | 7       | GCC 8.3.1 (devtoolset-8) | 3.14.6 or later (epel: cmake3) |
+| System    | Version | Compiler                     | CMake           |
+| ---       | ---     | ---                          | ---             | 
+| AlmaLinux | 9       | GCC 11.5.0                   | 3.26.5 or later |
+| AlmaLinux | 9       | GCC 14.2.1 (gcc-toolset-14)  | 3.26.5 or later |
+| AlmaLinux | 10      | GCC 14.2.1                   | 3.30.5 or later |
 
 ## External packages used with NestDAQ
 | Packages         | Version  | URL |
