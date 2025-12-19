@@ -38,7 +38,6 @@ The following command installs ZeroMQ, boost, FairLogger, FairMQ, hiredis, and r
 ```bash
 # download the source code
 git clone https://github.com/spadi-alliance/nestdaq
-cd ../
 
 # configure
 cmake \
