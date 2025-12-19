@@ -43,7 +43,7 @@ cd ../
 # configure
 cmake \
   -DCMAKE_INSTALL_PREFIX=./install \
-  -DBUILD_PARALLE_LEVEL= $(nproc) \
+  -DBUILD_PARALLE_LEVEL=$(nproc) \
   -B ./build-external \
   -S nestdaq/cmake
 
