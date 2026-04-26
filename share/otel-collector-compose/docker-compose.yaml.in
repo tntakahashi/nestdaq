@@ -1,0 +1,56 @@
+services:
+  opensearch:
+    image: docker.io/opensearchproject/opensearch:3
+    container_name: opensearch
+    environment:
+      discovery.type: single-node
+      plugins.security.disabled: "true"
+      OPENSEARCH_JAVA_OPTS: "-Xms512m -Xmx512m"
+    ports:
+      - "${OPENSEARCH_PORT:-9200}:9200"
+    volumes:
+      - ${OPENSEARCH_DATA_DIR:-./opensearch-data}:/usr/share/opensearch/data:Z
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:9200/_cluster/health >/dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    networks:
+      - otel-net
+
+  opensearch-dashboards:
+    image: docker.io/opensearchproject/opensearch-dashboards:3
+    container_name: dashboards
+    environment:
+      OPENSEARCH_HOSTS: '["http://opensearch:9200"]'
+      DISABLE_SECURITY_DASHBOARDS_PLUGIN: "true"
+    volumes:
+      - ${OPENSEARCH_DASHBOARDS_CONFIG_FILE:-@EX_DATADIR@/otel-collector-compose/opensearch_dashboards.yaml}:/usr/share/opensearch-dashboards/config/opensearch_dashboards.yaml:ro,Z
+    ports:
+      - "${OPENSEARCH_DASHBOARDS_PORT:-5601}:5601"
+    depends_on:
+      opensearch:
+        condition: service_healthy
+    networks:
+      - otel-net
+
+  otel-collector:
+    image: docker.io/otel/opentelemetry-collector-contrib:0.150.0
+    container_name: otel-collector
+    command: ["--config=/etc/otel/config.yaml"]
+    volumes:
+      - ${OTEL_COLLECTOR_CONFIG_FILE:-@EX_DATADIR@/otel-collector-compose/otel-collector-config.yaml}:/etc/otel/config.yaml:ro,Z
+    ports:
+      - "${OTEL_COLLECTOR_GRPC_PORT:-4317}:4317"   # OTLP gRPC
+      - "${OTEL_COLLECTOR_HTTP_PORT:-4318}:4318"   # OTLP HTTP
+    depends_on:
+      opensearch:
+        condition: service_healthy
+    networks:
+      - otel-net
+
+networks:
+  otel-net:
+    external: true
+    name: otel-net
+#    driver: bridge

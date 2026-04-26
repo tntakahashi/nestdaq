@@ -2,6 +2,11 @@ set(ORIGINAL  ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_DATADIR}/controller/daq-we
 set(LINK  ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_DATADIR}/controller/index.html)
 
 install(FILES
+  README.md;
+  DESTINATION ${CMAKE_INSTALL_DATADIR}/doc/controller
+)
+
+install(FILES
   daq-webctl.html;
   DESTINATION ${CMAKE_INSTALL_DATADIR}/controller
 )
