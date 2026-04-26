@@ -56,6 +56,7 @@ cmake --build ./build-external
   - In this case, the `--parallel` (or `-j`) option passed to cmake --build does not control the inner ExternalProject builds, so please specify the parallel build level during the initial configuration using `-DBUILD_PARALLEL_LEVEL=xxx`.
     - The `nproc` command prints the number of available CPU cores on the system. If this causes excessive memory usage, specify a smaller value manually.
 - The default dependency versions are listed below. To override a version, pass `-Dxxxx_VERSION=yyyy` to CMake.
+- If `-DWITH_REDIS_STACK=OFF` is specified, the external dependency build does not build or install Redis Stack. The default is `WITH_REDIS_STACK=ON`.
 - If `-DWITH_OTEL_CPP=ON` is specified, the external dependency build also installs opentelemetry-cpp and its dependencies, such as nlohmann/json and gRPC. The default is `WITH_OTEL_CPP=OFF`.
 - To use Ninja instead of Make, add `-G Ninja` to the CMake options.
 - To use `mold` instead of the system `ld`.
@@ -77,7 +78,7 @@ cmake --build ./build-external
 ##### External runtime components
 Redis Stack (`redis-server`, `redis-cli`, Redis modules, etc.) is included in the external packages and is built and installed together with them. It is required by the NestDAQ application at runtime, but it is not a direct library dependency.
 
-| Packages                                                                 | Version (default) | CMake options to modify versions |
+| Package                                                                  | Version (default) | CMake options to modify versions |
 | :--                                                                      | :--               | :--                              |
 | [Redis](https://github.com/redis/redis)                                  | 8.6.2             | `Redis_VERSION`                  |
 | [RedisBloom](https://github.com/RedisBloom/RedisBloom)                   | 2.8.17            | `RedisBloom_VERSION`             |
