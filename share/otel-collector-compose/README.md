@@ -30,21 +30,28 @@ podman network create otel-net
 ## Start
 
 After installation, copy the installed compose file and config files to a
-working directory, then run Compose with the copied compose file:
-
+working directory.
 ```bash
 mkdir -p ./otel-collector-compose
 cp <install-prefix>/share/otel-collector-compose/docker-compose.yaml \
    <install-prefix>/share/otel-collector-compose/otel-collector-config.yaml \
    <install-prefix>/share/otel-collector-compose/opensearch_dashboards.yaml \
    ./otel-collector-compose/
+```
 
+Then run Compose with the copied compose file. 
+
+For docker: 
+
+```bash
+OPENSEARCH_INITIAL_ADMIN_PASSWORD='yourStrongPassword123!' \
 docker compose -f ./otel-collector-compose/docker-compose.yaml up
 ```
 
 For Podman:
 
 ```bash
+OPENSEARCH_INITIAL_ADMIN_PASSWORD='yourStrongPassword123!' \
 podman compose -f ./otel-collector-compose/docker-compose.yaml up
 ```
 
@@ -60,7 +67,19 @@ By default, the services are available on these host ports:
 The host-side ports, OpenSearch data directory, and mounted config files can be
 changed with environment variables:
 
+| Variable                                | Default                         | Required | Description                                                                                                                                               |
+| :--                                     | :--                             | :--      | :--                                                                                                                                                       |
+| `OPENSEARCH_INITIAL_ADMIN_PASSWORD`     | none                            | yes      | Initial OpenSearch admin password. It must be at least 8 characters long and include at least one uppercase letter, one lowercase letter, one digit, and one symbol. |
+| `OPENSEARCH_PORT`                       | `9200`                          | no       | Host port mapped to OpenSearch port `9200`.                                                                                                               |
+| `OPENSEARCH_DASHBOARDS_PORT`            | `5601`                          | no       | Host port mapped to OpenSearch Dashboards port `5601`.                                                                                                    |
+| `OTEL_COLLECTOR_GRPC_PORT`              | `4317`                          | no       | Host port mapped to the OTLP gRPC receiver.                                                                                                               |
+| `OTEL_COLLECTOR_HTTP_PORT`              | `4318`                          | no       | Host port mapped to the OTLP HTTP receiver.                                                                                                               |
+| `OPENSEARCH_DATA_DIR`                   | `./opensearch-data`             | no       | Host directory bind-mounted to `/usr/share/opensearch/data`.                                                                                              |
+| `OTEL_COLLECTOR_CONFIG_FILE`            | `./otel-collector-config.yaml`  | no       | Host path to the OpenTelemetry Collector config file.                                                                                                     |
+| `OPENSEARCH_DASHBOARDS_CONFIG_FILE`     | `./opensearch_dashboards.yaml`  | no       | Host path to the OpenSearch Dashboards config file.                                                                                                       |
+
 ```bash
+OPENSEARCH_INITIAL_ADMIN_PASSWORD='yourStrongPassword123!' \
 OPENSEARCH_PORT=19200 \
 OPENSEARCH_DASHBOARDS_PORT=15601 \
 OTEL_COLLECTOR_GRPC_PORT=14317 \
