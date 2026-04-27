@@ -29,12 +29,15 @@ podman network create otel-net
 
 ## Start
 
-After installation, copy the installed compose file to a working directory and
-run Compose with the copied file:
+After installation, copy the installed compose file and config files to a
+working directory, then run Compose with the copied compose file:
 
 ```bash
 mkdir -p ./otel-collector-compose
-cp <install-prefix>/share/otel-collector-compose/docker-compose.yaml ./otel-collector-compose/
+cp <install-prefix>/share/otel-collector-compose/docker-compose.yaml \
+   <install-prefix>/share/otel-collector-compose/otel-collector-config.yaml \
+   <install-prefix>/share/otel-collector-compose/opensearch_dashboards.yaml \
+   ./otel-collector-compose/
 
 docker compose -f ./otel-collector-compose/docker-compose.yaml up
 ```
@@ -74,6 +77,11 @@ above, this is `./otel-collector-compose/opensearch-data`. The Compose file bind
 mounts that directory to `/usr/share/opensearch/data` in the OpenSearch
 container. On SELinux-enabled systems, the Compose file applies the `:Z` label
 option to the mounted paths.
+
+If `OTEL_COLLECTOR_CONFIG_FILE` and `OPENSEARCH_DASHBOARDS_CONFIG_FILE` are not
+set, the Compose file uses `otel-collector-config.yaml` and
+`opensearch_dashboards.yaml` next to the copied `docker-compose.yaml`. With the
+example above, these are expected under `./otel-collector-compose/`.
 
 To use different collector or OpenSearch Dashboards config files, either set
 `OTEL_COLLECTOR_CONFIG_FILE` and `OPENSEARCH_DASHBOARDS_CONFIG_FILE` when running

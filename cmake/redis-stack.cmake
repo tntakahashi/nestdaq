@@ -142,6 +142,9 @@ add_custom_command(
           "${REDIS_SOURCE_DIR}/modules/redisearch/src/.prepared"
 
   COMMAND "${CMAKE_COMMAND}" -E rm -rf "${REDIS_SOURCE_DIR}/modules/redisjson/src"
+  COMMAND "${CMAKE_COMMAND}"
+          "-DREDISJSON_SOURCE_DIR=${redisjson_src_SOURCE_DIR}"
+          -P "${CMAKE_CURRENT_SOURCE_DIR}/patch_redisjson.cmake"
   COMMAND "${CMAKE_COMMAND}" -E copy_directory
           "${redisjson_src_SOURCE_DIR}"
           "${REDIS_SOURCE_DIR}/modules/redisjson/src"
