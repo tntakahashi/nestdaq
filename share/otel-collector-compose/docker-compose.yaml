@@ -6,16 +6,17 @@ services:
       discovery.type: single-node
       plugins.security.disabled: "true"
       OPENSEARCH_JAVA_OPTS: "-Xms512m -Xmx512m"
-      OPENSEARCH_INITIAL_ADMIN_PASSWORD: "${OPENSEARCH_INITIAL_ADMIN_PASSWORD:?Set OPENSEARCH_INITIAL_ADMIN_PASSWORD}"
+      OPENSEARCH_INITIAL_ADMIN_PASSWORD: "${OPENSEARCH_INITIAL_ADMIN_PASSWORD:-yourStrongPassWord123!}"
     ports:
       - "${OPENSEARCH_PORT:-9200}:9200"
     volumes:
       - ${OPENSEARCH_DATA_DIR:-./opensearch-data}:/usr/share/opensearch/data:Z
     healthcheck:
-      test: ["CMD-SHELL", "curl -fsS http://localhost:9200/_cluster/health >/dev/null"]
+      test: ["CMD-SHELL", "bash -c '</dev/tcp/127.0.0.1/9200'"]
       interval: 10s
       timeout: 5s
-      retries: 12
+      retries: 30
+      start_period: 120s
     networks:
       - otel-net
 
@@ -36,7 +37,7 @@ services:
       - otel-net
 
   otel-collector:
-    image: docker.io/otel/opentelemetry-collector-contrib:0.150.0
+    image: docker.io/otel/opentelemetry-collector-contrib:0.150.1
     container_name: otel-collector
     command: ["--config=/etc/otel/config.yaml"]
     volumes:
