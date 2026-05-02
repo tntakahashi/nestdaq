@@ -1,11 +1,35 @@
 cmake_minimum_required(VERSION 3.24)
 
-project(nestdaq LANGUAGES CXX C)
+include(cmake/GitHelper.cmake)
+
+project(nestdaq VERSION "${PROJECT_VERSION}" LANGUAGES CXX C)
 
 message(STATUS "PROJECT_NAME: ${PROJECT_NAME}")
 
 include(cmake/common.cmake)
-include(cmake/GitHelper.cmake)
+include(CMakePackageConfigHelpers)
+
+set(NESTDAQ_CMAKE_INSTALL_DIR "${CMAKE_INSTALL_LIBDIR}/cmake/NestDAQ")
+
+write_basic_package_version_file(
+  "${CMAKE_CURRENT_BINARY_DIR}/cmake/NestDAQConfigVersion.cmake"
+  VERSION "${PROJECT_VERSION}"
+  COMPATIBILITY SameMajorVersion
+)
+
+configure_file(
+  "${CMAKE_CURRENT_SOURCE_DIR}/cmake/NestDAQVersion.cmake.in"
+  "${CMAKE_CURRENT_BINARY_DIR}/cmake/NestDAQVersion.cmake"
+  @ONLY
+)
+
+install(FILES
+  "${CMAKE_CURRENT_BINARY_DIR}/cmake/NestDAQConfig.cmake"
+  "${CMAKE_CURRENT_BINARY_DIR}/cmake/NestDAQConfigVersion.cmake"
+  "${CMAKE_CURRENT_BINARY_DIR}/cmake/NestDAQVersion.cmake"
+  "${CMAKE_CURRENT_SOURCE_DIR}/cmake/NestDAQTargets.cmake"
+  DESTINATION "${NESTDAQ_CMAKE_INSTALL_DIR}"
+)
 
 #------------------------------------------------------------------------------
 # RPATH handling
@@ -66,6 +90,12 @@ endif()
 message(STATUS "FairLogger_INCDIR: ${FairLogger_INCDIR}")
 message(STATUS "FairLogger_LIBDIR: ${FairLogger_LIBDIR}")
 
+configure_package_config_file(
+  "${CMAKE_CURRENT_SOURCE_DIR}/cmake/NestDAQConfig.cmake.in"
+  "${CMAKE_CURRENT_BINARY_DIR}/cmake/NestDAQConfig.cmake"
+  INSTALL_DESTINATION "${NESTDAQ_CMAKE_INSTALL_DIR}"
+)
+
 find_package(opentelemetry-cpp CONFIG QUIET
   COMPONENTS
     sdk
@@ -83,7 +113,6 @@ endif()
 #------------------------------------------------------------------------------
 add_subdirectory(nestdaq)
 add_subdirectory(plugins)
-add_subdirectory(examples)
 add_subdirectory(controller)
 add_subdirectory(share)
 add_subdirectory(scripts)
