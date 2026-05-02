@@ -100,3 +100,22 @@ cmake --install ./build
 
 - In the example above, both the main NestDAQ package and the external dependencies are installed in the same directory (`./install`).
   If the external dependencies are installed in a different location, specify that directory with `-DCMAKE_PREFIX_PATH=xxx`.
+
+### Build and install examples
+
+The examples are built as a separate CMake project. Build and install the main
+NestDAQ package first, then configure the examples with `find_package(NestDAQ)`
+using the NestDAQ install prefix.
+
+```bash
+cmake \
+  -DCMAKE_PREFIX_PATH=./install \
+  -DCMAKE_INSTALL_PREFIX=./install \
+  -B ./build-examples \
+  -S nestdaq/examples
+cmake --build ./build-examples --parallel $(nproc)
+cmake --install ./build-examples
+```
+
+- `-DCMAKE_PREFIX_PATH=./install` must point to the directory where NestDAQ was installed.
+- The installed example binaries are placed under `./install/bin`.

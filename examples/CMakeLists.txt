@@ -4,6 +4,16 @@ project(NestDAQExamples LANGUAGES CXX)
 
 include(GNUInstallDirs)
 
+# Standalone examples do not inherit RPATH settings from the main NestDAQ build.
+set(CMAKE_SKIP_BUILD_RPATH FALSE)
+set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
+set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+if(APPLE)
+  set(CMAKE_INSTALL_RPATH "@loader_path/../${CMAKE_INSTALL_LIBDIR}")
+elseif(UNIX)
+  set(CMAKE_INSTALL_RPATH "$ORIGIN/../${CMAKE_INSTALL_LIBDIR}")
+endif()
+
 find_package(NestDAQ REQUIRED CONFIG)
 
 foreach(exec IN ITEMS Sampler Sink NullDevice)
