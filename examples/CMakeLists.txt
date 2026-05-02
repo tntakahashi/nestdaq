@@ -1,4 +1,9 @@
 #==============================================================================
+add_library(nestdaq_dlopen INTERFACE)
+if(CMAKE_DL_LIBS)
+  target_link_libraries(nestdaq_dlopen INTERFACE ${CMAKE_DL_LIBS})
+endif()
+
 foreach(lvar IN ITEMS Sampler; Sink; NullDevice;)
   set(EXEC ${lvar})
   add_executable(${EXEC} 
@@ -24,6 +29,7 @@ foreach(lvar IN ITEMS Sampler; Sink; NullDevice;)
       ${fmt_LIB};
       FairLogger;
       fairmq;
+      nestdaq_dlopen;
     )
   elseif ((FairMQ_VERSION VERSION_GREATER_EQUAL 1.4.55)
     AND (FairMQ_VERSION VERSION_LESS_EQUAL 1.4.56))
@@ -32,6 +38,7 @@ foreach(lvar IN ITEMS Sampler; Sink; NullDevice;)
       ${fmt_LIB};
       FairLogger;
       FairMQ;
+      nestdaq_dlopen;
     )
   else()
     message(FATAL_ERROR "Unsupported FairMQ version ${FairMQ_VERSION}")

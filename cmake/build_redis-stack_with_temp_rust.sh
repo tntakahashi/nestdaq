@@ -23,6 +23,7 @@ RUST_BIN_DIR="${CARGO_HOME}/bin"
 RUSTUP_INIT="${TEMP_RUST_DIR}/rustup-init"
 RUST_TOOLCHAIN="1.92.0"
 LLVM_DIR="${TEMP_RUST_DIR}/llvm"
+COMPAT_LIB_DIR="${TEMP_RUST_DIR}/compat-lib"
 MODULE_INSTALL_DIR="${INSTALL_LIBDIR}/redis/modules"
 DEPS_PREFIX="${INSTALL_LIBDIR}/redis/deps"
 PYTHON_VENV="${TEMP_RUST_DIR}/python-venv"
@@ -35,7 +36,7 @@ else
   EFFECTIVE_OPENSSL_PREFIX="${INSTALL_PREFIX}"
 fi
 
-mkdir -p "${TEMP_RUST_DIR}" "${RUSTUP_HOME}" "${CARGO_HOME}"
+mkdir -p "${TEMP_RUST_DIR}" "${RUSTUP_HOME}" "${CARGO_HOME}" "${COMPAT_LIB_DIR}"
 
 export RUSTUP_HOME
 export CARGO_HOME
@@ -64,9 +65,12 @@ export PYTHON3="${PYTHON3_BIN}"
 export USER_MYPY="${PYTHON3_BIN}"
 export PATH="${PYTHON_VENV}/bin:${RUST_BIN_DIR}:${PATH}"
 
-# RedisJSON depends on bindgen through redismodule-rs, so libclang must be
-# discoverable at build time. Prefer a system libclang and fall back to a
-# temporary LLVM download for supported Linux architectures.
+# RedisJSON uses bindgen through redismodule-rs, so libclang must be available
+# at build time. Reuse an already downloaded LLVM tree first, then try system
+# libclang paths. If neither exists, download a temporary LLVM/Clang archive for
+# supported Linux architectures. CLANG_PATH is optional: set it only when a real
+# clang executable exists, and otherwise let bindgen use LIBCLANG_PATH plus the
+# resource include path below.
 find_libclang_dir() {
   for dir in \
     "${LLVM_DIR}/lib" \
@@ -109,22 +113,40 @@ if ! LIBCLANG_DIR="$(find_libclang_dir)"; then
 fi
 
 export LIBCLANG_PATH="${LIBCLANG_DIR}"
-export CLANG_PATH="${LLVM_DIR}/bin/clang"
-# The upstream LLVM binary archive for old Linux targets can reference
-# libtinfo.so.5. AlmaLinux commonly ships libtinfo.so.6, which is compatible for
-# this use case, so create a local symlink inside the temporary LLVM tree.
-if [ ! -e "${LIBCLANG_DIR}/libtinfo.so.5" ]; then
+CLANG_PATH_ARG=""
+if [ -x "${LLVM_DIR}/bin/clang" ]; then
+  export CLANG_PATH="${LLVM_DIR}/bin/clang"
+  CLANG_PATH_ARG="CLANG_PATH=${CLANG_PATH}"
+  export PATH="${LLVM_DIR}/bin:${PATH}"
+else
+  HOST_CLANG="$(command -v clang || true)"
+  if [ -n "${HOST_CLANG}" ]; then
+    export CLANG_PATH="${HOST_CLANG}"
+    CLANG_PATH_ARG="CLANG_PATH=${CLANG_PATH}"
+  else
+    unset CLANG_PATH
+  fi
+fi
+for clang_resource_dir in "${LLVM_DIR}"/lib/clang/*/include /usr/lib/clang/*/include /usr/lib64/clang/*/include; do
+  if [ -f "${clang_resource_dir}/stddef.h" ]; then
+    export BINDGEN_EXTRA_CLANG_ARGS="${BINDGEN_EXTRA_CLANG_ARGS:-} -isystem ${clang_resource_dir}"
+    break
+  fi
+done
+# Some LLVM/libclang builds can reference libtinfo.so.5. AlmaLinux commonly
+# ships libtinfo.so.6 instead, which is compatible for this build-time use case.
+# Keep the compatibility symlink in the temporary tool directory instead of
+# modifying system library directories such as /usr/lib64.
+if ! ls /usr/lib64/libtinfo.so.5 /usr/lib/libtinfo.so.5 /lib64/libtinfo.so.5 /lib/libtinfo.so.5 >/dev/null 2>&1 \
+  && [ ! -e "${COMPAT_LIB_DIR}/libtinfo.so.5" ]; then
   for tinfo in /usr/lib64/libtinfo.so.6 /usr/lib/libtinfo.so.6 /lib64/libtinfo.so.6 /lib/libtinfo.so.6; do
     if [ -e "${tinfo}" ]; then
-      ln -s "${tinfo}" "${LIBCLANG_DIR}/libtinfo.so.5"
+      ln -s "${tinfo}" "${COMPAT_LIB_DIR}/libtinfo.so.5"
       break
     fi
   done
 fi
-if [ -x "${LLVM_DIR}/bin/clang" ]; then
-  export PATH="${LLVM_DIR}/bin:${PATH}"
-fi
-export LD_LIBRARY_PATH="${LIBCLANG_DIR}${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}"
+export LD_LIBRARY_PATH="${LIBCLANG_DIR}:${COMPAT_LIB_DIR}${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}"
 
 # Install a pinned Rust toolchain only when the temporary tool directory does not
 # already contain the requested version. The built Redis/RedisJSON artifacts do
@@ -187,7 +209,7 @@ env \
   OPENSSL_PREFIX="${EFFECTIVE_OPENSSL_PREFIX}" \
   JEMALLOC_CONFIGURE_OPTS="--prefix=${DEPS_PREFIX}" \
   LIBCLANG_PATH="${LIBCLANG_PATH}" \
-  CLANG_PATH="${CLANG_PATH}" \
+  ${CLANG_PATH_ARG} \
   LD_LIBRARY_PATH="${LD_LIBRARY_PATH}" \
   CARGO_TERM_VERBOSE=true \
   CARGO_TERM_COLOR=never \
@@ -211,7 +233,7 @@ env \
     OPENSSL_PREFIX="${EFFECTIVE_OPENSSL_PREFIX}" \
     JEMALLOC_CONFIGURE_OPTS="--prefix=${DEPS_PREFIX}" \
     LIBCLANG_PATH="${LIBCLANG_PATH}" \
-    CLANG_PATH="${CLANG_PATH}" \
+    ${CLANG_PATH_ARG} \
     LD_LIBRARY_PATH="${LD_LIBRARY_PATH}" \
     CARGO_TERM_VERBOSE=true \
     CARGO_TERM_COLOR=never \
@@ -233,7 +255,7 @@ env \
   OPENSSL_PREFIX="${EFFECTIVE_OPENSSL_PREFIX}" \
   JEMALLOC_CONFIGURE_OPTS="--prefix=${DEPS_PREFIX}" \
   LIBCLANG_PATH="${LIBCLANG_PATH}" \
-  CLANG_PATH="${CLANG_PATH}" \
+  ${CLANG_PATH_ARG} \
   LD_LIBRARY_PATH="${LD_LIBRARY_PATH}" \
   CARGO_TERM_VERBOSE=true \
   CARGO_TERM_COLOR=never \
@@ -257,7 +279,7 @@ env \
     OPENSSL_PREFIX="${EFFECTIVE_OPENSSL_PREFIX}" \
     JEMALLOC_CONFIGURE_OPTS="--prefix=${DEPS_PREFIX}" \
     LIBCLANG_PATH="${LIBCLANG_PATH}" \
-    CLANG_PATH="${CLANG_PATH}" \
+    ${CLANG_PATH_ARG} \
     LD_LIBRARY_PATH="${LD_LIBRARY_PATH}" \
     CARGO_TERM_VERBOSE=true \
     CARGO_TERM_COLOR=never \

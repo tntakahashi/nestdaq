@@ -66,6 +66,19 @@ endif()
 message(STATUS "FairLogger_INCDIR: ${FairLogger_INCDIR}")
 message(STATUS "FairLogger_LIBDIR: ${FairLogger_LIBDIR}")
 
+find_package(opentelemetry-cpp CONFIG QUIET
+  COMPONENTS
+    sdk
+    exporters_ostream
+    exporters_otlp_http
+    exporters_otlp_grpc
+)
+if(opentelemetry-cpp_FOUND)
+  message(STATUS "opentelemetry-cpp found: enabling nestdaq telemetry library")
+else()
+  message(STATUS "opentelemetry-cpp not found: skipping nestdaq telemetry library")
+endif()
+
 
 #------------------------------------------------------------------------------
 add_subdirectory(nestdaq)

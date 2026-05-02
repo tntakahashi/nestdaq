@@ -19,7 +19,6 @@ PLUGIN_SEARCH_PATH=" -S '<$PLUGIN_LIBDIR'"
 DAQSERVICE_PLUGIN=" -P daq_service"
 METRICS_PLUGIN=" -P metrics"
 CONFIG_PLUGIN=" -P parameter_config"
-TELEMETRY_PLUGIN=" -P telemetry"
 
 echo "BINDIR             = $BINDIR"
 echo "PLUGIN_LIBDIR      = $PLUGIN_LIBDIR"
@@ -27,7 +26,6 @@ echo "PLUGIN_SEARCH_PATH = $PLUGIN_SEARCH_PATH"
 echo "DAQSERVICE_PLUGIN  = $DAQSERVICE_PLUGIN"
 echo "METRICS_PLUGIN     = $METRICS_PLUGIN"
 echo "CONFIG_PLUGIN      = $CONFIG_PLUGIN"
-echo "TELEMETRY_PLUGIN   = $TELEMETRY_PLUGIN"
 echo "DAQSERVICE_URI     = $DAQSERVICE_URI"
 echo "METRICS_URI        = $METRICS_URI"
 echo "CONFIG_URI         = $CONFIG_URI"
@@ -39,7 +37,6 @@ function run_device () {
   var+=$DAQSERVICE_PLUGIN
   var+=$METRICS_PLUGIN
   var+=$CONFIG_PLUGIN
-  var+=$TELEMETRY_PLUGIN
   var+=$DAQSERVICE_URI
   var+=$METRICS_URI
   var+=$CONFIG_URI
@@ -55,4 +52,3 @@ function run_device () {
 }
 
 run_device $@
-

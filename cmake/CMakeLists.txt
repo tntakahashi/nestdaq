@@ -9,10 +9,7 @@ if(${PROJECT_NAME} STREQUAL "nestdaq")
   set(MY_CMAKE_FILES "cmake/")
 endif()
 
-set(BOOST_BUILD_PARALLEL_LEVEL "")
 if(BUILD_PARALLEL_LEVEL)
-  set(BOOST_BUILD_PARALLEL_LEVEL "-j${BUILD_PARALLEL_LEVEL}")
-  # replace the value
   set(BUILD_PARALLEL_LEVEL "--parallel ${BUILD_PARALLEL_LEVEL}")
 endif()
 

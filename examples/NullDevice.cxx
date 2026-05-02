@@ -2,7 +2,7 @@
 #include <string_view>
 #include <thread>
 
-#include <fairmq/runFairMQDevice.h>
+#include <nestdaq/runDevice.h>
 
 #include "NullDevice.h"
 
