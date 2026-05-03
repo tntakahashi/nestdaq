@@ -292,18 +292,18 @@ auto MakeConfig(const TelemetryOptions& options) -> nestdaq_otel_config_v1
 {
     nestdaq_otel_config_v1 config{};
     config.size = sizeof(config);
-    config.protocol = options.protocol.c_str();
-    config.endpoint = options.endpoint.c_str();
-    config.endpoint_http = options.endpointHttp.c_str();
-    config.endpoint_grpc = options.endpointGrpc.c_str();
-    config.headers = options.headers.c_str();
-    config.service_name = options.serviceName.c_str();
-    config.service_namespace = options.serviceNamespace.c_str();
-    config.service_instance_id = options.serviceInstanceId.c_str();
-    config.fairmq_id = options.fairmqId.c_str();
-    config.fairmq_device = options.fairmqDevice.c_str();
-    config.fairmq_session = options.fairmqSession.c_str();
-    config.fairmq_transport = options.fairmqTransport.c_str();
+    config.protocol = options.protocol.data();
+    config.endpoint = options.endpoint.data();
+    config.endpoint_http = options.endpointHttp.data();
+    config.endpoint_grpc = options.endpointGrpc.data();
+    config.headers = options.headers.data();
+    config.service_name = options.serviceName.data();
+    config.service_namespace = options.serviceNamespace.data();
+    config.service_instance_id = options.serviceInstanceId.data();
+    config.fairmq_id = options.fairmqId.data();
+    config.fairmq_device = options.fairmqDevice.data();
+    config.fairmq_session = options.fairmqSession.data();
+    config.fairmq_transport = options.fairmqTransport.data();
     config.fairmq_git_version = FAIRMQ_GIT_VERSION;
     config.fairmq_build_type = FAIRMQ_BUILD_TYPE;
     config.fairmq_repo_url = FAIRMQ_REPO_URL;
@@ -333,7 +333,7 @@ public:
 
     auto Load(const std::string& library) -> bool
     {
-        fHandle = dlopen(library.c_str(), RTLD_NOW | RTLD_LOCAL);
+        fHandle = dlopen(library.data(), RTLD_NOW | RTLD_LOCAL);
         if (!fHandle) {
             fLastError = dlerror(); // NOLINT(concurrency-mt-unsafe)
             return false;

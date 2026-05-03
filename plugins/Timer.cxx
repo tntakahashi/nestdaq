@@ -1,12 +1,18 @@
 #include <chrono>
 #include <iostream>
+#include <utility>
+
+#include <boost/system/error_code.hpp>
 
 #include "plugins/Timer.h"
 
 //______________________________________________________________________________
-daq::service::Timer::~Timer()
+daq::service::Timer::~Timer() noexcept
 {
-    fTimer->cancel();
+    if (fTimer) {
+        boost::system::error_code ec;
+        fTimer->cancel(ec);
+    }
 }
 
 //______________________________________________________________________________
@@ -20,7 +26,7 @@ void daq::service::Timer::Start(const std::shared_ptr<net::io_context> &ctx,
 // fStrand    = strand;
     fTimer     = std::make_unique<net::steady_timer>(*fContext);
     fTimeoutMS = timeoutMS;
-    fHandle    = f;
+    fHandle    = std::move(f);
     Start();
 }
 

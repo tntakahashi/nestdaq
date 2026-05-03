@@ -1,6 +1,8 @@
 #ifndef WebSocket_Session_h
 #define WebSocket_Session_h
 
+#include <utility>
+
 #include "controller/beast_tools.h"
 
 // Echoes back all received WebSocket messages
@@ -25,7 +27,7 @@ public:
         }));
 
         // Accept the websocket handshake
-        ws_.async_accept(req,
+        ws_.async_accept(std::move(req),
                          beast::bind_front_handler(&websocket_session::on_accept, shared_from_this())
                         );
     }

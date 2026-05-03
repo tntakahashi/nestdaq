@@ -717,9 +717,11 @@ void daq::service::TopologyConfig::InitializeDefaultChannelProperties()
                     fDefaultChannelProperties[k] = fair::mq::PropertyHelper::ConvertPropertyToString(v);
                 }
             }
-        } catch (const std::exception& e) {
+        }
+        catch (const std::exception& e) {
             LOG(error) << MyClass << " " << __FUNCTION__ << " : " << e.what();
-        } catch (...) {
+        }
+        catch (...) {
             LOG(error) << MyClass << " " << __FUNCTION__ << " : unknown exception";
         }
     }

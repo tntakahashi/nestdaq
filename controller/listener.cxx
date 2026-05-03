@@ -5,16 +5,17 @@
 #include "controller/listener.h"
 
 //_____________________________________________________________________________
-listener::listener(const std::shared_ptr<net::io_context> &ioc, tcp::endpoint endpoint, std::shared_ptr<std::string const> const& doc_root)
+listener::listener(const std::shared_ptr<net::io_context> &ioc, const tcp::endpoint& endpoint, std::shared_ptr<std::string const> const& doc_root)
     : ioc_(ioc)
     , acceptor_(net::make_strand(*ioc))
     , doc_root_(doc_root)
+    , status_(StatusGood)
 {
     beast::error_code ec;
-    status_ = StatusGood;
 
     // Open the acceptor
-    acceptor_.open(endpoint.protocol(), ec);
+    const auto openResult = acceptor_.open(endpoint.protocol(), ec);
+    boost::ignore_unused(openResult);
     if(ec) {
         fail(ec, "listener open");
         status_ = ec.message();
@@ -22,7 +23,8 @@ listener::listener(const std::shared_ptr<net::io_context> &ioc, tcp::endpoint en
     }
 
     // Allow address reuse
-    acceptor_.set_option(net::socket_base::reuse_address(true), ec);
+    const auto setOptionResult = acceptor_.set_option(net::socket_base::reuse_address(true), ec);
+    boost::ignore_unused(setOptionResult);
     if(ec) {
         fail(ec, "listener set_option");
         status_ = ec.message();
@@ -30,7 +32,8 @@ listener::listener(const std::shared_ptr<net::io_context> &ioc, tcp::endpoint en
     }
 
     // Bind to the server address
-    acceptor_.bind(endpoint, ec);
+    const auto bindResult = acceptor_.bind(endpoint, ec);
+    boost::ignore_unused(bindResult);
     if(ec) {
         fail(ec, "listener bind");
         status_ = ec.message();
@@ -38,7 +41,8 @@ listener::listener(const std::shared_ptr<net::io_context> &ioc, tcp::endpoint en
     }
 
     // Start listening for connections
-    acceptor_.listen(net::socket_base::max_listen_connections, ec);
+    const auto listenResult = acceptor_.listen(net::socket_base::max_listen_connections, ec);
+    boost::ignore_unused(listenResult);
     if(ec) {
         fail(ec, "listener listen");
         status_ = ec.message();

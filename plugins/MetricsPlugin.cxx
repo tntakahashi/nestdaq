@@ -130,11 +130,11 @@ auto daq::service::MetricsPluginProgramOptions() -> fair::mq::Plugin::ProgOption
 
     auto options = bpo::options_description(MyClass.data());
     options.add_options()
-    (opt::UpdateInterval.data(), bpo::value<long long>()->default_value(1000),     "update interval in milliseconds for CPU and memory usage.")
-    (opt::ServerUri.data(),      bpo::value<std::string>(),                        "Redis server URI (if empty, the same URI of the service registry is used.)")
-    (opt::Retention.data(),      bpo::value<std::string>()->default_value("0"),    "Retention time in msec for time series data. When set to 0, the series is not trimmed at all.")
-    (opt::RecreateTS.data(),     bpo::value<std::string>()->default_value("true"), "Recreate timeseries data on state transition to Running")
-    (opt::MaxTtl.data(),         bpo::value<std::string>()->default_value("3000"), "Max TTL for metrics in milliseconds. (if zero or negative, no TTL is set.)");
+           (opt::UpdateInterval.data(), bpo::value<long long>()->default_value(1000),     "update interval in milliseconds for CPU and memory usage.")
+           (opt::ServerUri.data(),      bpo::value<std::string>(),                        "Redis server URI (if empty, the same URI of the service registry is used.)")
+           (opt::Retention.data(),      bpo::value<std::string>()->default_value("0"),    "Retention time in msec for time series data. When set to 0, the series is not trimmed at all.")
+           (opt::RecreateTS.data(),     bpo::value<std::string>()->default_value("true"), "Recreate timeseries data on state transition to Running")
+           (opt::MaxTtl.data(),         bpo::value<std::string>()->default_value("3000"), "Max TTL for metrics in milliseconds. (if zero or negative, no TTL is set.)");
     return options;
 }
 
@@ -236,9 +236,9 @@ daq::service::MetricsPlugin::MetricsPlugin(std::string_view name,
         fClient = std::make_shared<sw::redis::Redis>(serverUri);
     }
 
-    const auto fCreatedTimeKey = join({fTopPrefix, CreatedTimePrefix.data()},   fSeparator);
-    const auto fHostNameKey    = join({fTopPrefix, HostnamePrefix.data()},      fSeparator);
-    const auto fIpAddressKey   = join({fTopPrefix, HostIpAddressPrefix.data()}, fSeparator);
+    fCreatedTimeKey = join({fTopPrefix, CreatedTimePrefix.data()},   fSeparator);
+    fHostNameKey    = join({fTopPrefix, HostnamePrefix.data()},      fSeparator);
+    fIpAddressKey   = join({fTopPrefix, HostIpAddressPrefix.data()}, fSeparator);
 
     //LOG(debug) << " createdTimeKey = " << fCreatedTimeKey
     //           << "\n hostnameKey    = " << fHostnameKey
@@ -278,7 +278,7 @@ daq::service::MetricsPlugin::MetricsPlugin(std::string_view name,
         //.hset(fLastUpdateNSKey, fId, std::to_string(lastUpdateNS.count()))
         .exec();
     }
-    fair::Logger::AddCustomSink(MyClass.data(), "info", [this](const std::string &content, const fair::LogMetaData &metadata) {
+    fair::Logger::AddCustomSink(MyClass.data(), "info", [this](const std::string &content, const fair::LogMetaData & /*metadata*/) {
         std::lock_guard<std::mutex> lock{fMutex};
         SendSocketMetrics(content);
     });
@@ -749,7 +749,6 @@ void daq::service::MetricsPlugin::SendSocketMetrics(const std::string &content)
     boost::trim_if(subChannelIndex, boost::is_space());
     auto subChannelName  = channelName + "[" + subChannelIndex + "]";
     auto channelId       = join({fId, subChannelName}, fSeparator);
-    auto i=0;
     //for (auto itr = m.begin(); itr!=m.end(); ++itr) {
     //  std::cout << __LINE__<< " " << itr->str() << " " << m[i++].str() << std::endl;
     //}
@@ -840,9 +839,9 @@ void daq::service::MetricsPlugin::SendSocketMetrics(const std::string &content)
             if (count==0) {
                 ++count;
             }
-            auto countAll = 0;
+            std::size_t countAll = 0;
             for (const auto &[k, v] : fNumChannels) {
-                countAll += v;
+                countAll += static_cast<std::size_t>(v);
             }
             if (countAll==fSocketMetrics.size()) {
                 SendProcessMetrics();

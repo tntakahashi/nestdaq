@@ -34,6 +34,7 @@ std::string path_cat(beast::string_view base, beast::string_view path);
 
 //_____________________________________________________________________________
 template<class Body, class Allocator, class Send>
+// NOLINTNEXTLINE(cppcoreguidelines-rvalue-reference-param-not-moved,cppcoreguidelines-missing-std-forward)
 void handle_request(beast::string_view doc_root, http::request<Body, http::basic_fields<Allocator>>&& req, Send&& send)
 {
     // Returns a bad request response
@@ -77,32 +78,37 @@ void handle_request(beast::string_view doc_root, http::request<Body, http::basic
 
     // Make sure we can handle the method
     if( req.method() != http::verb::get &&
-            req.method() != http::verb::head)
+            req.method() != http::verb::head) {
         return send(bad_request("Unknown HTTP-method"));
+    }
 
     // Request path must be absolute and not contain "..".
     if( req.target().empty() ||
             req.target()[0] != '/' ||
-            req.target().find("..") != beast::string_view::npos)
+            req.target().find("..") != beast::string_view::npos) {
         return send(bad_request("Illegal request-target"));
+    }
 
     // Build the path to the requested file
     std::string path = path_cat(doc_root, req.target());
-    if(req.target().back() == '/')
+    if(req.target().back() == '/') {
         path.append("index.html");
+    }
 
     // Attempt to open the file
     beast::error_code ec;
     http::file_body::value_type body;
-    body.open(path.c_str(), beast::file_mode::scan, ec);
+    body.open(path.data(), beast::file_mode::scan, ec);
 
     // Handle the case where the file doesn't exist
-    if(ec == beast::errc::no_such_file_or_directory)
+    if(ec == beast::errc::no_such_file_or_directory) {
         return send(not_found(req.target()));
+    }
 
     // Handle an unknown error
-    if(ec)
+    if(ec) {
         return send(server_error(ec.message()));
+    }
 
     // Cache the size since we need it after the move
     auto const size = body.size();

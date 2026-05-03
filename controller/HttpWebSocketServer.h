@@ -18,6 +18,8 @@ public:
     explicit HttpWebSocketServer(int nThreads);
     HttpWebSocketServer(const HttpWebSocketServer&) = delete;
     HttpWebSocketServer& operator=(const HttpWebSocketServer&) = delete;
+    HttpWebSocketServer(HttpWebSocketServer&&) = delete;
+    HttpWebSocketServer& operator=(HttpWebSocketServer&&) = delete;
     ~HttpWebSocketServer();
 
     void Run(std::string_view scheme, std::string_view address, std::string_view port, std::string_view doc_root);

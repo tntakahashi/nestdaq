@@ -15,9 +15,10 @@ websocket_session::websocket_session(tcp::socket&& socket)
 //_____________________________________________________________________________
 void websocket_session::on_accept(beast::error_code ec)
 {
-    LOG(debug) << " websocket session : new connection" << std::endl;
+    LOG(debug) << " websocket session : new connection\n";
     if(ec) {
-        return fail(ec, "websocket accept");
+        fail(ec, "websocket accept");
+        return;
     }
 
     static unsigned int lastId{0};
@@ -70,9 +71,8 @@ void websocket_session::on_read(beast::error_code ec, std::size_t bytes_transfer
             OnRead(id_, m);
 
         } else {
-            const auto bufferBegin = net::buffer_cast<const char*>(beast::buffers_front(buffer_.data()));
-            const auto bufferEnd = bufferBegin + net::buffer_size(buffer_.data());
-            std::vector<char> buf(bufferBegin, bufferEnd);
+            const auto m = beast::buffers_to_string(buffer_.data());
+            std::vector<char> buf(m.begin(), m.end());
 //      std::cout << "received message: got_text() ? " << ws_.got_text() << "\n"
 //                << " buffer (" << buffer_.size() << " bytes, "
 //                << " transferred: " << bytes_transferred << " bytes)\n";

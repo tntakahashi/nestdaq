@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <array>
 #include <atomic>
 #include <cerrno>
 #include <csignal>
@@ -38,6 +39,11 @@ static constexpr std::string_view StartupState{"startup-state"};
 static constexpr std::string_view EnableUds{"enable-uds"};
 static constexpr std::string_view ConnectConfig{"connect-config"};
 static constexpr std::string_view MaxRetryToResolveAddress{"max-retry-to-resolve-address"};
+static constexpr long long kDefaultMaxTtl{5};
+static constexpr long long kDefaultTtlUpdateInterval{3};
+static constexpr long long kMillisecondsPerSecond{1000};
+static constexpr std::size_t kCwdBufferSize{512};
+static constexpr std::chrono::milliseconds kRedLockRetryInterval{100};
 
 static const std::unordered_set<std::string_view> knownCommandList{
     fairmq::command::Bind,
@@ -72,45 +78,45 @@ auto PluginProgramOptions() -> fair::mq::Plugin::ProgOptions
     namespace bpo = boost::program_options;
 
     LOG(debug) << "daq::service::PluginProgramOptions: add_options";
-    auto pluginOptions = bpo::options_description(MyClass.data());
+    auto pluginOptions = bpo::options_description(std::string{MyClass});
     pluginOptions.add_options() //
-    (ServiceName.data(),        bpo::value<std::string>(),  "name of this service")
-    //
-    (Uuid.data(),               bpo::value<std::string>(),  "uuid of this service")
-    //
-    (HostIpAddress.data(),      bpo::value<std::string>(),  "IP address or hostname of this service")
-    //
-    (Hostname.data(),           bpo::value<std::string>(),  "hostname of this service")
-    //
-    (ServiceRegistryUri.data(), bpo::value<std::string>()->default_value("tcp://127.0.0.1:6379/0"), "DAQ service registry's URI")
-    //
-    (Separator.data(),          bpo::value<std::string>()->default_value(":"), "separator character for key space name")
-    //
-    (MaxTtl.data(),             bpo::value<long long>()->default_value(5), "max TTL (time-to-live) in second for keys")
-    //
-    (TtlUpdateInterval.data(),  bpo::value<long long>()->default_value(3), "TTL update interval in second for keys")
-    //
-    (StartupState.data(),       bpo::value<std::string>()->default_value("idle"),
-     "state on startup. (idle, initializing-device, initialized, bound, device-ready, ready, running)")
-    //
-    (EnableUds.data(),          bpo::value<std::string>()->default_value("true"),
-     "Use Unix Domain Socket for the local IPC if available (bool)")
-    //
-    (ConnectConfig.data(),          bpo::value<std::string>(),
-     "MQ channel parameters of JSON string for temporary connection with method=connect\n"
-     " '{ \"my-channel-a\": { parameters-a }, \"my-channel-b\":  { parameters-b } }'\n\n"
-     " NOTE: When using start_device.sh, the JSON string must be enclosed in \\' (backslash + single quote)\n"
-     " \\''{ \"my-channel-a\": { parameters-a }, \"my-channel-b\":  { parameters-b } }'\\'\n\n"
-     " e.g. 1 \n"
-     " '{ \"in\": { \"type\": \"pull\", \"peer\": \"Sampler:out\" } }'\n"
-     " e.g. 2 \n"
-     " '{ \"in\": { \"type\": \"pill\",  \"peer\": \"Sampler-0:out\" } }'\n"
-     " e.g. 3 \n"
-     " '{ \"in\": {\"type\": \"sub\", \"peer\": [ \"Sampler:Sampler-0:out[0]\", \"Sampler:Sampler-1:out[1]\" ] } }'\n"
-     " e.g. 4 \n"
-     " '{ \"in\": {\"type\": \"sub\", \"peer\": \"Sampler:Sampler-0:out[0]\" }, \"out\": { \"type\": \"pub\",  \"peer\": \"Sink:Sink-2:in[1]\" } }'\n")
-    //
-    (MaxRetryToResolveAddress.data(), bpo::value<std::string>()->default_value("10"), "max retry to resolve connect address");
+                 (std::string{ServiceName}.data(),        bpo::value<std::string>(),  "name of this service")
+                 //
+                 (std::string{Uuid}.data(),               bpo::value<std::string>(),  "uuid of this service")
+                 //
+                 (std::string{HostIpAddress}.data(),      bpo::value<std::string>(),  "IP address or hostname of this service")
+                 //
+                 (std::string{Hostname}.data(),           bpo::value<std::string>(),  "hostname of this service")
+                 //
+                 (std::string{ServiceRegistryUri}.data(), bpo::value<std::string>()->default_value("tcp://127.0.0.1:6379/0"), "DAQ service registry's URI")
+                 //
+                 (std::string{Separator}.data(),          bpo::value<std::string>()->default_value(":"), "separator character for key space name")
+                 //
+                 (std::string{MaxTtl}.data(),             bpo::value<long long>()->default_value(kDefaultMaxTtl), "max TTL (time-to-live) in second for keys")
+                 //
+                 (std::string{TtlUpdateInterval}.data(),  bpo::value<long long>()->default_value(kDefaultTtlUpdateInterval), "TTL update interval in second for keys")
+                 //
+                 (std::string{StartupState}.data(),       bpo::value<std::string>()->default_value("idle"),
+                  "state on startup. (idle, initializing-device, initialized, bound, device-ready, ready, running)")
+                 //
+                 (std::string{EnableUds}.data(),          bpo::value<std::string>()->default_value("true"),
+                  "Use Unix Domain Socket for the local IPC if available (bool)")
+                 //
+                 (std::string{ConnectConfig}.data(),          bpo::value<std::string>(),
+                  "MQ channel parameters of JSON string for temporary connection with method=connect\n"
+                  " '{ \"my-channel-a\": { parameters-a }, \"my-channel-b\":  { parameters-b } }'\n\n"
+                  " NOTE: When using start_device.sh, the JSON string must be enclosed in \\' (backslash + single quote)\n"
+                  " \\''{ \"my-channel-a\": { parameters-a }, \"my-channel-b\":  { parameters-b } }'\\'\n\n"
+                  " e.g. 1 \n"
+                  " '{ \"in\": { \"type\": \"pull\", \"peer\": \"Sampler:out\" } }'\n"
+                  " e.g. 2 \n"
+                  " '{ \"in\": { \"type\": \"pill\",  \"peer\": \"Sampler-0:out\" } }'\n"
+                  " e.g. 3 \n"
+                  " '{ \"in\": {\"type\": \"sub\", \"peer\": [ \"Sampler:Sampler-0:out[0]\", \"Sampler:Sampler-1:out[1]\" ] } }'\n"
+                  " e.g. 4 \n"
+                  " '{ \"in\": {\"type\": \"sub\", \"peer\": \"Sampler:Sampler-0:out[0]\" }, \"out\": { \"type\": \"pub\",  \"peer\": \"Sink:Sink-2:in[1]\" } }'\n")
+                 //
+                 (std::string{MaxRetryToResolveAddress}.data(), bpo::value<std::string>()->default_value("10"), "max retry to resolve connect address");
 
     return pluginOptions;
 }
@@ -121,7 +127,7 @@ Plugin::Plugin(std::string_view name,
                std::string_view maintainer,
                std::string_view homepage,
                fair::mq::PluginServices *pluginServices)
-    : fair::mq::Plugin(name.data(), version, maintainer.data(), homepage.data(), pluginServices)
+    : fair::mq::Plugin(std::string{name}, version, std::string{maintainer}, std::string{homepage}, pluginServices)
 {
     fUuid = boost::uuids::nil_uuid();
 
@@ -129,8 +135,8 @@ Plugin::Plugin(std::string_view name,
     SetCurrentWorkingDirectory();
     SetProcessName();
 
-    if (PropertyExists(Uuid.data())) {
-        fUuid = boost::lexical_cast<boost::uuids::uuid>(GetProperty<std::string>(Uuid.data()));
+    if (PropertyExists(std::string{Uuid})) {
+        fUuid = boost::lexical_cast<boost::uuids::uuid>(GetProperty<std::string>(std::string{Uuid}));
     }
     if (fUuid.is_nil()) {
         fUuid = boost::uuids::random_generator()();
@@ -138,27 +144,27 @@ Plugin::Plugin(std::string_view name,
     }
     LOG(debug) << MyClass << " uuid = "  << fUuid;
 
-    fSeparator = GetProperty<std::string>(Separator.data());
-    SetProperty("top-prefix", std::string(TopPrefix.data()));
+    fSeparator = GetProperty<std::string>(std::string{Separator});
+    SetProperty("top-prefix", std::string{TopPrefix});
 
     fPresence = std::make_unique<Presence>();
-    fMaxTtl = GetProperty<long long>(MaxTtl.data());
-    fTtlUpdateInterval = GetProperty<long long>(TtlUpdateInterval.data());
+    fMaxTtl = GetProperty<long long>(std::string{MaxTtl});
+    fTtlUpdateInterval = GetProperty<long long>(std::string{TtlUpdateInterval});
 
     fHealth = std::make_unique<Health>();
-    if (PropertyExists(Hostname.data())) {
-        fHealth->hostName = GetProperty<std::string>(Hostname.data());
+    if (PropertyExists(std::string{Hostname})) {
+        fHealth->hostName = GetProperty<std::string>(std::string{Hostname});
     } else {
         fHealth->hostName = net::ip::host_name();
     }
-    SetProperty(Hostname.data(), fHealth->hostName);
+    SetProperty(std::string{Hostname}, fHealth->hostName);
     fHealth->createdTimeSystem = std::chrono::system_clock::now();
     fHealth->createdTime       = std::chrono::steady_clock::now();
 
     SetProperty("created-time", std::chrono::duration_cast<std::chrono::nanoseconds>(fHealth->createdTimeSystem.time_since_epoch()).count());
 
-    if (PropertyExists(HostIpAddress.data())) {
-        auto ipAddress = GetProperty<std::string>(HostIpAddress.data());
+    if (PropertyExists(std::string{HostIpAddress})) {
+        auto ipAddress = GetProperty<std::string>(std::string{HostIpAddress});
         fHealth->ipAddress = fair::mq::tools::getIpFromHostname(ipAddress);
         auto hostIPs = fair::mq::tools::getHostIPs();
         //LOG(debug) << " host ip size = " << hostIPs.size();
@@ -184,19 +190,19 @@ Plugin::Plugin(std::string_view name,
     }
 
     LOG(debug) << " ip = " << fHealth->ipAddress;
-    SetProperty(HostIpAddress.data(), fHealth->ipAddress);
+    SetProperty(std::string{HostIpAddress}, fHealth->ipAddress);
 
-    if (PropertyExists(ServiceName.data())) {
-        fServiceName = GetProperty<std::string>(ServiceName.data());
+    if (PropertyExists(std::string{ServiceName})) {
+        fServiceName = GetProperty<std::string>(std::string{ServiceName});
     }
     if (fServiceName.empty()) {
         std::vector<std::string> v;
         boost::split(v, fProcessName, boost::is_any_of("/"));
         LOG(debug) << " service name is empty. use process name (filename of executable) as service name";
         fServiceName = v.back();
-        SetProperty(ServiceName.data(), fServiceName);
+        SetProperty(std::string{ServiceName}, fServiceName);
     }
-    fStartupState   = GetProperty<std::string>(StartupState.data());
+    fStartupState   = GetProperty<std::string>(std::string{StartupState});
 
     auto hostIPs = fair::mq::tools::getHostIPs();
     for (const auto& [nic, ip] : hostIPs) {
@@ -217,9 +223,9 @@ Plugin::Plugin(std::string_view name,
     // register to service registry
     Register();
     fTopology = std::make_unique<TopologyConfig>(*this);
-    if (PropertyExists(ConnectConfig.data())) {
-        fTopology->SetConnectConfig(GetProperty<std::string>(ConnectConfig.data()));
-        fTopology->SetMaxRetryToResolveAddress(std::stoi(GetProperty<std::string>(MaxRetryToResolveAddress.data())));
+    if (PropertyExists(std::string{ConnectConfig})) {
+        fTopology->SetConnectConfig(GetProperty<std::string>(std::string{ConnectConfig}));
+        fTopology->SetMaxRetryToResolveAddress(std::stoi(GetProperty<std::string>(std::string{MaxRetryToResolveAddress})));
         // for quick debug
         //fTopology->ConfigConnect();
     }
@@ -246,25 +252,21 @@ Plugin::Plugin(std::string_view name,
                 std::lock_guard<std::mutex> lock{fMutex};
                 auto pipe = fClient->pipeline();
                 pipe.setex(fFairMQStateKey, fMaxTtl, stateName)
-                .hset(fHealth->key, "fair:mq:state", stateName)
-                .expire(fHealth->key, fMaxTtl);
+                    .hset(fHealth->key, "fair:mq:state", stateName)
+                    .expire(fHealth->key, fMaxTtl);
                 pipe.exec();
             }
 
             WriteProgOptions();
             ReadRunNumber();
-            const auto& v = boost::to_lower_copy(GetProperty<std::string>(EnableUds.data()));
+            const auto& v = boost::to_lower_copy(GetProperty<std::string>(std::string{EnableUds}));
             fTopology->EnableUds((v=="1") || (v=="true"));
             switch (newState) {
             case DeviceState::Idle:
                 fResetDeviceRequested = false;
                 break;
             case DeviceState::InitializingDevice:
-                fTopology->OnDeviceStateChange(newState);
-                break;
             case DeviceState::Bound:
-                fTopology->OnDeviceStateChange(newState);
-                break;
             case DeviceState::ResettingDevice:
                 fTopology->OnDeviceStateChange(newState);
                 break;
@@ -653,7 +655,7 @@ void Plugin::ChangeDeviceStateBySingleCommand(std::string_view cmd)
 //_____________________________________________________________________________
 void Plugin::ReadRunNumber()
 {
-    auto key = join({RunInfoPrefix.data(), RunNumber.data()}, fSeparator);
+    auto key = join({std::string{RunInfoPrefix}, std::string{RunNumber}}, fSeparator);
 
     // LOG(debug) << " run number key = " << key;
     const auto runNumber = fClient->get(key);
@@ -663,12 +665,12 @@ void Plugin::ReadRunNumber()
     }
     LOG(debug) << MyClass << " run number (from redis) = " << *runNumber;
     std::string myRunNumber;
-    if (PropertyExists(RunNumber.data())) {
-        myRunNumber = GetProperty<std::string>(RunNumber.data());
+    if (PropertyExists(std::string{RunNumber})) {
+        myRunNumber = GetProperty<std::string>(std::string{RunNumber});
     }
     if (myRunNumber!=*runNumber) {
         LOG(warn) << MyClass << " update run number " << *runNumber << " (old = " << myRunNumber << ")";
-        SetProperty(RunNumber.data(), *runNumber);
+        SetProperty(std::string{RunNumber}, *runNumber);
     } else {
         // LOG(debug) << MyClass << " same run number " << *runNumber << " (old = " << myRunNumber << ")";
     }
@@ -677,13 +679,13 @@ void Plugin::ReadRunNumber()
 //_____________________________________________________________________________
 void Plugin::Register()
 {
-    auto registryUri = GetProperty<std::string>(ServiceRegistryUri.data());
+    auto registryUri = GetProperty<std::string>(std::string{ServiceRegistryUri});
     LOG(debug) << " registry URI = " << registryUri;
 
     try {
         {
             fClient = std::make_shared<sw::redis::Redis>(registryUri);
-            fClient->command("client", "setname", join({TopPrefix.data(), fServiceName, fId}, fSeparator));
+            fClient->command("client", "setname", join({std::string{TopPrefix}, fServiceName, fId}, fSeparator));
         }
         SetId();
         LOG(debug) << " mq device id = " << fId << ", service = " << fServiceName << ", hostname = " << fHealth->hostName
@@ -691,12 +693,12 @@ void Plugin::Register()
 
                    << ", " << fHealth->ipAddress;
 
-        fProgOptionKeyName = join({TopPrefix.data(), fServiceName, fId, ProgOptionPrefix.data()}, fSeparator);
+        fProgOptionKeyName = join({std::string{TopPrefix}, fServiceName, fId, std::string{ProgOptionPrefix}}, fSeparator);
 
         LOG(debug) << "(Register) id = " << fId << ", service = " << fServiceName;
-        fHealth->key    = join({TopPrefix.data(), fServiceName, fId, HealthPrefix.data()}, fSeparator);
-        fFairMQStateKey = join({TopPrefix.data(), fServiceName, fId, FairMQStatePrefix.data()}, fSeparator);
-        fUpdateTimeKey  = join({TopPrefix.data(), fServiceName, fId, UpdateTimePrefix.data()}, fSeparator);
+        fHealth->key    = join({std::string{TopPrefix}, fServiceName, fId, std::string{HealthPrefix}}, fSeparator);
+        fFairMQStateKey = join({std::string{TopPrefix}, fServiceName, fId, std::string{FairMQStatePrefix}}, fSeparator);
+        fUpdateTimeKey  = join({std::string{TopPrefix}, fServiceName, fId, std::string{UpdateTimePrefix}}, fSeparator);
         fRegisteredKeys.insert(fFairMQStateKey);
         fRegisteredKeys.insert(fUpdateTimeKey);
         LOG(debug) << " precense (key) = " << fPresence->key << ", presence (ttl) = " << fMaxTtl;
@@ -712,9 +714,9 @@ void Plugin::Register()
             fTimerThread.detach();
             LOG(debug) << " thread start";
 
-            LOG(debug) << " timer start " << (fTtlUpdateInterval * 1000)  << " msec";
+            LOG(debug) << " timer start " << (fTtlUpdateInterval * kMillisecondsPerSecond)  << " msec";
             fTimer = std::make_unique<Timer>();
-            fTimer->Start(fContext, fTtlUpdateInterval * 1000, [this](const auto& ec) {
+            fTimer->Start(fContext, fTtlUpdateInterval * kMillisecondsPerSecond, [this](const auto& /*ec*/) {
                 ResetTtl();
                 return false; // for restart
             });
@@ -858,10 +860,10 @@ void Plugin::RunShutdownSequence()
 //_____________________________________________________________________________
 void Plugin::SetCurrentWorkingDirectory()
 {
-    char d[512];
-    getcwd(d, sizeof(d));
+    std::array<char, kCwdBufferSize> d{};
+    getcwd(d.data(), d.size());
     std::stringstream ss;
-    ss << d;
+    ss << d.data();
     ss >> fCwd;
     LOG(debug) << " cwd = " << fCwd;
 
@@ -881,13 +883,13 @@ void Plugin::SetId()
                 std::unique_lock<sw::redis::RedMutex> redLock(mtx, std::defer_lock);
                 if (redLock.try_lock()) {
                     LOG(debug) << "got lock:  " << fUuid;
-                    auto presenceKeys = scan(*fClient, {TopPrefix.data(), fServiceName, "*", PresencePrefix.data()}, fSeparator);
+                    auto presenceKeys = scan(*fClient, {std::string{TopPrefix}, fServiceName, "*", std::string{PresencePrefix}}, fSeparator);
                     std::unordered_set<std::string> uuidList; // existing uuids
 
                     if (!presenceKeys.empty()) {
                         fClient->mget(presenceKeys.cbegin(), presenceKeys.cend(), std::inserter(uuidList, uuidList.begin()));
                     }
-                    std::string key = join({TopPrefix.data(), ServiceInstanceIndexPrefix.data(), fServiceName}, fSeparator);
+                    std::string key = join({std::string{TopPrefix}, std::string{ServiceInstanceIndexPrefix}, fServiceName}, fSeparator);
 
                     std::unordered_map<std::string, std::string> hashIndexToUuid;
                     LOG(debug) << "'id' (instance id) is empty. calculate service-instance-index";
@@ -915,7 +917,7 @@ void Plugin::SetId()
                             if (fClient->hsetnx(key, myIndex, myUuid)) {
                                 fRegisteredHashes.insert({key, myIndex});
                                 fId = fServiceName + "-" + myIndex;
-                                fPresence->key = join({TopPrefix.data(), fServiceName, fId, PresencePrefix.data()}, fSeparator);
+                                fPresence->key = join({std::string{TopPrefix}, fServiceName, fId, std::string{PresencePrefix}}, fSeparator);
                                 fClient->setex(fPresence->key, fMaxTtl, boost::uuids::to_string(fUuid));
                                 fRegisteredKeys.insert(fPresence->key);
                                 LOG(debug) << " service instance-index: " << myIndex << " for uuid = " << fUuid;
@@ -932,7 +934,7 @@ void Plugin::SetId()
                 } else {
                     //LOG(debug) << "extend lock:  " << fUuid;
                     //redLock.extend_lock(std::chrono::milliseconds(30000));
-                    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+                    std::this_thread::sleep_for(kRedLockRetryInterval);
                 }
             } catch (const sw::redis::Error& e) {
                 LOG(error) << " caught exception (redis++) : " << e.what();
@@ -983,10 +985,10 @@ void Plugin::SubscribeToDaqCommand()
     auto sub = fClient->subscriber();
 
     // set callback functions.
-    sub.on_message([this](auto channel, auto msg) {
+    sub.on_message([this](const auto& channel, const auto& msg) {
         // process message of MESSAGE type.
         LOG(debug) << MyClass << " on_message(MESSAGE): channel = " << channel << " msg = " << msg;
-        if (CommandChannelName.data()!=channel) {
+        if (std::string{CommandChannelName} != channel) {
             return;
         }
         const auto& obj = to_json(msg);
@@ -1036,13 +1038,13 @@ void Plugin::SubscribeToDaqCommand()
             }
         }
     });
-    sub.subscribe(CommandChannelName.data());
+    sub.subscribe(std::string{CommandChannelName});
 
     while (!fPluginShutdownRequested) {
         try {
             sub.consume();
-        } catch (const sw::redis::TimeoutError &e) {
-            // try again.
+        } catch (const sw::redis::TimeoutError &) {
+            continue;
         } catch (const sw::redis::Error &e) {
             LOG(error) << MyClass << "::" << __func__ << ": error in consume(): " << e.what();
             break;
@@ -1104,9 +1106,6 @@ void Plugin::WriteProgOptions()
         std::make_pair("shm-mlock-segment",   std::to_string(GetProperty<bool>("shm-mlock-segment"))),
         std::make_pair("shm-zero-segment",    std::to_string(GetProperty<bool>("shm-zero-segment"))),
         std::make_pair("shm-throw-bad-alloc", std::to_string(GetProperty<bool>("shm-throw-bad-alloc"))),
-#if 0 // This option was used, and it is no longer useed in FairMQ 1.8.
-        std::make_pair("ofi-size-hint",       std::to_string(GetProperty<std::size_t>("ofi-size-hint"))),
-#endif
         std::make_pair("rate",                std::to_string(GetProperty<float>("rate"))),
         std::make_pair("session",             GetProperty<std::string>("session")),
     })
@@ -1119,11 +1118,11 @@ void Plugin::WriteStartTime()
     auto t   = to_date(updatedTime);
     auto tNS = std::to_string(std::chrono::duration_cast<std::chrono::nanoseconds>(uptimeNsec).count());
     fClient->hset(fHealth->key,
-    {   std::make_pair(StartTime.data(), t),
-        std::make_pair(StartTimeNS.data(), tNS)
+    {   std::make_pair(std::string{StartTime}, t),
+        std::make_pair(std::string{StartTimeNS}, tNS)
     });
-    SetProperty(StartTime.data(), t);
-    SetProperty(StartTimeNS.data(), tNS);
+    SetProperty(std::string{StartTime}, t);
+    SetProperty(std::string{StartTimeNS}, tNS);
 }
 
 //_____________________________________________________________________________
@@ -1133,11 +1132,11 @@ void Plugin::WriteStopTime()
     auto t   = to_date(updatedTime);
     auto tNS = std::to_string(std::chrono::duration_cast<std::chrono::nanoseconds>(uptimeNsec).count());
     fClient->hset(fHealth->key,
-    {   std::make_pair(StopTime.data(), t),
-        std::make_pair(StopTimeNS.data(), tNS)
+    {   std::make_pair(std::string{StopTime}, t),
+        std::make_pair(std::string{StopTimeNS}, tNS)
     });
-    SetProperty(StopTime.data(), t);
-    SetProperty(StopTimeNS.data(), tNS);
+    SetProperty(std::string{StopTime}, t);
+    SetProperty(std::string{StopTimeNS}, tNS);
 }
 
 } // namespace daq::service

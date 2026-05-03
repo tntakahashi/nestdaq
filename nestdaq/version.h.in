@@ -7,9 +7,9 @@
 static constexpr std::string_view NESTDAQ_VERSION("@PROJECT_VERSION@");
 
 static constexpr uint64_t NESTDAQ_VERSION_DEC \
-  = (@PROJECT_VERSION_MAJOR@ * 10000) \
-  + (@PROJECT_VERSION_MINOR@ *   100) \
-  + (@PROJECT_VERSION_PATCH@ *     1);
+    = (@PROJECT_VERSION_MAJOR@ * 10000) \
+      + (@PROJECT_VERSION_MINOR@ *   100) \
+      + (@PROJECT_VERSION_PATCH@ *     1);
 
 static constexpr uint64_t NESTDAQ_VERSION_MAJOR = @PROJECT_VERSION_MAJOR@;
 static constexpr uint64_t NESTDAQ_VERSION_MINOR = @PROJECT_VERSION_MINOR@;

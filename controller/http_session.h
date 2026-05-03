@@ -1,6 +1,7 @@
 #ifndef HTTP_Session_h
 #define HTTP_Session_h
 
+#include <cstdint>
 #include <memory>
 #include <vector>
 
@@ -12,7 +13,7 @@ class http_session : public std::enable_shared_from_this<http_session>
     // This queue is used for HTTP pipelining.
     class queue
     {
-        enum
+        enum : std::uint8_t
         {
             // Maximum number of responses we will queue
             limit = 8
@@ -21,11 +22,16 @@ class http_session : public std::enable_shared_from_this<http_session>
         // The type-erased, saved work item
         struct work
         {
+            work() = default;
+            work(const work&) = delete;
+            work& operator=(const work&) = delete;
+            work(work&&) = delete;
+            work& operator=(work&&) = delete;
             virtual ~work() = default;
             virtual void operator()() = 0;
         };
 
-        http_session& self_;
+        http_session& self_; // NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members)
         std::vector<std::unique_ptr<work>> items_;
 
     public:
@@ -47,7 +53,7 @@ class http_session : public std::enable_shared_from_this<http_session>
             // This holds a work item
             struct work_impl : work
             {
-                http_session& self_;
+                http_session& self_; // NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members)
                 http::message<isRequest, Body, Fields> msg_;
 
                 work_impl(http_session& self, http::message<isRequest, Body, Fields>&& msg)
@@ -55,7 +61,7 @@ class http_session : public std::enable_shared_from_this<http_session>
                     , msg_(std::move(msg))
                 {}
 
-                void operator()()
+                void operator()() override
                 {
                     http::async_write(self_.stream_, msg_,
                                       beast::bind_front_handler(&http_session::on_write, self_.shared_from_this(), msg_.need_eof())

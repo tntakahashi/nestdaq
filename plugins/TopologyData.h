@@ -7,6 +7,11 @@
 
 namespace daq::service {
 
+static constexpr int kDefaultSocketBufferSize{1000};
+static constexpr int kDefaultSocketLinger{500};
+static constexpr int kDefaultPortRangeMin{22000};
+static constexpr int kDefaultPortRangeMax{32000};
+
 // property of FairMQSocket
 struct SocketProperty {
     std::string name; // channel name
@@ -14,14 +19,14 @@ struct SocketProperty {
     std::string method; // bind or connect
     std::string address;
     std::string transport{"zeromq"};
-    int sndBufSize{1000};
-    int rcvBufSize{1000};
+    int sndBufSize{kDefaultSocketBufferSize};
+    int rcvBufSize{kDefaultSocketBufferSize};
     int sndKernelSize{0};
     int rcvKernelSize{0};
-    int linger{500};
+    int linger{kDefaultSocketLinger};
     int rateLogging{1};
-    int portRangeMin{22000};
-    int portRangeMax{32000};
+    int portRangeMin{kDefaultPortRangeMin};
+    int portRangeMax{kDefaultPortRangeMax};
     bool autoBind{true};
     int numSockets{0};
 

@@ -21,7 +21,7 @@ inline std::string join(const std::vector<std::string> &v, std::string_view sepa
 //_____________________________________________________________________________
 inline std::unordered_set<std::string> scan(sw::redis::Redis &r,
         std::string_view pattern,
-        long long cursor=0LL)
+        sw::redis::Cursor cursor=0)
 {
     std::unordered_set<std::string> keys;
     while (true) {
@@ -37,7 +37,7 @@ inline std::unordered_set<std::string> scan(sw::redis::Redis &r,
 inline std::unordered_set<std::string> scan(sw::redis::Redis &r,
         const std::vector<std::string>& v,
         std::string_view separator,
-        long long cursor=0LL)
+        sw::redis::Cursor cursor=0)
 {
     return scan(r, boost::join(v, separator.data()), cursor);
 }

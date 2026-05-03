@@ -64,7 +64,7 @@ struct ProcStat_t {
     uint64_t nice{0};
     uint64_t system{0};
     uint64_t idle{0};
-    inline uint64_t sum() {
+    uint64_t sum() const {
         return user + nice + system + idle;
     }
 };
@@ -74,7 +74,7 @@ struct ProcSelfStat_t {
     uint64_t stime{0};
     uint64_t vsize{0};
     uint64_t rss{0};
-    inline uint64_t sum() {
+    uint64_t sum() const {
         return utime + stime;
     }
 };
@@ -119,6 +119,8 @@ public:
                   fair::mq::PluginServices *pluginServices);
     MetricsPlugin(const MetricsPlugin&) = delete;
     MetricsPlugin& operator=(const MetricsPlugin&) = delete;
+    MetricsPlugin(MetricsPlugin&&) = delete;
+    MetricsPlugin& operator=(MetricsPlugin&&) = delete;
     ~MetricsPlugin() override;
 
 private:
@@ -156,8 +158,9 @@ private:
     std::thread fTimerThread;
 
     // milliseconds
-    long long fUpdateInterval{1000};
-    long long fMaxTtl;
+    static constexpr long long kDefaultUpdateIntervalMs{1000};
+    long long fUpdateInterval{kDefaultUpdateIntervalMs};
+    long long fMaxTtl{0};
 
     std::string fStartTimeKey;
     std::string fStartTimeNSKey;
@@ -207,6 +210,7 @@ private:
 //_____________________________________________________________________________
 auto MetricsPluginProgramOptions() -> fair::mq::Plugin::ProgOptions;
 
+// NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables,cppcoreguidelines-pro-type-reinterpret-cast,performance-no-int-to-ptr)
 REGISTER_FAIRMQ_PLUGIN(
     MetricsPlugin,
     metrics,

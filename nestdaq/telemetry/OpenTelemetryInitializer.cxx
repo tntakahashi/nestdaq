@@ -44,10 +44,10 @@ enum class Protocol : std::uint8_t {
     OtlpGrpc,
 };
 
-static constexpr std::string_view kDefaultProtocol{"console"};
-static constexpr std::string_view kDefaultHttpEndpoint{"http://localhost:4318/v1/logs"};
-static constexpr std::string_view kDefaultGrpcEndpoint{"localhost:4317"};
-static constexpr int32_t kMaxFairLoggerSeverity{15};
+constexpr std::string_view kDefaultProtocol{"console"};
+constexpr std::string_view kDefaultHttpEndpoint{"http://localhost:4318/v1/logs"};
+constexpr std::string_view kDefaultGrpcEndpoint{"localhost:4317"};
+constexpr int32_t kMaxFairLoggerSeverity{15};
 
 struct RuntimeState {
     std::mutex mutex;
@@ -134,7 +134,8 @@ auto ParseProtocols(const char *protocols, std::vector<Protocol> &out) -> bool
     while (!input.empty()) {
         const auto comma = input.find(',');
         auto token = Trim(input.substr(0, comma));
-        input = comma == std::string_view::npos ? std::string_view{} : input.substr(comma + 1);
+        input = comma == std::string_view::npos ? std::string_view{} :
+                input.substr(comma + 1);
 
         if (token.empty()) {
             continue;
@@ -338,13 +339,13 @@ auto OpenTelemetryInitializer::Initialize(const nestdaq_otel_config_v1 *config) 
         return SetLastError("min_severity must be a fair::Severity numeric value in the range 0..15");
     }
 
-    auto protocols = std::vector<Protocol>{};
+    auto protocols = std::vector<Protocol> {};
     if (!ParseProtocols(localConfig.protocol, protocols)) {
         return SetLastError("unsupported OpenTelemetry protocol; expected comma-separated console, otlp-http, or otlp-grpc");
     }
 
     try {
-        auto processors = std::vector<std::unique_ptr<opentelemetry::sdk::logs::LogRecordProcessor>>{};
+        auto processors = std::vector<std::unique_ptr<opentelemetry::sdk::logs::LogRecordProcessor>> {};
         processors.reserve(protocols.size());
 
         for (const auto protocol : protocols) {
@@ -372,7 +373,7 @@ auto OpenTelemetryInitializer::Initialize(const nestdaq_otel_config_v1 *config) 
         }
 
         auto provider = opentelemetry::sdk::logs::LoggerProviderFactory::Create(std::move(processors),
-                                                                                MakeResource(localConfig));
+                        MakeResource(localConfig));
         auto sharedProvider = std::shared_ptr<opentelemetry::sdk::logs::LoggerProvider> {std::move(provider)};
         auto baseProvider = std::shared_ptr<opentelemetry::logs::LoggerProvider> {sharedProvider};
 
@@ -464,7 +465,7 @@ auto OpenTelemetryInitializer::LastError() noexcept -> const char *
 {
     auto &state = State();
     std::lock_guard lock{state.mutex};
-    return state.lastError.c_str();
+    return state.lastError.data();
 }
 
 } // namespace nestdaq

@@ -3,6 +3,9 @@
 #include "controller/websocket_session.h"
 #include "controller/http_session.h"
 
+static constexpr std::uint64_t kHttpBodyLimit{10000};
+static constexpr int kHttpSessionTimeoutSeconds{30};
+
 //_____________________________________________________________________________
 http_session::queue::queue(http_session& self)
     : self_(self)
@@ -17,8 +20,9 @@ bool http_session::queue::on_write()
     BOOST_ASSERT(! items_.empty());
     auto const was_full = is_full();
     items_.erase(items_.begin());
-    if(! items_.empty())
+    if(! items_.empty()) {
         (*items_.front())();
+    }
     return was_full;
 }
 
@@ -40,10 +44,10 @@ void http_session::do_read()
 
     // Apply a reasonable limit to the allowed size
     // of the body in bytes to prevent abuse.
-    parser_->body_limit(10000);
+    parser_->body_limit(kHttpBodyLimit);
 
     // Set the timeout.
-    stream_.expires_after(std::chrono::seconds(30));
+    stream_.expires_after(std::chrono::seconds(kHttpSessionTimeoutSeconds));
 
     // Read a request using the parser-oriented interface
     http::async_read(stream_, buffer_, *parser_,
@@ -58,12 +62,14 @@ void http_session::on_read(beast::error_code ec, std::size_t bytes_transferred)
 
     // This means they closed the connection
     if(ec == http::error::end_of_stream) {
-        LOG(warn)  << "boost::beast http session: what = " << ec.what() << std::endl;
-        return do_close();
+        LOG(warn)  << "boost::beast http session: what = " << ec.what() << '\n';
+        do_close();
+        return;
     }
 
     if(ec) {
-        return fail(ec, "http read");
+        fail(ec, "http read");
+        return;
     }
 
     LOG(debug) << " parser_->get() " << parser_->get();
@@ -90,13 +96,15 @@ void http_session::on_write(bool close, beast::error_code ec, std::size_t bytes_
     boost::ignore_unused(bytes_transferred);
 
     if(ec) {
-        return fail(ec, "http write");
+        fail(ec, "http write");
+        return;
     }
 
     if(close) {
         // This means we should close the connection, usually because
         // the response indicated the "Connection: close" semantic.
-        return do_close();
+        do_close();
+        return;
     }
 
     // Inform the queue that a write completed
@@ -112,7 +120,8 @@ void http_session::do_close()
     // Send a TCP shutdown
     beast::error_code ec;
     LOG(debug) << "boost::beast http session: Send a TCP shutdown";
-    stream_.socket().shutdown(tcp::socket::shutdown_send, ec);
+    const auto shutdownResult = stream_.socket().shutdown(tcp::socket::shutdown_send, ec);
+    boost::ignore_unused(shutdownResult);
 
     // At this point the connection is closed gracefully
 }

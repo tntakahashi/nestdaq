@@ -47,7 +47,7 @@ auto SinkRegistered() -> std::atomic<bool>&
 
 auto ToStringView(std::string_view value) noexcept -> opentelemetry::nostd::string_view
 {
-    return opentelemetry::nostd::string_view(value.data(), value.size());
+    return {value.data(), value.size()};
 }
 
 auto ParseLine(std::string_view line) noexcept -> int64_t

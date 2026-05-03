@@ -26,9 +26,12 @@ namespace bpo = boost::program_options;
 
 using namespace std::string_literals;
 
-std::mutex wsMutex;
-std::unordered_map<unsigned int, std::pair<std::shared_ptr<websocket_session>, std::string>> wsSessions;
-std::unique_ptr<WebGui> daqControl;
+static constexpr uint64_t kDefaultPollIntervalMs{500};
+static constexpr int kWebSocketRetryIntervalMs{1000};
+
+std::mutex wsMutex; // NOLINT(cppcoreguidelines-avoid-non-const-global-variables)
+std::unordered_map<unsigned int, std::pair<std::shared_ptr<websocket_session>, std::string>> wsSessions; // NOLINT(cppcoreguidelines-avoid-non-const-global-variables)
+std::unique_ptr<WebGui> daqControl; // NOLINT(cppcoreguidelines-avoid-non-const-global-variables)
 
 //_____________________________________________________________________________
 bpo::options_description MakeOption()
@@ -38,49 +41,49 @@ bpo::options_description MakeOption()
     bpo::options_description redisOptions("redis options");
     bpo::options_description logOptions("log options");
     wsOptions.add_options()
-    //
-    //
-    ("http-uri",  bpo::value<std::string>()->default_value("http://0.0.0.0:8080"), "http server URI. (scheme://address:port)")
-    //
-    ("threads", bpo::value<unsigned int>()->default_value(1), "number of threads for http server")
-    //
-    ("doc-root", bpo::value<std::string>()->default_value(std::string(DefaultDocRootPath.data())), "Directory of the document root, which is the starting point when looking for html")
-    //
-    ("pre-run", bpo::value<std::string>()->default_value("echo \"pre-run command\""), "Path to a script file (starting with shebang) or a command line to execute before publishing RUN command")
-    //
-    ("post-run", bpo::value<std::string>()->default_value("echo \"post-run command\""), "Path to a script file (starting with shebang) or a comamnd line to execute after publishing RUN command")
-    //
-    ("pre-stop", bpo::value<std::string>()->default_value("echo \"pre-stop command\""), "Path to a script file (starting with shebang) or a command line to execute before publishing STOP command")
-    //
-    ("post-stop", bpo::value<std::string>()->default_value("echo \"post-stop command\""), "Path to the script file (starting with shebang) or a comamnd line to execute after publishing STOP command");
+             //
+             //
+             ("http-uri",  bpo::value<std::string>()->default_value("http://0.0.0.0:8080"), "http server URI. (scheme://address:port)")
+             //
+             ("threads", bpo::value<unsigned int>()->default_value(1), "number of threads for http server")
+             //
+             ("doc-root", bpo::value<std::string>()->default_value(std::string{DefaultDocRootPath}), "Directory of the document root, which is the starting point when looking for html")
+             //
+             ("pre-run", bpo::value<std::string>()->default_value("echo \"pre-run command\""), "Path to a script file (starting with shebang) or a command line to execute before publishing RUN command")
+             //
+             ("post-run", bpo::value<std::string>()->default_value("echo \"post-run command\""), "Path to a script file (starting with shebang) or a comamnd line to execute after publishing RUN command")
+             //
+             ("pre-stop", bpo::value<std::string>()->default_value("echo \"pre-stop command\""), "Path to a script file (starting with shebang) or a command line to execute before publishing STOP command")
+             //
+             ("post-stop", bpo::value<std::string>()->default_value("echo \"post-stop command\""), "Path to the script file (starting with shebang) or a comamnd line to execute after publishing STOP command");
 
     redisOptions.add_options()
-    //
-    ("redis-uri", bpo::value<std::string>()->default_value("tcp://127.0.0.1:6379"), "URI of redis-server")
-    //
-    ("separator", bpo::value<std::string>()->default_value(":"), "namespace separator for redis keys")
-    //
-    ("poll-interval", bpo::value<uint64_t>()->default_value(500), "state polling interval in millisecond");
+                //
+                ("redis-uri", bpo::value<std::string>()->default_value("tcp://127.0.0.1:6379"), "URI of redis-server")
+                //
+                ("separator", bpo::value<std::string>()->default_value(":"), "namespace separator for redis keys")
+                //
+                ("poll-interval", bpo::value<uint64_t>()->default_value(kDefaultPollIntervalMs), "state polling interval in millisecond");
 
     logOptions.add_options()
-    //
-    ("log-to-file", bpo::value<std::string>()->default_value(""), "FairLogger Log output to a file")
-    //
-    ("file-severity", bpo::value<std::string>()->default_value("info"), "FairLogger Log severity level (file) : trace, debug, info, state, warn, error, fatal, nolog")
-    //
-    ("severity", bpo::value<std::string>()->default_value("info"), "FairLogger Log severity level (console): trace, debug, info, state, warn, error, fatal, nolog")
-    //
-    ("verbosity", bpo::value<std::string>()->default_value("medium"), "FairLogger Log verbosity level: veryhigh, high, medium, low")
-    //
-    ("color", bpo::value<bool>()->default_value(true), "FairLogger Log color (true/false)");
+              //
+              ("log-to-file", bpo::value<std::string>()->default_value(""), "FairLogger Log output to a file")
+              //
+              ("file-severity", bpo::value<std::string>()->default_value("info"), "FairLogger Log severity level (file) : trace, debug, info, state, warn, error, fatal, nolog")
+              //
+              ("severity", bpo::value<std::string>()->default_value("info"), "FairLogger Log severity level (console): trace, debug, info, state, warn, error, fatal, nolog")
+              //
+              ("verbosity", bpo::value<std::string>()->default_value("medium"), "FairLogger Log verbosity level: veryhigh, high, medium, low")
+              //
+              ("color", bpo::value<bool>()->default_value(true), "FairLogger Log color (true/false)");
 
     options.add_options()
-    //
-    ("help,h", "print this help");
+           //
+           ("help,h", "print this help");
 
     options.add(wsOptions)
-    .add(redisOptions)
-    .add(logOptions);
+           .add(redisOptions)
+           .add(logOptions);
     return options;
 }
 
@@ -116,7 +119,7 @@ auto ParseHttpUri(const std::string& uri) -> const std::tuple<std::string, std::
 }
 
 //_____________________________________________________________________________
-int main(int argc, char* argv[])
+int main(int argc, char* argv[]) // NOLINT(bugprone-exception-escape)
 {
     std::cin.tie(nullptr);
     std::ios::sync_with_stdio(false);
@@ -156,10 +159,10 @@ int main(int argc, char* argv[])
         return EXIT_FAILURE;
     }
     // ============================================
-    daqControl->SetSendFunction([&wsSessions](auto connid, const auto& arg) {
+    daqControl->SetSendFunction([](auto connid, const auto& arg) {
         if (wsSessions.empty()) {
             LOG(debug) << " no websocket clients";
-            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+            std::this_thread::sleep_for(std::chrono::milliseconds(kWebSocketRetryIntervalMs));
             return;
         }
         if (connid==0) { // broadcast message to registered clients
@@ -193,7 +196,7 @@ int main(int argc, char* argv[])
     const auto docRoot = vm["doc-root"].as<std::string>();
     LOG(info) << "doc-root = " << docRoot;
 
-    HttpWebSocketServer server(nThreads);
+    HttpWebSocketServer server(static_cast<int>(nThreads));
     server.Run(httpScheme, httpAddress, httpPort, docRoot);
     return ret;
 }
@@ -208,7 +211,7 @@ void OnClose(unsigned int id)
         std::lock_guard<std::mutex> lock{wsMutex};
         wsSessions.erase(id);
         for (const auto& [i, t] : wsSessions) {
-            v.push_back(std::make_pair(i, t.second));
+            v.emplace_back(i, t.second);
         }
     }
     daqControl->SendWebSocketIdList(v);
@@ -228,10 +231,10 @@ void OnConnect(const std::shared_ptr<websocket_session> &session)
         msg += std::to_string(id) + " (Date: " + d + ")";
         wsSessions.emplace(id, std::make_pair(session, d));
         for (const auto& [i, t] : wsSessions) {
-            v.push_back(std::make_pair(i, t.second));
+            v.emplace_back(i, t.second);
         }
     }
-    daqControl->Send(id, msg.data());
+    daqControl->Send(id, msg);
     daqControl->SendWebSocketIdList(v);
     LOG(info) << __func__ << " websocket id = " << id << " done";
 }
@@ -244,7 +247,7 @@ void OnRead(unsigned int id, const std::string& message)
 }
 
 //_____________________________________________________________________________
-void OnRead(unsigned int id, const std::vector<char>& message)
+void OnRead(unsigned int /*id*/, const std::vector<char>& /*message*/)
 {
 }
 

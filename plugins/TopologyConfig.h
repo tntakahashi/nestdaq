@@ -32,6 +32,8 @@ public:
     explicit TopologyConfig(daq::service::Plugin &plugin);
     TopologyConfig(const TopologyConfig&) = delete;
     TopologyConfig& operator=(const TopologyConfig&) = delete;
+    TopologyConfig(TopologyConfig&&) = delete;
+    TopologyConfig& operator=(TopologyConfig&&) = delete;
     ~TopologyConfig();
 
     void ConfigConnect();
@@ -49,7 +51,7 @@ public:
     void Reset();
     void ResetTtl(sw::redis::Pipeline& pipe);
     void SetConnectConfig(std::string_view arg) {
-        fConnectConfig = arg.data();
+        fConnectConfig = arg;
     }
     void SetMaxRetryToResolveAddress(int arg) {
         fMaxRetryToResolveAddress = arg;
@@ -104,10 +106,10 @@ private:
     std::string fId;
     std::string fSeparator;
     std::string fTopPrefix;
-    long long   fMaxTtl;
-    bool        fEnableUds;
+    long long   fMaxTtl{0};
+    bool        fEnableUds{true};
     std::string fConnectConfig;
-    int         fMaxRetryToResolveAddress;
+    int         fMaxRetryToResolveAddress{0};
 
     // channel properties configured by command line option or JSON
     std::map<std::string, std::string> fDefaultChannelProperties;

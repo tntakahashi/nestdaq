@@ -12,7 +12,11 @@ using strand_t = net::strand<net::io_context::executor_type>;
 class Timer {
 public:
     Timer() = default;
-    ~Timer();
+    Timer(const Timer&) = delete;
+    Timer& operator=(const Timer&) = delete;
+    Timer(Timer&&) = delete;
+    Timer& operator=(Timer&&) = delete;
+    ~Timer() noexcept;
 
     void Start(const std::shared_ptr<net::io_context> &ctx,
 //           const std::shared_ptr<strand_t> &strand,

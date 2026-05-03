@@ -36,6 +36,8 @@ public:
                           fair::mq::PluginServices *pluginServices);
     ParameterConfigPlugin(const ParameterConfigPlugin&) = delete;
     ParameterConfigPlugin& operator=(const ParameterConfigPlugin&) = delete;
+    ParameterConfigPlugin(ParameterConfigPlugin&&) = delete;
+    ParameterConfigPlugin& operator=(ParameterConfigPlugin&&) = delete;
     ~ParameterConfigPlugin() override;
 
 private:
@@ -48,7 +50,7 @@ private:
     std::thread fSubscriberThread;
     std::atomic<bool> fPluginShutdownRequested{false};
 
-    bool IsReservedOption(std::string_view name) const;
+    static bool IsReservedOption(std::string_view name);
     void Parse(std::string_view name, std::string line);
     void ReadHash(const std::string& name);
     void ReadList(const std::string& name);
@@ -101,6 +103,7 @@ private:
 //_____________________________________________________________________________
 auto ParameterConfigPluginProgramOptions() -> fair::mq::Plugin::ProgOptions;
 
+// NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables,cppcoreguidelines-pro-type-reinterpret-cast,performance-no-int-to-ptr)
 REGISTER_FAIRMQ_PLUGIN(
     ParameterConfigPlugin,
     parameter_config,

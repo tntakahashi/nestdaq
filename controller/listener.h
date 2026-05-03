@@ -13,9 +13,9 @@ class listener : public std::enable_shared_from_this<listener>
 {
 public:
     static constexpr std::string_view StatusGood {"good"};
-    listener(const std::shared_ptr<net::io_context> &ioc, tcp::endpoint endpoint, std::shared_ptr<std::string const> const& doc_root);
+    listener(const std::shared_ptr<net::io_context> &ioc, const tcp::endpoint& endpoint, std::shared_ptr<std::string const> const& doc_root);
 
-    const std::string get_status() const {
+    std::string get_status() const {
         return status_;
     }
 

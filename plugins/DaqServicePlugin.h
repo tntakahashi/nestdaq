@@ -62,6 +62,8 @@ public:
            fair::mq::PluginServices *pluginServices);
     Plugin(const Plugin &) = delete;
     Plugin& operator=(const Plugin &) = delete;
+    Plugin(Plugin&&) = delete;
+    Plugin& operator=(Plugin&&) = delete;
     ~Plugin() override;
 
     const Health& GetHealth() const {
@@ -102,10 +104,10 @@ private:
 
     std::string fSeparator;
 
-    pid_t fPid;
+    pid_t fPid{0};
     std::string fProcessName;
     std::string fCwd;
-    boost::uuids::uuid fUuid;
+    boost::uuids::uuid fUuid{};
     std::string fId; // instance id configured by command line option or uuid
     std::string fServiceName;
     std::shared_ptr<sw::redis::Redis> fClient;
@@ -117,8 +119,8 @@ private:
     std::string fFairMQStateKey;
     std::string fUpdateTimeKey;
     std::string fProgOptionKeyName;
-    long long fMaxTtl;
-    long long fTtlUpdateInterval;
+    long long fMaxTtl{0};
+    long long fTtlUpdateInterval{0};
 
     std::string fStartupState;
 
@@ -140,6 +142,7 @@ private:
 //_____________________________________________________________________________
 auto PluginProgramOptions() -> fair::mq::Plugin::ProgOptions;
 
+// NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables,cppcoreguidelines-pro-type-reinterpret-cast,performance-no-int-to-ptr)
 REGISTER_FAIRMQ_PLUGIN(
     Plugin,                                      // Class name
     daq_service,                                 // Plugin name (lowercase chars only)

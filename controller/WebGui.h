@@ -38,12 +38,14 @@ public:
     }
     WebGui(const WebGui &) = delete;
     WebGui& operator=(const WebGui &) = delete;
+    WebGui(WebGui&&) = delete;
+    WebGui& operator=(WebGui&&) = delete;
     ~WebGui() {
         Send(0, "Disconnected.");
     }
 
     // add function to the list for ProcessData
-    void AddFunction(const std::string& command, ProcessDataFunc f) {
+    void AddFunction(const std::string& command, const ProcessDataFunc& f) {
         fFuncList.emplace(command, f);
     }
     void AddFunction(const std::unordered_map<std::string, ProcessDataFunc>& table) {
@@ -51,7 +53,7 @@ public:
     }
 
     bool ConnectToRedis(std::string_view redisUri,
-                        std::string_view commandChanenlName,
+                        std::string_view commandChannelName,
                         std::string_view separator);
 
     // read/write operation on redis and send the value to the web client
@@ -94,10 +96,10 @@ public:
         fPreStopCommand = value.data();
     }
     void SetSendFunction(std::function<void (unsigned int, const std::string&)> f) {
-        fSend = f;
+        fSend = std::move(f);
     }
     void SetTerminateFunction(std::function<void (void)> f) {
-        fTerminate = f;
+        fTerminate = std::move(f);
     }
 
     // terminate this webgui daq controller
@@ -145,7 +147,7 @@ private:
     std::thread fStatePollThread;
     uint64_t fPollIntervalMS{0};
 
-    bool fRecreateTS;
+    bool fRecreateTS{false};
 };
 
 #endif

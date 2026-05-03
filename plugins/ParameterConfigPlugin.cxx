@@ -48,9 +48,6 @@ const std::unordered_set<std::string_view> reservedOptionsBool
 
 const std::unordered_set<std::string_view> reservedOptionsSize
 {   "shm-segment-size", //
-#if 0 // This option was not used, and it is no longer used in FairMQ 1.8.
-    "ofi-size-hint", //
-#endif
     "color", //
 };
 
@@ -74,7 +71,7 @@ auto ParameterConfigPluginProgramOptions() -> fair::mq::Plugin::ProgOptions
     using opt = ParameterConfigPlugin::OptionKey;
     auto options = bpo::options_description(MyClass.data());
     options.add_options()
-    (opt::ServerUri.data(), bpo::value<std::string>(), "Redis server URI (if empty, the same URI of the service registry is used.)");
+           (opt::ServerUri.data(), bpo::value<std::string>(), "Redis server URI (if empty, the same URI of the service registry is used.)");
     return options;
 }
 
@@ -138,7 +135,7 @@ ParameterConfigPlugin::~ParameterConfigPlugin()
 }
 
 //_____________________________________________________________________________
-bool ParameterConfigPlugin::IsReservedOption(std::string_view name) const
+bool ParameterConfigPlugin::IsReservedOption(std::string_view name)
 {
     if (reservedOptionsString.count(name)>0) {
         return true;
@@ -381,7 +378,7 @@ void ParameterConfigPlugin::SubscribeToParameterChange()
     const std::string redisKeySpaceNotificationGroupChannel = RedisKeySpacePrefix.data() + dbNumber + "__:"s + fGroupKey;
     LOG(debug) << " key-space-notification channel = " << redisKeySpaceNotificationChannel << ", " << redisKeySpaceNotificationGroupChannel;
 
-    sub.on_message([this, &redisKeySpaceNotificationChannel, &redisKeySpaceNotificationGroupChannel](auto channel, auto msg) {
+    sub.on_message([this, &redisKeySpaceNotificationChannel, &redisKeySpaceNotificationGroupChannel](auto channel, auto /*msg*/) {
         //LOG(debug) << MyClass << " on_message(MESSAGE): channel = " << channel << " msg = " << msg;
         if (redisKeySpaceNotificationChannel!=channel && redisKeySpaceNotificationGroupChannel!=channel) {
             return;

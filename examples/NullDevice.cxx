@@ -17,7 +17,7 @@ void addCustomOptions(bpo::options_description &options)
 }
 
 //_____________________________________________________________________________
-FairMQDevicePtr getDevice(const FairMQProgOptions &)
+FairMQDevicePtr getDevice(const FairMQProgOptions & /*config*/)
 {
     return std::make_unique<NullDevice>();
 }

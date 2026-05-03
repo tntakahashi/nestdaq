@@ -209,8 +209,9 @@ void WebGui::PollState()
     while (true) {
 
         auto tNow = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-        if ((tNow - tPrev) < fPollIntervalMS) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(fPollIntervalMS - (tNow - tPrev)));
+        const auto elapsed = static_cast<uint64_t>(tNow - tPrev);
+        if (elapsed < fPollIntervalMS) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(fPollIntervalMS - elapsed));
             continue;
         }
         tPrev = tNow;
@@ -313,16 +314,29 @@ void WebGui::ProcessExpiredKey(std::string_view key)
     LOG(trace) << __func__ << ":" << __LINE__ << " " << key;
     try {
         if (key.find("presence")!=std::string_view::npos) {
-            std::vector<std::string> v;
-            boost::split(v, key.data(), boost::is_any_of(":")); // prefix:service:instance:presence
-            LOG(trace) << __LINE__ << " v.size() = " << v.size();
-            const auto& serviceName = v[1];
-            const auto& instName    = v[2];
-            const auto& instIndex   = instName.substr(instName.find("-")+1);
+            const auto serviceBegin = key.find(':');
+            if (serviceBegin == std::string_view::npos) {
+                return;
+            }
+            const auto instanceBegin = key.find(':', serviceBegin + 1);
+            if (instanceBegin == std::string_view::npos) {
+                return;
+            }
+            const auto presenceBegin = key.find(':', instanceBegin + 1);
+            if (presenceBegin == std::string_view::npos) {
+                return;
+            }
+            const auto serviceName = std::string{key.substr(serviceBegin + 1, instanceBegin - serviceBegin - 1)};
+            const auto instName    = key.substr(instanceBegin + 1, presenceBegin - instanceBegin - 1);
+            const auto indexBegin  = instName.find('-');
+            if (indexBegin == std::string_view::npos) {
+                return;
+            }
+            const auto instIndex   = std::string{instName.substr(indexBegin + 1)};
             {
-                const auto& key = daq::service::join({daq::service::TopPrefix.data(), daq::service::ServiceInstanceIndexPrefix.data(), serviceName}, fSeparator);
-                fClient->hdel(key, instIndex);
-                LOG(warn) << " delete instance index: key = " << key << ", field = " << instIndex;
+                const auto& instanceIndexKey = daq::service::join({daq::service::TopPrefix.data(), daq::service::ServiceInstanceIndexPrefix.data(), serviceName}, fSeparator);
+                fClient->hdel(instanceIndexKey, instIndex);
+                LOG(warn) << " delete instance index: key = " << instanceIndexKey << ", field = " << instIndex;
             }
         }
     } catch (const std::exception &e) {
@@ -604,7 +618,7 @@ void WebGui::SendWebSocketIdList(const std::vector<std::pair<unsigned int, std::
         msg += " " + std::to_string(id) + " : " + t + "<br>";
     }
     LOG(debug) << __func__ << " " << msg;
-    Send(0, msg.data());
+    Send(0, msg);
 }
 
 //_____________________________________________________________________________
@@ -726,5 +740,4 @@ void WebGui::Wait(const std::unordered_set<std::string> &services, const std::un
         Wait(keys, waitStateTargets);
     }
     // LOG(debug) << "Wait done";
-    return;
 }
