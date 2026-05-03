@@ -61,14 +61,13 @@ namespace nestdaq {
 
 class OpenTelemetryInitializer {
 public:
+    OpenTelemetryInitializer() = delete;
+
     static auto Initialize(const nestdaq_otel_config_v1 *config) -> int;
     static auto SetMinSeverity(int32_t severity) -> int;
     static auto ForceFlush(uint64_t timeout_ms) -> int;
     static auto Shutdown(uint64_t timeout_ms) -> int;
     static auto LastError() noexcept -> const char *;
-
-private:
-    OpenTelemetryInitializer() = delete;
 };
 
 } // namespace nestdaq

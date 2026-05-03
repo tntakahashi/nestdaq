@@ -20,7 +20,7 @@
 #include <string_view>
 #include <vector>
 
-using FairMQDevicePtr = fair::mq::Device*;
+using FairMQDevicePtr = std::unique_ptr<fair::mq::Device>;
 
 // To be implemented by the user to return a child class of fair::mq::Device.
 FairMQDevicePtr getDevice(const fair::mq::ProgOptions& config);
@@ -30,10 +30,27 @@ void addCustomOptions(boost::program_options::options_description&);
 
 namespace nestdaq::run_device_detail {
 
-static constexpr char kDefaultTelemetryLibrary[] = "libnestdaq_fairlogger_otel.so";
-static constexpr char kDefaultProtocol[] = "console";
-static constexpr char kDefaultHttpEndpoint[] = "http://localhost:4318/v1/logs";
-static constexpr char kDefaultGrpcEndpoint[] = "localhost:4317";
+static constexpr std::string_view kDefaultTelemetryLibrary{"libnestdaq_fairlogger_otel.so"};
+static constexpr std::string_view kDefaultProtocol{"console"};
+static constexpr std::string_view kDefaultHttpEndpoint{"http://localhost:4318/v1/logs"};
+static constexpr std::string_view kDefaultGrpcEndpoint{"localhost:4317"};
+static constexpr uint32_t kDefaultTimeoutMs{5000};
+static constexpr int32_t kSeverityNoLog{0};
+static constexpr int32_t kSeverityTrace{1};
+static constexpr int32_t kSeverityDebug4{2};
+static constexpr int32_t kSeverityDebug3{3};
+static constexpr int32_t kSeverityDebug2{4};
+static constexpr int32_t kSeverityDebug1{5};
+static constexpr int32_t kSeverityDebug{6};
+static constexpr int32_t kSeverityDetail{7};
+static constexpr int32_t kSeverityInfo{8};
+static constexpr int32_t kSeverityState{9};
+static constexpr int32_t kSeverityWarn{10};
+static constexpr int32_t kSeverityImportant{11};
+static constexpr int32_t kSeverityAlarm{12};
+static constexpr int32_t kSeverityError{13};
+static constexpr int32_t kSeverityCritical{14};
+static constexpr int32_t kSeverityFatal{15};
 
 struct TelemetryOptions {
     std::string library{kDefaultTelemetryLibrary};
@@ -50,7 +67,7 @@ struct TelemetryOptions {
     std::string fairmqDevice;
     std::string fairmqSession;
     std::string fairmqTransport;
-    uint32_t timeoutMs{5000};
+    uint32_t timeoutMs{kDefaultTimeoutMs};
     uint32_t otlpHttpJson{1};
     bool required{false};
     bool endpointHttpSet{false};
@@ -67,18 +84,18 @@ struct ProgramArguments {
     }
 };
 
-auto NormalizeArguments(int argc, char* argv[]) -> ProgramArguments
+auto NormalizeArguments(int argc, char* argv[]) -> ProgramArguments // NOLINT(cppcoreguidelines-avoid-c-arrays)
 {
     auto arguments = ProgramArguments{};
     arguments.storage.reserve(static_cast<std::size_t>(argc));
     arguments.argv.reserve(static_cast<std::size_t>(argc));
 
     for (int i = 0; i < argc; ++i) {
-        const auto arg = std::string_view{argv[i]};
+        const auto arg = std::string_view{argv[i]}; // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
         if (arg == "--otel-log-protocol=") {
             arguments.storage.emplace_back("--otel-log-protocol");
         } else {
-            arguments.storage.emplace_back(argv[i]);
+            arguments.storage.emplace_back(argv[i]); // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
         }
     }
 
@@ -91,7 +108,7 @@ auto NormalizeArguments(int argc, char* argv[]) -> ProgramArguments
 
 auto Env(const char* name) -> const char*
 {
-    return std::getenv(name);
+    return std::getenv(name); // NOLINT(concurrency-mt-unsafe)
 }
 
 auto ParseBool(std::string_view value) -> bool
@@ -112,57 +129,59 @@ auto ParseUInt32(std::string_view value, uint32_t fallback) -> uint32_t
 auto SeverityToFairLoggerValue(std::string_view severity) -> int32_t
 {
     if (severity == "nolog") {
-        return 0;
+        return kSeverityNoLog;
     }
     if (severity == "trace") {
-        return 1;
+        return kSeverityTrace;
     }
     if (severity == "debug4") {
-        return 2;
+        return kSeverityDebug4;
     }
     if (severity == "debug3") {
-        return 3;
+        return kSeverityDebug3;
     }
     if (severity == "debug2") {
-        return 4;
+        return kSeverityDebug2;
     }
     if (severity == "debug1") {
-        return 5;
+        return kSeverityDebug1;
     }
     if (severity == "debug") {
-        return 6;
+        return kSeverityDebug;
     }
     if (severity == "detail") {
-        return 7;
+        return kSeverityDetail;
     }
     if (severity == "info") {
-        return 8;
+        return kSeverityInfo;
     }
     if (severity == "state") {
-        return 9;
+        return kSeverityState;
     }
     if (severity == "warn" || severity == "warning") {
-        return 10;
+        return kSeverityWarn;
     }
     if (severity == "important") {
-        return 11;
+        return kSeverityImportant;
     }
     if (severity == "alarm") {
-        return 12;
+        return kSeverityAlarm;
     }
     if (severity == "error") {
-        return 13;
+        return kSeverityError;
     }
     if (severity == "critical") {
-        return 14;
+        return kSeverityCritical;
     }
     if (severity == "fatal") {
-        return 15;
+        return kSeverityFatal;
     }
-    return 8;
+    return kSeverityInfo;
 }
 
-auto AssignOption(TelemetryOptions& options, std::string_view key, std::string_view value) -> void
+auto AssignOption(TelemetryOptions& options,
+                  std::string_view key, // NOLINT(bugprone-easily-swappable-parameters)
+                  std::string_view value) -> void
 {
     if (key == "otel-log-library") {
         options.library = value;
@@ -203,7 +222,7 @@ auto AssignOption(TelemetryOptions& options, std::string_view key, std::string_v
     }
 }
 
-auto ParseTelemetryOptions(int argc, char* argv[]) -> TelemetryOptions
+auto ParseTelemetryOptions(int argc, char* argv[]) -> TelemetryOptions // NOLINT(cppcoreguidelines-avoid-c-arrays)
 {
     TelemetryOptions options;
 
@@ -235,7 +254,7 @@ auto ParseTelemetryOptions(int argc, char* argv[]) -> TelemetryOptions
     }
 
     for (int i = 1; i < argc; ++i) {
-        const std::string_view arg{argv[i]};
+        const std::string_view arg{argv[i]}; // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
         if (arg.rfind("--", 0) != 0) {
             continue;
         }
@@ -247,8 +266,8 @@ auto ParseTelemetryOptions(int argc, char* argv[]) -> TelemetryOptions
             value = key.substr(equals + 1);
             key = key.substr(0, equals);
         } else if (key.rfind("otel-", 0) == 0 && i + 1 < argc &&
-                   std::string_view{argv[i + 1]}.rfind("--", 0) != 0) {
-            value = argv[++i];
+                   std::string_view{argv[i + 1]}.rfind("--", 0) != 0) { // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+            value = argv[++i]; // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
         } else if (key == "otel-log-protocol") {
             value = "";
         } else {
@@ -301,10 +320,12 @@ public:
     TelemetryLibrary() = default;
     TelemetryLibrary(const TelemetryLibrary&) = delete;
     TelemetryLibrary& operator=(const TelemetryLibrary&) = delete;
+    TelemetryLibrary(TelemetryLibrary&&) = delete;
+    TelemetryLibrary& operator=(TelemetryLibrary&&) = delete;
 
     ~TelemetryLibrary()
     {
-        ShutdownTelemetry(5000);
+        ShutdownTelemetry(kDefaultTimeoutMs);
         if (fHandle) {
             dlclose(fHandle);
         }
@@ -314,7 +335,7 @@ public:
     {
         fHandle = dlopen(library.c_str(), RTLD_NOW | RTLD_LOCAL);
         if (!fHandle) {
-            fLastError = dlerror();
+            fLastError = dlerror(); // NOLINT(concurrency-mt-unsafe)
             return false;
         }
 
@@ -370,8 +391,8 @@ private:
     template<typename T>
     auto Resolve(const char* symbol) const -> T
     {
-        dlerror();
-        return reinterpret_cast<T>(dlsym(fHandle, symbol));
+        dlerror(); // NOLINT(concurrency-mt-unsafe)
+        return reinterpret_cast<T>(dlsym(fHandle, symbol)); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
     }
 
     void* fHandle{nullptr};
@@ -386,15 +407,15 @@ auto AddTelemetryOptions(boost::program_options::options_description& options) -
 {
     namespace bpo = boost::program_options;
     options.add_options()
-           ("otel-log-library", bpo::value<std::string>()->default_value(kDefaultTelemetryLibrary), "Telemetry shared library path or soname to dlopen")
-           ("otel-log-protocol", bpo::value<std::string>()->default_value(kDefaultProtocol)->implicit_value(""), "Comma-separated OTel log exporter protocols to enable: console, otlp-http, otlp-grpc. Empty disables OTel output")
+           ("otel-log-library", bpo::value<std::string>()->default_value(std::string{kDefaultTelemetryLibrary}), "Telemetry shared library path or soname to dlopen")
+           ("otel-log-protocol", bpo::value<std::string>()->default_value(std::string{kDefaultProtocol})->implicit_value(""), "Comma-separated OTel log exporter protocols to enable: console, otlp-http, otlp-grpc. Empty disables OTel output")
            ("otel-log-endpoint", bpo::value<std::string>(), "Compatibility OTel collector endpoint for both HTTP and gRPC logs")
-           ("otel-log-endpoint-http", bpo::value<std::string>()->default_value(kDefaultHttpEndpoint), "OTLP HTTP logs endpoint")
-           ("otel-log-endpoint-grpc", bpo::value<std::string>()->default_value(kDefaultGrpcEndpoint), "OTLP gRPC logs endpoint")
+           ("otel-log-endpoint-http", bpo::value<std::string>()->default_value(std::string{kDefaultHttpEndpoint}), "OTLP HTTP logs endpoint")
+           ("otel-log-endpoint-grpc", bpo::value<std::string>()->default_value(std::string{kDefaultGrpcEndpoint}), "OTLP gRPC logs endpoint")
            ("otel-log-headers", bpo::value<std::string>(), "OTel exporter headers as comma-separated key=value pairs")
            ("otel-log-severity", bpo::value<std::string>()->default_value("info"), "Minimum severity exported to OTel")
            ("otel-log-required", bpo::value<bool>()->default_value(false), "Fail startup if telemetry library cannot be loaded")
-           ("otel-log-timeout-ms", bpo::value<uint32_t>()->default_value(5000), "OTel force-flush/shutdown timeout in milliseconds")
+           ("otel-log-timeout-ms", bpo::value<uint32_t>()->default_value(kDefaultTimeoutMs), "OTel force-flush/shutdown timeout in milliseconds")
            ("otel-log-http-json", bpo::value<bool>()->default_value(true), "Use JSON content type for OTLP HTTP logs")
            ("otel-service-name", bpo::value<std::string>()->default_value("nestdaq"), "OTel service.name resource attribute")
            ("otel-service-namespace", bpo::value<std::string>(), "OTel service.namespace resource attribute")
@@ -452,7 +473,7 @@ int main(int argc, char* argv[])
         });
 
         runner.AddHook<InstantiateDevice>([](DeviceRunner& r) {
-            r.fDevice = std::unique_ptr<fair::mq::Device> {getDevice(r.fConfig)};
+            r.fDevice = getDevice(r.fConfig);
         });
 
         const auto rc = runner.Run();

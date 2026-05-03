@@ -5,6 +5,7 @@
 #include <chrono>
 #include <cstdint>
 #include <functional>
+#include <iostream>
 #include <string>
 #include <string_view>
 #include <thread>
@@ -29,11 +30,20 @@ namespace {
 
 constexpr std::string_view kLoggerName{"FairLogger"};
 constexpr std::string_view kLibraryName{"NestDAQ"};
-constexpr std::string_view kSchemaUrl{""};
-constexpr char kSinkKey[] = "nestdaq-otel-log-sink";
+constexpr std::string_view kSchemaUrl;
+constexpr std::string_view kSinkKey{"nestdaq-otel-log-sink"};
 
-std::atomic<int32_t> gMinSeverity{static_cast<int32_t>(fair::Severity::trace)};
-std::atomic<bool> gSinkRegistered{false};
+auto MinSeverity() -> std::atomic<int32_t>&
+{
+    static std::atomic<int32_t> value{static_cast<int32_t>(fair::Severity::trace)};
+    return value;
+}
+
+auto SinkRegistered() -> std::atomic<bool>&
+{
+    static std::atomic<bool> value{false};
+    return value;
+}
 
 auto ToStringView(std::string_view value) noexcept -> opentelemetry::nostd::string_view
 {
@@ -91,7 +101,7 @@ auto ConvertSeverity(fair::Severity severity) noexcept -> opentelemetry::logs::S
 
 auto ShouldEmit(fair::Severity severity) noexcept -> bool
 {
-    const auto minSeverity = static_cast<fair::Severity>(gMinSeverity.load(std::memory_order_relaxed));
+    const auto minSeverity = static_cast<fair::Severity>(MinSeverity().load(std::memory_order_relaxed));
     return minSeverity != fair::Severity::nolog && severity >= minSeverity;
 }
 
@@ -139,8 +149,10 @@ auto EmitLogRecord(const std::string &content, const fair::LogMetaData &metadata
                                 static_cast<int64_t>(std::hash<std::thread::id> {}(std::this_thread::get_id())));
 
         logger->EmitLogRecord(std::move(logRecord));
+    } catch (const std::exception &ex) {
+        std::cerr << "FairLoggerOpenTelemetrySink: failed to emit log record: " << ex.what() << '\n';
     } catch (...) {
-        // FairLogger sinks must not throw back into the logging path.
+        std::cerr << "FairLoggerOpenTelemetrySink: failed to emit log record\n";
     }
 }
 
@@ -149,18 +161,18 @@ auto EmitLogRecord(const std::string &content, const fair::LogMetaData &metadata
 auto FairLoggerOpenTelemetrySink::Initialize() -> void
 {
     bool expected = false;
-    if (!gSinkRegistered.compare_exchange_strong(expected, true, std::memory_order_acq_rel)) {
+    if (!SinkRegistered().compare_exchange_strong(expected, true, std::memory_order_acq_rel)) {
         return;
     }
 
     try {
-        fair::Logger::AddCustomSink(kSinkKey,
+        fair::Logger::AddCustomSink(std::string{kSinkKey},
                                     fair::Severity::trace,
         [](const std::string &content, const fair::LogMetaData &metadata) {
             EmitLogRecord(content, metadata);
         });
     } catch (...) {
-        gSinkRegistered.store(false, std::memory_order_release);
+        SinkRegistered().store(false, std::memory_order_release);
         throw;
     }
 }
@@ -168,24 +180,27 @@ auto FairLoggerOpenTelemetrySink::Initialize() -> void
 auto FairLoggerOpenTelemetrySink::Shutdown() noexcept -> void
 {
     bool expected = true;
-    if (!gSinkRegistered.compare_exchange_strong(expected, false, std::memory_order_acq_rel)) {
+    if (!SinkRegistered().compare_exchange_strong(expected, false, std::memory_order_acq_rel)) {
         return;
     }
 
     try {
-        fair::Logger::RemoveCustomSink(kSinkKey);
+        fair::Logger::RemoveCustomSink(std::string{kSinkKey});
+    } catch (const std::exception &ex) {
+        std::cerr << "FairLoggerOpenTelemetrySink: failed to remove sink: " << ex.what() << '\n';
     } catch (...) {
+        std::cerr << "FairLoggerOpenTelemetrySink: failed to remove sink\n";
     }
 }
 
 auto FairLoggerOpenTelemetrySink::SetMinSeverity(int32_t severity) noexcept -> void
 {
-    gMinSeverity.store(severity, std::memory_order_release);
+    MinSeverity().store(severity, std::memory_order_release);
 }
 
 auto FairLoggerOpenTelemetrySink::GetMinSeverity() noexcept -> int32_t
 {
-    return gMinSeverity.load(std::memory_order_acquire);
+    return MinSeverity().load(std::memory_order_acquire);
 }
 
 } // namespace nestdaq

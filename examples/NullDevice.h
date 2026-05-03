@@ -11,6 +11,10 @@ class NullDevice : public FairMQDevice
 {
 public:
     NullDevice() = default;
+    NullDevice(const NullDevice&) = delete;
+    NullDevice& operator=(const NullDevice&) = delete;
+    NullDevice(NullDevice&&) = delete;
+    NullDevice& operator=(NullDevice&&) = delete;
     ~NullDevice() override = default;
 
 protected:

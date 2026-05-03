@@ -5,7 +5,6 @@
 #include <cstdint>
 #include <memory>
 #include <string>
-#include <string_view>
 
 #if __has_include(<fairmq/Device.h>)
 #include <fairmq/Device.h> // since v1.4.34
@@ -17,14 +16,16 @@ class Sink : public FairMQDevice {
 public:
 
     struct OptionKey {
-        static constexpr std::string_view InputChannelName{"in"};
-        static constexpr std::string_view Multipart{"multipart"};
+        static constexpr const char* InputChannelName{"in"};
+        static constexpr const char* Multipart{"multipart"};
     };
 
     Sink() = default;
     Sink(const Sink&) = delete;
     Sink &operator=(const Sink&) = delete;
-    ~Sink() = default;
+    Sink(Sink&&) = delete;
+    Sink& operator=(Sink&&) = delete;
+    ~Sink() override = default;
 
 private:
     bool HandleData(FairMQMessagePtr &msg, int index);

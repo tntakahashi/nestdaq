@@ -1,4 +1,5 @@
 #include <chrono>
+#include <memory>
 #include <thread>
 
 #include <nestdaq/runDevice.h>
@@ -6,6 +7,8 @@
 #include "Sink.h"
 
 static constexpr std::string_view MyClass{"Sink"};
+static constexpr int kMaxDrainRetries{10};
+static constexpr std::chrono::milliseconds kDrainRetryInterval{200};
 
 namespace bpo = boost::program_options;
 
@@ -14,21 +17,22 @@ void addCustomOptions(bpo::options_description &options)
 {
     using opt = Sink::OptionKey;
     options.add_options()
-           (opt::InputChannelName.data(), bpo::value<std::string>()->default_value(opt::InputChannelName.data()), "Name of input channel\n")
+           (opt::InputChannelName, bpo::value<std::string>()->default_value(opt::InputChannelName), "Name of input channel\n")
            //
-           (opt::Multipart.data(), bpo::value<std::string>()->default_value("true"), "Handle multipart message\n");
+           (opt::Multipart, bpo::value<std::string>()->default_value("true"), "Handle multipart message\n");
 }
 
 //_____________________________________________________________________________
 FairMQDevicePtr getDevice(const FairMQProgOptions &)
 {
-    return new Sink;
+    return std::make_unique<Sink>();
 }
 
 //_____________________________________________________________________________
 void PrintConfig(const fair::mq::ProgOptions* config, std::string_view name, std::string_view funcname)
 {
-    auto c = config->GetPropertiesAsStringStartingWith(name.data());
+    const auto prefix = std::string{name};
+    auto c = config->GetPropertiesAsStringStartingWith(prefix);
     std::ostringstream ss;
     ss << funcname << "\n\t " << name << "\n";
     for (const auto &[k, v] : c) {
@@ -40,8 +44,8 @@ void PrintConfig(const fair::mq::ProgOptions* config, std::string_view name, std
 //_____________________________________________________________________________
 bool Sink::HandleData(FairMQMessagePtr &msg, int index)
 {
-    const auto ptr = reinterpret_cast<char*>(msg->GetData());
-    std::string s(ptr, ptr+msg->GetSize());
+    const auto ptr = static_cast<char*>(msg->GetData());
+    std::string s(ptr, msg->GetSize());
     LOG(debug) << __FUNCTION__ << " received = " << s << " [" << index << "] " << fNumMessages;
     ++fNumMessages;
     return true;
@@ -51,8 +55,8 @@ bool Sink::HandleData(FairMQMessagePtr &msg, int index)
 bool Sink::HandleMultipartData(FairMQParts &msgParts, int index)
 {
     for (const auto& msg : msgParts) {
-        const auto ptr = reinterpret_cast<char*>(msg->GetData());
-        std::string s(ptr, ptr+msg->GetSize());
+        const auto ptr = static_cast<char*>(msg->GetData());
+        std::string s(ptr, msg->GetSize());
         LOG(debug) << __FUNCTION__ << " received = " << s << " [" << index << "] " << fNumMessages;
         LOG(debug) << s;
         ++fNumMessages;
@@ -78,10 +82,10 @@ void Sink::InitTask()
     LOG(debug) << MyClass << " InitTask";
     using opt = OptionKey;
 
-    fInputChannelName = fConfig->GetProperty<std::string>(opt::InputChannelName.data());
+    fInputChannelName = fConfig->GetProperty<std::string>(opt::InputChannelName);
     LOG(debug) << " input channel = " << fInputChannelName;
 
-    const auto &isMultipart = fConfig->GetProperty<std::string>(opt::Multipart.data());
+    const auto &isMultipart = fConfig->GetProperty<std::string>(opt::Multipart);
     if (isMultipart=="true" || isMultipart=="1") {
         LOG(warn) << " set multipart data handler";
         OnData(fInputChannelName, &Sink::HandleMultipartData);
@@ -99,16 +103,16 @@ void Sink::PostRun()
     LOG(debug) << __func__;
     int nrecv=0;
     while (true) {
-        const auto &isMultipart = fConfig->GetProperty<std::string>(opt::Multipart.data());
+        const auto &isMultipart = fConfig->GetProperty<std::string>(opt::Multipart);
         if (isMultipart=="true" || isMultipart=="1") {
             FairMQParts parts;
             if (Receive(parts, fInputChannelName) <= 0) {
                 LOG(debug) << __func__ << " no data received " << nrecv;
                 ++nrecv;
-                if (nrecv>10) {
+                if (nrecv > kMaxDrainRetries) {
                     break;
                 }
-                std::this_thread::sleep_for(std::chrono::milliseconds(200));
+                std::this_thread::sleep_for(kDrainRetryInterval);
             } else {
                 LOG(debug) << __func__ << " print data";
                 HandleMultipartData(parts, 0);
@@ -118,10 +122,10 @@ void Sink::PostRun()
             if (Receive(msg, fInputChannelName) <= 0) {
                 LOG(debug) << __func__ << " no data received " << nrecv;
                 ++nrecv;
-                if (nrecv>10) {
+                if (nrecv > kMaxDrainRetries) {
                     break;
                 }
-                std::this_thread::sleep_for(std::chrono::milliseconds(200));
+                std::this_thread::sleep_for(kDrainRetryInterval);
             } else {
                 LOG(debug) << __func__ << " print data";
                 HandleData(msg, 0);

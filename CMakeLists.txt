@@ -9,6 +9,13 @@ message(STATUS "PROJECT_NAME: ${PROJECT_NAME}")
 include(cmake/common.cmake)
 include(CMakePackageConfigHelpers)
 
+option(NESTDAQ_ENABLE_CLANG_TIDY "Run clang-tidy during NestDAQ builds" OFF)
+if(NESTDAQ_ENABLE_CLANG_TIDY)
+  find_program(CLANG_TIDY_EXE NAMES clang-tidy REQUIRED)
+  set(CMAKE_CXX_CLANG_TIDY "${CLANG_TIDY_EXE}")
+  message(STATUS "clang-tidy enabled: ${CLANG_TIDY_EXE}")
+endif()
+
 set(NESTDAQ_CMAKE_INSTALL_DIR "${CMAKE_INSTALL_LIBDIR}/cmake/NestDAQ")
 
 write_basic_package_version_file(

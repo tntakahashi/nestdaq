@@ -38,15 +38,16 @@ static constexpr std::string_view NESTDAQ_VERSION {"unknown"};
 namespace nestdaq {
 namespace {
 
-enum class Protocol {
+enum class Protocol : std::uint8_t {
     Console,
     OtlpHttp,
     OtlpGrpc,
 };
 
-static constexpr char kDefaultProtocol[] = "console";
-static constexpr char kDefaultHttpEndpoint[] = "http://localhost:4318/v1/logs";
-static constexpr char kDefaultGrpcEndpoint[] = "localhost:4317";
+static constexpr std::string_view kDefaultProtocol{"console"};
+static constexpr std::string_view kDefaultHttpEndpoint{"http://localhost:4318/v1/logs"};
+static constexpr std::string_view kDefaultGrpcEndpoint{"localhost:4317"};
+static constexpr int32_t kMaxFairLoggerSeverity{15};
 
 struct RuntimeState {
     std::mutex mutex;
@@ -77,7 +78,7 @@ auto ClearLastError() -> void
 
 auto IsEmpty(const char *value) noexcept -> bool
 {
-    return value == nullptr || value[0] == '\0';
+    return value == nullptr || *value == '\0';
 }
 
 auto ToLower(std::string_view value) -> std::string
@@ -151,7 +152,7 @@ auto ParseProtocols(const char *protocols, std::vector<Protocol> &out) -> bool
 
 auto ValidateSeverity(int32_t severity) noexcept -> bool
 {
-    return severity >= 0 && severity <= 15;
+    return severity >= 0 && severity <= kMaxFairLoggerSeverity;
 }
 
 auto TimeoutFromMs(uint64_t timeoutMs) noexcept -> std::chrono::microseconds
@@ -240,7 +241,7 @@ auto HttpEndpoint(const nestdaq_otel_config_v1 &config) -> const char *
     if (!IsEmpty(config.endpoint)) {
         return config.endpoint;
     }
-    return kDefaultHttpEndpoint;
+    return kDefaultHttpEndpoint.data();
 }
 
 auto GrpcEndpoint(const nestdaq_otel_config_v1 &config) -> const char *
@@ -251,7 +252,7 @@ auto GrpcEndpoint(const nestdaq_otel_config_v1 &config) -> const char *
     if (!IsEmpty(config.endpoint)) {
         return config.endpoint;
     }
-    return kDefaultGrpcEndpoint;
+    return kDefaultGrpcEndpoint.data();
 }
 
 auto CreateExporter(const nestdaq_otel_config_v1 &config, Protocol protocol)
@@ -317,9 +318,9 @@ auto OpenTelemetryInitializer::Initialize(const nestdaq_otel_config_v1 *config) 
 {
     auto localConfig = nestdaq_otel_config_v1{};
     localConfig.size = sizeof(localConfig);
-    localConfig.protocol = kDefaultProtocol;
-    localConfig.endpoint_http = kDefaultHttpEndpoint;
-    localConfig.endpoint_grpc = kDefaultGrpcEndpoint;
+    localConfig.protocol = kDefaultProtocol.data();
+    localConfig.endpoint_http = kDefaultHttpEndpoint.data();
+    localConfig.endpoint_grpc = kDefaultGrpcEndpoint.data();
     localConfig.service_name = "nestdaq";
     localConfig.min_severity = static_cast<int32_t>(1);
 

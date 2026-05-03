@@ -1,4 +1,5 @@
 #include <chrono>
+#include <memory>
 #include <string_view>
 #include <thread>
 
@@ -18,7 +19,7 @@ void addCustomOptions(bpo::options_description &options)
 //_____________________________________________________________________________
 FairMQDevicePtr getDevice(const FairMQProgOptions &)
 {
-    return new NullDevice;
+    return std::make_unique<NullDevice>();
 }
 
 //_____________________________________________________________________________

@@ -1,6 +1,7 @@
 #ifndef Examples_Sampler_h
 #define Exapmles_Sampler_h
 
+#include <cstdint>
 #include <string>
 
 #if __has_include(<fairmq/Device.h>)
@@ -13,15 +14,19 @@ class Sampler : public FairMQDevice
 {
 public:
     Sampler();
+    Sampler(const Sampler&) = delete;
+    Sampler& operator=(const Sampler&) = delete;
+    Sampler(Sampler&&) = delete;
+    Sampler& operator=(Sampler&&) = delete;
     ~Sampler() override = default;
 
-protected:
+private:
     std::string fId;
     std::string fOutputChannelName;
     std::string fText;
-    uint64_t fMaxIterations;
-    uint64_t fNumIterations;
-    int fNumSubChannels;
+    uint64_t fMaxIterations{0};
+    uint64_t fNumIterations{0};
+    int fNumSubChannels{0};
 
     void Init() override;
     void InitTask() override;

@@ -4,6 +4,14 @@ project(NestDAQExamples LANGUAGES CXX)
 
 include(GNUInstallDirs)
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+option(NESTDAQ_ENABLE_CLANG_TIDY "Run clang-tidy during builds" OFF)
+if(NESTDAQ_ENABLE_CLANG_TIDY)
+  find_program(CLANG_TIDY_EXE NAMES clang-tidy REQUIRED)
+  set(CMAKE_CXX_CLANG_TIDY "${CLANG_TIDY_EXE}")
+  message(STATUS "clang-tidy enabled: ${CLANG_TIDY_EXE}")
+endif()
+
 # Standalone examples do not inherit RPATH settings from the main NestDAQ build.
 set(CMAKE_SKIP_BUILD_RPATH FALSE)
 set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)

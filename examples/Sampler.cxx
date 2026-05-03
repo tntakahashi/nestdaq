@@ -1,3 +1,4 @@
+#include <memory>
 #include <sstream>
 #include <string>
 
@@ -20,13 +21,14 @@ void addCustomOptions(bpo::options_description& options)
 //_____________________________________________________________________________
 FairMQDevicePtr getDevice(const fair::mq::ProgOptions& /*config*/)
 {
-    return new Sampler();
+    return std::make_unique<Sampler>();
 }
 
 //_____________________________________________________________________________
 void PrintConfig(const fair::mq::ProgOptions* config, std::string_view name, std::string_view funcname)
 {
-    auto c = config->GetPropertiesAsStringStartingWith(name.data());
+    const auto prefix = std::string{name};
+    auto c = config->GetPropertiesAsStringStartingWith(prefix);
     std::ostringstream ss;
     ss << funcname << "\n\t " << name << "\n";
     for (const auto &[k, v] : c) {
@@ -37,12 +39,6 @@ void PrintConfig(const fair::mq::ProgOptions* config, std::string_view name, std
 
 //_____________________________________________________________________________
 Sampler::Sampler()
-    : fId()
-    , fOutputChannelName()
-    , fText()
-    , fMaxIterations(0)
-    , fNumIterations(0)
-    , fNumSubChannels(0)
 {
     LOG(debug) << "Sampler : hello";
 }
@@ -77,7 +73,7 @@ void Sampler::InitTask()
     fText = fConfig->GetProperty<std::string>("text");
     fMaxIterations = std::stoull(fConfig->GetProperty<std::string>("max-iterations"));
 
-    fNumSubChannels = GetNumSubChannels(fOutputChannelName);
+    fNumSubChannels = static_cast<int>(GetNumSubChannels(fOutputChannelName));
 }
 
 //_____________________________________________________________________________
@@ -93,9 +89,9 @@ bool Sampler::ConditionalRun()
                                  const_cast<char*>(text->data()),
                                  text->length(),
         [](void * /*data*/, void* object) {
-            auto p = reinterpret_cast<std::string*>(object);
+            auto p = static_cast<std::string*>(object);
             //LOG(debug) << " sent " << *p;
-            delete p;
+            delete p; // NOLINT(cppcoreguidelines-owning-memory)
         },
         text
                              )
