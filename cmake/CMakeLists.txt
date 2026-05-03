@@ -47,7 +47,7 @@ endif()
 
 find_package(Doxygen QUIET)
 if(Doxygen_FOUND)
-  set(doxygen-awesome-css_VERSION "2.4.1" CACHE STRING "doxygen-awesome-css version tag")
+  set(doxygen-awesome-css_VERSION "2.4.2" CACHE STRING "doxygen-awesome-css version tag")
   include("${NESTDAQ_DEPENDENCIES_CMAKE_DIR}/doxygen-awesome-css.cmake")
 else()
   message(STATUS "Doxygen not found: skipping doxygen-awesome-css")

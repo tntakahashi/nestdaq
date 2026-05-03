@@ -30,6 +30,13 @@ dnf -y install \
     libstdc++-static \
     python3-devel
 
+# Optional tools:
+# - jq: format and inspect JSON output from command-line tools.
+# - clang-tools-extra: provide clang-tidy for static analysis.
+# - doxygen: generate API documentation.
+# - graphviz: provide the dot command for Doxygen diagrams.
+# dnf -y install jq clang-tools-extra doxygen graphviz
+
 # If needed for AlmaLinux 9
 # dnf -y install gcc-toolset-14
 ```
@@ -58,6 +65,7 @@ cmake --build ./build-external
 - The default dependency versions are listed below. To override a version, pass `-Dxxxx_VERSION=yyyy` to CMake.
 - If `-DWITH_REDIS_STACK=OFF` is specified, the external dependency build does not build or install Redis Stack. The default is `WITH_REDIS_STACK=ON`.
 - If `-DWITH_OTEL_CPP=ON` is specified, the external dependency build also installs opentelemetry-cpp and its dependencies, such as nlohmann/json and gRPC. The default is `WITH_OTEL_CPP=OFF`.
+- If Doxygen is found during the external dependency configure step, `doxygen-awesome-css` is installed as an optional documentation asset.
 - To use Ninja instead of Make, add `-G Ninja` to the CMake options.
 - To use `mold` instead of the system `ld`.
   - GCC 12.1 or later: Add `-DCMAKE_EXE_LINKER_FLAGS="-fuse-ld=mold"` and `-DCMAKE_SHARED_LINKER_FLAGS="-fuse-ld=mold"` to the CMake options
@@ -74,6 +82,7 @@ cmake --build ./build-external
 | [hiredis](https://github.com/redis/hiredis)                              | 1.3.0             | `hiredis_VERSION`                |
 | [redis++](https://github.com/sewenew/redis-plus-plus)                    | 1.3.15            | `redis_plus_plus_VERSION`        |
 | [opentelemetry-cpp](https://github.com/open-telemetry/opentelemetry-cpp) | 1.24.0            | `opentelemetry-cpp_VERSION`      |
+| [doxygen-awesome-css](https://github.com/jothepro/doxygen-awesome-css)   | 2.4.2             | `doxygen-awesome-css_VERSION`    |
 
 ##### External runtime components
 Redis Stack (`redis-server`, `redis-cli`, Redis modules, etc.) is included in the external packages and is built and installed together with them. It is required by the NestDAQ application at runtime, but it is not a direct library dependency.
@@ -100,6 +109,11 @@ cmake --install ./build
 
 - In the example above, both the main NestDAQ package and the external dependencies are installed in the same directory (`./install`).
   If the external dependencies are installed in a different location, specify that directory with `-DCMAKE_PREFIX_PATH=xxx`.
+- To run `clang-tidy` during the NestDAQ build, add `-DNESTDAQ_ENABLE_CLANG_TIDY=ON`.
+  This requires the `clang-tidy` command, provided by `clang-tools-extra` on AlmaLinux.
+- To build and install Doxygen documentation, add `-DWITH_DOCS=ON`.
+  This requires the `doxygen` command. If Doxygen is not found, documentation generation is skipped. If `dot` from Graphviz is available, Doxygen can use it to generate diagrams.
+- When `-DWITH_DOCS=ON` and Doxygen is available, the HTML documentation is generated under `./build/docs/html` and installed under `./install/share/doc/nestdaq/html`.
 
 ### Build and install examples
 
