@@ -23,7 +23,7 @@ void addCustomOptions(bpo::options_description &options)
 }
 
 //_____________________________________________________________________________
-FairMQDevicePtr getDevice(const FairMQProgOptions & /*config*/)
+std::unique_ptr<fair::mq::Device> getDevice(const fair::mq::ProgOptions& /*config*/)
 {
     return std::make_unique<Sink>();
 }
@@ -42,7 +42,7 @@ void PrintConfig(const fair::mq::ProgOptions* config, std::string_view name, std
 }
 
 //_____________________________________________________________________________
-bool Sink::HandleData(FairMQMessagePtr &msg, int index)
+bool Sink::HandleData(fair::mq::MessagePtr &msg, int index)
 {
     const auto ptr = static_cast<char*>(msg->GetData());
     std::string s(ptr, msg->GetSize());
@@ -52,7 +52,7 @@ bool Sink::HandleData(FairMQMessagePtr &msg, int index)
 }
 
 //_____________________________________________________________________________
-bool Sink::HandleMultipartData(FairMQParts &msgParts, int index)
+bool Sink::HandleMultipartData(fair::mq::Parts &msgParts, int index)
 {
     for (const auto& msg : msgParts) {
         const auto ptr = static_cast<char*>(msg->GetData());
@@ -105,7 +105,7 @@ void Sink::PostRun()
     while (true) {
         const auto &isMultipart = fConfig->GetProperty<std::string>(opt::Multipart);
         if (isMultipart=="true" || isMultipart=="1") {
-            FairMQParts parts;
+            fair::mq::Parts parts;
             if (Receive(parts, fInputChannelName) <= 0) {
                 LOG(debug) << __func__ << " no data received " << nrecv;
                 ++nrecv;
@@ -118,7 +118,7 @@ void Sink::PostRun()
                 HandleMultipartData(parts, 0);
             }
         } else {
-            FairMQMessagePtr msg(NewMessage());
+            fair::mq::MessagePtr msg(NewMessage());
             if (Receive(msg, fInputChannelName) <= 0) {
                 LOG(debug) << __func__ << " no data received " << nrecv;
                 ++nrecv;

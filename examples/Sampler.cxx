@@ -19,7 +19,7 @@ void addCustomOptions(bpo::options_description& options)
 }
 
 //_____________________________________________________________________________
-FairMQDevicePtr getDevice(const fair::mq::ProgOptions& /*config*/)
+std::unique_ptr<fair::mq::Device> getDevice(const fair::mq::ProgOptions& /*config*/)
 {
     return std::make_unique<Sampler>();
 }
@@ -85,17 +85,17 @@ bool Sampler::ConditionalRun()
         // copy
         auto txt = *text;
 
-        FairMQMessagePtr msg(NewMessage(
-                                 const_cast<char*>(text->data()),
-                                 text->length(),
+        fair::mq::MessagePtr msg(NewMessage(
+                                     const_cast<char*>(text->data()),
+                                     text->length(),
         [](void * /*data*/, void* object) {
             auto p = static_cast<std::string*>(object);
             //LOG(debug) << " sent " << *p;
             delete p; // NOLINT(cppcoreguidelines-owning-memory)
         },
         text
-                             )
-                            );
+                                 )
+                                );
 
         LOG(info) << "Sending \"" << txt << "\"";
 

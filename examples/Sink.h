@@ -6,13 +6,9 @@
 #include <memory>
 #include <string>
 
-#if __has_include(<fairmq/Device.h>)
-#include <fairmq/Device.h> // since v1.4.34
-#else
-#include <fairmq/FairMQDevice.h>
-#endif
+#include <fairmq/Device.h>
 
-class Sink : public FairMQDevice {
+class Sink : public fair::mq::Device {
 public:
 
     struct OptionKey {
@@ -28,8 +24,8 @@ public:
     ~Sink() override = default;
 
 private:
-    bool HandleData(FairMQMessagePtr &msg, int index);
-    bool HandleMultipartData(FairMQParts &msgParts, int index);
+    bool HandleData(fair::mq::MessagePtr &msg, int index);
+    bool HandleMultipartData(fair::mq::Parts &msgParts, int index);
     void Init() override;
     void InitTask() override;
     void PostRun() override;

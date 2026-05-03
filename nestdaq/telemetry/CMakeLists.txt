@@ -1,4 +1,5 @@
 install(FILES
+  ${CMAKE_CURRENT_SOURCE_DIR}/FairLoggerTelemetryLoader.h
   ${CMAKE_CURRENT_SOURCE_DIR}/OpenTelemetryInitializer.h
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/nestdaq/telemetry
 )

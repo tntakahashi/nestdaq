@@ -87,8 +87,9 @@ const std::string ToChannelConfig(const daq::service::SocketProperty& p)
     if (p.address.find(",")!=std::string::npos) {
         std::vector<std::string> res;
         boost::split(res, p.address, boost::is_any_of(","));
-        if (res.size()<p.numSockets) {
-            auto n = p.numSockets - res.size();
+        const auto numSockets = static_cast<std::vector<std::string>::size_type>(p.numSockets);
+        if (res.size()<numSockets) {
+            auto n = numSockets - res.size();
             for (auto i=0u; i<n; ++i) {
                 res.push_back("unspecified");
             }
@@ -254,20 +255,20 @@ void daq::service::TopologyConfig::ConfigConnect()
             return ret;
         }
 
-        const auto &k = join({fTopPrefix, service, id, topology::SocketPrefix.data(), channel}, fSeparator);
-        const auto &socketKeys = scan(*GetClient(), k);
-        for (const auto &k : socketKeys) {
+        const auto &socketKeyPattern = join({fTopPrefix, service, id, topology::SocketPrefix.data(), channel}, fSeparator);
+        const auto &socketKeys = scan(*GetClient(), socketKeyPattern);
+        for (const auto &socketKey : socketKeys) {
             int nRetry = 0;
             while (true) {
-                auto a = GetClient()->hget(k, "address");
+                auto a = GetClient()->hget(socketKey, "address");
                 if (a) {
-                    LOG(warn) << " ch = " << k << " : address found " << *a;
+                    LOG(warn) << " ch = " << socketKey << " : address found " << *a;
                     ret.push_back(MakeAddress(*a, peerIP));
                     break;
                 }
-                LOG(warn) << " ch = " << k << " : address not found";
+                LOG(warn) << " ch = " << socketKey << " : address not found";
                 if (IsCanceled() || nRetry>fMaxRetryToResolveAddress) {
-                    LOG(warn) << " find address of peer channel = " << k << " -> canceled";
+                    LOG(warn) << " find address of peer channel = " << socketKey << " -> canceled";
                     break;
                 }
                 std::this_thread::sleep_for(1000ms);
@@ -313,7 +314,7 @@ void daq::service::TopologyConfig::ConfigConnect()
                 if (hasSubChannelIndex) {
                     // try to match:  "service" : "instance" - "index" : "channel" ["sub_channel_index"]
                     std::regex pattern{"(\\w+)" + fSeparator + "(\\w+)-(\\d+)" + fSeparator + "(\\w+)\\[(\\d+)\\]"};
-                    int nMarks = pattern.mark_count();
+                    auto nMarks = pattern.mark_count();
                     std::smatch matchResults;
                     std::regex_match(p, matchResults, pattern);
                     if (!matchResults.ready() || matchResults.size()!=(nMarks+1)) {
@@ -333,7 +334,7 @@ void daq::service::TopologyConfig::ConfigConnect()
                 } else {
                     // try to match: "service" : "instance" - "index" : "channel"
                     std::regex pattern{"(\\w+)" + fSeparator + "(\\w+)-(\\d+)" + fSeparator +  "(\\w+)"};
-                    int nMarks = pattern.mark_count();
+                    auto nMarks = pattern.mark_count();
                     std::smatch matchResults;
                     std::regex_match(p, matchResults, pattern);
                     if (!matchResults.ready() || matchResults.size()!=(nMarks+1)) {
@@ -368,7 +369,7 @@ void daq::service::TopologyConfig::ConfigConnect()
 
                     // try to match: "instance" - "index" : "channel" ["sub_channel_index"]
                     std::regex pattern{"(\\w+)-(\\d+)" + fSeparator + "(\\w+)\\[(\\d+)\\]"};
-                    int nMarks = pattern.mark_count();
+                    auto nMarks = pattern.mark_count();
                     std::smatch matchResults;
                     std::regex_match(p, matchResults, pattern);
 
@@ -413,7 +414,7 @@ void daq::service::TopologyConfig::ConfigConnect()
 
                     // try to match:  "instance" - "index" : "channel"
                     std::regex pattern{"(\\w+)-(\\d+)" + fSeparator + "(\\w+)"};
-                    int nMarks = pattern.mark_count();
+                    auto nMarks = pattern.mark_count();
                     std::smatch matchResults;
                     std::regex_match(p, matchResults, pattern);
                     if (matchResults.ready() && matchResults.size()==(nMarks+1)) {

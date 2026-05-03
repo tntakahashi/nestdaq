@@ -4,13 +4,9 @@
 #include <cstdint>
 #include <string>
 
-#if __has_include(<fairmq/Device.h>)
-#include <fairmq/Device.h>  // since v1.4.34
-#else
-#include <fairmq/FairMQDevice.h>
-#endif
+#include <fairmq/Device.h>
 
-class Sampler : public FairMQDevice
+class Sampler : public fair::mq::Device
 {
 public:
     Sampler();

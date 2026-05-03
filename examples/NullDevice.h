@@ -1,13 +1,9 @@
 #ifndef Examples_NullDevice_h
 #define Examples_NullDevice_h
 
-#if __has_include(<fairmq/Device.h>)
-#include <fairmq/Device.h> // since v1.4.34
-#else
-#include <fairmq/FairMQDevice.h>
-#endif
+#include <fairmq/Device.h>
 
-class NullDevice : public FairMQDevice
+class NullDevice : public fair::mq::Device
 {
 public:
     NullDevice() = default;
