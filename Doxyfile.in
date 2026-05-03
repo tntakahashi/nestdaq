@@ -1,0 +1,21 @@
+PROJECT_NAME           = "@PROJECT_NAME@"
+PROJECT_NUMBER         = "@PROJECT_VERSION@"
+OUTPUT_DIRECTORY       = "@CMAKE_CURRENT_BINARY_DIR@/docs"
+GENERATE_HTML          = YES
+GENERATE_LATEX         = NO
+GENERATE_XML           = NO
+
+INPUT                  = "@CMAKE_CURRENT_SOURCE_DIR@/nestdaq" \
+                         "@CMAKE_CURRENT_SOURCE_DIR@/plugins" \
+                         "@CMAKE_CURRENT_SOURCE_DIR@/controller" \
+                         "@CMAKE_CURRENT_SOURCE_DIR@/examples"
+FILE_PATTERNS          = *.h *.cxx
+RECURSIVE              = YES
+EXTRACT_ALL            = YES
+
+QUIET                  = YES
+WARN_IF_UNDOCUMENTED   = NO
+WARN_AS_ERROR          = NO
+
+HTML_EXTRA_STYLESHEET  = @NESTDAQ_DOXYGEN_HTML_EXTRA_STYLESHEET@
+HTML_EXTRA_FILES       = @NESTDAQ_DOXYGEN_HTML_EXTRA_FILES@

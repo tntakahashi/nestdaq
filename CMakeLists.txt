@@ -16,6 +16,8 @@ if(NESTDAQ_ENABLE_CLANG_TIDY)
   message(STATUS "clang-tidy enabled: ${CLANG_TIDY_EXE}")
 endif()
 
+option(WITH_DOCS "Build and install NestDAQ Doxygen documentation" OFF)
+
 set(NESTDAQ_CMAKE_INSTALL_DIR "${CMAKE_INSTALL_LIBDIR}/cmake/NestDAQ")
 
 write_basic_package_version_file(
@@ -116,6 +118,70 @@ else()
   message(STATUS "opentelemetry-cpp not found: skipping nestdaq telemetry library")
 endif()
 
+if(WITH_DOCS)
+  find_package(Doxygen QUIET)
+endif()
+if(WITH_DOCS AND Doxygen_FOUND)
+  set(NESTDAQ_DOXYGEN_AWESOME_DIR
+    "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_DATADIR}/doxygen-awesome-css")
+  set(NESTDAQ_DOXYGEN_AWESOME_CSS
+    "${NESTDAQ_DOXYGEN_AWESOME_DIR}/doxygen-awesome.css")
+  set(NESTDAQ_DOXYGEN_AWESOME_FRAGMENT_COPY_BUTTON
+    "${NESTDAQ_DOXYGEN_AWESOME_DIR}/doxygen-awesome-fragment-copy-button.js")
+  set(NESTDAQ_DOXYGEN_AWESOME_PARAGRAPH_LINK
+    "${NESTDAQ_DOXYGEN_AWESOME_DIR}/doxygen-awesome-paragraph-link.js")
+  set(NESTDAQ_DOXYGEN_AWESOME_INTERACTIVE_TOC
+    "${NESTDAQ_DOXYGEN_AWESOME_DIR}/doxygen-awesome-interactive-toc.js")
+
+  set(NESTDAQ_DOXYGEN_HTML_EXTRA_STYLESHEET "")
+  set(NESTDAQ_DOXYGEN_HTML_EXTRA_FILES "")
+  if(EXISTS "${NESTDAQ_DOXYGEN_AWESOME_CSS}")
+    set(NESTDAQ_DOXYGEN_HTML_EXTRA_STYLESHEET
+      "\"${NESTDAQ_DOXYGEN_AWESOME_CSS}\"")
+  endif()
+  foreach(extra_file
+      "${NESTDAQ_DOXYGEN_AWESOME_FRAGMENT_COPY_BUTTON}"
+      "${NESTDAQ_DOXYGEN_AWESOME_PARAGRAPH_LINK}"
+      "${NESTDAQ_DOXYGEN_AWESOME_INTERACTIVE_TOC}")
+    if(EXISTS "${extra_file}")
+      list(APPEND NESTDAQ_DOXYGEN_HTML_EXTRA_FILES "\"${extra_file}\"")
+    endif()
+  endforeach()
+  if(NESTDAQ_DOXYGEN_HTML_EXTRA_FILES)
+    list(JOIN NESTDAQ_DOXYGEN_HTML_EXTRA_FILES " " NESTDAQ_DOXYGEN_HTML_EXTRA_FILES)
+  endif()
+  if(NOT NESTDAQ_DOXYGEN_HTML_EXTRA_STYLESHEET)
+    message(STATUS "doxygen-awesome-css not found under ${NESTDAQ_DOXYGEN_AWESOME_DIR}: using default Doxygen HTML style")
+  endif()
+
+  configure_file(
+    "${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile.in"
+    "${CMAKE_CURRENT_BINARY_DIR}/Doxyfile"
+    @ONLY
+  )
+
+  add_custom_command(
+    OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/docs/html/index.html"
+    COMMAND "${DOXYGEN_EXECUTABLE}" "${CMAKE_CURRENT_BINARY_DIR}/Doxyfile"
+    DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/Doxyfile"
+    WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
+    COMMENT "Generating NestDAQ API documentation"
+    VERBATIM
+  )
+
+  add_custom_target(docs ALL
+    DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/docs/html/index.html"
+  )
+
+  install(DIRECTORY
+    "${CMAKE_CURRENT_BINARY_DIR}/docs/html/"
+    DESTINATION "${CMAKE_INSTALL_DATADIR}/doc/nestdaq/html"
+  )
+elseif(WITH_DOCS)
+  message(STATUS "Doxygen not found: skipping NestDAQ documentation")
+else()
+  message(STATUS "WITH_DOCS is OFF: skipping NestDAQ documentation")
+endif()
 
 #------------------------------------------------------------------------------
 add_subdirectory(nestdaq)
