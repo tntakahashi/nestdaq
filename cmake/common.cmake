@@ -15,7 +15,6 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wshadow -Wfloat-equal")
-set(CMAKE_CXX_FLAGS_RELEASE "-Ofast -DNDEBUG -march=native")
 message(STATUS "")
 message(STATUS "CMAKE_PREFIX_PATH:              ${CMAKE_PREFIX_PATH}")
 message(STATUS "CMAKE_CXX_FLAGS:                ${CMAKE_CXX_FLAGS}")

@@ -35,7 +35,7 @@ option(REDIS_GIT_SHALLOW "Use shallow Git clones for Redis and Redis modules" ON
 
 set(REDIS_TEMP_RUST_RELATIVE_DIR ".redis-build-tools/rust" CACHE STRING "Temporary Rust directory relative to the Redis install prefix")
 set(REDIS_PREPARE_STAMP_RELATIVE_PATH "redis-modules-prepared.stamp" CACHE STRING "Module preparation stamp path relative to the CMake build directory")
-set(REDIS_BUILD_WRAPPER_RELATIVE_PATH "build_redis-stack_with_temp_rust.sh" CACHE STRING "Build wrapper path relative to this CMake source directory")
+set(REDIS_BUILD_WRAPPER_RELATIVE_PATH "build_redis-stack_with_temp_rust.sh" CACHE STRING "Build wrapper path relative to this CMake file directory")
 
 # Redis itself still uses its Makefile build. FetchContent is used only to pin
 # and materialize source trees; SOURCE_SUBDIR prevents CMake from trying to
@@ -110,7 +110,7 @@ cmake_path(ABSOLUTE_PATH REDIS_PREPARE_STAMP_RELATIVE_PATH
   NORMALIZE
 )
 cmake_path(ABSOLUTE_PATH REDIS_BUILD_WRAPPER_RELATIVE_PATH
-  BASE_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+  BASE_DIRECTORY "${CMAKE_CURRENT_LIST_DIR}"
   OUTPUT_VARIABLE REDIS_BUILD_WRAPPER
   NORMALIZE
 )
@@ -120,8 +120,8 @@ cmake_path(ABSOLUTE_PATH REDIS_BUILD_WRAPPER_RELATIVE_PATH
 # Redis tree before invoking the upstream Makefile.
 add_custom_command(
   OUTPUT "${REDIS_PREPARE_STAMP}"
-  DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/patch_redisearch.cmake"
-          "${CMAKE_CURRENT_SOURCE_DIR}/patch_redisjson.cmake"
+  DEPENDS "${CMAKE_CURRENT_LIST_DIR}/patch_redisearch.cmake"
+          "${CMAKE_CURRENT_LIST_DIR}/patch_redisjson.cmake"
 
   COMMAND "${CMAKE_COMMAND}" -E rm -rf "${REDIS_SOURCE_DIR}/modules/redisbloom/src"
   COMMAND "${CMAKE_COMMAND}" -E copy_directory
@@ -137,20 +137,20 @@ add_custom_command(
   COMMAND "${CMAKE_COMMAND}"
           "-DREDISEARCH_SOURCE_DIR=${REDIS_SOURCE_DIR}/modules/redisearch/src"
           "-DREDISEARCH_MODULE_MAKEFILE=${REDIS_SOURCE_DIR}/modules/redisearch/Makefile"
-          -P "${CMAKE_CURRENT_SOURCE_DIR}/patch_redisearch.cmake"
+          -P "${CMAKE_CURRENT_LIST_DIR}/patch_redisearch.cmake"
   COMMAND "${CMAKE_COMMAND}" -E touch
           "${REDIS_SOURCE_DIR}/modules/redisearch/src/.prepared"
 
   COMMAND "${CMAKE_COMMAND}" -E rm -rf "${REDIS_SOURCE_DIR}/modules/redisjson/src"
   COMMAND "${CMAKE_COMMAND}"
           "-DREDISJSON_SOURCE_DIR=${redisjson_src_SOURCE_DIR}"
-          -P "${CMAKE_CURRENT_SOURCE_DIR}/patch_redisjson.cmake"
+          -P "${CMAKE_CURRENT_LIST_DIR}/patch_redisjson.cmake"
   COMMAND "${CMAKE_COMMAND}" -E copy_directory
           "${redisjson_src_SOURCE_DIR}"
           "${REDIS_SOURCE_DIR}/modules/redisjson/src"
   COMMAND "${CMAKE_COMMAND}"
           "-DREDISJSON_SOURCE_DIR=${REDIS_SOURCE_DIR}/modules/redisjson/src"
-          -P "${CMAKE_CURRENT_SOURCE_DIR}/patch_redisjson.cmake"
+          -P "${CMAKE_CURRENT_LIST_DIR}/patch_redisjson.cmake"
   COMMAND "${CMAKE_COMMAND}" -E touch
           "${REDIS_SOURCE_DIR}/modules/redisjson/src/.prepared"
 
@@ -168,7 +168,7 @@ add_custom_command(
 
 add_custom_target(redis_prepare_modules DEPENDS "${REDIS_PREPARE_STAMP}")
 
-# Build Redis with its upstream Makefile via cmake/build_redis-stack_with_temp_rust.sh.
+# Build Redis with its upstream Makefile via build_redis-stack_with_temp_rust.sh.
 # The wrapper provides a temporary Rust/LLVM toolchain, avoids /usr/local
 # defaults, and installs Redis plus modules into CMAKE_INSTALL_PREFIX.
 ExternalProject_Add(redis_build

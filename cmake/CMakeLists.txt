@@ -2,28 +2,26 @@ cmake_minimum_required(VERSION 3.24)
 
 project(nestdaq_external_dependencies LANGUAGES CXX C)
 
-include(common.cmake)
+include("${CMAKE_CURRENT_LIST_DIR}/common.cmake")
 
 #------------------------------------------------------------------------------
-if(${PROJECT_NAME} STREQUAL "nestdaq")
-  set(MY_CMAKE_FILES "cmake/")
-endif()
+set(NESTDAQ_DEPENDENCIES_CMAKE_DIR "${CMAKE_CURRENT_LIST_DIR}/dependencies")
 
 if(BUILD_PARALLEL_LEVEL)
   set(BUILD_PARALLEL_LEVEL "--parallel ${BUILD_PARALLEL_LEVEL}")
 endif()
 
 set(ZeroMQ_VERSION "4.3.5" CACHE STRING "ZeroMQ version tag")
-include(${MY_CMAKE_FILES}ZeroMQ.cmake)
+include("${NESTDAQ_DEPENDENCIES_CMAKE_DIR}/ZeroMQ.cmake")
 
 set(Boost_VERSION "1.85.0" CACHE STRING "boost version tag")
-include(${MY_CMAKE_FILES}Boost.cmake)
+include("${NESTDAQ_DEPENDENCIES_CMAKE_DIR}/Boost.cmake")
 
 set(FairLogger_VERSION "2.3.0" CACHE STRING "FairLogger version tag")
-include(${MY_CMAKE_FILES}FairLogger.cmake)
+include("${NESTDAQ_DEPENDENCIES_CMAKE_DIR}/FairLogger.cmake")
 
 set(FairMQ_VERSION "1.10.0" CACHE STRING "FairMQ version tag")
-include(${MY_CMAKE_FILES}FairMQ.cmake)
+include("${NESTDAQ_DEPENDENCIES_CMAKE_DIR}/FairMQ.cmake")
 
 option(WITH_REDIS_STACK "Build and install Redis Stack" ON)
 if(WITH_REDIS_STACK)
@@ -32,17 +30,17 @@ if(WITH_REDIS_STACK)
   set(RediSearch_VERSION "2.10.25" CACHE STRING "RediSearch version tag")
   set(RedisJSON_VERSION "2.8.16" CACHE STRING "RedisJSON version tag")
   set(RedisTimeSeries_VERSION "1.12.9" CACHE STRING "RedisTimeSeries version tag")
-  include(${MY_CMAKE_FILES}redis-stack.cmake)
+  include("${NESTDAQ_DEPENDENCIES_CMAKE_DIR}/redis-stack.cmake")
 endif()
 
 set(hiredis_VERSION "1.3.0" CACHE STRING "hiredis version tag")
-include(${MY_CMAKE_FILES}hiredis.cmake)
+include("${NESTDAQ_DEPENDENCIES_CMAKE_DIR}/hiredis.cmake")
 
 set(redis_plus_plus_VERSION "1.3.15" CACHE STRING "redis++ version tag")
-include(${MY_CMAKE_FILES}redis_plus_plus.cmake)
+include("${NESTDAQ_DEPENDENCIES_CMAKE_DIR}/redis_plus_plus.cmake")
 
 option(WITH_OTEL_CPP "Build and install opentelemetry-cpp" OFF)
 if(WITH_OTEL_CPP)
   set(opentelemetry-cpp_VERSION "1.26.0" CACHE STRING "opentelemetry-cpp version tag")
-  include(${MY_CMAKE_FILES}opentelemetry-cpp.cmake)
+  include("${NESTDAQ_DEPENDENCIES_CMAKE_DIR}/opentelemetry-cpp.cmake")
 endif()
