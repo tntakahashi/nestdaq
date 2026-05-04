@@ -1,5 +1,4 @@
-#ifndef DaqService_Plugins_Functions_h
-#define DaqService_Plugins_Functions_h
+#pragma once
 
 #include <string>
 #include <string_view>
@@ -43,5 +42,3 @@ inline std::unordered_set<std::string> scan(sw::redis::Redis &r,
 }
 
 } // namespace daq::service
-
-#endif

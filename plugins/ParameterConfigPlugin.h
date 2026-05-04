@@ -1,5 +1,4 @@
-#ifndef DaqService_Plugins_ParameterConfigPlugin_h
-#define DaqService_Plugins_ParameterConfigPlugin_h
+#pragma once
 
 // Parameter configuration plugin using Redis
 
@@ -114,5 +113,3 @@ daq::service::ParameterConfigPluginProgramOptions
 ) // end of macro: REGISTER_FAIRMQ_PLUGIN
 
 } // namespace daq::service
-
-#endif

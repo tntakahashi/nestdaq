@@ -1,5 +1,4 @@
-#ifndef Example_Sink_h
-#define Example_Sink_h
+#pragma once
 
 #include <chrono>
 #include <cstdint>
@@ -34,6 +33,3 @@ private:
     uint64_t fNumMessages{0};
 
 };
-
-
-#endif

@@ -1,5 +1,4 @@
-#ifndef TCP_Listener_h
-#define TCP_Listener_h
+#pragma once
 
 // Accepts incoming connections and launches the sessions
 
@@ -33,5 +32,3 @@ private:
     void do_accept();
     void on_accept(beast::error_code ec, tcp::socket socket);
 };
-
-#endif

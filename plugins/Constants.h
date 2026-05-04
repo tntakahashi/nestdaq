@@ -1,5 +1,4 @@
-#ifndef DaqService_Plugins_PluginOptions_h
-#define DaqService_Plugins_PluginOptions_h
+#pragma once
 
 #include <string_view>
 
@@ -55,5 +54,3 @@ static constexpr std::string_view Quit{"quit"};
 static constexpr std::string_view Reset{"reset"};
 static constexpr std::string_view Start{"start"};
 }
-
-#endif

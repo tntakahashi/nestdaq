@@ -1,5 +1,4 @@
-#ifndef Examples_NullDevice_h
-#define Examples_NullDevice_h
+#pragma once
 
 #include <fairmq/Device.h>
 
@@ -26,5 +25,3 @@ protected:
     void Run() override;
 
 };
-
-#endif

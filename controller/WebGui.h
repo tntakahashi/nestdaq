@@ -1,5 +1,4 @@
-#ifndef WebGui_h
-#define WebGui_h
+#pragma once
 
 #include <functional>
 #include <list>
@@ -149,5 +148,3 @@ private:
 
     bool fRecreateTS{false};
 };
-
-#endif

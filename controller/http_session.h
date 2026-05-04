@@ -1,5 +1,4 @@
-#ifndef HTTP_Session_h
-#define HTTP_Session_h
+#pragma once
 
 #include <cstdint>
 #include <memory>
@@ -103,5 +102,3 @@ private:
     void on_write(bool close, beast::error_code ec, std::size_t bytes_transferred);
     void do_close();
 };
-
-#endif

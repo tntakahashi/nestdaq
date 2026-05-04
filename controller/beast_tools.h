@@ -1,5 +1,4 @@
-#ifndef MY_BOOST_NAMES_H_
-#define MY_BOOST_NAMES_H_
+#pragma once
 
 #include <iostream>
 
@@ -134,5 +133,3 @@ void handle_request(beast::string_view doc_root, http::request<Body, http::basic
     res.keep_alive(req.keep_alive());
     return send(std::move(res));
 }
-
-#endif

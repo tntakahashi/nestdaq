@@ -1,5 +1,4 @@
-#ifndef WebGui_Tools_h
-#define WebGui_Tools_h
+#pragma once
 
 #include <string>
 #include <string_view>
@@ -15,5 +14,3 @@ int ParseCommandLine(int argc, char* argv[], // NOLINT(cppcoreguidelines-avoid-c
 
 boost::property_tree::ptree to_json(std::string_view s);
 std::string to_string(const boost::property_tree::ptree& pt, bool pretty=true);
-
-#endif

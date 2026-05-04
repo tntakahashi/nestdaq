@@ -1,5 +1,4 @@
-#ifndef HTTP_WebSocketServer_h
-#define HTTP_WebSocketServer_h
+#pragma once
 
 // HTTP and WebSocket server using boost::beast
 
@@ -31,5 +30,3 @@ private:
     std::shared_ptr<net::signal_set> fSignals;
     std::vector<std::thread> fThreads;
 };
-
-#endif

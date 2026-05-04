@@ -1,5 +1,4 @@
-#ifndef DaqService_Plugins_TopologyConfig_h
-#define DaqService_Plugins_TopologyConfig_h
+#pragma once
 
 //#include <initializer_list>
 #include <memory>
@@ -125,5 +124,3 @@ private:
 };
 
 } // namespace daq::service
-
-#endif

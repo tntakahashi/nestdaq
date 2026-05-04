@@ -1,5 +1,4 @@
-#ifndef WEBSOCKET_HANDLE_H_
-#define WEBSOCKET_HANDLE_H_
+#pragma once
 
 #include <memory>
 #include <string>
@@ -12,6 +11,3 @@ void OnConnect(const std::shared_ptr<websocket_session> &session);
 void OnRead(unsigned int id, const std::string& message);
 void OnRead(unsigned int id, const std::vector<char>& message);
 void Write(unsigned int id, const std::string& message);
-
-
-#endif

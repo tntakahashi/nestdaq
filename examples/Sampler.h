@@ -1,5 +1,4 @@
-#ifndef Examples_Sampler_h
-#define Exapmles_Sampler_h
+#pragma once
 
 #include <cstdint>
 #include <string>
@@ -32,5 +31,3 @@ private:
     void Run() override;
 
 };
-
-#endif

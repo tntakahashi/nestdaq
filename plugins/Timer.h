@@ -1,5 +1,4 @@
-#ifndef DaqService_Timer_h
-#define DaqService_Timer_h
+#pragma once
 
 #include <functional>
 #include <memory>
@@ -35,5 +34,3 @@ private:
 };
 
 } // namespace daq::service
-
-#endif

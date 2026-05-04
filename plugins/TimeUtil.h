@@ -1,5 +1,4 @@
-#ifndef DaqService_Plugins_TimeUtil_h
-#define DaqService_Plugins_TimeUtil_h
+#pragma once
 
 #include <chrono>
 #include <string>
@@ -13,5 +12,3 @@ auto update_date(const std::chrono::system_clock::time_point &s,
 -> const std::pair<std::chrono::nanoseconds, std::chrono::system_clock::time_point>;
 
 } // namespace daq::service
-
-#endif

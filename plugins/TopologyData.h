@@ -1,5 +1,4 @@
-#ifndef DaqService_Plugins_TopologyData_h
-#define DaqService_Plugins_TopologyData_h
+#pragma once
 
 #include <map>
 #include <string>
@@ -47,5 +46,3 @@ struct LinkProperty {
 using MQChannel = std::map<std::string, SocketProperty>;
 
 } // namespae daq::service
-
-#endif

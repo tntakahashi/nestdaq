@@ -1,5 +1,4 @@
-#ifndef DaqService_Plugins_Plugin_h
-#define DaqService_Plugins_Plugin_h
+#pragma once
 
 // Redis client for DAQ service discovery
 
@@ -154,5 +153,3 @@ daq::service::PluginProgramOptions           // Free function which declares cus
 ) // end of macro: REGISTER_FAIRMQ_PLUGIN
 
 } // namespace daq::service
-
-#endif

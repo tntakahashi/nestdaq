@@ -1,5 +1,4 @@
-#ifndef WebSocket_Session_h
-#define WebSocket_Session_h
+#pragma once
 
 #include <utility>
 
@@ -46,5 +45,3 @@ private:
     void do_read();
     void on_read(beast::error_code ec, std::size_t bytes_transferred);
 };
-
-#endif

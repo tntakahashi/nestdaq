@@ -1,5 +1,4 @@
-#ifndef DaqService_Plugins_MetricsPlugin_h
-#define DaqService_Plugins_MetricsPlugin_h
+#pragma once
 
 #include <chrono>
 #include <cstdint>
@@ -221,5 +220,3 @@ daq::service::MetricsPluginProgramOptions
 ) // end of macro: REGISTER_FAIRMQ_PLUGIN
 
 } // namespace daq::service
-
-#endif
