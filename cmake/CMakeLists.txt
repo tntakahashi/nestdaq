@@ -23,6 +23,9 @@ include("${NESTDAQ_DEPENDENCIES_CMAKE_DIR}/FairLogger.cmake")
 set(FairMQ_VERSION "1.10.0" CACHE STRING "FairMQ version tag")
 include("${NESTDAQ_DEPENDENCIES_CMAKE_DIR}/FairMQ.cmake")
 
+set(Catch2_VERSION "3.14.0" CACHE STRING "Catch2 version tag")
+include("${NESTDAQ_DEPENDENCIES_CMAKE_DIR}/Catch2.cmake")
+
 option(WITH_REDIS_STACK "Build and install Redis Stack" ON)
 if(WITH_REDIS_STACK)
   set(Redis_VERSION "8.6.2" CACHE STRING "Redis version tag")

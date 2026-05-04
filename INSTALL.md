@@ -42,7 +42,7 @@ dnf -y install \
 ```
 
 ### Build and install external dependencies
-The following command installs ZeroMQ, Boost, FairLogger, FairMQ, hiredis, redis++, and Redis Stack. 
+The following command installs ZeroMQ, Boost, FairLogger, FairMQ, Catch2, hiredis, redis++, and Redis Stack.
 
 ```bash
 # download the source code
@@ -79,6 +79,7 @@ cmake --build ./build-external
 | [Boost](https://github.com/boostorg/boost)                               | 1.85.0            | `Boost_VERSION`                  | 
 | [FairLogger](https://github.com/FairRootGroup/FairLogger)                | 2.3.0             | `FairLogger_VERSION`             |
 | [FairMQ](https://github.com/FairRootGroup/FairMQ)                        | 1.10.0            | `FairMQ_VERSION`                 |
+| [Catch2](https://github.com/catchorg/Catch2)                             | 3.14.0            | `Catch2_VERSION`                 |
 | [hiredis](https://github.com/redis/hiredis)                              | 1.3.0             | `hiredis_VERSION`                |
 | [redis++](https://github.com/sewenew/redis-plus-plus)                    | 1.3.15            | `redis_plus_plus_VERSION`        |
 | [opentelemetry-cpp](https://github.com/open-telemetry/opentelemetry-cpp) | 1.24.0            | `opentelemetry-cpp_VERSION`      |
