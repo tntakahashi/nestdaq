@@ -1,5 +1,6 @@
 #pragma once
 
+#include <fairmq/ProgOptions.h>
 #include <fairmq/Version.h>
 
 #include <boost/program_options.hpp>
@@ -38,6 +39,7 @@ static constexpr int32_t kSeverityAlarm{12};
 static constexpr int32_t kSeverityError{13};
 static constexpr int32_t kSeverityCritical{14};
 static constexpr int32_t kSeverityFatal{15};
+static constexpr std::string_view kTelemetryConfigSubscriber{"nestdaq-telemetry"};
 
 struct TelemetryOptions {
     std::string library{kDefaultTelemetryLibrary};
@@ -350,6 +352,7 @@ public:
         fInitialize = Resolve<int (*)(const nestdaq_otel_config_v1*)>("nestdaq_otel_init_v1");
         fShutdown = Resolve<int (*)(uint64_t)>("nestdaq_otel_shutdown");
         fLastErrorFunction = Resolve<const char* (*)()>("nestdaq_otel_last_error");
+        fSetMinSeverity = Resolve<int (*)(int32_t)>("nestdaq_otel_set_min_severity");
 
         if (!fInitialize || !fShutdown) {
             fLastError = "telemetry library does not export the required nestdaq_otel_* C ABI";
@@ -358,6 +361,7 @@ public:
             fInitialize = nullptr;
             fShutdown = nullptr;
             fLastErrorFunction = nullptr;
+            fSetMinSeverity = nullptr;
             return false;
         }
 
@@ -379,6 +383,29 @@ public:
             }
             return false;
         }
+        return true;
+    }
+
+    auto SetMinSeverity(std::string_view severity) -> bool
+    {
+        return SetMinSeverity(SeverityToFairLoggerValue(severity));
+    }
+
+    auto SetMinSeverity(int32_t severity) -> bool
+    {
+        if (!fSetMinSeverity) {
+            return false;
+        }
+        const auto rc = fSetMinSeverity(severity);
+        if (rc != 0) {
+            if (fLastErrorFunction) {
+                if (const auto* error = fLastErrorFunction()) {
+                    fLastError = error;
+                }
+            }
+            return false;
+        }
+        fLastError.clear();
         return true;
     }
 
@@ -407,9 +434,30 @@ private:
     std::function<int(const nestdaq_otel_config_v1*)> fInitialize;
     std::function<int(uint64_t)> fShutdown;
     std::function<const char*()> fLastErrorFunction;
+    std::function<int(int32_t)> fSetMinSeverity;
     mutable bool fShutdownCalled{false};
     std::string fLastError;
 };
+
+inline auto SubscribeTelemetryOptionChanges(const fair::mq::ProgOptions& config,
+                                            TelemetryLibrary& telemetry) -> void
+{
+    config.SubscribeAsString(std::string{kTelemetryConfigSubscriber},
+                             [&telemetry](const fair::mq::PropertyChange::KeyType& key, std::string value) {
+                                 if (key != "otel-log-severity") {
+                                     return;
+                                 }
+                                 if (!telemetry.SetMinSeverity(value)) {
+                                     std::cerr << "Failed to update OTel log severity: "
+                                               << telemetry.GetLastError() << '\n';
+                                 }
+                             });
+}
+
+inline auto UnsubscribeTelemetryOptionChanges(const fair::mq::ProgOptions& config) -> void
+{
+    config.UnsubscribeAsString(std::string{kTelemetryConfigSubscriber});
+}
 
 inline auto AddTelemetryOptions(boost::program_options::options_description& options,
                                 std::string_view defaultServiceName = "nestdaq") -> void

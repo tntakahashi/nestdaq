@@ -68,6 +68,7 @@ int main(int argc, char* argv[])
             nestdaq::telemetry::ParseTelemetryOptions(arguments.argc(), arguments.argv.data(), "nestdaq");
         auto telemetry = std::make_unique<nestdaq::telemetry::TelemetryLibrary>();
         auto telemetryLoaded = false;
+        auto telemetryInitialized = false;
 
         if (!telemetryOptions.library.empty()) {
             telemetryLoaded = telemetry->Load(telemetryOptions.library);
@@ -85,13 +86,15 @@ int main(int argc, char* argv[])
                     if (telemetryOptions.required) {
                         return 1;
                     }
+                } else {
+                    telemetryInitialized = true;
                 }
             }
         }
 
         DeviceRunner runner{arguments.argc(), arguments.argv.data(), false};
 
-        runner.AddHook<SetCustomCmdLineOptions>([](DeviceRunner& r) {
+        runner.AddHook<SetCustomCmdLineOptions>([telemetryInitialized, telemetry = telemetry.get()](DeviceRunner& r) {
             boost::program_options::options_description customOptions("Custom options");
             addCustomOptions(customOptions);
             r.fConfig.AddToCmdLineOptions(customOptions);
@@ -99,6 +102,10 @@ int main(int argc, char* argv[])
             boost::program_options::options_description otelOptions("OpenTelemetry options");
             nestdaq::telemetry::AddTelemetryOptions(otelOptions, "nestdaq");
             r.fConfig.AddToCmdLineOptions(otelOptions);
+
+            if (telemetryInitialized) {
+                nestdaq::telemetry::SubscribeTelemetryOptionChanges(r.fConfig, *telemetry);
+            }
         });
 
         runner.AddHook<InstantiateDevice>([](DeviceRunner& r) {
@@ -106,6 +113,9 @@ int main(int argc, char* argv[])
         });
 
         const auto rc = runner.Run();
+        if (telemetryInitialized) {
+            nestdaq::telemetry::UnsubscribeTelemetryOptionChanges(runner.fConfig);
+        }
         if (telemetryLoaded) {
             telemetry->ShutdownTelemetry(telemetryOptions.timeoutMs);
         }
