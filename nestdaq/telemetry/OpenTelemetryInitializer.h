@@ -46,11 +46,11 @@ typedef struct nestdaq_otel_config_v1 {
     const char *endpoint_grpc;       /* Optional OTLP gRPC logs endpoint. */
 } nestdaq_otel_config_v1;
 
-NESTDAQ_OTEL_EXPORT int nestdaq_otel_init_v1(const nestdaq_otel_config_v1 *config);
-NESTDAQ_OTEL_EXPORT int nestdaq_otel_set_min_severity(int32_t severity);
 NESTDAQ_OTEL_EXPORT int nestdaq_otel_force_flush(uint64_t timeout_ms);
-NESTDAQ_OTEL_EXPORT int nestdaq_otel_shutdown(uint64_t timeout_ms);
+NESTDAQ_OTEL_EXPORT int nestdaq_otel_init_v1(const nestdaq_otel_config_v1 *config);
 NESTDAQ_OTEL_EXPORT const char *nestdaq_otel_last_error(void);
+NESTDAQ_OTEL_EXPORT int nestdaq_otel_set_min_severity(int32_t severity);
+NESTDAQ_OTEL_EXPORT int nestdaq_otel_shutdown(uint64_t timeout_ms);
 
 #ifdef __cplusplus
 }
@@ -63,11 +63,11 @@ class OpenTelemetryInitializer {
 public:
     OpenTelemetryInitializer() = delete;
 
-    static auto Initialize(const nestdaq_otel_config_v1 *config) -> int;
-    static auto SetMinSeverity(int32_t severity) -> int;
     static auto ForceFlush(uint64_t timeout_ms) -> int;
-    static auto Shutdown(uint64_t timeout_ms) -> int;
+    static auto Initialize(const nestdaq_otel_config_v1 *config) -> int;
     static auto LastError() noexcept -> const char *;
+    static auto SetMinSeverity(int32_t severity) -> int;
+    static auto Shutdown(uint64_t timeout_ms) -> int;
 };
 
 } // namespace nestdaq

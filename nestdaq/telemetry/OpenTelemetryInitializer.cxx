@@ -55,153 +55,28 @@ struct RuntimeState {
     std::string lastError;
 };
 
-auto State() -> RuntimeState &
-{
-    static auto state = RuntimeState{};
-    return state;
-}
-
-auto SetLastError(std::string message) -> int
-{
-    auto &state = State();
-    std::lock_guard lock{state.mutex};
-    state.lastError = std::move(message);
-    return NESTDAQ_OTEL_ERROR;
-}
-
-auto ClearLastError() -> void
-{
-    auto &state = State();
-    std::lock_guard lock{state.mutex};
-    state.lastError.clear();
-}
-
-auto IsEmpty(const char *value) noexcept -> bool
-{
-    return value == nullptr || *value == '\0';
-}
-
-auto ToLower(std::string_view value) -> std::string
-{
-    auto out = std::string{value};
-    std::transform(out.begin(), out.end(), out.begin(), [](unsigned char c) {
-        return static_cast<char>(std::tolower(c));
-    });
-    return out;
-}
-
-auto Trim(std::string_view value) -> std::string_view
-{
-    while (!value.empty() && std::isspace(static_cast<unsigned char>(value.front())) != 0) {
-        value.remove_prefix(1);
-    }
-    while (!value.empty() && std::isspace(static_cast<unsigned char>(value.back())) != 0) {
-        value.remove_suffix(1);
-    }
-    return value;
-}
-
-auto ParseProtocolToken(std::string_view protocol, Protocol &out) -> bool
-{
-    const auto normalized = ToLower(protocol);
-    if (normalized == "console") {
-        out = Protocol::Console;
-        return true;
-    }
-    if (normalized == "otlp-http" || normalized == "http" || normalized == "otlp_http") {
-        out = Protocol::OtlpHttp;
-        return true;
-    }
-    if (normalized == "otlp-grpc" || normalized == "grpc" || normalized == "otlp_grpc") {
-        out = Protocol::OtlpGrpc;
-        return true;
-    }
-    return false;
-}
-
-auto ParseProtocols(const char *protocols, std::vector<Protocol> &out) -> bool
-{
-    if (protocols == nullptr) {
-        out.emplace_back(Protocol::Console);
-        return true;
-    }
-
-    auto input = std::string_view{protocols};
-    if (input.empty()) {
-        return true;
-    }
-
-    while (!input.empty()) {
-        const auto comma = input.find(',');
-        auto token = Trim(input.substr(0, comma));
-        input = comma == std::string_view::npos ? std::string_view{} :
-                input.substr(comma + 1);
-
-        if (token.empty()) {
-            continue;
-        }
-
-        auto protocol = Protocol::Console;
-        if (!ParseProtocolToken(token, protocol)) {
-            return false;
-        }
-        out.emplace_back(protocol);
-    }
-
-    return true;
-}
-
-auto ValidateSeverity(int32_t severity) noexcept -> bool
-{
-    return severity >= 0 && severity <= kMaxFairLoggerSeverity;
-}
-
-auto TimeoutFromMs(uint64_t timeoutMs) noexcept -> std::chrono::microseconds
-{
-    if (timeoutMs == 0) {
-        return (std::chrono::microseconds::max)();
-    }
-    return std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::milliseconds{timeoutMs});
-}
-
-auto ParseHeaders(const char *headers) -> opentelemetry::exporter::otlp::OtlpHeaders
-{
-    auto parsed = opentelemetry::exporter::otlp::OtlpHeaders{};
-    if (IsEmpty(headers)) {
-        return parsed;
-    }
-
-    auto input = std::string_view{headers};
-    while (!input.empty()) {
-        const auto comma = input.find(',');
-        auto item = input.substr(0, comma);
-        input = comma == std::string_view::npos ? std::string_view{} :
-                input.substr(comma + 1);
-
-        const auto equals = item.find('=');
-        if (equals == std::string_view::npos || equals == 0) {
-            continue;
-        }
-        auto key = item.substr(0, equals);
-        auto value = item.substr(equals + 1);
-        while (!key.empty() && std::isspace(static_cast<unsigned char>(key.front())) != 0) {
-            key.remove_prefix(1);
-        }
-        while (!key.empty() && std::isspace(static_cast<unsigned char>(key.back())) != 0) {
-            key.remove_suffix(1);
-        }
-        while (!value.empty() && std::isspace(static_cast<unsigned char>(value.front())) != 0) {
-            value.remove_prefix(1);
-        }
-        while (!value.empty() && std::isspace(static_cast<unsigned char>(value.back())) != 0) {
-            value.remove_suffix(1);
-        }
-        if (!key.empty()) {
-            parsed.emplace(std::string{key}, std::string{value});
-        }
-    }
-    return parsed;
-}
+auto AddStringAttribute(opentelemetry::sdk::resource::ResourceAttributes &attributes,
+                        const char *key,
+                        const char *value) -> void;
+auto ClearLastError() -> void;
+auto CreateExporter(const nestdaq_otel_config_v1 &config, Protocol protocol)
+-> std::unique_ptr<opentelemetry::sdk::logs::LogRecordExporter>;
+auto CreateProcessor(std::unique_ptr<opentelemetry::sdk::logs::LogRecordExporter> exporter,
+                     Protocol protocol) -> std::unique_ptr<opentelemetry::sdk::logs::LogRecordProcessor>;
+auto GrpcEndpoint(const nestdaq_otel_config_v1 &config) -> const char *;
+auto HttpEndpoint(const nestdaq_otel_config_v1 &config) -> const char *;
+auto InstallNoopProvider() -> void;
+auto IsEmpty(const char *value) noexcept -> bool;
+auto MakeResource(const nestdaq_otel_config_v1 &config) -> opentelemetry::sdk::resource::Resource;
+auto ParseHeaders(const char *headers) -> opentelemetry::exporter::otlp::OtlpHeaders;
+auto ParseProtocols(const char *protocols, std::vector<Protocol> &out) -> bool;
+auto ParseProtocolToken(std::string_view protocol, Protocol &out) -> bool;
+auto SetLastError(std::string message) -> int;
+auto State() -> RuntimeState &;
+auto TimeoutFromMs(uint64_t timeoutMs) noexcept -> std::chrono::microseconds;
+auto ToLower(std::string_view value) -> std::string;
+auto Trim(std::string_view value) -> std::string_view;
+auto ValidateSeverity(int32_t severity) noexcept -> bool;
 
 auto AddStringAttribute(opentelemetry::sdk::resource::ResourceAttributes &attributes,
                         const char *key,
@@ -212,48 +87,11 @@ auto AddStringAttribute(opentelemetry::sdk::resource::ResourceAttributes &attrib
     }
 }
 
-auto MakeResource(const nestdaq_otel_config_v1 &config) -> opentelemetry::sdk::resource::Resource
+auto ClearLastError() -> void
 {
-    auto attributes = opentelemetry::sdk::resource::ResourceAttributes{};
-
-    attributes.emplace("service.name", std::string{IsEmpty(config.service_name) ? "nestdaq" : config.service_name});
-    attributes.emplace("service.version", std::string{NESTDAQ_VERSION});
-
-    AddStringAttribute(attributes, "service.namespace", config.service_namespace);
-    AddStringAttribute(attributes, "service.instance.id", config.service_instance_id);
-    AddStringAttribute(attributes, "fairmq.id", config.fairmq_id);
-    AddStringAttribute(attributes, "fairmq.device", config.fairmq_device);
-    AddStringAttribute(attributes, "fairmq.session", config.fairmq_session);
-    AddStringAttribute(attributes, "fairmq.transport", config.fairmq_transport);
-    AddStringAttribute(attributes, "fairmq.git_version", config.fairmq_git_version);
-    AddStringAttribute(attributes, "fairmq.build_type", config.fairmq_build_type);
-    AddStringAttribute(attributes, "fairmq.repo_url", config.fairmq_repo_url);
-    AddStringAttribute(attributes, "fairmq.license", config.fairmq_license);
-    AddStringAttribute(attributes, "fairmq.copyright", config.fairmq_copyright);
-
-    return opentelemetry::sdk::resource::Resource::Create(attributes);
-}
-
-auto HttpEndpoint(const nestdaq_otel_config_v1 &config) -> const char *
-{
-    if (!IsEmpty(config.endpoint_http)) {
-        return config.endpoint_http;
-    }
-    if (!IsEmpty(config.endpoint)) {
-        return config.endpoint;
-    }
-    return kDefaultHttpEndpoint.data();
-}
-
-auto GrpcEndpoint(const nestdaq_otel_config_v1 &config) -> const char *
-{
-    if (!IsEmpty(config.endpoint_grpc)) {
-        return config.endpoint_grpc;
-    }
-    if (!IsEmpty(config.endpoint)) {
-        return config.endpoint;
-    }
-    return kDefaultGrpcEndpoint.data();
+    auto &state = State();
+    std::lock_guard lock{state.mutex};
+    state.lastError.clear();
 }
 
 auto CreateExporter(const nestdaq_otel_config_v1 &config, Protocol protocol)
@@ -305,6 +143,28 @@ auto CreateProcessor(std::unique_ptr<opentelemetry::sdk::logs::LogRecordExporter
     return opentelemetry::sdk::logs::BatchLogRecordProcessorFactory::Create(std::move(exporter), options);
 }
 
+auto GrpcEndpoint(const nestdaq_otel_config_v1 &config) -> const char *
+{
+    if (!IsEmpty(config.endpoint_grpc)) {
+        return config.endpoint_grpc;
+    }
+    if (!IsEmpty(config.endpoint)) {
+        return config.endpoint;
+    }
+    return kDefaultGrpcEndpoint.data();
+}
+
+auto HttpEndpoint(const nestdaq_otel_config_v1 &config) -> const char *
+{
+    if (!IsEmpty(config.endpoint_http)) {
+        return config.endpoint_http;
+    }
+    if (!IsEmpty(config.endpoint)) {
+        return config.endpoint;
+    }
+    return kDefaultHttpEndpoint.data();
+}
+
 auto InstallNoopProvider() -> void
 {
     opentelemetry::logs::Provider::SetLoggerProvider(
@@ -313,7 +173,194 @@ auto InstallNoopProvider() -> void
     });
 }
 
+auto IsEmpty(const char *value) noexcept -> bool
+{
+    return value == nullptr || *value == '\0';
+}
+
+auto MakeResource(const nestdaq_otel_config_v1 &config) -> opentelemetry::sdk::resource::Resource
+{
+    auto attributes = opentelemetry::sdk::resource::ResourceAttributes{};
+
+    attributes.emplace("service.name", std::string{IsEmpty(config.service_name) ? "nestdaq" : config.service_name});
+    attributes.emplace("service.version", std::string{NESTDAQ_VERSION});
+
+    AddStringAttribute(attributes, "service.namespace", config.service_namespace);
+    AddStringAttribute(attributes, "service.instance.id", config.service_instance_id);
+    AddStringAttribute(attributes, "fairmq.id", config.fairmq_id);
+    AddStringAttribute(attributes, "fairmq.device", config.fairmq_device);
+    AddStringAttribute(attributes, "fairmq.session", config.fairmq_session);
+    AddStringAttribute(attributes, "fairmq.transport", config.fairmq_transport);
+    AddStringAttribute(attributes, "fairmq.git_version", config.fairmq_git_version);
+    AddStringAttribute(attributes, "fairmq.build_type", config.fairmq_build_type);
+    AddStringAttribute(attributes, "fairmq.repo_url", config.fairmq_repo_url);
+    AddStringAttribute(attributes, "fairmq.license", config.fairmq_license);
+    AddStringAttribute(attributes, "fairmq.copyright", config.fairmq_copyright);
+
+    return opentelemetry::sdk::resource::Resource::Create(attributes);
+}
+
+auto ParseHeaders(const char *headers) -> opentelemetry::exporter::otlp::OtlpHeaders
+{
+    auto parsed = opentelemetry::exporter::otlp::OtlpHeaders{};
+    if (IsEmpty(headers)) {
+        return parsed;
+    }
+
+    auto input = std::string_view{headers};
+    while (!input.empty()) {
+        const auto comma = input.find(',');
+        auto item = input.substr(0, comma);
+        input = comma == std::string_view::npos ? std::string_view{} :
+                input.substr(comma + 1);
+
+        const auto equals = item.find('=');
+        if (equals == std::string_view::npos || equals == 0) {
+            continue;
+        }
+        auto key = item.substr(0, equals);
+        auto value = item.substr(equals + 1);
+        while (!key.empty() && std::isspace(static_cast<unsigned char>(key.front())) != 0) {
+            key.remove_prefix(1);
+        }
+        while (!key.empty() && std::isspace(static_cast<unsigned char>(key.back())) != 0) {
+            key.remove_suffix(1);
+        }
+        while (!value.empty() && std::isspace(static_cast<unsigned char>(value.front())) != 0) {
+            value.remove_prefix(1);
+        }
+        while (!value.empty() && std::isspace(static_cast<unsigned char>(value.back())) != 0) {
+            value.remove_suffix(1);
+        }
+        if (!key.empty()) {
+            parsed.emplace(std::string{key}, std::string{value});
+        }
+    }
+    return parsed;
+}
+
+auto ParseProtocols(const char *protocols, std::vector<Protocol> &out) -> bool
+{
+    if (protocols == nullptr) {
+        out.emplace_back(Protocol::Console);
+        return true;
+    }
+
+    auto input = std::string_view{protocols};
+    if (input.empty()) {
+        return true;
+    }
+
+    while (!input.empty()) {
+        const auto comma = input.find(',');
+        auto token = Trim(input.substr(0, comma));
+        input = comma == std::string_view::npos ? std::string_view{} :
+                input.substr(comma + 1);
+
+        if (token.empty()) {
+            continue;
+        }
+
+        auto protocol = Protocol::Console;
+        if (!ParseProtocolToken(token, protocol)) {
+            return false;
+        }
+        out.emplace_back(protocol);
+    }
+
+    return true;
+}
+
+auto ParseProtocolToken(std::string_view protocol, Protocol &out) -> bool
+{
+    const auto normalized = ToLower(protocol);
+    if (normalized == "console") {
+        out = Protocol::Console;
+        return true;
+    }
+    if (normalized == "otlp-http" || normalized == "http" || normalized == "otlp_http") {
+        out = Protocol::OtlpHttp;
+        return true;
+    }
+    if (normalized == "otlp-grpc" || normalized == "grpc" || normalized == "otlp_grpc") {
+        out = Protocol::OtlpGrpc;
+        return true;
+    }
+    return false;
+}
+
+auto SetLastError(std::string message) -> int
+{
+    auto &state = State();
+    std::lock_guard lock{state.mutex};
+    state.lastError = std::move(message);
+    return NESTDAQ_OTEL_ERROR;
+}
+
+auto State() -> RuntimeState &
+{
+    static auto state = RuntimeState{};
+    return state;
+}
+
+auto TimeoutFromMs(uint64_t timeoutMs) noexcept -> std::chrono::microseconds
+{
+    if (timeoutMs == 0) {
+        return (std::chrono::microseconds::max)();
+    }
+    return std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::milliseconds{timeoutMs});
+}
+
+auto ToLower(std::string_view value) -> std::string
+{
+    auto out = std::string{value};
+    std::transform(out.begin(), out.end(), out.begin(), [](unsigned char c) {
+        return static_cast<char>(std::tolower(c));
+    });
+    return out;
+}
+
+auto Trim(std::string_view value) -> std::string_view
+{
+    while (!value.empty() && std::isspace(static_cast<unsigned char>(value.front())) != 0) {
+        value.remove_prefix(1);
+    }
+    while (!value.empty() && std::isspace(static_cast<unsigned char>(value.back())) != 0) {
+        value.remove_suffix(1);
+    }
+    return value;
+}
+
+auto ValidateSeverity(int32_t severity) noexcept -> bool
+{
+    return severity >= 0 && severity <= kMaxFairLoggerSeverity;
+}
+
 } // namespace
+
+auto OpenTelemetryInitializer::ForceFlush(uint64_t timeout_ms) -> int
+{
+    try {
+        std::shared_ptr<opentelemetry::sdk::logs::LoggerProvider> provider;
+        {
+            auto &state = State();
+            std::lock_guard lock{state.mutex};
+            provider = state.provider;
+        }
+        if (!provider) {
+            return SetLastError("OpenTelemetry logger provider is not initialized");
+        }
+        if (!provider->ForceFlush(TimeoutFromMs(timeout_ms))) {
+            return SetLastError("OpenTelemetry force flush failed");
+        }
+        ClearLastError();
+        return NESTDAQ_OTEL_OK;
+    } catch (const std::exception &ex) {
+        return SetLastError(ex.what());
+    } catch (...) {
+        return SetLastError("unknown OpenTelemetry force flush error");
+    }
+}
 
 auto OpenTelemetryInitializer::Initialize(const nestdaq_otel_config_v1 *config) -> int
 {
@@ -401,6 +448,13 @@ auto OpenTelemetryInitializer::Initialize(const nestdaq_otel_config_v1 *config) 
     }
 }
 
+auto OpenTelemetryInitializer::LastError() noexcept -> const char *
+{
+    auto &state = State();
+    std::lock_guard lock{state.mutex};
+    return state.lastError.data();
+}
+
 auto OpenTelemetryInitializer::SetMinSeverity(int32_t severity) -> int
 {
     if (!ValidateSeverity(severity)) {
@@ -409,30 +463,6 @@ auto OpenTelemetryInitializer::SetMinSeverity(int32_t severity) -> int
     FairLoggerOpenTelemetrySink::SetMinSeverity(severity);
     ClearLastError();
     return NESTDAQ_OTEL_OK;
-}
-
-auto OpenTelemetryInitializer::ForceFlush(uint64_t timeout_ms) -> int
-{
-    try {
-        std::shared_ptr<opentelemetry::sdk::logs::LoggerProvider> provider;
-        {
-            auto &state = State();
-            std::lock_guard lock{state.mutex};
-            provider = state.provider;
-        }
-        if (!provider) {
-            return SetLastError("OpenTelemetry logger provider is not initialized");
-        }
-        if (!provider->ForceFlush(TimeoutFromMs(timeout_ms))) {
-            return SetLastError("OpenTelemetry force flush failed");
-        }
-        ClearLastError();
-        return NESTDAQ_OTEL_OK;
-    } catch (const std::exception &ex) {
-        return SetLastError(ex.what());
-    } catch (...) {
-        return SetLastError("unknown OpenTelemetry force flush error");
-    }
 }
 
 auto OpenTelemetryInitializer::Shutdown(uint64_t timeout_ms) -> int
@@ -461,20 +491,23 @@ auto OpenTelemetryInitializer::Shutdown(uint64_t timeout_ms) -> int
     }
 }
 
-auto OpenTelemetryInitializer::LastError() noexcept -> const char *
-{
-    auto &state = State();
-    std::lock_guard lock{state.mutex};
-    return state.lastError.data();
-}
-
 } // namespace nestdaq
 
 extern "C" {
 
+    NESTDAQ_OTEL_EXPORT int nestdaq_otel_force_flush(uint64_t timeout_ms)
+    {
+        return nestdaq::OpenTelemetryInitializer::ForceFlush(timeout_ms);
+    }
+
     NESTDAQ_OTEL_EXPORT int nestdaq_otel_init_v1(const nestdaq_otel_config_v1 *config)
     {
         return nestdaq::OpenTelemetryInitializer::Initialize(config);
+    }
+
+    NESTDAQ_OTEL_EXPORT const char *nestdaq_otel_last_error(void)
+    {
+        return nestdaq::OpenTelemetryInitializer::LastError();
     }
 
     NESTDAQ_OTEL_EXPORT int nestdaq_otel_set_min_severity(int32_t severity)
@@ -482,19 +515,9 @@ extern "C" {
         return nestdaq::OpenTelemetryInitializer::SetMinSeverity(severity);
     }
 
-    NESTDAQ_OTEL_EXPORT int nestdaq_otel_force_flush(uint64_t timeout_ms)
-    {
-        return nestdaq::OpenTelemetryInitializer::ForceFlush(timeout_ms);
-    }
-
     NESTDAQ_OTEL_EXPORT int nestdaq_otel_shutdown(uint64_t timeout_ms)
     {
         return nestdaq::OpenTelemetryInitializer::Shutdown(timeout_ms);
-    }
-
-    NESTDAQ_OTEL_EXPORT const char *nestdaq_otel_last_error(void)
-    {
-        return nestdaq::OpenTelemetryInitializer::LastError();
     }
 
 }

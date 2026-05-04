@@ -40,49 +40,14 @@ constexpr std::string_view kLibraryName{"NestDAQ"};
 constexpr std::string_view kSchemaUrl;
 constexpr std::string_view kSinkKey{"nestdaq-otel-log-sink"};
 
-auto MinSeverity() -> std::atomic<int32_t>&
-{
-    static std::atomic<int32_t> value{static_cast<int32_t>(fair::Severity::trace)};
-    return value;
-}
-
-auto SinkRegistered() -> std::atomic<bool>&
-{
-    static std::atomic<bool> value{false};
-    return value;
-}
-
-auto ToStringView(std::string_view value) noexcept -> opentelemetry::nostd::string_view
-{
-    return {value.data(), value.size()};
-}
-
-auto ParseLine(std::string_view line) noexcept -> int64_t
-{
-    int64_t value = 0;
-    const auto *first = line.data();
-    const auto *last = line.data() + line.size();
-    const auto result = std::from_chars(first, last, value);
-    if (result.ec != std::errc{} || result.ptr != last) {
-        return 0;
-    }
-    return value;
-}
-
-auto CurrentThreadId() noexcept -> uint64_t
-{
-#if defined(__linux__)
-    // Use the native Linux TID instead of std::this_thread::get_id() so logs can be correlated
-    // with /proc, top -H, debuggers, and profilers. This matches spdlog's Linux thread id behavior.
-    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-vararg)
-    static thread_local const auto tid = static_cast<uint64_t>(::syscall(SYS_gettid));
-    return tid;
-#else
-    static thread_local const auto tid =
-        static_cast<uint64_t>(std::hash<std::thread::id> {}(std::this_thread::get_id()));
-    return tid;
-#endif
-}
+auto ConvertSeverity(fair::Severity severity) noexcept -> opentelemetry::logs::Severity;
+auto CurrentThreadId() noexcept -> uint64_t;
+auto EmitLogRecord(const std::string &content, const fair::LogMetaData &metadata) noexcept -> void;
+auto MinSeverity() -> std::atomic<int32_t>&;
+auto ParseLine(std::string_view line) noexcept -> int64_t;
+auto ShouldEmit(fair::Severity severity) noexcept -> bool;
+auto SinkRegistered() -> std::atomic<bool>&;
+auto ToStringView(std::string_view value) noexcept -> opentelemetry::nostd::string_view;
 
 auto ConvertSeverity(fair::Severity severity) noexcept -> opentelemetry::logs::Severity
 {
@@ -121,10 +86,19 @@ auto ConvertSeverity(fair::Severity severity) noexcept -> opentelemetry::logs::S
     }
 }
 
-auto ShouldEmit(fair::Severity severity) noexcept -> bool
+auto CurrentThreadId() noexcept -> uint64_t
 {
-    const auto minSeverity = static_cast<fair::Severity>(MinSeverity().load(std::memory_order_relaxed));
-    return minSeverity != fair::Severity::nolog && severity >= minSeverity;
+#if defined(__linux__)
+    // Use the native Linux TID instead of std::this_thread::get_id() so logs can be correlated
+    // with /proc, top -H, debuggers, and profilers. This matches spdlog's Linux thread id behavior.
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-vararg)
+    static thread_local const auto tid = static_cast<uint64_t>(::syscall(SYS_gettid));
+    return tid;
+#else
+    static thread_local const auto tid =
+        static_cast<uint64_t>(std::hash<std::thread::id> {}(std::this_thread::get_id()));
+    return tid;
+#endif
 }
 
 auto EmitLogRecord(const std::string &content, const fair::LogMetaData &metadata) noexcept -> void
@@ -177,7 +151,47 @@ auto EmitLogRecord(const std::string &content, const fair::LogMetaData &metadata
     }
 }
 
+auto MinSeverity() -> std::atomic<int32_t>&
+{
+    static std::atomic<int32_t> value{static_cast<int32_t>(fair::Severity::trace)};
+    return value;
+}
+
+auto ParseLine(std::string_view line) noexcept -> int64_t
+{
+    int64_t value = 0;
+    const auto *first = line.data();
+    const auto *last = line.data() + line.size();
+    const auto result = std::from_chars(first, last, value);
+    if (result.ec != std::errc{} || result.ptr != last) {
+        return 0;
+    }
+    return value;
+}
+
+auto ShouldEmit(fair::Severity severity) noexcept -> bool
+{
+    const auto minSeverity = static_cast<fair::Severity>(MinSeverity().load(std::memory_order_relaxed));
+    return minSeverity != fair::Severity::nolog && severity >= minSeverity;
+}
+
+auto SinkRegistered() -> std::atomic<bool>&
+{
+    static std::atomic<bool> value{false};
+    return value;
+}
+
+auto ToStringView(std::string_view value) noexcept -> opentelemetry::nostd::string_view
+{
+    return {value.data(), value.size()};
+}
+
 } // namespace
+
+auto FairLoggerOpenTelemetrySink::GetMinSeverity() noexcept -> int32_t
+{
+    return MinSeverity().load(std::memory_order_acquire);
+}
 
 auto FairLoggerOpenTelemetrySink::Initialize() -> void
 {
@@ -198,6 +212,11 @@ auto FairLoggerOpenTelemetrySink::Initialize() -> void
     }
 }
 
+auto FairLoggerOpenTelemetrySink::SetMinSeverity(int32_t severity) noexcept -> void
+{
+    MinSeverity().store(severity, std::memory_order_release);
+}
+
 auto FairLoggerOpenTelemetrySink::Shutdown() noexcept -> void
 {
     bool expected = true;
@@ -212,16 +231,6 @@ auto FairLoggerOpenTelemetrySink::Shutdown() noexcept -> void
     } catch (...) {
         std::cerr << "FairLoggerOpenTelemetrySink: failed to remove sink\n";
     }
-}
-
-auto FairLoggerOpenTelemetrySink::SetMinSeverity(int32_t severity) noexcept -> void
-{
-    MinSeverity().store(severity, std::memory_order_release);
-}
-
-auto FairLoggerOpenTelemetrySink::GetMinSeverity() noexcept -> int32_t
-{
-    return MinSeverity().load(std::memory_order_acquire);
 }
 
 } // namespace nestdaq

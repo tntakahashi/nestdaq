@@ -15,11 +15,11 @@
 #include <string_view>
 #include <vector>
 
-// To be implemented by the user to return a child class of fair::mq::Device.
-std::unique_ptr<fair::mq::Device> getDevice(const fair::mq::ProgOptions& config);
-
 // To be implemented by the user to add custom command line options.
 void addCustomOptions(boost::program_options::options_description& options);
+
+// To be implemented by the user to return a child class of fair::mq::Device.
+std::unique_ptr<fair::mq::Device> getDevice(const fair::mq::ProgOptions& config);
 
 namespace nestdaq::run_device_detail {
 
