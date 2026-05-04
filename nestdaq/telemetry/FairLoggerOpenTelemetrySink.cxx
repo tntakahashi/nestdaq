@@ -10,6 +10,11 @@
 #include <string_view>
 #include <thread>
 
+#if defined(__linux__)
+#  include <sys/syscall.h>
+#  include <unistd.h>
+#endif
+
 #include <fairlogger/Logger.h>
 
 #include <opentelemetry/common/timestamp.h>
@@ -18,6 +23,8 @@
 #include <opentelemetry/logs/provider.h>
 #include <opentelemetry/logs/severity.h>
 #include <opentelemetry/nostd/string_view.h>
+#include <opentelemetry/semconv/code_attributes.h>
+#include <opentelemetry/semconv/incubating/thread_attributes.h>
 
 #if __has_include("nestdaq/version.h")
 #  include "nestdaq/version.h"
@@ -60,6 +67,21 @@ auto ParseLine(std::string_view line) noexcept -> int64_t
         return 0;
     }
     return value;
+}
+
+auto CurrentThreadId() noexcept -> uint64_t
+{
+#if defined(__linux__)
+    // Use the native Linux TID instead of std::this_thread::get_id() so logs can be correlated
+    // with /proc, top -H, debuggers, and profilers. This matches spdlog's Linux thread id behavior.
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-vararg)
+    static thread_local const auto tid = static_cast<uint64_t>(::syscall(SYS_gettid));
+    return tid;
+#else
+    static thread_local const auto tid =
+        static_cast<uint64_t>(std::hash<std::thread::id> {}(std::this_thread::get_id()));
+    return tid;
+#endif
 }
 
 auto ConvertSeverity(fair::Severity severity) noexcept -> opentelemetry::logs::Severity
@@ -136,17 +158,16 @@ auto EmitLogRecord(const std::string &content, const fair::LogMetaData &metadata
             logRecord->SetAttribute("process.name", ToStringView(metadata.process_name));
         }
         if (!metadata.file.empty()) {
-            logRecord->SetAttribute("code.file.path", ToStringView(metadata.file));
+            logRecord->SetAttribute(opentelemetry::semconv::code::kCodeFilePath, ToStringView(metadata.file));
         }
         const auto line = ParseLine(metadata.line);
         if (line > 0) {
-            logRecord->SetAttribute("code.line.number", line);
+            logRecord->SetAttribute(opentelemetry::semconv::code::kCodeLineNumber, line);
         }
         if (!metadata.func.empty()) {
-            logRecord->SetAttribute("code.function.name", ToStringView(metadata.func));
+            logRecord->SetAttribute(opentelemetry::semconv::code::kCodeFunctionName, ToStringView(metadata.func));
         }
-        logRecord->SetAttribute("thread.id",
-                                static_cast<int64_t>(std::hash<std::thread::id> {}(std::this_thread::get_id())));
+        logRecord->SetAttribute(opentelemetry::semconv::thread::kThreadId, CurrentThreadId());
 
         logger->EmitLogRecord(std::move(logRecord));
     } catch (const std::exception &ex) {
