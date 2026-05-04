@@ -1,6 +1,26 @@
 # NestDAQ
 A streaming DAQ implementation for the particle measurements
 
+## Quick links
+
+- [Installation](INSTALL.md): prerequisites, external dependencies, NestDAQ build, examples, and optional documentation generation.
+- [Examples](examples/): sample NestDAQ devices built as a separate CMake project.
+- [Scripts](scripts/README.md): helper scripts and topology examples for running DAQ processes.
+- [Web controller assets](share/controller/README.md): static files used by `daq-webctl`.
+- [OpenTelemetry Collector Compose setup](share/otel-collector-compose/README.md): local OpenTelemetry, OpenSearch, and OpenSearch Dashboards stack.
+
+## Directory layout
+
+| Path                                     | Purpose |
+| :--                                      | :--     |
+| [cmake/](cmake/)                         | External dependency build project. |
+| [nestdaq/](nestdaq/)                     | Public NestDAQ headers and runtime helpers. |
+| [nestdaq/telemetry/](nestdaq/telemetry/) | Optional OpenTelemetry integration. |
+| [plugins/](plugins/)                     | FairMQ plugins for DAQ service, metrics, and parameter configuration. |
+| [controller/](controller/)               | `daq-webctl` implementation. |
+| [examples/](examples/)                   | Example devices such as `Sampler`, `Sink`, and `NullDevice`. |
+| [scripts/](scripts/)                     | Runtime helper scripts and topology examples. |
+| [share/](share/)                         | Installed runtime/configuration assets. |
 
 ## Tested system
 | System    | Version | Compiler                     | CMake           |
