@@ -122,8 +122,25 @@ if(WITH_DOCS)
   find_package(Doxygen QUIET)
 endif()
 if(WITH_DOCS AND Doxygen_FOUND)
+  set(NESTDAQ_DOXYGEN_AWESOME_DEFAULT_DIR "")
+  foreach(prefix IN LISTS CMAKE_PREFIX_PATH)
+    set(candidate "${prefix}/${CMAKE_INSTALL_DATADIR}/doxygen-awesome-css")
+    if(EXISTS "${candidate}")
+      set(NESTDAQ_DOXYGEN_AWESOME_DEFAULT_DIR "${candidate}")
+      break()
+    endif()
+    if(NOT NESTDAQ_DOXYGEN_AWESOME_DEFAULT_DIR)
+      set(NESTDAQ_DOXYGEN_AWESOME_DEFAULT_DIR "${candidate}")
+    endif()
+  endforeach()
+  if(NOT NESTDAQ_DOXYGEN_AWESOME_DEFAULT_DIR)
+    set(NESTDAQ_DOXYGEN_AWESOME_DEFAULT_DIR
+      "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_DATADIR}/doxygen-awesome-css")
+  endif()
+
   set(NESTDAQ_DOXYGEN_AWESOME_DIR
-    "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_DATADIR}/doxygen-awesome-css")
+    "${NESTDAQ_DOXYGEN_AWESOME_DEFAULT_DIR}"
+    CACHE PATH "Path to doxygen-awesome-css assets")
   set(NESTDAQ_DOXYGEN_AWESOME_CSS
     "${NESTDAQ_DOXYGEN_AWESOME_DIR}/doxygen-awesome.css")
   set(NESTDAQ_DOXYGEN_AWESOME_FRAGMENT_COPY_BUTTON
@@ -133,18 +150,34 @@ if(WITH_DOCS AND Doxygen_FOUND)
   set(NESTDAQ_DOXYGEN_AWESOME_INTERACTIVE_TOC
     "${NESTDAQ_DOXYGEN_AWESOME_DIR}/doxygen-awesome-interactive-toc.js")
 
+  set(NESTDAQ_DOXYGEN_AWESOME_BUILD_DIR
+    "${CMAKE_CURRENT_BINARY_DIR}/docs/doxygen-awesome-css")
+  file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/docs/html")
+  set(NESTDAQ_DOXYGEN_AWESOME_COPY_COMMAND)
+  if(EXISTS "${NESTDAQ_DOXYGEN_AWESOME_DIR}")
+    list(APPEND NESTDAQ_DOXYGEN_AWESOME_COPY_COMMAND
+      COMMAND
+        ${CMAKE_COMMAND} -E make_directory "${NESTDAQ_DOXYGEN_AWESOME_BUILD_DIR}"
+      COMMAND
+        ${CMAKE_COMMAND} -E copy_directory
+          "${NESTDAQ_DOXYGEN_AWESOME_DIR}"
+          "${NESTDAQ_DOXYGEN_AWESOME_BUILD_DIR}")
+  endif()
   set(NESTDAQ_DOXYGEN_HTML_EXTRA_STYLESHEET "")
   set(NESTDAQ_DOXYGEN_HTML_EXTRA_FILES "")
   if(EXISTS "${NESTDAQ_DOXYGEN_AWESOME_CSS}")
     set(NESTDAQ_DOXYGEN_HTML_EXTRA_STYLESHEET
-      "\"${NESTDAQ_DOXYGEN_AWESOME_CSS}\"")
+      "\"../doxygen-awesome-css/doxygen-awesome.css\"")
   endif()
   foreach(extra_file
-      "${NESTDAQ_DOXYGEN_AWESOME_FRAGMENT_COPY_BUTTON}"
-      "${NESTDAQ_DOXYGEN_AWESOME_PARAGRAPH_LINK}"
-      "${NESTDAQ_DOXYGEN_AWESOME_INTERACTIVE_TOC}")
-    if(EXISTS "${extra_file}")
-      list(APPEND NESTDAQ_DOXYGEN_HTML_EXTRA_FILES "\"${extra_file}\"")
+      "${NESTDAQ_DOXYGEN_AWESOME_FRAGMENT_COPY_BUTTON};doxygen-awesome-fragment-copy-button.js"
+      "${NESTDAQ_DOXYGEN_AWESOME_PARAGRAPH_LINK};doxygen-awesome-paragraph-link.js"
+      "${NESTDAQ_DOXYGEN_AWESOME_INTERACTIVE_TOC};doxygen-awesome-interactive-toc.js")
+    list(GET extra_file 0 extra_file_source)
+    list(GET extra_file 1 extra_file_name)
+    if(EXISTS "${extra_file_source}")
+      list(APPEND NESTDAQ_DOXYGEN_HTML_EXTRA_FILES
+        "\"../doxygen-awesome-css/${extra_file_name}\"")
     endif()
   endforeach()
   if(NESTDAQ_DOXYGEN_HTML_EXTRA_FILES)
@@ -162,9 +195,17 @@ if(WITH_DOCS AND Doxygen_FOUND)
 
   add_custom_command(
     OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/docs/html/index.html"
-    COMMAND "${DOXYGEN_EXECUTABLE}" "${CMAKE_CURRENT_BINARY_DIR}/Doxyfile"
+    COMMAND
+      ${CMAKE_COMMAND} -E make_directory "${CMAKE_CURRENT_BINARY_DIR}/docs/html"
+    ${NESTDAQ_DOXYGEN_AWESOME_COPY_COMMAND}
+    COMMAND
+      "${DOXYGEN_EXECUTABLE}" "${CMAKE_CURRENT_BINARY_DIR}/Doxyfile"
+    COMMAND
+      ${CMAKE_COMMAND}
+        "-DNESTDAQ_DOXYGEN_HTML_DIR=${CMAKE_CURRENT_BINARY_DIR}/docs/html"
+        -P "${CMAKE_CURRENT_SOURCE_DIR}/cmake/PatchDoxygenAwesomeCssRefs.cmake"
     DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/Doxyfile"
-    WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
+    WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/docs/html"
     COMMENT "Generating NestDAQ API documentation"
     VERBATIM
   )
@@ -176,7 +217,14 @@ if(WITH_DOCS AND Doxygen_FOUND)
   install(DIRECTORY
     "${CMAKE_CURRENT_BINARY_DIR}/docs/html/"
     DESTINATION "${CMAKE_INSTALL_DATADIR}/doc/nestdaq/html"
+    PATTERN "doxygen-awesome*" EXCLUDE
   )
+  if(EXISTS "${NESTDAQ_DOXYGEN_AWESOME_DIR}")
+    install(DIRECTORY
+      "${NESTDAQ_DOXYGEN_AWESOME_DIR}/"
+      DESTINATION "${CMAKE_INSTALL_DATADIR}/doc/nestdaq/doxygen-awesome-css"
+    )
+  endif()
 elseif(WITH_DOCS)
   message(STATUS "Doxygen not found: skipping NestDAQ documentation")
 else()

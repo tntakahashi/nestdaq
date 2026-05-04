@@ -65,7 +65,7 @@ cmake --build ./build-external
 - The default dependency versions are listed below. To override a version, pass `-Dxxxx_VERSION=yyyy` to CMake.
 - If `-DWITH_REDIS_STACK=OFF` is specified, the external dependency build does not build or install Redis Stack. The default is `WITH_REDIS_STACK=ON`.
 - If `-DWITH_OTEL_CPP=ON` is specified, the external dependency build also installs opentelemetry-cpp and its dependencies, such as nlohmann/json and gRPC. The default is `WITH_OTEL_CPP=OFF`.
-- If Doxygen is found during the external dependency configure step, `doxygen-awesome-css` is installed as an optional documentation asset.
+- If Doxygen is found during the external dependency configure step, `doxygen-awesome-css` is installed as an optional documentation asset under `./install/share/doxygen-awesome-css`.
 - To use Ninja instead of Make, add `-G Ninja` to the CMake options.
 - To use `mold` instead of the system `ld`.
   - GCC 12.1 or later: Add `-DCMAKE_EXE_LINKER_FLAGS="-fuse-ld=mold"` and `-DCMAKE_SHARED_LINKER_FLAGS="-fuse-ld=mold"` to the CMake options
@@ -113,6 +113,8 @@ cmake --install ./build
   This requires the `clang-tidy` command, provided by `clang-tools-extra` on AlmaLinux.
 - To build and install Doxygen documentation, add `-DWITH_DOCS=ON`.
   This requires the `doxygen` command. If Doxygen is not found, documentation generation is skipped. If `dot` from Graphviz is available, Doxygen can use it to generate diagrams.
+- The Doxygen HTML output uses `doxygen-awesome-css` from `CMAKE_PREFIX_PATH/share/doxygen-awesome-css` by default. To use another location, specify `-DNESTDAQ_DOXYGEN_AWESOME_DIR=/path/to/doxygen-awesome-css`.
+- When `doxygen-awesome-css` is available, it is installed with the generated documentation under `./install/share/doc/nestdaq/doxygen-awesome-css`.
 - When `-DWITH_DOCS=ON` and Doxygen is available, the HTML documentation is generated under `./build/docs/html` and installed under `./install/share/doc/nestdaq/html`.
 
 ### Build and install examples
