@@ -43,12 +43,8 @@ struct Options {
     std::string fChannelA;
     std::string fServiceB;
     std::string fChannelB;
-    std::string fRedisHost{"127.0.0.1"};
-    std::string fRedisPort{"6379"};
-    int fRedisDb{0};
-    std::string fMetricsHost;
-    std::string fMetricsPort;
-    int fMetricsDb{1};
+    std::string fRedisUrlDaqService{"127.0.0.1:6379/0"};
+    std::string fRedisUrlMetrics{"127.0.0.1:6379/1"};
     std::string fSeparator{":"};
     double fDiffLow{0.0};
     double fDiffHigh{0.0};
@@ -111,12 +107,10 @@ auto MakeOptionDescription() -> bpo::options_description
         ("channel-a", bpo::value<std::string>(), "source-side channel name")
         ("service-b", bpo::value<std::string>(), "peer-side service name")
         ("channel-b", bpo::value<std::string>(), "peer-side channel name")
-        ("redis-host", bpo::value<std::string>()->default_value("127.0.0.1"), "topology Redis host")
-        ("redis-port", bpo::value<std::string>()->default_value("6379"), "topology Redis port")
-        ("redis-db", bpo::value<int>()->default_value(0), "topology Redis DB number")
-        ("metrics-host", bpo::value<std::string>(), "metrics Redis host. Defaults to --redis-host")
-        ("metrics-port", bpo::value<std::string>(), "metrics Redis port. Defaults to --redis-port")
-        ("metrics-db", bpo::value<int>()->default_value(1), "metrics Redis DB number")
+        ("redis-url-daq_service", bpo::value<std::string>()->default_value("127.0.0.1:6379/0"),
+         "DAQ service Redis URL. Format: host-address:port/db")
+        ("redis-url-metrics", bpo::value<std::string>()->default_value("127.0.0.1:6379/1"),
+         "metrics Redis URL. Format: host-address:port/db")
         ("separator", bpo::value<std::string>()->default_value(":"), "Redis key separator")
         ("diff-low", bpo::value<double>()->default_value(0.0), "low-side threshold in msg/s")
         ("diff-high", bpo::value<double>()->default_value(0.0), "high-side threshold in msg/s")
@@ -150,12 +144,8 @@ auto ParseOptions(int argc, char *argv[]) -> std::optional<Options> // NOLINT(cp
     ret.fChannelA = vm["channel-a"].as<std::string>();
     ret.fServiceB = vm["service-b"].as<std::string>();
     ret.fChannelB = vm["channel-b"].as<std::string>();
-    ret.fRedisHost = vm["redis-host"].as<std::string>();
-    ret.fRedisPort = vm["redis-port"].as<std::string>();
-    ret.fRedisDb = vm["redis-db"].as<int>();
-    ret.fMetricsHost = (vm.count("metrics-host") > 0) ? vm["metrics-host"].as<std::string>() : ret.fRedisHost;
-    ret.fMetricsPort = (vm.count("metrics-port") > 0) ? vm["metrics-port"].as<std::string>() : ret.fRedisPort;
-    ret.fMetricsDb = vm["metrics-db"].as<int>();
+    ret.fRedisUrlDaqService = vm["redis-url-daq_service"].as<std::string>();
+    ret.fRedisUrlMetrics = vm["redis-url-metrics"].as<std::string>();
     ret.fSeparator = vm["separator"].as<std::string>();
     ret.fDiffLow = vm["diff-low"].as<double>();
     ret.fDiffHigh = vm["diff-high"].as<double>();
@@ -174,9 +164,20 @@ auto ParseOptions(int argc, char *argv[]) -> std::optional<Options> // NOLINT(cp
     return ret;
 }
 
-auto MakeRedisUri(const std::string &host, const std::string &port, int db) -> std::string
+auto NormalizeRedisUri(const std::string &uri) -> std::optional<std::string>
 {
-    return "tcp://" + host + ":" + port + "/" + std::to_string(db);
+    constexpr std::string_view TCP_PREFIX{"tcp://"};
+    std::string ret = uri;
+    if (ret.rfind(TCP_PREFIX.data(), 0) == 0) {
+        ret = ret.substr(TCP_PREFIX.size());
+    }
+
+    const auto slash = ret.find('/');
+    const auto colon = ret.rfind(':', slash == std::string::npos ? ret.size() : slash);
+    if (ret.empty() || slash == std::string::npos || colon == std::string::npos || colon == 0 || colon > slash || slash + 1 >= ret.size()) {
+        return std::nullopt;
+    }
+    return std::string{TCP_PREFIX} + ret;
 }
 
 auto NowString() -> std::string
@@ -767,16 +768,26 @@ int main(int argc, char *argv[]) // NOLINT(bugprone-exception-escape,cppcoreguid
     std::signal(SIGINT, nestdaq::OnSignal);
     std::signal(SIGTERM, nestdaq::OnSignal);
 
-    const auto redis_uri = nestdaq::MakeRedisUri(options.fRedisHost, options.fRedisPort, options.fRedisDb);
-    const auto metrics_uri = nestdaq::MakeRedisUri(options.fMetricsHost, options.fMetricsPort, options.fMetricsDb);
+    const auto redis_uri = nestdaq::NormalizeRedisUri(options.fRedisUrlDaqService);
+    if (!redis_uri) {
+        std::cerr << "error: --redis-url-daq_service must be host-address:port/db or tcp://host-address:port/db\n";
+        return EXIT_FAILURE;
+    }
+
+    const auto metrics_uri = nestdaq::NormalizeRedisUri(options.fRedisUrlMetrics);
+    if (!metrics_uri) {
+        std::cerr << "error: --redis-url-metrics must be host-address:port/db or tcp://host-address:port/db\n";
+        return EXIT_FAILURE;
+    }
+
     auto terminal = nestdaq::GetTerminal();
     if (!terminal.fTty && options.fRefreshMs == 1000) {
         terminal.fTty = false;
     }
 
     try {
-        sw::redis::Redis redis{redis_uri};
-        sw::redis::Redis metrics{metrics_uri};
+        sw::redis::Redis redis{*redis_uri};
+        sw::redis::Redis metrics{*metrics_uri};
 
         while (nestdaq::g_stop_requested == 0) {
             if (terminal.fTty && options.fRefreshMs > 0) {
