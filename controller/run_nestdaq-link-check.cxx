@@ -27,6 +27,7 @@
 
 #include "plugins/Constants.h"
 #include "plugins/Functions.h"
+#include "plugins/MetricsData.h"
 
 namespace bpo = boost::program_options;
 
@@ -36,9 +37,6 @@ namespace nestdaq {
 namespace {
 
 volatile std::sig_atomic_t g_stop_requested{0}; // NOLINT(cppcoreguidelines-avoid-non-const-global-variables)
-
-constexpr std::string_view METRICS_PREFIX{"metrics"};
-constexpr std::string_view NUM_MESSAGE_PREFIX{"num-msg"};
 
 struct Options {
     std::string fServiceA;
@@ -312,15 +310,6 @@ auto ReadDoubleHash(sw::redis::Redis &redis, const std::string &key) -> std::uno
     return ret;
 }
 
-auto MetricField(const std::string &instance,
-                 const std::string &channel,
-                 int index,
-                 std::string_view direction,
-                 std::string_view separator) -> std::string
-{
-    return instance + std::string{separator} + channel + "[" + std::to_string(index) + "]." + std::string{direction};
-}
-
 auto AggregateMetric(const std::unordered_map<std::string, double> &metrics,
                      const std::string &instance,
                      const std::string &channel,
@@ -341,7 +330,7 @@ auto AggregateMetric(const std::unordered_map<std::string, double> &metrics,
     }
 
     for (const auto index : indexes) {
-        const auto field = MetricField(instance, channel, index, direction, separator);
+        const auto field = daq::service::MakeSocketMetricField(instance, channel, index, direction, separator);
         const auto iter = metrics.find(field);
         if (iter != metrics.end()) {
             ret += iter->second;
@@ -568,8 +557,8 @@ auto ReadSnapshot(sw::redis::Redis &redis, sw::redis::Redis &metrics, const Opti
     });
 
     try {
-        const auto num_msg = ReadDoubleHash(metrics, daq::service::join({std::string{METRICS_PREFIX},
-                                                                        std::string{NUM_MESSAGE_PREFIX}},
+        const auto num_msg = ReadDoubleHash(metrics, daq::service::join({std::string{daq::service::MetricsPrefix},
+                                                                        std::string{daq::service::NumMessagePrefix}},
                                                                        options.fSeparator));
         ret.fMsgIn = num_msg;
         ret.fMsgOut = num_msg;
