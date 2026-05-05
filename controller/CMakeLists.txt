@@ -12,7 +12,7 @@ find_library(HIREDIS_LIB hiredis)
 
 # --------- add redis++ dependency ----------
 find_path(REDIS_PLUS_PLUS_HEADER sw)
-find_path(REDIS_PLUS_PLUS_LIB redis++)
+find_library(REDIS_PLUS_PLUS_LIB redis++)
 
 # ===============================================
 # web gui using websocket
@@ -72,8 +72,60 @@ else()
   message(FATAL_ERROR "Unsupported FairMQ version ${FairMQ_VERSION}")
 endif()
 
+# ===============================================
+# terminal link checker
+# ===============================================
+set(LINK_CHECK_EXEC nestdaq-link-check)
+add_executable(${LINK_CHECK_EXEC}
+  run_${LINK_CHECK_EXEC}.cxx;
+)
+
+target_include_directories(${LINK_CHECK_EXEC} PUBLIC
+  ${Boost_INCLUDE_DIRS};
+  ${FairLogger_INCDIR};
+  ${FairMQ_INCDIR};
+  ${HIREDIS_HEADER};
+  ${REDIS_PLUS_PLUS_HEADER};
+  ${CMAKE_SOURCE_DIR};
+  ${CMAKE_BINARY_DIR};
+)
+
+target_link_directories(${LINK_CHECK_EXEC} PUBLIC
+  ${Boost_LIBRARY_DIRS};
+  ${FairLogger_LIBDIR};
+  ${FairMQ_LIBDIR};
+)
+
+if (FairMQ_VERSION VERSION_GREATER_EQUAL 1.8.0)
+  target_link_libraries(${LINK_CHECK_EXEC} PUBLIC
+    ${Boost_LIBRARIES};
+    fairmq;
+    FairLogger;
+    ${fmt_LIB};
+    ${HIREDIS_LIB};
+    ${REDIS_PLUS_PLUS_LIB};
+    ${CMAKE_THREAD_LIBS_INIT};
+    ${CMAKE_DL_LIBS};
+  )
+elseif ((FairMQ_VERSION VERSION_GREATER_EQUAL 1.4.55)
+    AND (FairMQ_VERSION VERSION_LESS_EQUAL 1.4.56))
+  target_link_libraries(${LINK_CHECK_EXEC} PUBLIC
+    ${Boost_LIBRARIES};
+    FairMQStateMachine;
+    FairLogger;
+    ${fmt_LIB};
+    ${HIREDIS_LIB};
+    ${REDIS_PLUS_PLUS_LIB};
+    ${CMAKE_THREAD_LIBS_INIT};
+    ${CMAKE_DL_LIBS};
+  )
+else()
+  message(FATAL_ERROR "Unsupported FairMQ version ${FairMQ_VERSION}")
+endif()
+
 install(TARGETS
   ${EXEC};
+  ${LINK_CHECK_EXEC};
   ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
   LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
