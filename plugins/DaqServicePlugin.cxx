@@ -1,3 +1,7 @@
+/** @file
+ *  @brief Implements the DAQ service plugin for publishing device state.
+ */
+
 #include <algorithm>
 #include <array>
 #include <atomic>

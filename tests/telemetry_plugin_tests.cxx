@@ -1,3 +1,8 @@
+/**
+ * @file telemetry_plugin_tests.cxx
+ * @brief Catch2 tests for loading `libnestdaq_otel.so` through the runtime loader.
+ */
+
 #include <catch2/catch_test_macros.hpp>
 
 #include <nestdaq/telemetry/Telemetry.h>

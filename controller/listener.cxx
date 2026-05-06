@@ -1,4 +1,8 @@
 
+/** @file
+ *  @brief Implements TCP listener setup for controller HTTP sessions.
+ */
+
 #include <iostream>
 
 #include "controller/http_session.h"

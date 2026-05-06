@@ -1,6 +1,9 @@
 #pragma once
 
-// Accepts incoming connections and launches the sessions
+/**
+ * @file listener.h
+ * @brief TCP acceptor that launches HTTP/WebSocket sessions.
+ */
 
 #include <memory>
 #include <string>

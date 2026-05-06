@@ -1,3 +1,7 @@
+/** @file
+ *  @brief Implements time conversion helpers used by plugins.
+ */
+
 #include <ctime>
 #include <iomanip> // std::put_time
 #include <iostream>

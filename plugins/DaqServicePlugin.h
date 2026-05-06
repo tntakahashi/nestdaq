@@ -1,6 +1,9 @@
 #pragma once
 
-// Redis client for DAQ service discovery
+/**
+ * @file DaqServicePlugin.h
+ * @brief Redis client plugin for DAQ service discovery and command/state data.
+ */
 
 // for linux pid
 #include <sys/types.h>
@@ -37,6 +40,7 @@ struct Presence {
     std::string key;
 };
 
+/** Current health record tracked for a DAQ service instance. */
 struct Health {
     std::string key;
     std::string hostName;
@@ -48,6 +52,9 @@ struct Health {
 
 class TopologyConfig;
 
+/**
+ * @brief FairMQ plugin that publishes service presence, health, and state.
+ */
 class Plugin : public fair::mq::Plugin
 {
 public:

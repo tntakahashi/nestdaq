@@ -1,3 +1,7 @@
+/** @file
+ *  @brief Implements the sample message-producing NestDAQ device.
+ */
+
 #include <memory>
 #include <sstream>
 #include <string>

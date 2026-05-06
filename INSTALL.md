@@ -1,3 +1,5 @@
+# Installation {#nestdaq_installation}
+
 ## Install external packages
 
 ### Prerequisites for AlmaLinux 9 and 10

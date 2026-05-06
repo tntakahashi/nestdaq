@@ -4,6 +4,13 @@
 
 namespace nestdaq {
 
+/**
+ * @brief FairLogger custom sink that forwards log records to OpenTelemetry.
+ *
+ * The sink is installed by the telemetry plugin after a logger provider has
+ * been configured. The class exposes only lifecycle controls because FairLogger
+ * invokes the actual sink callback internally.
+ */
 class FairLoggerOpenTelemetrySink {
 public:
     FairLoggerOpenTelemetrySink() = delete;

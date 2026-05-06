@@ -1,5 +1,10 @@
 #pragma once
 
+/**
+ * @file WebSocketHandle.h
+ * @brief Global connection callbacks used by Beast WebSocket sessions.
+ */
+
 #include <memory>
 #include <string>
 #include <vector>

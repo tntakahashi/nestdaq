@@ -1,3 +1,7 @@
+/** @file
+ *  @brief Implements shared plugin utility functions.
+ */
+
 #include <chrono>
 #include <ctime>
 #include <iomanip> // for std::put_time 
@@ -7,6 +11,8 @@
 
 #include <boost/asio.hpp>
 #include <boost/property_tree/json_parser.hpp>
+
+#include <fairlogger/Logger.h>
 
 #include "plugins/tools.h"
 
@@ -44,9 +50,9 @@ std::string GetIPv4FromHostname(const std::string& name)
             ss <<  it->endpoint().address();
             return ss.str();
         }
-        std::cerr << "could not find ipv4 address for hostname '" << name << "'";
+        LOG(error) << "could not find ipv4 address for hostname '" << name << "'";
     } catch (const std::exception &e) {
-        std::cerr << "could not resolve hostname '" << name << "', reason: " << e.what() << '\n';
+        LOG(error) << "could not resolve hostname '" << name << "', reason: " << e.what();
     }
     return "";
 }
@@ -66,13 +72,13 @@ int ParseCommandLine(int argc, char* argv[], // NOLINT(cppcoreguidelines-avoid-c
         }
 
     } catch (const bpo::error_with_option_name &e) {
-        std::cerr << "#Exception: boost program options error: " << e.what() << '\n';
+        LOG(error) << "#Exception: boost program options error: " << e.what();
         ret = EXIT_FAILURE;
     } catch (const std::exception &e) {
-        std::cerr << "#Exception: unhandled exception: " << e.what() << '\n';
+        LOG(error) << "#Exception: unhandled exception: " << e.what();
         ret = EXIT_FAILURE;
     } catch (...) {
-        std::cerr << "#Exception: unknown exception ..." << '\n';
+        LOG(error) << "#Exception: unknown exception ...";
         ret = EXIT_FAILURE;
     }
 

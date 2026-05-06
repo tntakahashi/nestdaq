@@ -1,5 +1,14 @@
 #pragma once
 
+/**
+ * @file runDevice.h
+ * @brief NestDAQ replacement entry point for FairMQ devices.
+ *
+ * Including this header defines `main()` and expects the application to provide
+ * `addCustomOptions()` and `getDevice()`. The wrapper installs NestDAQ
+ * telemetry options before constructing and running the FairMQ device.
+ */
+
 #include <fairmq/DeviceRunner.h>
 #include <fairlogger/Logger.h>
 
@@ -9,16 +18,25 @@
 
 #include <cstddef>
 #include <exception>
-#include <iostream>
 #include <memory>
 #include <string>
 #include <string_view>
 #include <vector>
 
-// To be implemented by the user to add custom command line options.
+/**
+ * @brief Add application-specific command-line options.
+ *
+ * The function must be implemented by the executable that includes
+ * `nestdaq/runDevice.h`.
+ */
 void addCustomOptions(boost::program_options::options_description& options);
 
-// To be implemented by the user to return a child class of fair::mq::Device.
+/**
+ * @brief Create the FairMQ device instance for the application.
+ *
+ * The function must return exclusive ownership of a `fair::mq::Device`
+ * subclass. It is called after command-line options have been registered.
+ */
 std::unique_ptr<fair::mq::Device> getDevice(const fair::mq::ProgOptions& config);
 
 namespace nestdaq::run_device_detail {
@@ -73,16 +91,16 @@ int main(int argc, char* argv[])
         if (!telemetryOptions.library.empty()) {
             telemetryLoaded = telemetry->Load(telemetryOptions.library);
             if (!telemetryLoaded) {
-                std::cerr << "Failed to load telemetry library '" << telemetryOptions.library
-                          << "': " << telemetry->GetLastError() << '\n';
+                LOG(error) << "Failed to load telemetry library '" << telemetryOptions.library
+                           << "': " << telemetry->GetLastError();
                 if (telemetryOptions.required) {
                     return 1;
                 }
             } else {
                 const auto config = nestdaq::telemetry::MakeConfig(telemetryOptions);
                 if (!telemetry->InitializeWith(config)) {
-                    std::cerr << "Failed to initialize telemetry library '" << telemetryOptions.library
-                              << "': " << telemetry->GetLastError() << '\n';
+                    LOG(error) << "Failed to initialize telemetry library '" << telemetryOptions.library
+                               << "': " << telemetry->GetLastError();
                     if (telemetryOptions.required) {
                         return 1;
                     }

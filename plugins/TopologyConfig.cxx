@@ -1,3 +1,7 @@
+/** @file
+ *  @brief Implements topology loading from Redis configuration.
+ */
+
 #include <algorithm>
 #include <cassert>
 #include <mutex>

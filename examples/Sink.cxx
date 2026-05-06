@@ -1,3 +1,7 @@
+/** @file
+ *  @brief Implements the sample message-consuming NestDAQ device.
+ */
+
 #include <chrono>
 #include <memory>
 #include <thread>

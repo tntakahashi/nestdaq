@@ -1,8 +1,13 @@
+/** @file
+ *  @brief Implements periodic timer utilities used by plugins.
+ */
+
 #include <chrono>
-#include <iostream>
 #include <utility>
 
 #include <boost/system/error_code.hpp>
+
+#include <fairlogger/Logger.h>
 
 #include "plugins/Timer.h"
 
@@ -38,9 +43,9 @@ void daq::service::Timer::Start()
     [this](const auto &ec) {
         // std::cout << "# timer canceled : " << ec.message() << std::endl;
         if (ec == std::errc::operation_canceled) {
-            std::cout << " timer canceled : " << ec.message() << std::endl;
+            LOG(debug) << " timer canceled : " << ec.message();
         } else if (ec) {
-            std::cout << " error. timer stopped: " << ec.message() << std::endl;
+            LOG(debug) << " error. timer stopped: " << ec.message();
         } else {
             if (!fHandle(ec)) {
                 // std::cout << " restart timer" << std::endl;

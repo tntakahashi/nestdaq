@@ -1,3 +1,7 @@
+/** @file
+ *  @brief Implements the DAQ metrics collection plugin.
+ */
+
 #include <sys/types.h>
 #include <unistd.h>
 
@@ -708,9 +712,9 @@ void daq::service::MetricsPlugin::SendProcessMetrics()
             //          << "\n " << fTsProcKey.stateId   << "\t " << stateId << std::endl;
         }
     } catch (const std::exception& e) {
-        std::cerr << MyClass << " " << __FUNCTION__ << " exception : what() " << e.what();
+        LOG(error) << MyClass << " " << __FUNCTION__ << " exception : what() " << e.what();
     } catch (...) {
-        std::cerr << MyClass << " " << __FUNCTION__ << " exception : unknown ";
+        LOG(error) << MyClass << " " << __FUNCTION__ << " exception : unknown ";
     }
     //std::cout << MyClass << " " << __FUNCTION__ << " done";
 }
@@ -739,7 +743,7 @@ void daq::service::MetricsPlugin::SendSocketMetrics(const std::string &content)
     std::regex_search(content, m, r);
     //std::cout << " m.size() = " << m.size() << std::endl;
     if (m.size() < NSocketMetricsRegexIndex) {
-        std::cout << " too few number of metrics" << m.size() << std::endl;
+        LOG(debug) << " too few number of metrics" << m.size();
         return;
     }
 
@@ -852,8 +856,8 @@ void daq::service::MetricsPlugin::SendSocketMetrics(const std::string &content)
         //std::cout << __LINE__ << " no pipeline is created " << std::endl;
         //}
     } catch (const std::exception &e) {
-        std::cerr << MyClass << " " << __FUNCTION__ << " exception : what() = " << e.what();
+        LOG(error) << MyClass << " " << __FUNCTION__ << " exception : what() = " << e.what();
     } catch (...) {
-        std::cerr << MyClass << " " << __FUNCTION__ << " exception : unknown";
+        LOG(error) << MyClass << " " << __FUNCTION__ << " exception : unknown";
     }
 }

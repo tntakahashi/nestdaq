@@ -1,5 +1,10 @@
 #pragma once
 
+/**
+ * @file TopologyConfig.h
+ * @brief Runtime topology resolver for Redis-backed FairMQ channel setup.
+ */
+
 //#include <initializer_list>
 #include <memory>
 #include <mutex>
@@ -35,6 +40,7 @@ public:
     TopologyConfig& operator=(TopologyConfig&&) = delete;
     ~TopologyConfig();
 
+    /** Resolve and apply channel connection properties from Redis. */
     void ConfigConnect();
     void EnableUds(bool f=true) {
         fEnableUds = f;
@@ -46,6 +52,7 @@ public:
         return GetPeerState(fConnectChannels);
     }
 
+    /** React to FairMQ state changes and update topology-related Redis state. */
     void OnDeviceStateChange(DeviceState newState);
     void Reset();
     void ResetTtl(sw::redis::Pipeline& pipe);

@@ -5,12 +5,12 @@ GENERATE_HTML          = YES
 GENERATE_LATEX         = NO
 GENERATE_XML           = NO
 
-INPUT                  = "@CMAKE_CURRENT_SOURCE_DIR@/nestdaq" \
-                         "@CMAKE_CURRENT_SOURCE_DIR@/plugins" \
-                         "@CMAKE_CURRENT_SOURCE_DIR@/controller" \
-                         "@CMAKE_CURRENT_SOURCE_DIR@/examples"
-FILE_PATTERNS          = *.h *.cxx
+INPUT                  = "@CMAKE_CURRENT_SOURCE_DIR@"
+FILE_PATTERNS          = *.h *.hh *.hpp *.hxx *.c *.cc *.cpp *.cxx *.md
 RECURSIVE              = YES
+EXCLUDE_PATTERNS       = */.git/* */build/* */install/*
+MARKDOWN_SUPPORT       = YES
+USE_MDFILE_AS_MAINPAGE = "@CMAKE_CURRENT_SOURCE_DIR@/README.md"
 EXTRACT_ALL            = YES
 
 QUIET                  = YES

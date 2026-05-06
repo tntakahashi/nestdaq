@@ -1,4 +1,6 @@
-# Example for web-based DAQ controller GUI
+# Web Controller Assets {#nestdaq_web_controller_assets}
+
+## Example for web-based DAQ controller GUI
 
 ## daq-webctl.html
 A simple html (and JavaScript) used by `daq-webctl`. 

@@ -1,6 +1,9 @@
 #pragma once
 
-// Parameter configuration plugin using Redis
+/**
+ * @file ParameterConfigPlugin.h
+ * @brief FairMQ plugin that mirrors Redis parameter values into ProgOptions.
+ */
 
 #include <atomic>
 #include <cmath>

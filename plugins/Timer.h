@@ -1,5 +1,10 @@
 #pragma once
 
+/**
+ * @file Timer.h
+ * @brief Repeating Boost.Asio timer wrapper used by service plugins.
+ */
+
 #include <functional>
 #include <memory>
 #include <boost/asio.hpp>

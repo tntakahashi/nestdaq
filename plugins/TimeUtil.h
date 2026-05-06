@@ -1,5 +1,10 @@
 #pragma once
 
+/**
+ * @file TimeUtil.h
+ * @brief Helpers for converting steady-clock updates into wall-clock timestamps.
+ */
+
 #include <chrono>
 #include <string>
 #include <utility>

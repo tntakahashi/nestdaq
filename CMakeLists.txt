@@ -188,6 +188,18 @@ if(WITH_DOCS AND Doxygen_FOUND)
     message(STATUS "doxygen-awesome-css not found under ${NESTDAQ_DOXYGEN_AWESOME_DIR}: using default Doxygen HTML style")
   endif()
 
+  file(GLOB_RECURSE NESTDAQ_DOXYGEN_INPUTS CONFIGURE_DEPENDS
+    "${CMAKE_CURRENT_SOURCE_DIR}/*.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/*.hh"
+    "${CMAKE_CURRENT_SOURCE_DIR}/*.hpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/*.hxx"
+    "${CMAKE_CURRENT_SOURCE_DIR}/*.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/*.cc"
+    "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/*.cxx"
+    "${CMAKE_CURRENT_SOURCE_DIR}/*.md"
+  )
+
   configure_file(
     "${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile.in"
     "${CMAKE_CURRENT_BINARY_DIR}/Doxyfile"
@@ -206,6 +218,7 @@ if(WITH_DOCS AND Doxygen_FOUND)
         "-DNESTDAQ_DOXYGEN_HTML_DIR=${CMAKE_CURRENT_BINARY_DIR}/docs/html"
         -P "${CMAKE_CURRENT_SOURCE_DIR}/cmake/PatchDoxygenAwesomeCssRefs.cmake"
     DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/Doxyfile"
+            ${NESTDAQ_DOXYGEN_INPUTS}
     WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/docs/html"
     COMMENT "Generating NestDAQ API documentation"
     VERBATIM

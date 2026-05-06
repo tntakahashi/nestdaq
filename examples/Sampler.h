@@ -1,5 +1,10 @@
 #pragma once
 
+/**
+ * @file Sampler.h
+ * @brief Example producer device that sends text payloads through FairMQ.
+ */
+
 #include <cstdint>
 #include <string>
 

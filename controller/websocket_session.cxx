@@ -1,3 +1,7 @@
+/** @file
+ *  @brief Implements WebSocket session management for browser clients.
+ */
+
 #include <algorithm>
 #include <mutex>
 

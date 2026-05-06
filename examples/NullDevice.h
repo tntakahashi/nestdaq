@@ -1,5 +1,10 @@
 #pragma once
 
+/**
+ * @file NullDevice.h
+ * @brief Example FairMQ device with lifecycle hooks and no data processing.
+ */
+
 #include <fairmq/Device.h>
 
 class NullDevice : public fair::mq::Device

@@ -1,5 +1,10 @@
 #pragma once
 
+/**
+ * @file Sink.h
+ * @brief Example consumer device that receives single-part or multipart FairMQ messages.
+ */
+
 #include <chrono>
 #include <cstdint>
 #include <memory>

@@ -1,5 +1,10 @@
 #pragma once
 
+/**
+ * @file beast_tools.h
+ * @brief Boost.Beast helpers for static file serving and HTTP responses.
+ */
+
 #include <iostream>
 
 #include <boost/asio.hpp>
@@ -12,13 +17,15 @@ namespace net = boost::asio;                    // from <boost/asio.hpp>
 using tcp = net::ip::tcp;                       // from <boost/asio/ip/tcp.hpp>
 
 //_____________________________________________________________________________
-// Report a failure
+/** Report a Boost.Beast failure to stderr. */
 void fail(beast::error_code ec, char const* what);
 //_____________________________________________________________________________
-// This function produces an HTTP response for the given
-// request. The type of the response object depends on the
-// contents of the request, so the interface requires the
-// caller to pass a generic lambda for receiving the response.
+/**
+ * @brief Produce an HTTP response for a static-file request.
+ *
+ * The response type depends on the request, so the caller supplies a generic
+ * lambda that receives the concrete response object.
+ */
 template<class Body, class Allocator, class Send>
 void handle_request(beast::string_view doc_root, http::request<Body, http::basic_fields<Allocator>>&& req, Send&& send);
 

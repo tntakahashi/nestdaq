@@ -2,6 +2,7 @@
 
 #include <fairmq/ProgOptions.h>
 #include <fairmq/Version.h>
+#include <fairlogger/Logger.h>
 
 #include <boost/program_options.hpp>
 
@@ -12,13 +13,13 @@
 #include <cstdint>
 #include <cstdlib>
 #include <functional>
-#include <iostream>
 #include <string>
 #include <string_view>
 #include <vector>
 
 namespace nestdaq::telemetry {
 
+/** Default soname loaded by NestDAQ executables when telemetry is enabled. */
 static constexpr std::string_view kDefaultTelemetryLibrary{"libnestdaq_otel.so"};
 static constexpr std::string_view kDefaultProtocol{"console"};
 static constexpr std::string_view kDefaultLogHttpEndpoint{"http://localhost:4318/v1/logs"};
@@ -45,6 +46,14 @@ static constexpr int32_t kSeverityCritical{14};
 static constexpr int32_t kSeverityFatal{15};
 static constexpr std::string_view kTelemetryConfigSubscriber{"nestdaq-telemetry"};
 
+/**
+ * @brief Runtime options used to configure the telemetry plugin.
+ *
+ * Values are initialized from defaults, optionally overridden by environment
+ * variables and command-line/FairMQ options. `MakeConfig()` returns borrowed
+ * pointers into this object, so the object must outlive the call to
+ * `TelemetryLibrary::InitializeWith()`.
+ */
 struct TelemetryOptions {
     std::string library{kDefaultTelemetryLibrary};
     std::string logProtocol{kDefaultProtocol};
@@ -77,13 +86,25 @@ struct TelemetryOptions {
 
 class TelemetryLibrary;
 
+/**
+ * @brief Add telemetry-related Boost.Program_options entries.
+ *
+ * The options configure the runtime-loaded telemetry library, per-signal
+ * exporters, service resource attributes, and FairLogger severity threshold.
+ */
 inline auto AddTelemetryOptions(boost::program_options::options_description& options,
                                 std::string_view defaultServiceName = "nestdaq") -> void;
+/** Apply `NESTDAQ_OTEL_*` environment variables to @p options. */
 inline auto ApplyEnvironment(TelemetryOptions& options) -> void;
 inline auto AssignOption(TelemetryOptions& options,
                          std::string_view key,
                          std::string_view value) -> void;
 inline auto Env(const char* name) -> const char*;
+/**
+ * @brief Build the C ABI config passed to `libnestdaq_otel.so`.
+ *
+ * The returned struct contains pointers into @p options.
+ */
 inline auto MakeConfig(const TelemetryOptions& options) -> nestdaq_otel_config;
 inline auto MakeSignalConfig(std::string_view protocol,
                              std::string_view endpointHttp,
@@ -460,6 +481,14 @@ inline auto SeverityToFairLoggerValue(std::string_view severity) -> int32_t
     return kSeverityInfo;
 }
 
+/**
+ * @brief Runtime loader for the optional OpenTelemetry plugin.
+ *
+ * `TelemetryLibrary` owns the `dlopen()` handle and resolves the required
+ * `nestdaq_otel_*` C ABI symbols. It is intentionally non-copyable and
+ * non-movable because the plugin state is process-wide. Destruction shuts down
+ * telemetry once and then closes the shared library.
+ */
 class TelemetryLibrary {
 public:
     TelemetryLibrary() = default;
@@ -476,11 +505,13 @@ public:
         }
     }
 
+    /** Return the last loader or plugin error captured by this wrapper. */
     auto GetLastError() const -> const std::string&
     {
         return fLastError;
     }
 
+    /** Initialize the loaded plugin with a C ABI configuration. */
     auto InitializeWith(const nestdaq_otel_config& config) -> bool
     {
         if (!fInitialize) {
@@ -498,6 +529,7 @@ public:
         return true;
     }
 
+    /** Forward a double counter measurement through the loaded plugin. */
     auto MetricAddDoubleCounter(std::string_view name,
                                 double value,
                                 std::string_view unit = "",
@@ -516,6 +548,7 @@ public:
                                                    attributeCount));
     }
 
+    /** Forward a double histogram measurement through the loaded plugin. */
     auto MetricRecordDoubleHistogram(std::string_view name,
                                      double value,
                                      std::string_view unit = "",
@@ -534,6 +567,11 @@ public:
                                                         attributeCount));
     }
 
+    /**
+     * @brief Load the telemetry shared library and resolve ABI symbols.
+     *
+     * @param library Path or soname passed to `dlopen()`.
+     */
     auto Load(const std::string& library) -> bool
     {
         fHandle = dlopen(library.data(), RTLD_NOW | RTLD_LOCAL);
@@ -574,6 +612,7 @@ public:
         return true;
     }
 
+    /** End an active span handle. */
     auto SpanEnd(uint64_t spanHandle) -> bool
     {
         if (!fSpanEnd) {
@@ -582,6 +621,7 @@ public:
         return StoreResult(fSpanEnd(spanHandle));
     }
 
+    /** Set an attribute on an active span handle. */
     auto SpanSetAttribute(uint64_t spanHandle, const nestdaq_otel_attribute& attribute) -> bool
     {
         if (!fSpanSetAttribute) {
@@ -590,6 +630,7 @@ public:
         return StoreResult(fSpanSetAttribute(spanHandle, &attribute));
     }
 
+    /** Start a span and return the plugin-owned span handle. */
     auto SpanStart(std::string_view name,
                    const nestdaq_otel_attribute* attributes = nullptr,
                    uint64_t attributeCount = 0) -> uint64_t
@@ -606,11 +647,13 @@ public:
         return spanHandle;
     }
 
+    /** Update the FairLogger severity threshold by name. */
     auto SetMinSeverity(std::string_view severity) -> bool
     {
         return SetMinSeverity(SeverityToFairLoggerValue(severity));
     }
 
+    /** Update the FairLogger severity threshold by numeric FairLogger value. */
     auto SetMinSeverity(int32_t severity) -> bool
     {
         if (!fSetMinSeverity) {
@@ -629,6 +672,7 @@ public:
         return true;
     }
 
+    /** Shut down telemetry if it has not already been shut down. */
     auto ShutdownTelemetry(uint64_t timeoutMs) const -> void
     {
         if (fShutdown && !fShutdownCalled) {
@@ -682,8 +726,8 @@ inline auto SubscribeTelemetryOptionChanges(const fair::mq::ProgOptions& config,
                                      return;
                                  }
                                  if (!telemetry.SetMinSeverity(value)) {
-                                     std::cerr << "Failed to update OTel log severity: "
-                                               << telemetry.GetLastError() << '\n';
+                                     LOG(error) << "Failed to update OTel log severity: "
+                                                << telemetry.GetLastError();
                                  }
                              });
 }

@@ -1,3 +1,7 @@
+/** @file
+ *  @brief Implements a minimal NestDAQ device example.
+ */
+
 #include <chrono>
 #include <memory>
 #include <string_view>

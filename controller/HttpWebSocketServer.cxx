@@ -1,3 +1,7 @@
+/** @file
+ *  @brief Implements the HTTP/WebSocket server entry point.
+ */
+
 #include <iostream>
 #include <string>
 

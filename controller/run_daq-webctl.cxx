@@ -1,3 +1,7 @@
+/** @file
+ *  @brief Provides the daq-webctl executable entry point.
+ */
+
 #include <cstdlib>
 #include <iostream>
 #include <mutex>
@@ -155,16 +159,16 @@ int main(int argc, char* argv[]) // NOLINT(bugprone-exception-escape)
     if (!telemetryOptions.library.empty()) {
         telemetryLoaded = telemetry->Load(telemetryOptions.library);
         if (!telemetryLoaded) {
-            std::cerr << "Failed to load telemetry library '" << telemetryOptions.library
-                      << "': " << telemetry->GetLastError() << '\n';
+            LOG(error) << "Failed to load telemetry library '" << telemetryOptions.library
+                       << "': " << telemetry->GetLastError();
             if (telemetryOptions.required) {
                 return EXIT_FAILURE;
             }
         } else {
             const auto telemetryConfig = nestdaq::telemetry::MakeConfig(telemetryOptions);
             if (!telemetry->InitializeWith(telemetryConfig)) {
-                std::cerr << "Failed to initialize telemetry library '" << telemetryOptions.library
-                          << "': " << telemetry->GetLastError() << '\n';
+                LOG(error) << "Failed to initialize telemetry library '" << telemetryOptions.library
+                           << "': " << telemetry->GetLastError();
                 if (telemetryOptions.required) {
                     return EXIT_FAILURE;
                 }

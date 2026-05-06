@@ -1,3 +1,7 @@
+/** @file
+ *  @brief Implements dynamic OpenTelemetry setup for logs, metrics, and traces.
+ */
+
 #include "nestdaq/telemetry/OpenTelemetryInitializer.h"
 
 #include <algorithm>

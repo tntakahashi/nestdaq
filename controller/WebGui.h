@@ -1,5 +1,10 @@
 #pragma once
 
+/**
+ * @file WebGui.h
+ * @brief Redis-backed command handler for the web DAQ controller.
+ */
+
 #include <functional>
 #include <list>
 #include <memory>
@@ -29,6 +34,9 @@ struct ServiceState {
     std::string date;
 };
 
+/**
+ * @brief Controller-side command dispatcher and Redis state reader.
+ */
 class WebGui {
 public:
     using ProcessDataFunc    = std::function<void (unsigned int, const boost::property_tree::ptree&)>;

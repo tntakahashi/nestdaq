@@ -1,5 +1,10 @@
 #pragma once
 
+/**
+ * @file Functions.h
+ * @brief Small Redis and string helper functions used by DAQ service plugins.
+ */
+
 #include <string>
 #include <string_view>
 #include <unordered_set>

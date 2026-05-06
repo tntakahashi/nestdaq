@@ -1,4 +1,6 @@
-# Code style and naming
+# Contributing {#nestdaq_contributing}
+
+## Code style and naming
 
 ## C++
 

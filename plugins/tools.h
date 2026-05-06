@@ -1,5 +1,10 @@
 #pragma once
 
+/**
+ * @file tools.h
+ * @brief Controller/plugin utility functions for dates, host lookup, CLI parsing, and JSON conversion.
+ */
+
 #include <string>
 #include <string_view>
 

@@ -1,3 +1,8 @@
+/**
+ * @file catch2_generatortracker_compat.cxx
+ * @brief Compatibility definitions for the installed Catch2 static library.
+ */
+
 #include <catch2/generators/catch_generators.hpp>
 #include <catch2/interfaces/catch_interfaces_generatortracker.hpp>
 

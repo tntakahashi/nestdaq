@@ -1,6 +1,9 @@
 #pragma once
 
-// HTTP and WebSocket server using boost::beast
+/**
+ * @file HttpWebSocketServer.h
+ * @brief HTTP and WebSocket server wrapper used by `daq-webctl`.
+ */
 
 #include <memory>
 #include <string_view>

@@ -1,5 +1,10 @@
 #pragma once
 
+/**
+ * @file Constants.h
+ * @brief Shared Redis key names and FairMQ command strings used by plugins.
+ */
+
 #include <string_view>
 
 namespace daq::service {

@@ -1,3 +1,7 @@
+/** @file
+ *  @brief Implements Redis-backed parameter configuration loading.
+ */
+
 #include <iostream>
 #include <iterator>
 #include <unordered_map>

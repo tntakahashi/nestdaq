@@ -1,5 +1,10 @@
 #pragma once
 
+/**
+ * @file TopologyData.h
+ * @brief Data structures for the current Redis-backed DAQ topology schema.
+ */
+
 #include <map>
 #include <string>
 #include <vector>
@@ -11,7 +16,9 @@ static constexpr int kDefaultSocketLinger{500};
 static constexpr int kDefaultPortRangeMin{22000};
 static constexpr int kDefaultPortRangeMax{32000};
 
-// property of FairMQSocket
+/**
+ * @brief Current socket/channel properties exchanged through Redis topology keys.
+ */
 struct SocketProperty {
     std::string name; // channel name
     std::string type;
@@ -35,6 +42,9 @@ struct SocketProperty {
     bool waitForPeerConnection{true};
 };
 
+/**
+ * @brief Current logical link between a local channel and a peer channel.
+ */
 struct LinkProperty {
     std::string myService; // near
     std::string myChannel;

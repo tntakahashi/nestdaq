@@ -1,4 +1,6 @@
-# OpenTelemetry Collector with OpenSearch
+# OpenTelemetry Collector Compose Setup {#nestdaq_otel_collector_compose}
+
+## OpenTelemetry Collector with OpenSearch
 
 This directory contains a Compose setup for receiving OpenTelemetry data with
 OpenTelemetry Collector, storing logs and traces in OpenSearch, and viewing them

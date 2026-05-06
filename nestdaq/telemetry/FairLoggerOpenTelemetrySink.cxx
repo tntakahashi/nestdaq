@@ -1,3 +1,7 @@
+/** @file
+ *  @brief Implements the FairLogger sink that forwards log records to OpenTelemetry.
+ */
+
 #include "nestdaq/telemetry/FairLoggerOpenTelemetrySink.h"
 
 #include <atomic>

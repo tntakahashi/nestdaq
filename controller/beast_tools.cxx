@@ -1,3 +1,7 @@
+/** @file
+ *  @brief Implements Boost.Beast helper functions for HTTP responses.
+ */
+
 #include <iostream>
 
 #include <fairmq/FairMQLogger.h>

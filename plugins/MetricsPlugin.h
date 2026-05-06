@@ -1,5 +1,10 @@
 #pragma once
 
+/**
+ * @file MetricsPlugin.h
+ * @brief FairMQ plugin that publishes device and channel metrics to Redis.
+ */
+
 #include <chrono>
 #include <cstdint>
 #include <deque>

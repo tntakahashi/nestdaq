@@ -1,10 +1,15 @@
 #pragma once
 
+/**
+ * @file websocket_session.h
+ * @brief Per-connection WebSocket session for the web DAQ controller.
+ */
+
 #include <utility>
 
 #include "controller/beast_tools.h"
 
-// Echoes back all received WebSocket messages
+/** Manages one WebSocket client connection and forwards messages to WebGui. */
 class websocket_session : public std::enable_shared_from_this<websocket_session>
 {
 

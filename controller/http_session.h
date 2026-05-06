@@ -1,12 +1,17 @@
 #pragma once
 
+/**
+ * @file http_session.h
+ * @brief Per-connection HTTP session that serves files and upgrades WebSockets.
+ */
+
 #include <cstdint>
 #include <memory>
 #include <vector>
 
 #include "controller/beast_tools.h"
 
-// Handles an HTTP server connection
+/** Handles one HTTP server connection. */
 class http_session : public std::enable_shared_from_this<http_session>
 {
     // This queue is used for HTTP pipelining.

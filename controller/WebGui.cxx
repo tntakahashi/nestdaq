@@ -1,3 +1,7 @@
+/** @file
+ *  @brief Implements Redis-backed DAQ control and monitoring operations.
+ */
+
 #include <algorithm>
 #include <chrono>
 #include <iostream>
@@ -637,7 +641,7 @@ void WebGui::SubscribeToRedisPubSub()
                 return;
             }
         } else if (channel == fRedisKeyEventChannelName) {
-            std::cout << MyClass << " on_message(): expired key = " << msg << std::endl;
+            LOG(debug) << MyClass << " on_message(): expired key = " << msg;
             std::thread t([this, msg = std::move(msg)]() {
                 ProcessExpiredKey(msg);
             });

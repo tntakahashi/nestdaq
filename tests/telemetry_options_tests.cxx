@@ -1,3 +1,8 @@
+/**
+ * @file telemetry_options_tests.cxx
+ * @brief Catch2 tests for telemetry option parsing and C ABI config mapping.
+ */
+
 #include <catch2/catch_test_macros.hpp>
 
 #include <nestdaq/telemetry/FairLoggerTelemetryLoader.h>
