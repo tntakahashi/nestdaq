@@ -15,14 +15,18 @@
 #include <iostream>
 #include <string>
 #include <string_view>
+#include <vector>
 
 namespace nestdaq::telemetry {
 
-static constexpr std::string_view kDefaultTelemetryLibrary{"libnestdaq_fairlogger_otel.so"};
+static constexpr std::string_view kDefaultTelemetryLibrary{"libnestdaq_otel.so"};
 static constexpr std::string_view kDefaultProtocol{"console"};
-static constexpr std::string_view kDefaultHttpEndpoint{"http://localhost:4318/v1/logs"};
+static constexpr std::string_view kDefaultLogHttpEndpoint{"http://localhost:4318/v1/logs"};
+static constexpr std::string_view kDefaultMetricHttpEndpoint{"http://localhost:4318/v1/metrics"};
+static constexpr std::string_view kDefaultTraceHttpEndpoint{"http://localhost:4318/v1/traces"};
 static constexpr std::string_view kDefaultGrpcEndpoint{"localhost:4317"};
 static constexpr uint32_t kDefaultTimeoutMs{5000};
+static constexpr uint32_t kDefaultMetricExportIntervalMs{60000};
 static constexpr int32_t kSeverityNoLog{0};
 static constexpr int32_t kSeverityTrace{1};
 static constexpr int32_t kSeverityDebug4{2};
@@ -43,11 +47,18 @@ static constexpr std::string_view kTelemetryConfigSubscriber{"nestdaq-telemetry"
 
 struct TelemetryOptions {
     std::string library{kDefaultTelemetryLibrary};
-    std::string protocol{kDefaultProtocol};
-    std::string endpoint;
-    std::string endpointHttp{kDefaultHttpEndpoint};
-    std::string endpointGrpc{kDefaultGrpcEndpoint};
-    std::string headers;
+    std::string logProtocol{kDefaultProtocol};
+    std::string metricProtocol;
+    std::string traceProtocol;
+    std::string logEndpointHttp{kDefaultLogHttpEndpoint};
+    std::string logEndpointGrpc{kDefaultGrpcEndpoint};
+    std::string metricEndpointHttp{kDefaultMetricHttpEndpoint};
+    std::string metricEndpointGrpc{kDefaultGrpcEndpoint};
+    std::string traceEndpointHttp{kDefaultTraceHttpEndpoint};
+    std::string traceEndpointGrpc{kDefaultGrpcEndpoint};
+    std::string logHeaders;
+    std::string metricHeaders;
+    std::string traceHeaders;
     std::string severity{"info"};
     std::string serviceName{"nestdaq"};
     std::string serviceNamespace;
@@ -57,10 +68,11 @@ struct TelemetryOptions {
     std::string fairmqSession;
     std::string fairmqTransport;
     uint32_t timeoutMs{kDefaultTimeoutMs};
-    uint32_t otlpHttpJson{1};
+    uint32_t metricExportIntervalMs{kDefaultMetricExportIntervalMs};
+    uint32_t logOtlpHttpJson{1};
+    uint32_t metricOtlpHttpJson{1};
+    uint32_t traceOtlpHttpJson{1};
     bool required{false};
-    bool endpointHttpSet{false};
-    bool endpointGrpcSet{false};
 };
 
 class TelemetryLibrary;
@@ -72,8 +84,12 @@ inline auto AssignOption(TelemetryOptions& options,
                          std::string_view key,
                          std::string_view value) -> void;
 inline auto Env(const char* name) -> const char*;
-inline auto FinalizeEndpoints(TelemetryOptions& options) -> void;
-inline auto MakeConfig(const TelemetryOptions& options) -> nestdaq_otel_config_v1;
+inline auto MakeConfig(const TelemetryOptions& options) -> nestdaq_otel_config;
+inline auto MakeSignalConfig(std::string_view protocol,
+                             std::string_view endpointHttp,
+                             std::string_view endpointGrpc,
+                             std::string_view headers,
+                             uint32_t otlpHttpJson) -> nestdaq_otel_signal_config;
 inline auto ParseBool(std::string_view value) -> bool;
 inline auto ParseTelemetryOptions(int argc, char* argv[], // NOLINT(cppcoreguidelines-avoid-c-arrays)
                                   std::string_view defaultServiceName = "nestdaq") -> TelemetryOptions;
@@ -90,16 +106,26 @@ inline auto AddTelemetryOptions(boost::program_options::options_description& opt
 {
     namespace bpo = boost::program_options;
     options.add_options()
-           ("otel-log-library", bpo::value<std::string>()->default_value(std::string{kDefaultTelemetryLibrary}), "Telemetry shared library path or soname to dlopen")
+           ("otel-library", bpo::value<std::string>()->default_value(std::string{kDefaultTelemetryLibrary}), "Telemetry shared library path or soname to dlopen")
            ("otel-log-protocol", bpo::value<std::string>()->default_value(std::string{kDefaultProtocol})->implicit_value(""), "Comma-separated OTel log exporter protocols to enable: console, otlp-http, otlp-grpc. Empty disables OTel output")
-           ("otel-log-endpoint", bpo::value<std::string>(), "Compatibility OTel collector endpoint for both HTTP and gRPC logs")
-           ("otel-log-endpoint-http", bpo::value<std::string>()->default_value(std::string{kDefaultHttpEndpoint}), "OTLP HTTP logs endpoint")
+           ("otel-metric-protocol", bpo::value<std::string>()->default_value("")->implicit_value(""), "Comma-separated OTel metric exporter protocols to enable: console, otlp-http, otlp-grpc. Empty disables metrics")
+           ("otel-trace-protocol", bpo::value<std::string>()->default_value("")->implicit_value(""), "Comma-separated OTel trace exporter protocols to enable: console, otlp-http, otlp-grpc. Empty disables traces")
+           ("otel-log-endpoint-http", bpo::value<std::string>()->default_value(std::string{kDefaultLogHttpEndpoint}), "OTLP HTTP logs endpoint")
            ("otel-log-endpoint-grpc", bpo::value<std::string>()->default_value(std::string{kDefaultGrpcEndpoint}), "OTLP gRPC logs endpoint")
+           ("otel-metric-endpoint-http", bpo::value<std::string>()->default_value(std::string{kDefaultMetricHttpEndpoint}), "OTLP HTTP metrics endpoint")
+           ("otel-metric-endpoint-grpc", bpo::value<std::string>()->default_value(std::string{kDefaultGrpcEndpoint}), "OTLP gRPC metrics endpoint")
+           ("otel-trace-endpoint-http", bpo::value<std::string>()->default_value(std::string{kDefaultTraceHttpEndpoint}), "OTLP HTTP traces endpoint")
+           ("otel-trace-endpoint-grpc", bpo::value<std::string>()->default_value(std::string{kDefaultGrpcEndpoint}), "OTLP gRPC traces endpoint")
            ("otel-log-headers", bpo::value<std::string>(), "OTel exporter headers as comma-separated key=value pairs")
+           ("otel-metric-headers", bpo::value<std::string>(), "OTel metric exporter headers as comma-separated key=value pairs")
+           ("otel-trace-headers", bpo::value<std::string>(), "OTel trace exporter headers as comma-separated key=value pairs")
            ("otel-log-severity", bpo::value<std::string>()->default_value("info"), "Minimum severity exported to OTel")
            ("otel-log-required", bpo::value<bool>()->default_value(false), "Fail startup if telemetry library cannot be loaded")
-           ("otel-log-timeout-ms", bpo::value<uint32_t>()->default_value(kDefaultTimeoutMs), "OTel force-flush/shutdown timeout in milliseconds")
+           ("otel-timeout-ms", bpo::value<uint32_t>()->default_value(kDefaultTimeoutMs), "OTel force-flush/shutdown timeout in milliseconds")
+           ("otel-metric-export-interval-ms", bpo::value<uint32_t>()->default_value(kDefaultMetricExportIntervalMs), "OTel periodic metric export interval in milliseconds")
            ("otel-log-http-json", bpo::value<bool>()->default_value(true), "Use JSON content type for OTLP HTTP logs")
+           ("otel-metric-http-json", bpo::value<bool>()->default_value(true), "Use JSON content type for OTLP HTTP metrics")
+           ("otel-trace-http-json", bpo::value<bool>()->default_value(true), "Use JSON content type for OTLP HTTP traces")
            ("otel-service-name", bpo::value<std::string>()->default_value(std::string{defaultServiceName}), "OTel service.name resource attribute")
            ("otel-service-namespace", bpo::value<std::string>(), "OTel service.namespace resource attribute")
            ("otel-service-instance-id", bpo::value<std::string>(), "OTel service.instance.id resource attribute")
@@ -111,25 +137,44 @@ inline auto AddTelemetryOptions(boost::program_options::options_description& opt
 
 inline auto ApplyEnvironment(TelemetryOptions& options) -> void
 {
-    if (const auto* value = Env("NESTDAQ_OTEL_LOG_LIBRARY")) {
+    if (const auto* value = Env("NESTDAQ_OTEL_LIBRARY")) {
         options.library = value;
     }
     if (const auto* value = Env("NESTDAQ_OTEL_LOG_PROTOCOL")) {
-        options.protocol = value;
+        options.logProtocol = value;
     }
-    if (const auto* value = Env("NESTDAQ_OTEL_LOG_ENDPOINT")) {
-        options.endpoint = value;
+    if (const auto* value = Env("NESTDAQ_OTEL_METRIC_PROTOCOL")) {
+        options.metricProtocol = value;
+    }
+    if (const auto* value = Env("NESTDAQ_OTEL_TRACE_PROTOCOL")) {
+        options.traceProtocol = value;
     }
     if (const auto* value = Env("NESTDAQ_OTEL_LOG_ENDPOINT_HTTP")) {
-        options.endpointHttp = value;
-        options.endpointHttpSet = true;
+        options.logEndpointHttp = value;
     }
     if (const auto* value = Env("NESTDAQ_OTEL_LOG_ENDPOINT_GRPC")) {
-        options.endpointGrpc = value;
-        options.endpointGrpcSet = true;
+        options.logEndpointGrpc = value;
+    }
+    if (const auto* value = Env("NESTDAQ_OTEL_METRIC_ENDPOINT_HTTP")) {
+        options.metricEndpointHttp = value;
+    }
+    if (const auto* value = Env("NESTDAQ_OTEL_METRIC_ENDPOINT_GRPC")) {
+        options.metricEndpointGrpc = value;
+    }
+    if (const auto* value = Env("NESTDAQ_OTEL_TRACE_ENDPOINT_HTTP")) {
+        options.traceEndpointHttp = value;
+    }
+    if (const auto* value = Env("NESTDAQ_OTEL_TRACE_ENDPOINT_GRPC")) {
+        options.traceEndpointGrpc = value;
     }
     if (const auto* value = Env("NESTDAQ_OTEL_LOG_HEADERS")) {
-        options.headers = value;
+        options.logHeaders = value;
+    }
+    if (const auto* value = Env("NESTDAQ_OTEL_METRIC_HEADERS")) {
+        options.metricHeaders = value;
+    }
+    if (const auto* value = Env("NESTDAQ_OTEL_TRACE_HEADERS")) {
+        options.traceHeaders = value;
     }
     if (const auto* value = Env("NESTDAQ_OTEL_LOG_SEVERITY")) {
         options.severity = value;
@@ -143,28 +188,46 @@ inline auto AssignOption(TelemetryOptions& options,
                          std::string_view key, // NOLINT(bugprone-easily-swappable-parameters)
                          std::string_view value) -> void
 {
-    if (key == "otel-log-library") {
+    if (key == "otel-library") {
         options.library = value;
     } else if (key == "otel-log-protocol") {
-        options.protocol = value;
-    } else if (key == "otel-log-endpoint") {
-        options.endpoint = value;
+        options.logProtocol = value;
+    } else if (key == "otel-metric-protocol") {
+        options.metricProtocol = value;
+    } else if (key == "otel-trace-protocol") {
+        options.traceProtocol = value;
     } else if (key == "otel-log-endpoint-http") {
-        options.endpointHttp = value;
-        options.endpointHttpSet = true;
+        options.logEndpointHttp = value;
     } else if (key == "otel-log-endpoint-grpc") {
-        options.endpointGrpc = value;
-        options.endpointGrpcSet = true;
+        options.logEndpointGrpc = value;
+    } else if (key == "otel-metric-endpoint-http") {
+        options.metricEndpointHttp = value;
+    } else if (key == "otel-metric-endpoint-grpc") {
+        options.metricEndpointGrpc = value;
+    } else if (key == "otel-trace-endpoint-http") {
+        options.traceEndpointHttp = value;
+    } else if (key == "otel-trace-endpoint-grpc") {
+        options.traceEndpointGrpc = value;
     } else if (key == "otel-log-headers") {
-        options.headers = value;
+        options.logHeaders = value;
+    } else if (key == "otel-metric-headers") {
+        options.metricHeaders = value;
+    } else if (key == "otel-trace-headers") {
+        options.traceHeaders = value;
     } else if (key == "otel-log-severity") {
         options.severity = value;
     } else if (key == "otel-log-required") {
         options.required = ParseBool(value);
-    } else if (key == "otel-log-timeout-ms") {
+    } else if (key == "otel-timeout-ms") {
         options.timeoutMs = ParseUInt32(value, options.timeoutMs);
+    } else if (key == "otel-metric-export-interval-ms") {
+        options.metricExportIntervalMs = ParseUInt32(value, options.metricExportIntervalMs);
     } else if (key == "otel-log-http-json") {
-        options.otlpHttpJson = ParseBool(value) ? 1U : 0U;
+        options.logOtlpHttpJson = ParseBool(value) ? 1U : 0U;
+    } else if (key == "otel-metric-http-json") {
+        options.metricOtlpHttpJson = ParseBool(value) ? 1U : 0U;
+    } else if (key == "otel-trace-http-json") {
+        options.traceOtlpHttpJson = ParseBool(value) ? 1U : 0U;
     } else if (key == "otel-service-name") {
         options.serviceName = value;
     } else if (key == "otel-service-namespace") {
@@ -187,27 +250,25 @@ inline auto Env(const char* name) -> const char*
     return std::getenv(name); // NOLINT(concurrency-mt-unsafe)
 }
 
-inline auto FinalizeEndpoints(TelemetryOptions& options) -> void
+inline auto MakeConfig(const TelemetryOptions& options) -> nestdaq_otel_config
 {
-    if (!options.endpoint.empty()) {
-        if (!options.endpointHttpSet) {
-            options.endpointHttp = options.endpoint;
-        }
-        if (!options.endpointGrpcSet) {
-            options.endpointGrpc = options.endpoint;
-        }
-    }
-}
-
-inline auto MakeConfig(const TelemetryOptions& options) -> nestdaq_otel_config_v1
-{
-    nestdaq_otel_config_v1 config{};
+    nestdaq_otel_config config{};
     config.size = sizeof(config);
-    config.protocol = options.protocol.data();
-    config.endpoint = options.endpoint.data();
-    config.endpoint_http = options.endpointHttp.data();
-    config.endpoint_grpc = options.endpointGrpc.data();
-    config.headers = options.headers.data();
+    config.logs = MakeSignalConfig(options.logProtocol,
+                                   options.logEndpointHttp,
+                                   options.logEndpointGrpc,
+                                   options.logHeaders,
+                                   options.logOtlpHttpJson);
+    config.metrics = MakeSignalConfig(options.metricProtocol,
+                                      options.metricEndpointHttp,
+                                      options.metricEndpointGrpc,
+                                      options.metricHeaders,
+                                      options.metricOtlpHttpJson);
+    config.traces = MakeSignalConfig(options.traceProtocol,
+                                     options.traceEndpointHttp,
+                                     options.traceEndpointGrpc,
+                                     options.traceHeaders,
+                                     options.traceOtlpHttpJson);
     config.service_name = options.serviceName.data();
     config.service_namespace = options.serviceNamespace.data();
     config.service_instance_id = options.serviceInstanceId.data();
@@ -222,7 +283,22 @@ inline auto MakeConfig(const TelemetryOptions& options) -> nestdaq_otel_config_v
     config.fairmq_copyright = FAIRMQ_COPYRIGHT;
     config.min_severity = SeverityToFairLoggerValue(options.severity);
     config.timeout_ms = options.timeoutMs;
-    config.otlp_http_json = options.otlpHttpJson;
+    config.metric_export_interval_ms = options.metricExportIntervalMs;
+    return config;
+}
+
+inline auto MakeSignalConfig(std::string_view protocol,
+                             std::string_view endpointHttp,
+                             std::string_view endpointGrpc,
+                             std::string_view headers,
+                             uint32_t otlpHttpJson) -> nestdaq_otel_signal_config
+{
+    auto config = nestdaq_otel_signal_config{};
+    config.protocol = protocol.data();
+    config.endpoint_http = endpointHttp.data();
+    config.endpoint_grpc = endpointGrpc.data();
+    config.headers = headers.data();
+    config.otlp_http_json = otlpHttpJson;
     return config;
 }
 
@@ -254,7 +330,7 @@ inline auto ParseTelemetryOptions(int argc, char* argv[], // NOLINT(cppcoreguide
         } else if (key.rfind("otel-", 0) == 0 && i + 1 < argc &&
                    std::string_view{argv[i + 1]}.rfind("--", 0) != 0) { // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
             value = argv[++i]; // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
-        } else if (key == "otel-log-protocol") {
+        } else if (key == "otel-log-protocol" || key == "otel-metric-protocol" || key == "otel-trace-protocol") {
             value = "";
         } else {
             continue;
@@ -262,7 +338,6 @@ inline auto ParseTelemetryOptions(int argc, char* argv[], // NOLINT(cppcoreguide
         AssignOption(options, key, value);
     }
 
-    FinalizeEndpoints(options);
     return options;
 }
 
@@ -289,12 +364,19 @@ inline auto ReadTelemetryOptions(const boost::program_options::variables_map& vm
         }
     };
 
-    readString("otel-log-library");
+    readString("otel-library");
     readString("otel-log-protocol");
-    readString("otel-log-endpoint");
+    readString("otel-metric-protocol");
+    readString("otel-trace-protocol");
     readString("otel-log-endpoint-http");
     readString("otel-log-endpoint-grpc");
+    readString("otel-metric-endpoint-http");
+    readString("otel-metric-endpoint-grpc");
+    readString("otel-trace-endpoint-http");
+    readString("otel-trace-endpoint-grpc");
     readString("otel-log-headers");
+    readString("otel-metric-headers");
+    readString("otel-trace-headers");
     readString("otel-log-severity");
     readString("otel-service-name");
     readString("otel-service-namespace");
@@ -307,14 +389,21 @@ inline auto ReadTelemetryOptions(const boost::program_options::variables_map& vm
     if (vm.count("otel-log-required") != 0) {
         options.required = vm["otel-log-required"].as<bool>();
     }
-    if (vm.count("otel-log-timeout-ms") != 0) {
-        options.timeoutMs = vm["otel-log-timeout-ms"].as<uint32_t>();
+    if (vm.count("otel-timeout-ms") != 0) {
+        options.timeoutMs = vm["otel-timeout-ms"].as<uint32_t>();
+    }
+    if (vm.count("otel-metric-export-interval-ms") != 0) {
+        options.metricExportIntervalMs = vm["otel-metric-export-interval-ms"].as<uint32_t>();
     }
     if (vm.count("otel-log-http-json") != 0) {
-        options.otlpHttpJson = vm["otel-log-http-json"].as<bool>() ? 1U : 0U;
+        options.logOtlpHttpJson = vm["otel-log-http-json"].as<bool>() ? 1U : 0U;
     }
-
-    FinalizeEndpoints(options);
+    if (vm.count("otel-metric-http-json") != 0) {
+        options.metricOtlpHttpJson = vm["otel-metric-http-json"].as<bool>() ? 1U : 0U;
+    }
+    if (vm.count("otel-trace-http-json") != 0) {
+        options.traceOtlpHttpJson = vm["otel-trace-http-json"].as<bool>() ? 1U : 0U;
+    }
     return options;
 }
 
@@ -392,7 +481,7 @@ public:
         return fLastError;
     }
 
-    auto InitializeWith(const nestdaq_otel_config_v1& config) -> bool
+    auto InitializeWith(const nestdaq_otel_config& config) -> bool
     {
         if (!fInitialize) {
             return false;
@@ -409,6 +498,42 @@ public:
         return true;
     }
 
+    auto MetricAddDoubleCounter(std::string_view name,
+                                double value,
+                                std::string_view unit = "",
+                                std::string_view description = "",
+                                const nestdaq_otel_attribute* attributes = nullptr,
+                                uint64_t attributeCount = 0) -> bool
+    {
+        if (!fMetricAddDoubleCounter) {
+            return false;
+        }
+        return StoreResult(fMetricAddDoubleCounter(name.data(),
+                                                   value,
+                                                   unit.data(),
+                                                   description.data(),
+                                                   attributes,
+                                                   attributeCount));
+    }
+
+    auto MetricRecordDoubleHistogram(std::string_view name,
+                                     double value,
+                                     std::string_view unit = "",
+                                     std::string_view description = "",
+                                     const nestdaq_otel_attribute* attributes = nullptr,
+                                     uint64_t attributeCount = 0) -> bool
+    {
+        if (!fMetricRecordDoubleHistogram) {
+            return false;
+        }
+        return StoreResult(fMetricRecordDoubleHistogram(name.data(),
+                                                        value,
+                                                        unit.data(),
+                                                        description.data(),
+                                                        attributes,
+                                                        attributeCount));
+    }
+
     auto Load(const std::string& library) -> bool
     {
         fHandle = dlopen(library.data(), RTLD_NOW | RTLD_LOCAL);
@@ -417,10 +542,17 @@ public:
             return false;
         }
 
-        fInitialize = Resolve<int (*)(const nestdaq_otel_config_v1*)>("nestdaq_otel_init_v1");
+        fInitialize = Resolve<int (*)(const nestdaq_otel_config*)>("nestdaq_otel_init");
         fShutdown = Resolve<int (*)(uint64_t)>("nestdaq_otel_shutdown");
         fLastErrorFunction = Resolve<const char* (*)()>("nestdaq_otel_last_error");
         fSetMinSeverity = Resolve<int (*)(int32_t)>("nestdaq_otel_set_min_severity");
+        fMetricAddDoubleCounter = Resolve<int (*)(const char*, double, const char*, const char*, const nestdaq_otel_attribute*, uint64_t)>(
+            "nestdaq_otel_metric_add_double_counter");
+        fMetricRecordDoubleHistogram = Resolve<int (*)(const char*, double, const char*, const char*, const nestdaq_otel_attribute*, uint64_t)>(
+            "nestdaq_otel_metric_record_double_histogram");
+        fSpanEnd = Resolve<int (*)(uint64_t)>("nestdaq_otel_span_end");
+        fSpanSetAttribute = Resolve<int (*)(uint64_t, const nestdaq_otel_attribute*)>("nestdaq_otel_span_set_attribute");
+        fSpanStart = Resolve<uint64_t (*)(const char*, const nestdaq_otel_attribute*, uint64_t)>("nestdaq_otel_span_start");
 
         if (!fInitialize || !fShutdown) {
             fLastError = "telemetry library does not export the required nestdaq_otel_* C ABI";
@@ -430,11 +562,48 @@ public:
             fShutdown = nullptr;
             fLastErrorFunction = nullptr;
             fSetMinSeverity = nullptr;
+            fMetricAddDoubleCounter = nullptr;
+            fMetricRecordDoubleHistogram = nullptr;
+            fSpanEnd = nullptr;
+            fSpanSetAttribute = nullptr;
+            fSpanStart = nullptr;
             return false;
         }
 
         fLastError.clear();
         return true;
+    }
+
+    auto SpanEnd(uint64_t spanHandle) -> bool
+    {
+        if (!fSpanEnd) {
+            return false;
+        }
+        return StoreResult(fSpanEnd(spanHandle));
+    }
+
+    auto SpanSetAttribute(uint64_t spanHandle, const nestdaq_otel_attribute& attribute) -> bool
+    {
+        if (!fSpanSetAttribute) {
+            return false;
+        }
+        return StoreResult(fSpanSetAttribute(spanHandle, &attribute));
+    }
+
+    auto SpanStart(std::string_view name,
+                   const nestdaq_otel_attribute* attributes = nullptr,
+                   uint64_t attributeCount = 0) -> uint64_t
+    {
+        if (!fSpanStart) {
+            return 0;
+        }
+        const auto spanHandle = fSpanStart(name.data(), attributes, attributeCount);
+        if (spanHandle == 0) {
+            StoreResult(NESTDAQ_OTEL_ERROR);
+        } else {
+            fLastError.clear();
+        }
+        return spanHandle;
     }
 
     auto SetMinSeverity(std::string_view severity) -> bool
@@ -476,11 +645,30 @@ private:
         return reinterpret_cast<T>(dlsym(fHandle, symbol)); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
     }
 
+    auto StoreResult(int rc) -> bool
+    {
+        if (rc == 0) {
+            fLastError.clear();
+            return true;
+        }
+        if (fLastErrorFunction) {
+            if (const auto* error = fLastErrorFunction()) {
+                fLastError = error;
+            }
+        }
+        return false;
+    }
+
     void* fHandle{nullptr};
-    std::function<int(const nestdaq_otel_config_v1*)> fInitialize;
+    std::function<int(const nestdaq_otel_config*)> fInitialize;
     std::function<int(uint64_t)> fShutdown;
     std::function<const char*()> fLastErrorFunction;
     std::function<int(int32_t)> fSetMinSeverity;
+    std::function<int(const char*, double, const char*, const char*, const nestdaq_otel_attribute*, uint64_t)> fMetricAddDoubleCounter;
+    std::function<int(const char*, double, const char*, const char*, const nestdaq_otel_attribute*, uint64_t)> fMetricRecordDoubleHistogram;
+    std::function<int(uint64_t)> fSpanEnd;
+    std::function<int(uint64_t, const nestdaq_otel_attribute*)> fSpanSetAttribute;
+    std::function<uint64_t(const char*, const nestdaq_otel_attribute*, uint64_t)> fSpanStart;
     mutable bool fShutdownCalled{false};
     std::string fLastError;
 };

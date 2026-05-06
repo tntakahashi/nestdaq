@@ -22,11 +22,37 @@ enum {
 extern "C" {
 #endif
 
-typedef struct nestdaq_otel_config_v1 {
+typedef enum nestdaq_otel_attribute_type {
+    NESTDAQ_OTEL_ATTRIBUTE_STRING = 0,
+    NESTDAQ_OTEL_ATTRIBUTE_INT64 = 1,
+    NESTDAQ_OTEL_ATTRIBUTE_UINT64 = 2,
+    NESTDAQ_OTEL_ATTRIBUTE_DOUBLE = 3,
+    NESTDAQ_OTEL_ATTRIBUTE_BOOL = 4
+} nestdaq_otel_attribute_type;
+
+typedef struct nestdaq_otel_attribute {
+    const char *key;
+    nestdaq_otel_attribute_type type;
+    const char *string_value;
+    int64_t int_value;
+    uint64_t uint_value;
+    double double_value;
+    uint32_t bool_value;
+} nestdaq_otel_attribute;
+
+typedef struct nestdaq_otel_signal_config {
+    const char *protocol;      /* Comma-separated "console", "otlp-http", and/or "otlp-grpc"; empty disables the signal. */
+    const char *endpoint_http; /* Optional OTLP HTTP endpoint for this signal. */
+    const char *endpoint_grpc; /* Optional OTLP gRPC endpoint for this signal. */
+    const char *headers;       /* Optional comma-separated key=value pairs. */
+    uint32_t otlp_http_json;   /* Non-zero selects JSON for otlp-http. */
+} nestdaq_otel_signal_config;
+
+typedef struct nestdaq_otel_config {
     uint32_t size;
-    const char *protocol;            /* Comma-separated "console", "otlp-http", and/or "otlp-grpc". */
-    const char *endpoint;            /* Optional compatibility endpoint for both OTLP exporters. */
-    const char *headers;             /* Optional comma-separated key=value pairs. */
+    nestdaq_otel_signal_config logs;
+    nestdaq_otel_signal_config metrics;
+    nestdaq_otel_signal_config traces;
     const char *service_name;        /* OpenTelemetry service.name. */
     const char *service_namespace;   /* OpenTelemetry service.namespace. */
     const char *service_instance_id; /* OpenTelemetry service.instance.id. */
@@ -41,16 +67,32 @@ typedef struct nestdaq_otel_config_v1 {
     const char *fairmq_copyright;    /* FAIRMQ_COPYRIGHT. */
     int32_t min_severity;            /* fair::Severity numeric value, 0..15. */
     uint32_t timeout_ms;             /* Optional exporter force-flush/shutdown timeout. */
-    uint32_t otlp_http_json;         /* Non-zero selects JSON for otlp-http. */
-    const char *endpoint_http;       /* Optional OTLP HTTP logs endpoint. */
-    const char *endpoint_grpc;       /* Optional OTLP gRPC logs endpoint. */
-} nestdaq_otel_config_v1;
+    uint32_t metric_export_interval_ms;
+} nestdaq_otel_config;
 
 NESTDAQ_OTEL_EXPORT int nestdaq_otel_force_flush(uint64_t timeout_ms);
-NESTDAQ_OTEL_EXPORT int nestdaq_otel_init_v1(const nestdaq_otel_config_v1 *config);
+NESTDAQ_OTEL_EXPORT int nestdaq_otel_init(const nestdaq_otel_config *config);
 NESTDAQ_OTEL_EXPORT const char *nestdaq_otel_last_error(void);
+NESTDAQ_OTEL_EXPORT int nestdaq_otel_metric_add_double_counter(const char *name,
+                                                               double value,
+                                                               const char *unit,
+                                                               const char *description,
+                                                               const nestdaq_otel_attribute *attributes,
+                                                               uint64_t attribute_count);
+NESTDAQ_OTEL_EXPORT int nestdaq_otel_metric_record_double_histogram(const char *name,
+                                                                    double value,
+                                                                    const char *unit,
+                                                                    const char *description,
+                                                                    const nestdaq_otel_attribute *attributes,
+                                                                    uint64_t attribute_count);
 NESTDAQ_OTEL_EXPORT int nestdaq_otel_set_min_severity(int32_t severity);
 NESTDAQ_OTEL_EXPORT int nestdaq_otel_shutdown(uint64_t timeout_ms);
+NESTDAQ_OTEL_EXPORT int nestdaq_otel_span_end(uint64_t span_handle);
+NESTDAQ_OTEL_EXPORT int nestdaq_otel_span_set_attribute(uint64_t span_handle,
+                                                        const nestdaq_otel_attribute *attribute);
+NESTDAQ_OTEL_EXPORT uint64_t nestdaq_otel_span_start(const char *name,
+                                                     const nestdaq_otel_attribute *attributes,
+                                                     uint64_t attribute_count);
 
 #ifdef __cplusplus
 }
@@ -64,10 +106,27 @@ public:
     OpenTelemetryInitializer() = delete;
 
     static auto ForceFlush(uint64_t timeout_ms) -> int;
-    static auto Initialize(const nestdaq_otel_config_v1 *config) -> int;
+    static auto Initialize(const nestdaq_otel_config *config) -> int;
     static auto LastError() noexcept -> const char *;
+    static auto MetricAddDoubleCounter(const char *name,
+                                       double value,
+                                       const char *unit,
+                                       const char *description,
+                                       const nestdaq_otel_attribute *attributes,
+                                       uint64_t attribute_count) -> int;
+    static auto MetricRecordDoubleHistogram(const char *name,
+                                            double value,
+                                            const char *unit,
+                                            const char *description,
+                                            const nestdaq_otel_attribute *attributes,
+                                            uint64_t attribute_count) -> int;
     static auto SetMinSeverity(int32_t severity) -> int;
     static auto Shutdown(uint64_t timeout_ms) -> int;
+    static auto SpanEnd(uint64_t span_handle) -> int;
+    static auto SpanSetAttribute(uint64_t span_handle, const nestdaq_otel_attribute *attribute) -> int;
+    static auto SpanStart(const char *name,
+                          const nestdaq_otel_attribute *attributes,
+                          uint64_t attribute_count) -> uint64_t;
 };
 
 } // namespace nestdaq

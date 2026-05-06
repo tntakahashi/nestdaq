@@ -8,6 +8,7 @@ message(STATUS "PROJECT_NAME: ${PROJECT_NAME}")
 
 include(cmake/common.cmake)
 include(CMakePackageConfigHelpers)
+include(CTest)
 
 option(NESTDAQ_ENABLE_CLANG_TIDY "Run clang-tidy during NestDAQ builds" OFF)
 if(NESTDAQ_ENABLE_CLANG_TIDY)
@@ -233,6 +234,9 @@ endif()
 
 #------------------------------------------------------------------------------
 add_subdirectory(nestdaq)
+if(BUILD_TESTING)
+  add_subdirectory(tests)
+endif()
 add_subdirectory(plugins)
 add_subdirectory(controller)
 add_subdirectory(share)
