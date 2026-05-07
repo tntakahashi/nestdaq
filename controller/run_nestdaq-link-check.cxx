@@ -1,7 +1,9 @@
 #include <algorithm>
+#include <array>
 #include <atomic>
 #include <chrono>
 #include <cctype>
+#include <cmath>
 #include <csignal>
 #include <cstdlib>
 #include <iomanip>
@@ -46,11 +48,13 @@ struct Options {
     std::string fChannelB;
     std::string fRedisUrlDaqService{"127.0.0.1:6379/0"};
     std::string fRedisUrlMetrics{"127.0.0.1:6379/1"};
+    std::string fRateFormat{"auto"};
     std::string fSeparator{":"};
     double fDiffLow{0.0};
     double fDiffHigh{0.0};
     uint64_t fRefreshMs{1000};
     bool fNoColor{false};
+    bool fShowReverse{false};
 };
 
 struct EndpointKey {
@@ -112,11 +116,13 @@ auto MakeOptionDescription() -> bpo::options_description
          "DAQ service Redis URL. Format: host-address:port/db")
         ("redis-url-metrics", bpo::value<std::string>()->default_value("127.0.0.1:6379/1"),
          "metrics Redis URL. Format: host-address:port/db")
+        ("rate-format", bpo::value<std::string>()->default_value("auto"), "traffic rate format: auto, si, or plain")
         ("separator", bpo::value<std::string>()->default_value(":"), "Redis key separator")
         ("diff-low", bpo::value<double>()->default_value(0.0), "low-side threshold in msg/s")
         ("diff-high", bpo::value<double>()->default_value(0.0), "high-side threshold in msg/s")
         ("refresh", bpo::value<uint64_t>()->default_value(1000), "refresh interval in milliseconds. 0 means one-shot")
-        ("no-color", bpo::bool_switch()->default_value(false), "disable ANSI colors");
+        ("no-color", bpo::bool_switch()->default_value(false), "accepted for compatibility; traffic display is not colorized")
+        ("show-reverse", bpo::bool_switch()->default_value(false), "show reverse-direction traffic matrix");
     return options;
 }
 
@@ -147,14 +153,20 @@ auto ParseOptions(int argc, char *argv[]) -> std::optional<Options> // NOLINT(cp
     ret.fChannelB = vm["channel-b"].as<std::string>();
     ret.fRedisUrlDaqService = vm["redis-url-daq_service"].as<std::string>();
     ret.fRedisUrlMetrics = vm["redis-url-metrics"].as<std::string>();
+    ret.fRateFormat = vm["rate-format"].as<std::string>();
     ret.fSeparator = vm["separator"].as<std::string>();
     ret.fDiffLow = vm["diff-low"].as<double>();
     ret.fDiffHigh = vm["diff-high"].as<double>();
     ret.fRefreshMs = vm["refresh"].as<uint64_t>();
     ret.fNoColor = vm["no-color"].as<bool>();
+    ret.fShowReverse = vm["show-reverse"].as<bool>();
 
     if (ret.fSeparator.empty()) {
         std::cerr << "error: --separator must not be empty\n";
+        return std::nullopt;
+    }
+    if (ret.fRateFormat != "auto" && ret.fRateFormat != "si" && ret.fRateFormat != "plain") {
+        std::cerr << "error: --rate-format must be one of auto, si, or plain\n";
         return std::nullopt;
     }
     if (ret.fDiffLow > ret.fDiffHigh) {
@@ -342,50 +354,25 @@ auto AggregateMetric(const std::unordered_map<std::string, double> &metrics,
     return found ? std::optional<double>{ret} : std::nullopt;
 }
 
-auto StatusForDiff(double diff, const Options &options) -> std::string_view
-{
-    if (diff > options.fDiffHigh) {
-        return "HIGH";
-    }
-    if (diff < options.fDiffLow) {
-        return "LOW";
-    }
-    return "OK";
-}
-
-auto ColorForStatus(std::string_view status, bool use_color) -> std::string
-{
-    if (!use_color) {
-        return "";
-    }
-    if (status == "HIGH") {
-        return "\033[31m";
-    }
-    if (status == "LOW") {
-        return "\033[34m";
-    }
-    if (status == "OK") {
-        return "\033[32m";
-    }
-    if (status == "WAIT" || status == "MISSING" || status == "UNKNOWN") {
-        return "\033[33m";
-    }
-    return "";
-}
-
-auto ResetColor(bool use_color) -> std::string
-{
-    return use_color ? "\033[0m" : "";
-}
-
-auto FormatDiff(std::optional<double> value, const Options &options, bool use_color) -> std::string
+auto FormatRate(std::optional<double> value, const Options &options) -> std::string
 {
     if (!value) {
         return "n/a";
     }
-    const auto status = StatusForDiff(*value, options);
+    auto scaled = *value;
+    std::string_view suffix;
+    if (options.fRateFormat != "plain") {
+        constexpr double SCALE{1000.0};
+        constexpr std::array<std::string_view, 5> SUFFIXES{"", "K", "M", "G", "T"};
+        std::size_t suffix_index = 0;
+        while (std::abs(scaled) >= SCALE && suffix_index + 1 < SUFFIXES.size()) {
+            scaled /= SCALE;
+            ++suffix_index;
+        }
+        suffix = SUFFIXES.at(suffix_index);
+    }
     std::ostringstream out;
-    out << ColorForStatus(status, use_color) << std::fixed << std::setprecision(1) << *value << ResetColor(use_color);
+    out << std::fixed << std::setprecision(1) << scaled << suffix;
     return out.str();
 }
 
@@ -642,6 +629,25 @@ auto CountEstablishedLinks(const Snapshot &snapshot,
     return ret;
 }
 
+auto CommunicatedRate(const Snapshot &snapshot,
+                      const InstanceInfo &sender,
+                      const std::string &sender_channel,
+                      const InstanceInfo &receiver,
+                      const std::string &receiver_channel,
+                      std::string_view separator) -> std::optional<double>
+{
+    if (CountEstablishedLinks(snapshot, sender, sender_channel, receiver, receiver_channel) == 0) {
+        return std::nullopt;
+    }
+
+    const auto sender_out = AggregateMetric(snapshot.fMsgOut, sender.fInstance, sender_channel, "out", snapshot.fSockets, separator);
+    const auto receiver_in = AggregateMetric(snapshot.fMsgIn, receiver.fInstance, receiver_channel, "in", snapshot.fSockets, separator);
+    if (!sender_out || !receiver_in) {
+        return std::nullopt;
+    }
+    return std::min(*sender_out, *receiver_in);
+}
+
 auto PrintConnectionMatrix(std::ostream &out, const Snapshot &snapshot, const Options &options) -> void
 {
     out << "\nConnection link count\n";
@@ -664,70 +670,50 @@ auto PrintConnectionMatrix(std::ostream &out, const Snapshot &snapshot, const Op
 auto PrintTrafficMatrix(std::ostream &out,
                         const Snapshot &snapshot,
                         const Options &options,
-                        bool use_color,
                         std::string_view title,
-                        const std::string &row_channel,
-                        const std::unordered_map<std::string, double> &row_metric,
-                        std::string_view row_direction,
-                        const std::string &column_channel,
-                        const std::unordered_map<std::string, double> &column_metric,
-                        std::string_view column_direction) -> void
+                        const std::vector<InstanceInfo> &senders,
+                        const std::string &sender_channel,
+                        const std::vector<InstanceInfo> &receivers,
+                        const std::string &receiver_channel) -> void
 {
-    out << "\n" << title << " message-rate diff [msg/s]\n";
-    out << std::left << std::setw(18) << "A\\B";
-    for (const auto &b : snapshot.fInstancesB) {
-        out << std::setw(14) << Shorten(MatrixLabel(snapshot, b, column_channel), 13);
+    out << "\n" << title << " message rate [msg/s]\n";
+    out << std::left << std::setw(18) << "src\\dst";
+    for (const auto &receiver : receivers) {
+        out << std::setw(14) << Shorten(MatrixLabel(snapshot, receiver, receiver_channel), 13);
     }
+    out << std::setw(14) << "Total";
     out << '\n';
 
-    for (const auto &a : snapshot.fInstancesA) {
-        out << std::left << std::setw(18) << Shorten(MatrixLabel(snapshot, a, row_channel), 17);
-        for (const auto &b : snapshot.fInstancesB) {
-            const auto row_value = AggregateMetric(row_metric, a.fInstance, row_channel, row_direction, snapshot.fSockets, options.fSeparator);
-            const auto column_value = AggregateMetric(column_metric, b.fInstance, column_channel, column_direction, snapshot.fSockets, options.fSeparator);
-            std::optional<double> diff;
-            if (row_value && column_value) {
-                diff = *row_value - *column_value;
+    std::vector<double> column_totals(receivers.size(), 0.0);
+    double matrix_total = 0.0;
+    for (const auto &sender : senders) {
+        double row_total = 0.0;
+        out << std::left << std::setw(18) << Shorten(MatrixLabel(snapshot, sender, sender_channel), 17);
+        for (std::size_t receiver_index = 0; receiver_index < receivers.size(); ++receiver_index) {
+            const auto rate = CommunicatedRate(snapshot, sender, sender_channel, receivers[receiver_index], receiver_channel, options.fSeparator);
+            if (rate) {
+                row_total += *rate;
+                column_totals[receiver_index] += *rate;
+                matrix_total += *rate;
             }
-            out << std::setw(14) << FormatDiff(diff, options, use_color);
+            out << std::setw(14) << FormatRate(rate, options);
         }
+        out << std::setw(14) << FormatRate(row_total, options);
         out << '\n';
     }
+
+    out << std::left << std::setw(18) << "Total";
+    for (const auto total : column_totals) {
+        out << std::setw(14) << FormatRate(total, options);
+    }
+    out << std::setw(14) << FormatRate(matrix_total, options) << '\n';
 }
 
-auto PrintReverseTrafficMatrix(std::ostream &out, const Snapshot &snapshot, const Options &options, bool use_color) -> void
+auto PrintSnapshot(std::ostream &out, const Snapshot &snapshot, const Options &options, const Terminal & /*terminal*/) -> void
 {
-    out << "\n" << options.fServiceB << ":" << options.fChannelB << " -> "
-        << options.fServiceA << ":" << options.fChannelA << " message-rate diff [msg/s]\n";
-    out << std::left << std::setw(18) << "A\\B";
-    for (const auto &b : snapshot.fInstancesB) {
-        out << std::setw(14) << Shorten(MatrixLabel(snapshot, b, options.fChannelB), 13);
-    }
-    out << '\n';
-
-    for (const auto &a : snapshot.fInstancesA) {
-        out << std::left << std::setw(18) << Shorten(MatrixLabel(snapshot, a, options.fChannelA), 17);
-        for (const auto &b : snapshot.fInstancesB) {
-            const auto b_out = AggregateMetric(snapshot.fMsgOut, b.fInstance, options.fChannelB, "out", snapshot.fSockets, options.fSeparator);
-            const auto a_in = AggregateMetric(snapshot.fMsgIn, a.fInstance, options.fChannelA, "in", snapshot.fSockets, options.fSeparator);
-            std::optional<double> diff;
-            if (b_out && a_in) {
-                diff = *b_out - *a_in;
-            }
-            out << std::setw(14) << FormatDiff(diff, options, use_color);
-        }
-        out << '\n';
-    }
-}
-
-auto PrintSnapshot(std::ostream &out, const Snapshot &snapshot, const Options &options, const Terminal &terminal) -> void
-{
-    const auto use_color = terminal.fTty && !options.fNoColor;
     out << "NestDAQ link check  " << options.fServiceA << ":" << options.fChannelA << " <-> "
         << options.fServiceB << ":" << options.fChannelB
-        << "  updated=" << NowString()
-        << "  diff-low=" << options.fDiffLow
-        << "  diff-high=" << options.fDiffHigh << "\n";
+        << "  updated=" << NowString() << "\n";
 
     if (snapshot.fInstancesA.empty()) {
         out << "warning: no live instances found for " << options.fServiceA << '\n';
@@ -740,19 +726,26 @@ auto PrintSnapshot(std::ostream &out, const Snapshot &snapshot, const Options &o
     PrintTrafficMatrix(out,
                        snapshot,
                        options,
-                       use_color,
                        options.fServiceA + ":" + options.fChannelA + " -> " + options.fServiceB + ":" + options.fChannelB,
+                       snapshot.fInstancesA,
                        options.fChannelA,
-                       snapshot.fMsgOut,
-                       "out",
-                       options.fChannelB,
-                       snapshot.fMsgIn,
-                       "in");
-    PrintReverseTrafficMatrix(out, snapshot, options, use_color);
+                       snapshot.fInstancesB,
+                       options.fChannelB);
+    if (options.fShowReverse) {
+        PrintTrafficMatrix(out,
+                           snapshot,
+                           options,
+                           options.fServiceB + ":" + options.fChannelB + " -> " + options.fServiceA + ":" + options.fChannelA,
+                           snapshot.fInstancesB,
+                           options.fChannelB,
+                           snapshot.fInstancesA,
+                           options.fChannelA);
+    }
 
     out << "\nLegend: connection cells are established bind/connect address match counts. "
         << "Headers are instance-index[sub-channel-count].\n";
-    out << "Traffic cells are sender msg-out rate minus receiver msg-in rate. Colors: LOW/OK/HIGH by thresholds.\n";
+    out << "Traffic cells are min(sender msg-out rate, receiver msg-in rate) for established links. "
+        << "Totals sum numeric traffic cells.\n";
 
     if (!snapshot.fMetricsError.empty()) {
         out << "\nMetrics warning: " << snapshot.fMetricsError << '\n';
