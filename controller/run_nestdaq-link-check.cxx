@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <atomic>
 #include <chrono>
+#include <cctype>
 #include <csignal>
 #include <cstdlib>
 #include <iomanip>
@@ -399,15 +400,24 @@ auto Shorten(std::string value, std::size_t width) -> std::string
     return value.substr(0, width - 1) + "~";
 }
 
-auto HasPeer(const RuntimeChannel &channel, const RuntimeChannel &peer) -> bool
-{
-    return std::find(channel.fPeers.cbegin(), channel.fPeers.cend(), peer.fKey) != channel.fPeers.cend();
-}
-
 auto HasAddress(const SocketInfo &socket) -> bool
 {
     const auto iter = socket.fFields.find("address");
     return iter != socket.fFields.end() && !iter->second.empty() && iter->second != "unspecified";
+}
+
+auto InstanceIndex(const std::string &instance) -> std::string
+{
+    const auto pos = instance.find_last_of('-');
+    if (pos == std::string::npos || pos + 1 >= instance.size()) {
+        return instance;
+    }
+
+    const auto suffix = instance.substr(pos + 1);
+    const auto all_digits = std::all_of(suffix.cbegin(), suffix.cend(), [](unsigned char ch) {
+        return std::isdigit(ch) != 0;
+    });
+    return all_digits ? suffix : instance;
 }
 
 auto SocketIndexes(const Snapshot &snapshot,
@@ -424,15 +434,38 @@ auto SocketIndexes(const Snapshot &snapshot,
     return ret;
 }
 
-auto FindChannel(const Snapshot &snapshot, const std::string &service, const std::string &instance, const std::string &channel)
-    -> const RuntimeChannel *
+auto MatrixLabel(const Snapshot &snapshot, const InstanceInfo &instance, const std::string &channel) -> std::string
 {
-    const auto key = service + "\n" + instance + "\n" + channel;
-    const auto iter = snapshot.fChannels.find(key);
-    if (iter == snapshot.fChannels.end()) {
-        return nullptr;
+    const auto indexes = SocketIndexes(snapshot, instance.fService, instance.fInstance, channel);
+    return InstanceIndex(instance.fInstance) + "[" + std::to_string(indexes.size()) + "]";
+}
+
+auto SocketAddresses(const SocketInfo &socket) -> std::set<std::string>
+{
+    const auto iter = socket.fFields.find("address");
+    if (iter == socket.fFields.end()) {
+        return {};
     }
-    return &iter->second;
+
+    std::vector<std::string> addresses;
+    boost::split(addresses, iter->second, boost::is_any_of(","));
+    std::set<std::string> ret;
+    for (auto &address : addresses) {
+        boost::trim(address);
+        if (!address.empty() && address != "unspecified") {
+            ret.emplace(std::move(address));
+        }
+    }
+    return ret;
+}
+
+auto SocketField(const SocketInfo &socket, std::string_view name) -> std::string_view
+{
+    const auto iter = socket.fFields.find(std::string{name});
+    if (iter == socket.fFields.end()) {
+        return {};
+    }
+    return iter->second;
 }
 
 auto ChannelMapKey(const RuntimeChannel &channel) -> std::string
@@ -569,66 +602,60 @@ auto ReadSnapshot(sw::redis::Redis &redis, sw::redis::Redis &metrics, const Opti
     return ret;
 }
 
-auto ConnectionStatus(const Snapshot &snapshot,
-                      const InstanceInfo &left,
-                      const std::string &left_channel_name,
-                      const InstanceInfo &right,
-                      const std::string &right_channel_name) -> std::string
+auto CountAddressMatches(const SocketInfo &left, const SocketInfo &right) -> std::size_t
 {
-    const auto *left_channel = FindChannel(snapshot, left.fService, left.fInstance, left_channel_name);
-    const auto *right_channel = FindChannel(snapshot, right.fService, right.fInstance, right_channel_name);
-    if (left_channel == nullptr || right_channel == nullptr) {
-        return "MISSING";
-    }
-    const auto left_has_right = HasPeer(*left_channel, *right_channel);
-    const auto right_has_left = HasPeer(*right_channel, *left_channel);
-    if (left_has_right || right_has_left) {
-        const auto left_indexes = SocketIndexes(snapshot, left.fService, left.fInstance, left_channel_name);
-        const auto right_indexes = SocketIndexes(snapshot, right.fService, right.fInstance, right_channel_name);
-        if (!left_indexes.empty() && !right_indexes.empty()) {
-            return "OK";
+    const auto left_addresses = SocketAddresses(left);
+    const auto right_addresses = SocketAddresses(right);
+    std::size_t ret = 0;
+    for (const auto &address : left_addresses) {
+        if (right_addresses.find(address) != right_addresses.end()) {
+            ++ret;
         }
-        return "WAIT";
     }
-    const auto left_bound = left_channel->fFields.find("bound");
-    const auto right_bound = right_channel->fFields.find("bound");
-    if ((left_bound != left_channel->fFields.end() && left_bound->second == "1")
-        || (right_bound != right_channel->fFields.end() && right_bound->second == "1")) {
-        return "WAIT";
-    }
-    return "UNKNOWN";
+    return ret;
 }
 
-auto ConnectionDetail(const Snapshot &snapshot,
-                      const InstanceInfo &left,
-                      const std::string &left_channel_name,
-                      const InstanceInfo &right,
-                      const std::string &right_channel_name) -> std::string
+auto CountEstablishedLinks(const Snapshot &snapshot,
+                           const InstanceInfo &left,
+                           const std::string &left_channel_name,
+                           const InstanceInfo &right,
+                           const std::string &right_channel_name) -> std::size_t
 {
-    const auto status = ConnectionStatus(snapshot, left, left_channel_name, right, right_channel_name);
-    const auto left_indexes = SocketIndexes(snapshot, left.fService, left.fInstance, left_channel_name);
-    const auto right_indexes = SocketIndexes(snapshot, right.fService, right.fInstance, right_channel_name);
-    std::ostringstream out;
-    out << status << "(" << left_indexes.size() << "/" << right_indexes.size() << ")";
-    return out.str();
+    std::size_t ret = 0;
+    for (const auto &left_socket : snapshot.fSockets) {
+        if (left_socket.fService != left.fService || left_socket.fInstance != left.fInstance || left_socket.fChannel != left_channel_name) {
+            continue;
+        }
+        for (const auto &right_socket : snapshot.fSockets) {
+            if (right_socket.fService != right.fService || right_socket.fInstance != right.fInstance
+                || right_socket.fChannel != right_channel_name) {
+                continue;
+            }
+            if (SocketField(left_socket, "method") == "bind" && SocketField(right_socket, "method") == "connect") {
+                ret += CountAddressMatches(left_socket, right_socket);
+            }
+            if (SocketField(right_socket, "method") == "bind" && SocketField(left_socket, "method") == "connect") {
+                ret += CountAddressMatches(left_socket, right_socket);
+            }
+        }
+    }
+    return ret;
 }
 
-auto PrintConnectionMatrix(std::ostream &out, const Snapshot &snapshot, const Options &options, bool use_color) -> void
+auto PrintConnectionMatrix(std::ostream &out, const Snapshot &snapshot, const Options &options) -> void
 {
-    out << "\nConnection sub-channel status\n";
-    out << "Rows: " << options.fServiceA << ":" << options.fChannelA
-        << "  Columns: " << options.fServiceB << ":" << options.fChannelB << "\n\n";
+    out << "\nConnection link count\n";
+    out << "Rows A: " << options.fServiceA << ":" << options.fChannelA
+        << "  Columns B: " << options.fServiceB << ":" << options.fChannelB << "\n\n";
     out << std::left << std::setw(18) << "A\\B";
     for (const auto &b : snapshot.fInstancesB) {
-        out << std::setw(14) << Shorten(b.fInstance, 13);
+        out << std::setw(14) << Shorten(MatrixLabel(snapshot, b, options.fChannelB), 13);
     }
     out << '\n';
     for (const auto &a : snapshot.fInstancesA) {
-        out << std::left << std::setw(18) << Shorten(a.fInstance, 17);
+        out << std::left << std::setw(18) << Shorten(MatrixLabel(snapshot, a, options.fChannelA), 17);
         for (const auto &b : snapshot.fInstancesB) {
-            const auto status = ConnectionStatus(snapshot, a, options.fChannelA, b, options.fChannelB);
-            const auto detail = ConnectionDetail(snapshot, a, options.fChannelA, b, options.fChannelB);
-            out << ColorForStatus(status, use_color) << std::setw(14) << detail << ResetColor(use_color);
+            out << std::setw(14) << CountEstablishedLinks(snapshot, a, options.fChannelA, b, options.fChannelB);
         }
         out << '\n';
     }
@@ -649,12 +676,12 @@ auto PrintTrafficMatrix(std::ostream &out,
     out << "\n" << title << " message-rate diff [msg/s]\n";
     out << std::left << std::setw(18) << "A\\B";
     for (const auto &b : snapshot.fInstancesB) {
-        out << std::setw(14) << Shorten(b.fInstance, 13);
+        out << std::setw(14) << Shorten(MatrixLabel(snapshot, b, column_channel), 13);
     }
     out << '\n';
 
     for (const auto &a : snapshot.fInstancesA) {
-        out << std::left << std::setw(18) << Shorten(a.fInstance, 17);
+        out << std::left << std::setw(18) << Shorten(MatrixLabel(snapshot, a, row_channel), 17);
         for (const auto &b : snapshot.fInstancesB) {
             const auto row_value = AggregateMetric(row_metric, a.fInstance, row_channel, row_direction, snapshot.fSockets, options.fSeparator);
             const auto column_value = AggregateMetric(column_metric, b.fInstance, column_channel, column_direction, snapshot.fSockets, options.fSeparator);
@@ -674,12 +701,12 @@ auto PrintReverseTrafficMatrix(std::ostream &out, const Snapshot &snapshot, cons
         << options.fServiceA << ":" << options.fChannelA << " message-rate diff [msg/s]\n";
     out << std::left << std::setw(18) << "A\\B";
     for (const auto &b : snapshot.fInstancesB) {
-        out << std::setw(14) << Shorten(b.fInstance, 13);
+        out << std::setw(14) << Shorten(MatrixLabel(snapshot, b, options.fChannelB), 13);
     }
     out << '\n';
 
     for (const auto &a : snapshot.fInstancesA) {
-        out << std::left << std::setw(18) << Shorten(a.fInstance, 17);
+        out << std::left << std::setw(18) << Shorten(MatrixLabel(snapshot, a, options.fChannelA), 17);
         for (const auto &b : snapshot.fInstancesB) {
             const auto b_out = AggregateMetric(snapshot.fMsgOut, b.fInstance, options.fChannelB, "out", snapshot.fSockets, options.fSeparator);
             const auto a_in = AggregateMetric(snapshot.fMsgIn, a.fInstance, options.fChannelA, "in", snapshot.fSockets, options.fSeparator);
@@ -709,7 +736,7 @@ auto PrintSnapshot(std::ostream &out, const Snapshot &snapshot, const Options &o
         out << "warning: no live instances found for " << options.fServiceB << '\n';
     }
 
-    PrintConnectionMatrix(out, snapshot, options, use_color);
+    PrintConnectionMatrix(out, snapshot, options);
     PrintTrafficMatrix(out,
                        snapshot,
                        options,
@@ -723,8 +750,8 @@ auto PrintSnapshot(std::ostream &out, const Snapshot &snapshot, const Options &o
                        "in");
     PrintReverseTrafficMatrix(out, snapshot, options, use_color);
 
-    out << "\nLegend: connection OK=peer key found, WAIT=runtime channel exists but peer unresolved, "
-        << "MISSING=runtime channel missing, UNKNOWN=insufficient data\n";
+    out << "\nLegend: connection cells are established bind/connect address match counts. "
+        << "Headers are instance-index[sub-channel-count].\n";
     out << "Traffic cells are sender msg-out rate minus receiver msg-in rate. Colors: LOW/OK/HIGH by thresholds.\n";
 
     if (!snapshot.fMetricsError.empty()) {
