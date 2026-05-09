@@ -6,6 +6,7 @@
 
 #include <algorithm>
 #include <atomic>
+#include <array>
 #include <chrono>
 #include <cctype>
 #include <cstdint>
@@ -33,10 +34,13 @@
 #include <opentelemetry/exporters/otlp/otlp_http_metric_exporter_factory.h>
 #include <opentelemetry/logs/noop.h>
 #include <opentelemetry/logs/provider.h>
+#include <opentelemetry/metrics/async_instruments.h>
 #include <opentelemetry/metrics/meter.h>
 #include <opentelemetry/metrics/noop.h>
+#include <opentelemetry/metrics/observer_result.h>
 #include <opentelemetry/metrics/provider.h>
 #include <opentelemetry/metrics/sync_instruments.h>
+#include <opentelemetry/nostd/variant.h>
 #include <opentelemetry/sdk/logs/batch_log_record_processor_factory.h>
 #include <opentelemetry/sdk/logs/batch_log_record_processor_options.h>
 #include <opentelemetry/sdk/logs/exporter.h>
@@ -61,6 +65,7 @@
 #include <opentelemetry/trace/tracer.h>
 
 #include "nestdaq/telemetry/FairLoggerOpenTelemetrySink.h"
+#include "nestdaq/telemetry/FairMQThroughputLogParser.h"
 
 #if __has_include("nestdaq/version.h")
 #  include "nestdaq/version.h"
@@ -108,6 +113,13 @@ struct MetricKey {
     }
 };
 
+struct FairMQThroughputMeasurement {
+    std::string channelName;
+    std::string direction;
+    double messagesPerSecond = 0.0;
+    double megabytesPerSecond = 0.0;
+};
+
 struct RuntimeState {
     std::mutex mutex;
     std::shared_ptr<opentelemetry::sdk::logs::LoggerProvider> loggerProvider;
@@ -117,6 +129,9 @@ struct RuntimeState {
     opentelemetry::nostd::shared_ptr<opentelemetry::trace::Tracer> tracer;
     std::map<MetricKey, opentelemetry::nostd::unique_ptr<opentelemetry::metrics::Counter<double>>> doubleCounters;
     std::map<MetricKey, opentelemetry::nostd::unique_ptr<opentelemetry::metrics::Histogram<double>>> doubleHistograms;
+    opentelemetry::nostd::shared_ptr<opentelemetry::metrics::ObservableInstrument> fairmqMessagesPerSecondGauge;
+    opentelemetry::nostd::shared_ptr<opentelemetry::metrics::ObservableInstrument> fairmqMegabytesPerSecondGauge;
+    std::map<std::pair<std::string, std::string>, FairMQThroughputMeasurement> fairmqThroughputMeasurements;
     std::map<uint64_t, opentelemetry::nostd::shared_ptr<opentelemetry::trace::Span>> spans;
     std::atomic<uint64_t> nextSpanHandle{1};
     std::string lastError;
@@ -128,6 +143,7 @@ auto AddStringAttribute(opentelemetry::sdk::resource::ResourceAttributes &attrib
 auto AppendAttribute(AttributeStorage &storage, const nestdaq_otel_attribute &attribute) -> void;
 auto BuildAttributes(const nestdaq_otel_attribute *attributes, uint64_t attributeCount) -> AttributeStorage;
 auto ClearLastError() -> void;
+auto ConfigureFairMQThroughputMetrics(RuntimeState &state) -> void;
 auto CreateLogExporter(const nestdaq_otel_config &config, Protocol protocol)
 -> std::unique_ptr<opentelemetry::sdk::logs::LogRecordExporter>;
 auto CreateLogProcessor(std::unique_ptr<opentelemetry::sdk::logs::LogRecordExporter> exporter,
@@ -152,6 +168,9 @@ auto LogEndpointGrpc(const nestdaq_otel_config &config) -> const char *;
 auto ParseHeaders(const char *headers) -> opentelemetry::exporter::otlp::OtlpHeaders;
 auto ParseProtocols(const char *protocols, std::vector<Protocol> &out) -> bool;
 auto ParseProtocolToken(std::string_view protocol, Protocol &out) -> bool;
+auto ObserveFairMQMegabytesPerSecond(opentelemetry::metrics::ObserverResult observer, void *state) noexcept -> void;
+auto ObserveFairMQMessagesPerSecond(opentelemetry::metrics::ObserverResult observer, void *state) noexcept -> void;
+auto ObserveFairMQThroughput(opentelemetry::metrics::ObserverResult observer, bool observeMegabytes) noexcept -> void;
 auto SetLastError(std::string message) -> int;
 auto SignalEnabled(const nestdaq_otel_signal_config &config) noexcept -> bool;
 auto State() -> RuntimeState &;
@@ -218,6 +237,29 @@ auto ClearLastError() -> void
     auto &state = State();
     std::lock_guard lock{state.mutex};
     state.lastError.clear();
+}
+
+auto ConfigureFairMQThroughputMetrics(RuntimeState &state) -> void
+{
+    if (!state.meter) {
+        return;
+    }
+
+    state.fairmqMessagesPerSecondGauge = state.meter->CreateDoubleObservableGauge(
+        "fairmq.channel.messages_per_second",
+        "FairMQ channel message rate parsed from Device throughput logs",
+        "{message}/s");
+    if (state.fairmqMessagesPerSecondGauge) {
+        state.fairmqMessagesPerSecondGauge->AddCallback(ObserveFairMQMessagesPerSecond, nullptr);
+    }
+
+    state.fairmqMegabytesPerSecondGauge = state.meter->CreateDoubleObservableGauge(
+        "fairmq.channel.megabytes_per_second",
+        "FairMQ channel throughput parsed from Device throughput logs",
+        "MB/s");
+    if (state.fairmqMegabytesPerSecondGauge) {
+        state.fairmqMegabytesPerSecondGauge->AddCallback(ObserveFairMQMegabytesPerSecond, nullptr);
+    }
 }
 
 auto CreateLogExporter(const nestdaq_otel_config &config, Protocol protocol)
@@ -474,6 +516,54 @@ auto ParseProtocolToken(std::string_view protocol, Protocol &out) -> bool
     return false;
 }
 
+auto ObserveFairMQMegabytesPerSecond(opentelemetry::metrics::ObserverResult observer, void * /* state */) noexcept
+-> void
+{
+    ObserveFairMQThroughput(observer, true);
+}
+
+auto ObserveFairMQMessagesPerSecond(opentelemetry::metrics::ObserverResult observer, void * /* state */) noexcept
+-> void
+{
+    ObserveFairMQThroughput(observer, false);
+}
+
+auto ObserveFairMQThroughput(opentelemetry::metrics::ObserverResult observer, bool observeMegabytes) noexcept -> void
+{
+    using DoubleObserver = opentelemetry::nostd::shared_ptr<opentelemetry::metrics::ObserverResultT<double>>;
+    if (!opentelemetry::nostd::holds_alternative<DoubleObserver>(observer)) {
+        return;
+    }
+
+    const auto result = opentelemetry::nostd::get<DoubleObserver>(observer);
+    if (!result) {
+        return;
+    }
+
+    auto measurements = std::vector<FairMQThroughputMeasurement>{};
+    {
+        auto &state = State();
+        std::lock_guard lock{state.mutex};
+        measurements.reserve(state.fairmqThroughputMeasurements.size());
+        for (const auto &[_, measurement] : state.fairmqThroughputMeasurements) {
+            measurements.emplace_back(measurement);
+        }
+    }
+
+    for (const auto &measurement : measurements) {
+        const auto attributes = std::array{
+            std::pair<opentelemetry::nostd::string_view, opentelemetry::common::AttributeValue>{
+                "fairmq.channel.name",
+                opentelemetry::nostd::string_view{measurement.channelName}},
+            std::pair<opentelemetry::nostd::string_view, opentelemetry::common::AttributeValue>{
+                "network.io.direction",
+                opentelemetry::nostd::string_view{measurement.direction}},
+        };
+        result->Observe(observeMegabytes ? measurement.megabytesPerSecond : measurement.messagesPerSecond,
+                        attributes);
+    }
+}
+
 auto SetLastError(std::string message) -> int
 {
     auto &state = State();
@@ -643,6 +733,7 @@ auto OpenTelemetryInitializer::Initialize(const nestdaq_otel_config *config) -> 
             state.tracer = {};
             if (meterProvider) {
                 state.meter = meterProvider->GetMeter("nestdaq", std::string{NESTDAQ_VERSION});
+                ConfigureFairMQThroughputMetrics(state);
             }
             if (tracerProvider) {
                 state.tracer = tracerProvider->GetTracer("nestdaq", std::string{NESTDAQ_VERSION});
@@ -744,6 +835,31 @@ auto OpenTelemetryInitializer::MetricRecordDoubleHistogram(const char *name,
     return NESTDAQ_OTEL_OK;
 }
 
+auto OpenTelemetryInitializer::RecordFairMQThroughput(const telemetry::FairMQThroughputSample &sample) noexcept
+-> void
+{
+    try {
+        auto &state = State();
+        std::lock_guard lock{state.mutex};
+        if (!state.meter) {
+            return;
+        }
+        state.fairmqThroughputMeasurements[{sample.channelName, "in"}] = FairMQThroughputMeasurement{
+            .channelName = sample.channelName,
+            .direction = "in",
+            .messagesPerSecond = sample.messagesPerSecondIn,
+            .megabytesPerSecond = sample.megabytesPerSecondIn,
+        };
+        state.fairmqThroughputMeasurements[{sample.channelName, "out"}] = FairMQThroughputMeasurement{
+            .channelName = sample.channelName,
+            .direction = "out",
+            .messagesPerSecond = sample.messagesPerSecondOut,
+            .megabytesPerSecond = sample.megabytesPerSecondOut,
+        };
+    } catch (...) {
+    }
+}
+
 auto OpenTelemetryInitializer::SetMinSeverity(int32_t severity) -> int
 {
     if (!ValidateSeverity(severity)) {
@@ -773,6 +889,9 @@ auto OpenTelemetryInitializer::Shutdown(uint64_t timeout_ms) -> int
             state.tracer = {};
             state.doubleCounters.clear();
             state.doubleHistograms.clear();
+            state.fairmqMessagesPerSecondGauge = {};
+            state.fairmqMegabytesPerSecondGauge = {};
+            state.fairmqThroughputMeasurements.clear();
             state.spans.clear();
         }
         FairLoggerOpenTelemetrySink::Shutdown();

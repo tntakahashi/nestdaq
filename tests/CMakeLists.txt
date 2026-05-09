@@ -2,6 +2,8 @@ find_package(Catch2 CONFIG REQUIRED)
 include(Catch)
 
 add_executable(nestdaq_telemetry_options_tests
+  ${CMAKE_SOURCE_DIR}/nestdaq/telemetry/FairMQThroughputLogParser.cxx
+  fairmq_throughput_log_parser_tests.cxx
   telemetry_options_tests.cxx
 )
 

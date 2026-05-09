@@ -5,6 +5,8 @@
 
 #include <catch2/catch_test_macros.hpp>
 
+#include <fairlogger/Logger.h>
+
 #include <nestdaq/telemetry/Telemetry.h>
 
 #include <string_view>
@@ -21,6 +23,16 @@ auto DisabledConfig() -> nestdaq_otel_config
     return nestdaq::telemetry::MakeConfig(options);
 }
 
+auto LogOnlyConfig() -> nestdaq_otel_config
+{
+    auto options = nestdaq::telemetry::TelemetryOptions{};
+    options.logProtocol = "console";
+    options.metricProtocol.clear();
+    options.traceProtocol.clear();
+    options.serviceName = "nestdaq-test";
+    return nestdaq::telemetry::MakeConfig(options);
+}
+
 } // namespace
 
 TEST_CASE("telemetry plugin loads unified nestdaq_otel library", "[telemetry][plugin]")
@@ -29,6 +41,17 @@ TEST_CASE("telemetry plugin loads unified nestdaq_otel library", "[telemetry][pl
 
     REQUIRE(library.Load(NESTDAQ_OTEL_LIBRARY_PATH));
     CHECK(library.InitializeWith(DisabledConfig()));
+    library.ShutdownTelemetry(nestdaq::telemetry::kDefaultTimeoutMs);
+}
+
+TEST_CASE("FairMQ throughput logs are safe when metrics are disabled", "[telemetry][plugin]")
+{
+    auto library = nestdaq::telemetry::TelemetryLibrary{};
+    REQUIRE(library.Load(NESTDAQ_OTEL_LIBRARY_PATH));
+    REQUIRE(library.InitializeWith(LogOnlyConfig()));
+
+    LOG(info) << "data: in: 123 (4.5 MB) out: 6.7 (8.9 MB)";
+
     library.ShutdownTelemetry(nestdaq::telemetry::kDefaultTimeoutMs);
 }
 

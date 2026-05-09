@@ -179,6 +179,9 @@ NESTDAQ_OTEL_EXPORT uint64_t nestdaq_otel_span_start(const char *name,
 
 #ifdef __cplusplus
 namespace nestdaq {
+namespace telemetry {
+struct FairMQThroughputSample;
+}
 
 /**
  * @brief C++ implementation facade for the `libnestdaq_otel.so` C ABI.
@@ -206,6 +209,7 @@ public:
                                             const char *description,
                                             const nestdaq_otel_attribute *attributes,
                                             uint64_t attribute_count) -> int;
+    static auto RecordFairMQThroughput(const telemetry::FairMQThroughputSample &sample) noexcept -> void;
     static auto SetMinSeverity(int32_t severity) -> int;
     static auto Shutdown(uint64_t timeout_ms) -> int;
     static auto SpanEnd(uint64_t span_handle) -> int;

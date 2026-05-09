@@ -7,6 +7,7 @@ install(FILES
 
 if(opentelemetry-cpp_FOUND)
   add_library(nestdaq_otel SHARED
+    FairMQThroughputLogParser.cxx
     FairLoggerOpenTelemetrySink.cxx
     OpenTelemetryInitializer.cxx
   )

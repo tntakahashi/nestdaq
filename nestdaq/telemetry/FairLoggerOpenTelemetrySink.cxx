@@ -30,6 +30,9 @@
 #include <opentelemetry/semconv/code_attributes.h>
 #include <opentelemetry/semconv/incubating/thread_attributes.h>
 
+#include "nestdaq/telemetry/FairMQThroughputLogParser.h"
+#include "nestdaq/telemetry/OpenTelemetryInitializer.h"
+
 #if __has_include("nestdaq/version.h")
 #  include "nestdaq/version.h"
 #else
@@ -107,6 +110,10 @@ auto CurrentThreadId() noexcept -> uint64_t
 
 auto EmitLogRecord(const std::string &content, const fair::LogMetaData &metadata) noexcept -> void
 {
+    if (auto sample = telemetry::ParseFairMQThroughputLog(content)) {
+        OpenTelemetryInitializer::RecordFairMQThroughput(*sample);
+    }
+
     if (!ShouldEmit(metadata.severity)) {
         return;
     }
