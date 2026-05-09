@@ -9,7 +9,7 @@
 
 #include <boost/algorithm/string.hpp>
 
-#include <fairmq/FairMQLogger.h>
+#include <fairlogger/Logger.h>
 
 #include <sw/redis++/redis++.h>
 

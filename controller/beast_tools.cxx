@@ -4,7 +4,7 @@
 
 #include <iostream>
 
-#include <fairmq/FairMQLogger.h>
+#include <fairlogger/Logger.h>
 
 #include "controller/beast_tools.h"
 

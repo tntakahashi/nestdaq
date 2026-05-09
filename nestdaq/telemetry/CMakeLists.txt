@@ -14,6 +14,9 @@ if(opentelemetry-cpp_FOUND)
   target_include_directories(nestdaq_otel PRIVATE
     ${CMAKE_SOURCE_DIR}
     ${CMAKE_BINARY_DIR}
+  )
+
+  target_include_directories(nestdaq_otel SYSTEM PRIVATE
     ${FairLogger_INCDIR}
   )
 

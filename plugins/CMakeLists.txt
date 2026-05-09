@@ -23,13 +23,16 @@ add_library(${PLUGIN} SHARED
   tools.cxx;
 )
 
-target_include_directories(${PLUGIN} PRIVATE 
+target_include_directories(${PLUGIN} PRIVATE
+  ${CMAKE_SOURCE_DIR};
+)
+
+target_include_directories(${PLUGIN} SYSTEM PRIVATE
   ${Boost_INCLUDE_DIRS};
   ${FairLogger_INCDIR};
   ${FairMQ_INCDIR};
   ${HIREDIS_HEADER};
   ${REDIS_PLUS_PLUS_HEADER};
-  ${CMAKE_SOURCE_DIR};
 )
 
 target_link_libraries(${PLUGIN}
@@ -50,13 +53,16 @@ add_library(${PLUGIN} SHARED
   TimeUtil.cxx;
 )
 
-target_include_directories(${PLUGIN} PRIVATE 
+target_include_directories(${PLUGIN} PRIVATE
+  ${CMAKE_SOURCE_DIR};
+)
+
+target_include_directories(${PLUGIN} SYSTEM PRIVATE
   ${Boost_INCLUDE_DIRS};
   ${FairLogger_INCDIR};
   ${FairMQ_INCDIR};
   ${HIREDIS_HEADER};
   ${REDIS_PLUS_PLUS_HEADER};
-  ${CMAKE_SOURCE_DIR};
 )
 
 target_link_libraries(${PLUGIN}
@@ -74,13 +80,16 @@ add_library(${PLUGIN} SHARED
   ParameterConfigPlugin.cxx;
 )
 
-target_include_directories(${PLUGIN} PRIVATE 
+target_include_directories(${PLUGIN} PRIVATE
+  ${CMAKE_SOURCE_DIR};
+)
+
+target_include_directories(${PLUGIN} SYSTEM PRIVATE
   ${Boost_INCLUDE_DIRS};
   ${FairLogger_INCDIR};
   ${FairMQ_INCDIR};
   ${HIREDIS_HEADER};
   ${REDIS_PLUS_PLUS_HEADER};
-  ${CMAKE_SOURCE_DIR};
 )
 
 target_link_libraries(${PLUGIN}

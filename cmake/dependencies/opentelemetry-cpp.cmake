@@ -21,6 +21,7 @@ else()
     CMAKE_ARGS
       -DCMAKE_BUILD_TYPE=Release
       -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
+      -DCMAKE_PREFIX_PATH=${CMAKE_INSTALL_PREFIX}
       -DCMAKE_CXX_STANDARD=${CMAKE_CXX_STANDARD}
       -DCMAKE_POSITION_INDEPENDENT_CODE=ON
       -DCMAKE_LINKER_TYPE=${CMAKE_LINKER_TYPE}
@@ -36,6 +37,10 @@ else()
     BUILD_COMMAND
       ${CMAKE_COMMAND} --build <BINARY_DIR> --config $<CONFIG> ${BUILD_PARALLEL_LEVEL} 
   )
+
+  if(TARGET nlohmann_json)
+    add_dependencies(opentelemetry-cpp nlohmann_json)
+  endif()
 endif()
 
 

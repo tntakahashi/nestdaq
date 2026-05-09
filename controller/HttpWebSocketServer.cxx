@@ -5,7 +5,7 @@
 #include <iostream>
 #include <string>
 
-#include <fairmq/FairMQLogger.h>
+#include <fairlogger/Logger.h>
 
 #include "controller/listener.h"
 #include "controller/HttpWebSocketServer.h"

@@ -16,7 +16,7 @@
 #include <sw/redis++/redis++.h>
 
 #include <fairmq/States.h>
-#include <fairmq/FairMQLogger.h>
+#include <fairlogger/Logger.h>
 
 #include "plugins/Constants.h"
 #include "plugins/Functions.h"

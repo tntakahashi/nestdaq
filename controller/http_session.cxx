@@ -2,7 +2,7 @@
  *  @brief Implements HTTP request handling for the DAQ web controller.
  */
 
-#include <fairmq/FairMQLogger.h>
+#include <fairlogger/Logger.h>
 
 #include "controller/websocket_session.h"
 #include "controller/http_session.h"

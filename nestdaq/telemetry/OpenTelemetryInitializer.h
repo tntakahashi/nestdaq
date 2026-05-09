@@ -103,7 +103,7 @@ typedef struct nestdaq_otel_config {
 
 /**
  * @brief Force-flush all initialized telemetry providers.
- * @return @ref NESTDAQ_OTEL_OK on success, otherwise @ref NESTDAQ_OTEL_ERROR.
+ * @return `NESTDAQ_OTEL_OK` on success, otherwise `NESTDAQ_OTEL_ERROR`.
  */
 NESTDAQ_OTEL_EXPORT int nestdaq_otel_force_flush(uint64_t timeout_ms);
 /**
@@ -112,7 +112,7 @@ NESTDAQ_OTEL_EXPORT int nestdaq_otel_force_flush(uint64_t timeout_ms);
  * Reinitialization shuts down the previous providers before installing the new
  * providers. Passing null uses defaults.
  *
- * @return @ref NESTDAQ_OTEL_OK on success, otherwise @ref NESTDAQ_OTEL_ERROR.
+ * @return `NESTDAQ_OTEL_OK` on success, otherwise `NESTDAQ_OTEL_ERROR`.
  */
 NESTDAQ_OTEL_EXPORT int nestdaq_otel_init(const nestdaq_otel_config *config);
 /**

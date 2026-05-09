@@ -5,7 +5,7 @@
 #include <algorithm>
 #include <mutex>
 
-#include <fairmq/FairMQLogger.h>
+#include <fairlogger/Logger.h>
 
 #include "controller/WebSocketHandle.h"
 #include "controller/websocket_session.h"

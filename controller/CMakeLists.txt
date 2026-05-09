@@ -30,13 +30,16 @@ add_executable(${EXEC}
 )
 
 target_include_directories(${EXEC} PUBLIC
+  ${CMAKE_SOURCE_DIR};
+  ${CMAKE_BINARY_DIR};
+)
+
+target_include_directories(${EXEC} SYSTEM PUBLIC
   ${Boost_INCLUDE_DIRS};
   ${FairLogger_INCDIR};
   ${FairMQ_INCDIR};
   ${HIREDIS_HEADER};
   ${REDIS_PLUS_PLUS_HEADER};
-  ${CMAKE_SOURCE_DIR};
-  ${CMAKE_BINARY_DIR};
 )
 
 target_link_directories(${EXEC} PUBLIC

@@ -1059,6 +1059,7 @@ void daq::service::TopologyConfig::ResolveConnectAddress()
 
             LOG(debug) << "id = " << fId << " numSocket (me) = " << sp.numSockets << ", (peer) = " << peerProperty.numSockets;
             const auto address = ReadPeerAddress(p); //peerHealthKey, *peerIP, peerChannel);
+            const auto myAddressIndex = static_cast<decltype(address)::size_type>(myIndex);
             if ((sp.numSockets<=1) && (peerProperty.numSockets<=1)) {
                 is1to1 = true;
                 // 1:1 or fan-in/fan-out
@@ -1073,7 +1074,7 @@ void daq::service::TopologyConfig::ResolveConnectAddress()
             } else if ((sp.numSockets<=1) && (peerProperty.numSockets>1)) {
                 // 1:m
                 LOG(debug) << MyClass << " " << __FUNCTION__ << ":" << __LINE__ << " id = " << fId << " 1:m ";
-                res.address = address[myIndex];
+                res.address = address[myAddressIndex];
             } else if ((sp.numSockets>1) && (peerProperty.numSockets<=1)) {
                 // n:1
                 LOG(debug) << MyClass << " " << __FUNCTION__ << ":" << __LINE__ << " id = " << fId << " n:1 ";
@@ -1082,8 +1083,8 @@ void daq::service::TopologyConfig::ResolveConnectAddress()
             } else if ((sp.numSockets>1) && (peerProperty.numSockets>1)) {
                 // n:m
                 LOG(debug) << MyClass << " " << __FUNCTION__ << ":" << __LINE__ << " id = " << fId << " n:m ";
-                assert(address.size()>myIndex);
-                res.address += (res.address.empty()) ? address[myIndex] : ("," + address[myIndex]);
+                assert(address.size()>myAddressIndex);
+                res.address += (res.address.empty()) ? address[myAddressIndex] : ("," + address[myAddressIndex]);
             }
             ++peerIndex;
         }

@@ -2,7 +2,6 @@ find_package(Catch2 CONFIG REQUIRED)
 include(Catch)
 
 add_executable(nestdaq_telemetry_options_tests
-  catch2_generatortracker_compat.cxx
   telemetry_options_tests.cxx
 )
 
@@ -22,7 +21,6 @@ catch_discover_tests(nestdaq_telemetry_options_tests)
 
 if(opentelemetry-cpp_FOUND)
   add_executable(nestdaq_telemetry_plugin_tests
-    catch2_generatortracker_compat.cxx
     telemetry_plugin_tests.cxx
   )
 
