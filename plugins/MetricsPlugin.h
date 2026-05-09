@@ -8,7 +8,6 @@
 #include <chrono>
 #include <cstdint>
 #include <deque>
-#include <fstream>
 #include <memory>
 #include <mutex>
 #include <string>
@@ -63,24 +62,9 @@ static constexpr std::string_view SocketType{"socket"};
 static constexpr std::string_view SocketTransport{"transport"};
 static constexpr std::string_view SocketMethod{"method"};
 
-struct ProcStat_t {
-    uint64_t user{0};
-    uint64_t nice{0};
-    uint64_t system{0};
-    uint64_t idle{0};
-    uint64_t sum() const {
-        return user + nice + system + idle;
-    }
-};
-
-struct ProcSelfStat_t {
-    uint64_t utime{0};
-    uint64_t stime{0};
-    uint64_t vsize{0};
-    uint64_t rss{0};
-    uint64_t sum() const {
-        return utime + stime;
-    }
+struct ProcessUsageSample {
+    double cpuSeconds{0.0};
+    std::chrono::steady_clock::time_point timestamp;
 };
 
 struct SocketMetrics {
@@ -140,20 +124,15 @@ private:
     void DeleteTSKeys();
     void InitializeSocketProperties();
     bool IsRecreateTS();
-    ProcSelfStat_t ReadProcSelfStat();
-    ProcStat_t     ReadProcStat();
+    ProcessUsageSample ReadProcessUsage() const;
+    double ReadResidentMemoryMiB() const;
     void SendProcessMetrics();
     void SendSocketMetrics(const std::string &content);
 
     //pid_t fPid;
     std::string fId;
     std::unordered_map<std::string, SocketMetrics> fSocketMetrics;
-    std::ifstream fProcStatFile;
-    std::ifstream fProcSelfStatFile;
-    ProcStat_t     fProcStat;
-    ProcSelfStat_t fProcSelfStat;
-    unsigned int fNCpuCores;
-    long fClockTick;
+    ProcessUsageSample fProcessUsage;
     long fPageSize;
 
     std::unique_ptr<work_guard_t> fWorkGuard;

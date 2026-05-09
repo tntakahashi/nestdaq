@@ -2,14 +2,17 @@
  *  @brief Implements the DAQ metrics collection plugin.
  */
 
+#include <sys/resource.h>
 #include <sys/types.h>
 #include <unistd.h>
 
+#include <cerrno>
 #include <cmath>
 #include <fstream>
 #include <iostream>
 #include <iterator>
 #include <regex>
+#include <system_error>
 #include <vector>
 
 #include <boost/algorithm/string.hpp>
@@ -29,26 +32,6 @@ static constexpr std::string_view MyClass{"daq::service::MetricsPlugin"};
 
 using namespace std::string_literals;
 
-enum ProcStat {
-    // measured in USER_HZ
-    User = 1,   // Time spent in user mode.
-    Nice,       // Time spend in user mode with low priority (nice)
-    System,     // Time spent in system mode.
-    Idle        // Time spent in the idle task.
-};
-
-enum ProcSelfStat {
-    // /proc/[pid]/stat
-    Pid         = 0,  // the process ID
-    Comm        = 1,  // The file name of the executable.
-    Utime       = 13, // Amount of time that this process has been scheduled in user mode, measured in clock ticks.
-    // This includes guest time.
-    Stime       = 14, // Amount of time that this process has been schedule in kernel mode, measured in clock ticks.
-    Starttime   = 21, // The time the process started after system boot.
-    Vsize       = 22, // virtual set size in bytes
-    Rss         = 23, // resident set size (= used real memory) in number of pages. no accurate
-};
-
 enum SocketMetricsRegexIndex {
     All,
     Channel,
@@ -59,6 +42,16 @@ enum SocketMetricsRegexIndex {
     BytesOut,
     NSocketMetricsRegexIndex
 };
+
+namespace {
+
+auto TimevalToSeconds(const timeval &value) -> double
+{
+    static constexpr auto kMicrosecondsPerSecond = 1'000'000.0;
+    return static_cast<double>(value.tv_sec) + (static_cast<double>(value.tv_usec) / kMicrosecondsPerSecond);
+}
+
+} // namespace
 
 namespace daq::service {
 //_____________________________________________________________________________
@@ -155,12 +148,8 @@ daq::service::MetricsPlugin::MetricsPlugin(std::string_view name,
 
 //  fPid          = getpid();
 //  LOG(debug) << MyClass << " pid = " << fPid;
-    fNCpuCores    = std::thread::hardware_concurrency();
-    LOG(debug) << MyClass << " n cpu cores (logical) = " << fNCpuCores;
-    fClockTick    = sysconf(_SC_CLK_TCK);
     fPageSize     = sysconf(_SC_PAGESIZE);
-    fProcSelfStat = ReadProcSelfStat();
-    fProcStat     = ReadProcStat();
+    fProcessUsage = ReadProcessUsage();
 
     fId          = GetProperty<std::string>("id");
     fServiceName = GetProperty<std::string>(ServiceName.data());
@@ -609,66 +598,34 @@ bool daq::service::MetricsPlugin::IsRecreateTS()
 }
 
 //_____________________________________________________________________________
-daq::service::ProcSelfStat_t daq::service::MetricsPlugin::ReadProcSelfStat()
+auto daq::service::MetricsPlugin::ReadProcessUsage() const -> ProcessUsageSample
 {
-    if (!fProcSelfStatFile.is_open()) {
-        fProcSelfStatFile.open("/proc/self/stat");
+    rusage usage{};
+    if (getrusage(RUSAGE_SELF, &usage) != 0) {
+        const auto error = std::error_code{errno, std::generic_category()};
+        LOG(error) << MyClass << " " << __FUNCTION__ << " getrusage failed: " << error.message();
+        return {.cpuSeconds = fProcessUsage.cpuSeconds, .timestamp = std::chrono::steady_clock::now()};
     }
-    std::string s;
-    std::vector<std::string> v;
-    std::getline(fProcSelfStatFile, s);
-    // clear iostate flag and seek to the beginning of the file
-    fProcSelfStatFile.clear();
-    fProcSelfStatFile.seekg(0);
-    boost::split(v, s, boost::is_space()); //, boost::token_compress_on);
 
-//  LOG(debug) << "/proc/self/stat \n" << s;
-//  LOG(debug) << " v.size() = " << v.size();
-//  LOG(debug) << v[Utime] << " " << v[Stime] << " " << v[Vsize] << " " << v[Rss];
-
-    ProcSelfStat_t ret;
-    ret.utime = std::stoull(v[Utime]);
-    ret.stime = std::stoull(v[Stime]);
-    ret.vsize = std::stoull(v[Vsize]);
-    ret.rss   = std::stoull(v[Rss]);
-
-    return ret;
+    return {
+        .cpuSeconds = TimevalToSeconds(usage.ru_utime) + TimevalToSeconds(usage.ru_stime),
+        .timestamp = std::chrono::steady_clock::now(),
+    };
 }
 
 //_____________________________________________________________________________
-daq::service::ProcStat_t daq::service::MetricsPlugin::ReadProcStat()
+auto daq::service::MetricsPlugin::ReadResidentMemoryMiB() const -> double
 {
-    //LOG(debug) << MyClass << " " << __FUNCTION__;
-    if (!fProcStatFile.is_open()) {
-        fProcStatFile.open("/proc/stat");
+    std::ifstream input{"/proc/self/statm"};
+    uint64_t totalPages = 0;
+    uint64_t residentPages = 0;
+    if (!(input >> totalPages >> residentPages)) {
+        LOG(error) << MyClass << " " << __FUNCTION__ << " failed to read /proc/self/statm";
+        return 0.0;
     }
-    std::string s;
-    while (std::getline(fProcStatFile, s)) {
-        if (s.find("cpu ")==0) {
-            break;
-        }
-    }
-    // clear iostate flag and seek to the beginning of the file
-    fProcStatFile.clear();
-    fProcStatFile.seekg(0);
 
-    std::vector<std::string> v;
-    boost::trim_if(s, boost::is_space());
-    boost::split(v, s, boost::is_space(), boost::token_compress_on);
-//  LOG(debug) << "/proc/stat \n" << s;
-//  LOG(debug) << " v.size() = " << v.size();
-//  LOG(debug) << " User = " << User << ", Nice = " << Nice << ", System = " << System << ", Idle = " << Idle;
-//  for (auto i=0; i<v.size(); ++i) {
-//    LOG(debug) << " i = " << i << " " << v[i];
-//  }
-//  LOG(debug) << v[User] << " " << v[Nice] << " " << v[System] << " " << v[Idle];
-    ProcStat_t ret;
-    ret.user   = std::stoull(v[User]);
-    ret.nice   = std::stoull(v[Nice]);
-    ret.system = std::stoull(v[System]);
-    ret.idle   = std::stoull(v[Idle]);
-
-    return ret;
+    static constexpr auto kBytesPerMiB = 1024.0 * 1024.0;
+    return static_cast<double>(residentPages) * static_cast<double>(fPageSize) / kBytesPerMiB;
 }
 
 //_____________________________________________________________________________
@@ -676,24 +633,22 @@ void daq::service::MetricsPlugin::SendProcessMetrics()
 {
     //std::cout << MyClass << " " << __FUNCTION__;
 
-    auto nowProcSelfStat = ReadProcSelfStat();
-    auto nowProcStat     = ReadProcStat();
+    auto nowProcessUsage = ReadProcessUsage();
 
-    auto diffSelf = nowProcSelfStat.sum() - fProcSelfStat.sum();
-    auto diffAll  = nowProcStat.sum()     - fProcStat.sum();
+    const auto cpuSeconds = nowProcessUsage.cpuSeconds - fProcessUsage.cpuSeconds;
+    const auto wallSeconds =
+        std::chrono::duration<double>(nowProcessUsage.timestamp - fProcessUsage.timestamp).count();
 
-    // cpu usage in percent
-    auto cpuUsage = static_cast<double>(diffSelf)/diffAll * fNCpuCores * fClockTick;
-    // memory usage in MiB
-    auto ramUsage = static_cast<double>(nowProcSelfStat.rss) * fPageSize / 1024/1024;
+    // Top/htop style percent: one fully used CPU core is 100%, two cores are 200%.
+    const auto cpuUsage = wallSeconds > 0.0 ? cpuSeconds / wallSeconds * 100.0 : 0.0;
+    const auto ramUsage = ReadResidentMemoryMiB();
 
 //  std::cout << " diff (self) = " << diffSelf
 //             << ", diff (all) = " << diffAll << "\n"
 //             << "cpu = " << cpuUsage
 //             << ", memory = " << ramUsage;
 
-    fProcSelfStat = nowProcSelfStat;
-    fProcStat     = nowProcStat;
+    fProcessUsage = nowProcessUsage;
     auto stateId  = static_cast<int>(GetCurrentDeviceState());
 
     const auto &[uptimeNSec, lastUpdate] = update_date(fCreatedTimeSystem, fCreatedTime);
