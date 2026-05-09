@@ -6,7 +6,6 @@
 
 #include <algorithm>
 #include <atomic>
-#include <array>
 #include <chrono>
 #include <cctype>
 #include <cstdint>
@@ -14,6 +13,7 @@
 #include <map>
 #include <memory>
 #include <mutex>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <tuple>
@@ -115,7 +115,9 @@ struct MetricKey {
 
 struct FairMQThroughputMeasurement {
     std::string channelName;
+    std::string subChannelName;
     std::string direction;
+    std::optional<uint64_t> subChannelIndex;
     double messagesPerSecond = 0.0;
     double megabytesPerSecond = 0.0;
 };
@@ -551,14 +553,17 @@ auto ObserveFairMQThroughput(opentelemetry::metrics::ObserverResult observer, bo
     }
 
     for (const auto &measurement : measurements) {
-        const auto attributes = std::array{
-            std::pair<opentelemetry::nostd::string_view, opentelemetry::common::AttributeValue>{
-                "fairmq.channel.name",
-                opentelemetry::nostd::string_view{measurement.channelName}},
-            std::pair<opentelemetry::nostd::string_view, opentelemetry::common::AttributeValue>{
-                "network.io.direction",
-                opentelemetry::nostd::string_view{measurement.direction}},
-        };
+        auto attributes =
+            std::vector<std::pair<opentelemetry::nostd::string_view, opentelemetry::common::AttributeValue>>{};
+        attributes.reserve(3);
+        attributes.emplace_back("fairmq.channel.name",
+                                opentelemetry::nostd::string_view{measurement.channelName});
+        attributes.emplace_back("network.io.direction",
+                                opentelemetry::nostd::string_view{measurement.direction});
+        if (measurement.subChannelIndex) {
+            attributes.emplace_back("fairmq.channel.index",
+                                    static_cast<int64_t>(*measurement.subChannelIndex));
+        }
         result->Observe(observeMegabytes ? measurement.megabytesPerSecond : measurement.messagesPerSecond,
                         attributes);
     }
@@ -844,15 +849,19 @@ auto OpenTelemetryInitializer::RecordFairMQThroughput(const telemetry::FairMQThr
         if (!state.meter) {
             return;
         }
-        state.fairmqThroughputMeasurements[{sample.channelName, "in"}] = FairMQThroughputMeasurement{
+        state.fairmqThroughputMeasurements[{sample.subChannelName, "in"}] = FairMQThroughputMeasurement{
             .channelName = sample.channelName,
+            .subChannelName = sample.subChannelName,
             .direction = "in",
+            .subChannelIndex = sample.subChannelIndex,
             .messagesPerSecond = sample.messagesPerSecondIn,
             .megabytesPerSecond = sample.megabytesPerSecondIn,
         };
-        state.fairmqThroughputMeasurements[{sample.channelName, "out"}] = FairMQThroughputMeasurement{
+        state.fairmqThroughputMeasurements[{sample.subChannelName, "out"}] = FairMQThroughputMeasurement{
             .channelName = sample.channelName,
+            .subChannelName = sample.subChannelName,
             .direction = "out",
+            .subChannelIndex = sample.subChannelIndex,
             .messagesPerSecond = sample.messagesPerSecondOut,
             .megabytesPerSecond = sample.megabytesPerSecondOut,
         };

@@ -7,6 +7,7 @@
 #include <charconv>
 #include <cmath>
 #include <cctype>
+#include <cstdint>
 #include <system_error>
 
 namespace nestdaq::telemetry {
@@ -58,6 +59,44 @@ auto Trim(std::string_view value) noexcept -> std::string_view
     return value;
 }
 
+auto ParseChannel(std::string_view value, FairMQThroughputSample &sample) -> bool
+{
+    value = Trim(value);
+    if (value.empty()) {
+        return false;
+    }
+
+    sample.subChannelName = std::string{value};
+
+    if (!value.ends_with(']')) {
+        sample.channelName = std::string{value};
+        return true;
+    }
+
+    const auto openBracket = value.rfind('[');
+    if (openBracket == std::string_view::npos || openBracket == 0 || openBracket + 1 >= value.size() - 1) {
+        return false;
+    }
+
+    const auto channelName = Trim(value.substr(0, openBracket));
+    if (channelName.empty()) {
+        return false;
+    }
+
+    const auto indexToken = value.substr(openBracket + 1, value.size() - openBracket - 2);
+    uint64_t index = 0;
+    const auto *first = indexToken.data();
+    const auto *last = indexToken.data() + indexToken.size();
+    const auto result = std::from_chars(first, last, index);
+    if (result.ec != std::errc{} || result.ptr != last) {
+        return false;
+    }
+
+    sample.channelName = std::string{channelName};
+    sample.subChannelIndex = index;
+    return true;
+}
+
 } // namespace
 
 auto ParseFairMQThroughputLog(std::string_view line) -> std::optional<FairMQThroughputSample>
@@ -68,13 +107,11 @@ auto ParseFairMQThroughputLog(std::string_view line) -> std::optional<FairMQThro
         return std::nullopt;
     }
 
-    const auto channelName = Trim(line.substr(0, channelDelimiter));
-    if (channelName.empty()) {
+    auto input = line.substr(channelDelimiter + 2);
+    auto sample = FairMQThroughputSample{};
+    if (!ParseChannel(line.substr(0, channelDelimiter), sample)) {
         return std::nullopt;
     }
-
-    auto input = line.substr(channelDelimiter + 2);
-    auto sample = FairMQThroughputSample{.channelName = std::string{channelName}};
 
     if (!ConsumeLiteral(input, "in:") ||
         !ParseDoubleToken(input, sample.messagesPerSecondIn)) {
