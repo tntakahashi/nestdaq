@@ -11,7 +11,6 @@
 #include <fstream>
 #include <iostream>
 #include <iterator>
-#include <regex>
 #include <system_error>
 #include <vector>
 
@@ -27,21 +26,11 @@
 #include "plugins/Functions.h"
 #include "plugins/TimeUtil.h"
 #include "plugins/MetricsPlugin.h"
+#include "nestdaq/telemetry/FairMQThroughputLogParser.h"
 
 static constexpr std::string_view MyClass{"daq::service::MetricsPlugin"};
 
 using namespace std::string_literals;
-
-enum SocketMetricsRegexIndex {
-    All,
-    Channel,
-    SubChannelIndex,
-    NumMessageIn,
-    BytesIn,
-    NumMessageOut,
-    BytesOut,
-    NSocketMetricsRegexIndex
-};
 
 namespace {
 
@@ -680,44 +669,23 @@ void daq::service::MetricsPlugin::SendSocketMetrics(const std::string &content)
     //LOG(debug) << MyClass << " " << __FUNCTION__;
     //return;
     //std::cout << MyClass << " content = \n" << content << "\n length = " << content.size() << std::endl;
-    if ((content.find(" in: ")==std::string::npos)  ||
-            (content.find(" out: ")==std::string::npos) ||
-            (content.find("[")==std::string::npos)      ||
-            (content.find("]:")==std::string::npos)) {
+    const auto sample = nestdaq::telemetry::ParseFairMQThroughputLog(content);
+    if (!sample || !sample->subChannelIndex) {
         return;
     }
     //std::cout << MyClass << " " << __FUNCTION__ << " (passed) content = \n" << content << std::endl;
 
-    // pattern :  _channel_[_index_]: in: _msg-in_ (_bytes-in_ MB) out: _msg-out_ (_bytes-out_ MB)
-    // targets are surrounded by "()"
-    // search results:
-    //               (1 )  (2  )        (3          )   (4          )           (5          )   (6          )
-    std::regex  r{R"((.*)\[(\d+)\]: in: ([\d.eE\-+]+) \(([\d.eE\-+]+) MB\) out: ([\d.eE\-+]+) \(([\d.eE\-+]+) MB\))"};
-
-    std::smatch m;
-    std::regex_search(content, m, r);
-    //std::cout << " m.size() = " << m.size() << std::endl;
-    if (m.size() < NSocketMetricsRegexIndex) {
-        LOG(debug) << " too few number of metrics" << m.size();
-        return;
-    }
-
-    auto channelName     = m[Channel].str();
-    boost::trim_if(channelName, boost::is_space());
-    auto subChannelIndex = m[SubChannelIndex].str();
-    boost::trim_if(subChannelIndex, boost::is_space());
-    auto subChannelName  = channelName + "[" + subChannelIndex + "]";
+    const auto &channelName = sample->channelName;
+    const auto subChannelIndex = std::to_string(*sample->subChannelIndex);
+    const auto &subChannelName = sample->subChannelName;
     auto channelId       = join({fId, subChannelName}, fSeparator);
-    //for (auto itr = m.begin(); itr!=m.end(); ++itr) {
-    //  std::cout << __LINE__<< " " << itr->str() << " " << m[i++].str() << std::endl;
-    //}
 
     SocketMetrics now;
-    now.msgIn    = std::stod(m[NumMessageIn].str());
-    now.msgOut   = std::stod(m[NumMessageOut].str());
+    now.msgIn    = sample->messagesPerSecondIn;
+    now.msgOut   = sample->messagesPerSecondOut;
     // mega bytes
-    now.bytesIn  = std::stod(m[BytesIn].str());
-    now.bytesOut = std::stod(m[BytesOut].str());
+    now.bytesIn  = sample->megabytesPerSecondIn;
+    now.bytesOut = sample->megabytesPerSecondOut;
 
     auto& sum = fSocketMetrics[subChannelName];
     sum.msgIn    += now.msgIn;

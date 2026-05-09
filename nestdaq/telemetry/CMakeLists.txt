@@ -5,9 +5,20 @@ install(FILES
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/nestdaq/telemetry
 )
 
+add_library(nestdaq_fairmq_throughput_parser STATIC
+  FairMQThroughputLogParser.cxx
+)
+
+target_include_directories(nestdaq_fairmq_throughput_parser PUBLIC
+  ${CMAKE_SOURCE_DIR}
+)
+
+set_target_properties(nestdaq_fairmq_throughput_parser PROPERTIES
+  POSITION_INDEPENDENT_CODE ON
+)
+
 if(opentelemetry-cpp_FOUND)
   add_library(nestdaq_otel SHARED
-    FairMQThroughputLogParser.cxx
     FairLoggerOpenTelemetrySink.cxx
     OpenTelemetryInitializer.cxx
   )
@@ -26,6 +37,7 @@ if(opentelemetry-cpp_FOUND)
   )
 
   target_link_libraries(nestdaq_otel PRIVATE
+    nestdaq_fairmq_throughput_parser
     FairLogger
     opentelemetry-cpp::logs
     opentelemetry-cpp::metrics

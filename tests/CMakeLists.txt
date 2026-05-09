@@ -2,7 +2,6 @@ find_package(Catch2 CONFIG REQUIRED)
 include(Catch)
 
 add_executable(nestdaq_telemetry_options_tests
-  ${CMAKE_SOURCE_DIR}/nestdaq/telemetry/FairMQThroughputLogParser.cxx
   fairmq_throughput_log_parser_tests.cxx
   telemetry_options_tests.cxx
 )
@@ -14,6 +13,7 @@ target_include_directories(nestdaq_telemetry_options_tests PRIVATE
 )
 
 target_link_libraries(nestdaq_telemetry_options_tests PRIVATE
+  nestdaq_fairmq_throughput_parser
   Catch2::Catch2WithMain
   FairMQ::FairMQ
   Boost::program_options

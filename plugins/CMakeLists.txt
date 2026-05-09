@@ -66,6 +66,7 @@ target_include_directories(${PLUGIN} SYSTEM PRIVATE
 )
 
 target_link_libraries(${PLUGIN}
+  nestdaq_fairmq_throughput_parser;
   ${CMAKE_THREAD_LIBS_INIT};
   ${HIREDIS_LIB};
   ${REDIS_PLUS_PLUS_LIB};
