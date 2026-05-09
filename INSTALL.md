@@ -1,4 +1,4 @@
-# Installation {#nestdaq_installation}
+# Installation
 
 ## Install external packages
 

@@ -1,4 +1,4 @@
-# Examples {#nestdaq_examples}
+# Examples
 
 This directory contains small NestDAQ device examples. The examples are a
 standalone CMake project: build and install the main NestDAQ package first, then

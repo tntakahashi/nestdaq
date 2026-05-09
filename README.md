@@ -1,4 +1,4 @@
-# NestDAQ {#nestdaq_main}
+# NestDAQ
 A streaming DAQ implementation for the particle measurements
 
 ## Quick links
@@ -14,14 +14,14 @@ A streaming DAQ implementation for the particle measurements
 
 | Path                                     | Purpose |
 | :--                                      | :--     |
-| [cmake/](cmake/)                         | External dependency build project. |
-| [nestdaq/](nestdaq/)                     | Public NestDAQ headers and runtime helpers. |
-| [nestdaq/telemetry/](nestdaq/telemetry/) | Optional OpenTelemetry integration. |
-| [plugins/](plugins/)                     | FairMQ plugins for DAQ service, metrics, and parameter configuration. |
+| `cmake/`                                 | External dependency build project. |
+| `nestdaq/`                               | Public NestDAQ headers and runtime helpers. |
+| [nestdaq/telemetry/](nestdaq/telemetry/README.md) | Optional OpenTelemetry integration. |
+| [plugins/](plugins/README.md)            | FairMQ plugins for DAQ service, metrics, and parameter configuration. |
 | [controller/](controller/README.md)      | `daq-webctl` implementation. |
 | [examples/](examples/README.md)          | Example devices such as `Sampler`, `Sink`, and `NullDevice`. |
-| [scripts/](scripts/)                     | Runtime helper scripts and topology examples. |
-| [share/](share/)                         | Installed runtime/configuration assets. |
+| [scripts/](scripts/README.md)            | Runtime helper scripts and topology examples. |
+| `share/`                                 | Installed runtime/configuration assets. |
 
 ## Tested system
 | System    | Version | Compiler                     | CMake           |

@@ -1,4 +1,4 @@
-# OpenTelemetry Collector Compose Setup {#nestdaq_otel_collector_compose}
+# OpenTelemetry Collector Compose Setup
 
 ## OpenTelemetry Collector with OpenSearch
 

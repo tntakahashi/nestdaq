@@ -1,4 +1,4 @@
-# Telemetry {#nestdaq_telemetry}
+# Telemetry
 
 NestDAQ telemetry is an optional OpenTelemetry integration for FairMQ-based
 devices and controller processes. The application executable does not link

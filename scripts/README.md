@@ -1,4 +1,4 @@
-# Scripts {#nestdaq_scripts}
+# Scripts
 
 Set of examples of how to use the plugins.
 The scripts can be copied to your favorite directory. 

@@ -1,4 +1,4 @@
-# Contributing {#nestdaq_contributing}
+# Contributing
 
 ## Code style and naming
 

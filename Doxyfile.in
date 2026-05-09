@@ -10,6 +10,7 @@ FILE_PATTERNS          = *.h *.hh *.hpp *.hxx *.c *.cc *.cpp *.cxx *.md
 RECURSIVE              = YES
 EXCLUDE_PATTERNS       = */.git/* */build/* */install/*
 MARKDOWN_SUPPORT       = YES
+IMPLICIT_DIR_DOCS      = NO
 USE_MDFILE_AS_MAINPAGE = "@CMAKE_CURRENT_SOURCE_DIR@/README.md"
 EXTRACT_ALL            = YES
 PREDEFINED             = __cplusplus
@@ -17,6 +18,8 @@ PREDEFINED             = __cplusplus
 QUIET                  = YES
 WARN_IF_UNDOCUMENTED   = NO
 WARN_AS_ERROR          = NO
+GENERATE_TREEVIEW      = YES
+TOC_INCLUDE_HEADINGS   = 3
 
 HTML_EXTRA_STYLESHEET  = @NESTDAQ_DOXYGEN_HTML_EXTRA_STYLESHEET@
 HTML_EXTRA_FILES       = @NESTDAQ_DOXYGEN_HTML_EXTRA_FILES@

@@ -1,22 +1,28 @@
-# Web Controller Assets {#nestdaq_web_controller_assets}
+# Web Controller Assets
 
-## Example for web-based DAQ controller GUI
+This directory contains the browser assets installed for `daq-webctl`, the
+NestDAQ web controller. The controller implementation and runtime behavior are
+documented in [`controller/README.md`](../../controller/README.md).
 
-## daq-webctl.html
-A simple html (and JavaScript) used by `daq-webctl`. 
-`daq-webctl` uses http and websocket implementation of `Boost.Beast`. 
+## `daq-webctl.html`
+
+`daq-webctl.html` is the default browser GUI served by `daq-webctl`. It is
+installed under the controller document root as `daq-webctl.html`.
+
+The install step also creates `index.html` as a symlink to this file, so the UI
+can be opened either at `/daq-webctl.html` or `/`.
 
 ```bash
-  # The following command shows command options
-  /your-install-path/bin/daq-webctl --help
+# The following command shows command options.
+/your-install-path/bin/daq-webctl --help
 
-  # Redis server must be started before starting webgui-ws. Then, 
-  /your-install/path/bin/daq-webctl
+# Redis server must be started before starting daq-webctl.
+/your-install-path/bin/daq-webctl
 
 ```
 
-After starting `daq-webctl`, open the URL `http://localhost:8080/daq-webctl.html` or `http://localhost:8080/`in a web browser.   
-In the latter case (the path to the HTML file is omitted), the symbolic link to the default file `daq-webctl.html` is used. 
+After starting `daq-webctl`, open `http://localhost:8080/daq-webctl.html` or
+`http://localhost:8080/` in a web browser.
 
 Note:
-- Run number must be set before entering to the Running state. 
+- Run number must be set before entering to the Running state.
