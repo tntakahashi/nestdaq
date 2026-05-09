@@ -20,6 +20,7 @@
 #endif
 
 #include <fairlogger/Logger.h>
+#include <fairlogger/Version.h>
 
 #include <opentelemetry/common/timestamp.h>
 #include <opentelemetry/logs/log_record.h>
@@ -33,17 +34,12 @@
 #include "nestdaq/telemetry/FairMQThroughputLogParser.h"
 #include "nestdaq/telemetry/OpenTelemetryInitializer.h"
 
-#if __has_include("nestdaq/version.h")
-#  include "nestdaq/version.h"
-#else
-static constexpr std::string_view NESTDAQ_VERSION {"unknown"};
-#endif
-
 namespace nestdaq {
 namespace {
 
 constexpr std::string_view kLoggerName{"FairLogger"};
-constexpr std::string_view kLibraryName{"NestDAQ"};
+constexpr std::string_view kLibraryName{"FairLogger"};
+constexpr std::string_view kLibraryVersion{FAIRLOGGER_VERSION};
 constexpr std::string_view kSchemaUrl;
 constexpr std::string_view kSinkKey{"nestdaq-otel-log-sink"};
 
@@ -122,7 +118,7 @@ auto EmitLogRecord(const std::string &content, const fair::LogMetaData &metadata
         auto provider = opentelemetry::logs::Provider::GetLoggerProvider();
         auto logger = provider->GetLogger(ToStringView(kLoggerName),
                                           ToStringView(kLibraryName),
-                                          ToStringView(NESTDAQ_VERSION),
+                                          ToStringView(kLibraryVersion),
                                           ToStringView(kSchemaUrl));
         auto logRecord = logger->CreateLogRecord();
         if (!logRecord) {
