@@ -10,7 +10,9 @@
 #include <nestdaq/telemetry/Telemetry.h>
 
 #include <iostream>
+#include <nlohmann/json.hpp>
 #include <sstream>
+#include <string>
 #include <string_view>
 
 namespace {
@@ -49,6 +51,16 @@ auto LogOnlyConfig() -> nestdaq_otel_config
     options.traceProtocol.clear();
     options.serviceName = "nestdaq-test";
     return nestdaq::telemetry::MakeConfig(options);
+}
+
+auto ExtractJsonLog(std::string_view logs, std::string_view root) -> nlohmann::json
+{
+    const auto marker = std::string{"{\""} + std::string{root} + "\":";
+    const auto begin = logs.find(marker);
+    REQUIRE(begin != std::string_view::npos);
+    const auto lineEnd = logs.find('\n', begin);
+    const auto jsonText = logs.substr(begin, lineEnd == std::string_view::npos ? logs.size() - begin : lineEnd - begin);
+    return nlohmann::json::parse(jsonText);
 }
 
 } // namespace
@@ -97,11 +109,36 @@ TEST_CASE("FairMQ build metadata is logged instead of stored as resource attribu
     library.ShutdownTelemetry(nestdaq::telemetry::kDefaultTimeoutMs);
 
     const auto logs = capture.output.str();
-    CHECK(logs.find("FairMQ git_version:") != std::string::npos);
-    CHECK(logs.find("FairMQ build_type:") != std::string::npos);
-    CHECK(logs.find("FairMQ repo_url:") != std::string::npos);
-    CHECK(logs.find("FairMQ license:") != std::string::npos);
-    CHECK(logs.find("FairMQ copyright:") != std::string::npos);
+    const auto nestdaqJson = ExtractJsonLog(logs, "nestdaq");
+    const auto fairmqJson = ExtractJsonLog(logs, "fairmq");
+
+    CHECK(nestdaqJson["nestdaq"]["version"]["string"].is_string());
+    CHECK(nestdaqJson["nestdaq"]["version"]["major"].is_number_unsigned());
+    CHECK(nestdaqJson["nestdaq"]["version"]["minor"].is_number_unsigned());
+    CHECK(nestdaqJson["nestdaq"]["version"]["patch"].is_number_unsigned());
+    CHECK(nestdaqJson["nestdaq"]["version"]["prerelease"].is_string());
+    CHECK(nestdaqJson["nestdaq"]["build"]["type"].is_string());
+    CHECK(nestdaqJson["nestdaq"]["git"]["commit_count"].is_number_unsigned());
+    CHECK(nestdaqJson["nestdaq"]["git"]["commit_hash"].is_string());
+    CHECK(nestdaqJson["nestdaq"]["git"]["branch"].is_string());
+    CHECK(nestdaqJson["nestdaq"]["git"]["remote_url"].is_string());
+    CHECK(nestdaqJson["nestdaq"]["git"]["commit_date"].is_string());
+
+    CHECK(fairmqJson["fairmq"]["version"]["string"].is_string());
+    CHECK(fairmqJson["fairmq"]["version"]["major"].is_number_unsigned());
+    CHECK(fairmqJson["fairmq"]["version"]["minor"].is_number_unsigned());
+    CHECK(fairmqJson["fairmq"]["version"]["patch"].is_number_unsigned());
+    CHECK(fairmqJson["fairmq"]["version"]["git"].is_string());
+    CHECK(fairmqJson["fairmq"]["build"]["type"].is_string());
+    CHECK(fairmqJson["fairmq"]["source"]["repo_url"].is_string());
+    CHECK(fairmqJson["fairmq"]["license"].is_string());
+    CHECK(fairmqJson["fairmq"]["copyright"].is_string());
+
+    REQUIRE(logs.find("{\"nestdaq\":") != std::string::npos);
+    REQUIRE(logs.find("{\"fairmq\":") != std::string::npos);
+    CHECK(logs.find("{\"nestdaq\":") < logs.find("{\"fairmq\":"));
+    CHECK(logs.find("NestDAQ version:") == std::string::npos);
+    CHECK(logs.find("FairMQ git_version:") == std::string::npos);
     CHECK(logs.find("fairmq.git_version") == std::string::npos);
     CHECK(logs.find("fairmq.build_type") == std::string::npos);
     CHECK(logs.find("fairmq.repo_url") == std::string::npos);

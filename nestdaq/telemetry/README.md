@@ -53,7 +53,7 @@ signal.
 | `--otel-metric-http-json` | none | `true` | Use JSON content type for OTLP HTTP metrics. |
 | `--otel-trace-http-json` | none | `true` | Use JSON content type for OTLP HTTP traces. |
 | `--otel-service-name` | none | caller default | `service.name` resource attribute. FairMQ device wrappers default this to `--service-name`, or to the executable basename when `--service-name` is unset. |
-| `--otel-service-namespace` | none | empty | `service.namespace` resource attribute. |
+| `--otel-service-namespace` | none | `nestdaq` | `service.namespace` resource attribute. |
 | `--otel-service-instance-id` | none | generated UUID | `service.instance.id` resource attribute. FairMQ device wrappers use `--uuid` when this option is unset; otherwise they generate a UUID. |
 | `--otel-fairmq-id` | none | empty | `fairmq.id` resource attribute. |
 | `--otel-fairmq-device` | none | empty | `fairmq.device` resource attribute. |

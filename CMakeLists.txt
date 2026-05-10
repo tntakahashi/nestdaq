@@ -115,6 +115,7 @@ find_package(opentelemetry-cpp CONFIG QUIET
 )
 if(opentelemetry-cpp_FOUND)
   message(STATUS "opentelemetry-cpp found: enabling nestdaq telemetry library")
+  find_package(nlohmann_json CONFIG REQUIRED)
 else()
   message(STATUS "opentelemetry-cpp not found: skipping nestdaq telemetry library")
 endif()

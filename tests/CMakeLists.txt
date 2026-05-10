@@ -40,6 +40,7 @@ if(opentelemetry-cpp_FOUND)
     Catch2::Catch2WithMain
     FairMQ::FairMQ
     Boost::program_options
+    nlohmann_json::nlohmann_json
     ${CMAKE_DL_LIBS}
   )
 

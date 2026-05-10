@@ -31,6 +31,7 @@ static constexpr std::string_view kDefaultGrpcEndpoint{"localhost:4317"};
 static constexpr uint32_t kDefaultTimeoutMs{5000};
 static constexpr uint32_t kDefaultMetricExportIntervalMs{60000};
 static constexpr std::string_view kTelemetryConfigSubscriber{"nestdaq-telemetry"};
+static constexpr std::string_view kDefaultServiceNamespace{"nestdaq"};
 
 /**
  * @brief Runtime options used to configure the telemetry plugin.
@@ -56,7 +57,7 @@ struct TelemetryOptions {
     std::string traceHeaders;
     std::string severity{"info"};
     std::string serviceName{"nestdaq"};
-    std::string serviceNamespace;
+    std::string serviceNamespace{kDefaultServiceNamespace};
     std::string serviceInstanceId;
     std::string fairmqId;
     std::string fairmqDevice;
@@ -148,7 +149,7 @@ inline auto AddTelemetryOptions(boost::program_options::options_description& opt
            ("otel-metric-http-json", bpo::value<bool>()->default_value(true), "Use JSON content type for OTLP HTTP metrics")
            ("otel-trace-http-json", bpo::value<bool>()->default_value(true), "Use JSON content type for OTLP HTTP traces")
            ("otel-service-name", bpo::value<std::string>()->default_value(std::string{defaultServiceName}), "OTel service.name resource attribute")
-           ("otel-service-namespace", bpo::value<std::string>(), "OTel service.namespace resource attribute")
+           ("otel-service-namespace", bpo::value<std::string>()->default_value(std::string{kDefaultServiceNamespace}), "OTel service.namespace resource attribute")
            ("otel-service-instance-id", bpo::value<std::string>(), "OTel service.instance.id resource attribute")
            ("otel-fairmq-id", bpo::value<std::string>(), "FairMQ id resource attribute")
            ("otel-fairmq-device", bpo::value<std::string>(), "FairMQ device resource attribute")

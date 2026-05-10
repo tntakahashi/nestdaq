@@ -213,6 +213,36 @@ TEST_CASE("telemetry service name falls back to executable basename for devices"
     CHECK(std::string_view{config.service_name} == "Sink");
 }
 
+TEST_CASE("telemetry service namespace defaults to nestdaq", "[telemetry]")
+{
+    ClearTelemetryEnvironment();
+
+    const auto options = Parse({"test"});
+    const auto config = nestdaq::telemetry::MakeConfig(options);
+
+    CHECK(std::string_view{config.service_namespace} == "nestdaq");
+}
+
+TEST_CASE("explicit telemetry service namespace overrides default", "[telemetry]")
+{
+    ClearTelemetryEnvironment();
+
+    const auto options = Parse({"test", "--otel-service-namespace=custom"});
+    const auto config = nestdaq::telemetry::MakeConfig(options);
+
+    CHECK(std::string_view{config.service_namespace} == "custom");
+}
+
+TEST_CASE("telemetry service namespace defaults to nestdaq through Boost options", "[telemetry]")
+{
+    ClearTelemetryEnvironment();
+
+    const auto options = ReadWithBoostOptions({"daq-webctl"}, "daq-webctl");
+    const auto config = nestdaq::telemetry::MakeConfig(options);
+
+    CHECK(std::string_view{config.service_namespace} == "nestdaq");
+}
+
 TEST_CASE("telemetry service instance id defaults to a generated uuid", "[telemetry]")
 {
     ClearTelemetryEnvironment();

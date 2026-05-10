@@ -39,6 +39,7 @@ if(opentelemetry-cpp_FOUND)
   target_link_libraries(nestdaq_otel PRIVATE
     nestdaq_fairmq_throughput_parser
     FairLogger
+    nlohmann_json::nlohmann_json
     opentelemetry-cpp::logs
     opentelemetry-cpp::metrics
     opentelemetry-cpp::resources

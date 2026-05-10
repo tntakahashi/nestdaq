@@ -14,12 +14,13 @@
 #include <memory>
 #include <mutex>
 #include <optional>
-#include <sstream>
 #include <string>
 #include <string_view>
 #include <tuple>
 #include <utility>
 #include <vector>
+
+#include <nlohmann/json.hpp>
 
 #include <opentelemetry/common/key_value_iterable_view.h>
 #include <opentelemetry/context/context.h>
@@ -66,6 +67,7 @@
 #include <opentelemetry/trace/tracer.h>
 
 #include <fairlogger/Logger.h>
+#include <fairmq/Version.h>
 
 #include "nestdaq/telemetry/FairLoggerOpenTelemetrySink.h"
 #include "nestdaq/telemetry/FairMQThroughputLogParser.h"
@@ -74,6 +76,16 @@
 #  include "nestdaq/version.h"
 #else
 static constexpr std::string_view NESTDAQ_VERSION {"unknown"};
+static constexpr std::string_view NESTDAQ_VERSION_PRERELEASE {"unknown"};
+static constexpr std::string_view NESTDAQ_BUILD_TYPE {"unknown"};
+static constexpr std::string_view NESTDAQ_GIT_COMMIT_DATE {"unknown"};
+static constexpr std::string_view NESTDAQ_GIT_BRANCH {"unknown"};
+static constexpr std::string_view NESTDAQ_GIT_REMOTE_URL {"unknown"};
+static constexpr uint64_t NESTDAQ_GIT_COMMIT_COUNT = 0;
+static constexpr std::string_view NESTDAQ_GIT_COMMIT_HASH_STRING {"unknown"};
+static constexpr uint64_t NESTDAQ_VERSION_MAJOR = 0;
+static constexpr uint64_t NESTDAQ_VERSION_MINOR = 0;
+static constexpr uint64_t NESTDAQ_VERSION_PATCH = 0;
 #endif
 
 namespace nestdaq {
@@ -166,7 +178,10 @@ auto InstallNoopProviders() -> void;
 auto IsEmpty(const char *value) noexcept -> bool;
 auto FairMQMetadataLogBody(const nestdaq_otel_config &config) -> std::string;
 auto MakeResource(const nestdaq_otel_config &config) -> opentelemetry::sdk::resource::Resource;
+auto MetadataValue(const char *value) -> std::string;
+auto MetadataValue(std::string_view value) -> std::string;
 auto MetricEndpointHttp(const nestdaq_otel_config &config) -> const char *;
+auto NestDAQMetadataLogBody() -> std::string;
 auto MetricEndpointGrpc(const nestdaq_otel_config &config) -> const char *;
 auto LogEndpointHttp(const nestdaq_otel_config &config) -> const char *;
 auto LogEndpointGrpc(const nestdaq_otel_config &config) -> const char *;
@@ -420,17 +435,62 @@ auto IsEmpty(const char *value) noexcept -> bool
 
 auto FairMQMetadataLogBody(const nestdaq_otel_config &config) -> std::string
 {
-    auto body = std::ostringstream{};
-    body << "FairMQ git_version: " << (IsEmpty(config.fairmq_git_version) ? "unknown" : config.fairmq_git_version)
-         << '\n'
-         << "FairMQ build_type: " << (IsEmpty(config.fairmq_build_type) ? "unknown" : config.fairmq_build_type)
-         << '\n'
-         << "FairMQ repo_url: " << (IsEmpty(config.fairmq_repo_url) ? "unknown" : config.fairmq_repo_url)
-         << '\n'
-         << "FairMQ license: " << (IsEmpty(config.fairmq_license) ? "unknown" : config.fairmq_license)
-         << '\n'
-         << "FairMQ copyright: " << (IsEmpty(config.fairmq_copyright) ? "unknown" : config.fairmq_copyright);
-    return body.str();
+    const auto body = nlohmann::json{
+        {"fairmq", {
+            {"version", {
+                {"string", MetadataValue(FAIRMQ_VERSION)},
+                {"major", FAIRMQ_VERSION_MAJOR},
+                {"minor", FAIRMQ_VERSION_MINOR},
+                {"patch", FAIRMQ_VERSION_PATCH},
+                {"git", MetadataValue(config.fairmq_git_version)},
+            }},
+            {"build", {
+                {"type", MetadataValue(config.fairmq_build_type)},
+            }},
+            {"source", {
+                {"repo_url", MetadataValue(config.fairmq_repo_url)},
+            }},
+            {"license", MetadataValue(config.fairmq_license)},
+            {"copyright", MetadataValue(config.fairmq_copyright)},
+        }},
+    };
+    return body.dump();
+}
+
+auto MetadataValue(const char *value) -> std::string
+{
+    return IsEmpty(value) ? std::string{"unknown"} : std::string{value};
+}
+
+auto MetadataValue(std::string_view value) -> std::string
+{
+    return value.empty() ? std::string{"unknown"} : std::string{value};
+}
+
+auto NestDAQMetadataLogBody() -> std::string
+{
+    const auto body = nlohmann::json{
+        {"nestdaq", {
+            {"version", {
+                {"string", MetadataValue(NESTDAQ_VERSION)},
+                {"major", NESTDAQ_VERSION_MAJOR},
+                {"minor", NESTDAQ_VERSION_MINOR},
+                {"patch", NESTDAQ_VERSION_PATCH},
+                {"prerelease", std::string{NESTDAQ_VERSION_PRERELEASE}},
+            }},
+            {"build", {
+                {"type", MetadataValue(NESTDAQ_BUILD_TYPE)},
+            }},
+            {"git", {
+                {"commit_count", NESTDAQ_GIT_COMMIT_COUNT},
+                {"commit_hash", MetadataValue(NESTDAQ_GIT_COMMIT_HASH_STRING)},
+                {"branch", MetadataValue(NESTDAQ_GIT_BRANCH)},
+                {"remote_url", MetadataValue(NESTDAQ_GIT_REMOTE_URL)},
+                {"commit_date", MetadataValue(NESTDAQ_GIT_COMMIT_DATE)},
+            }},
+        }},
+    };
+    return body.dump();
 }
 
 auto LogEndpointGrpc(const nestdaq_otel_config &config) -> const char *
@@ -766,6 +826,7 @@ auto OpenTelemetryInitializer::Initialize(const nestdaq_otel_config *config) -> 
                     std::shared_ptr<opentelemetry::logs::LoggerProvider>{loggerProvider}});
             FairLoggerOpenTelemetrySink::SetMinSeverity(localConfig.min_severity);
             FairLoggerOpenTelemetrySink::Initialize();
+            LOG(info) << NestDAQMetadataLogBody();
             LOG(info) << FairMQMetadataLogBody(localConfig);
         }
         if (meterProvider) {
