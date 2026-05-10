@@ -43,7 +43,7 @@ DAQ commands, and writes topology/channel metadata used by other services.
 | Option                           | Default                    | Required | Description |
 |----------------------------------|----------------------------|----------|-------------|
 | `--service-name`                 | none                       | No       | Service name used in Redis key paths. |
-| `--uuid`                         | generated                  | No       | UUID of this service instance. |
+| `--uuid`                         | generated                  | No       | UUID of this service instance. FairMQ device wrappers reuse the telemetry-generated `service.instance.id` when available; otherwise the plugin generates one. |
 | `--host-ip`                      | detected/configured value  | No       | IP address or hostname published as this service address. |
 | `--hostname`                     | detected/configured value  | No       | Host name published in health data. |
 | `--registry-uri`                 | `tcp://127.0.0.1:6379/0`   | No       | Redis URI for the DAQ service registry. |

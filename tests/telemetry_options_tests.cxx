@@ -8,7 +8,9 @@
 #include <nestdaq/telemetry/FairLoggerTelemetryLoader.h>
 
 #include <array>
+#include <boost/uuid/string_generator.hpp>
 #include <cstdlib>
+#include <exception>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -48,6 +50,16 @@ auto Parse(std::vector<std::string> arguments) -> nestdaq::telemetry::TelemetryO
         argv.emplace_back(argument.data());
     }
     return nestdaq::telemetry::ParseTelemetryOptions(static_cast<int>(argv.size()), argv.data(), "test-service");
+}
+
+auto IsUuidString(std::string_view value) -> bool
+{
+    try {
+        static_cast<void>(boost::uuids::string_generator{}(std::string{value}));
+        return true;
+    } catch (const std::exception&) {
+        return false;
+    }
 }
 
 auto ReadWithBoostOptions(std::vector<std::string> arguments,
@@ -199,6 +211,92 @@ TEST_CASE("telemetry service name falls back to executable basename for devices"
     const auto config = nestdaq::telemetry::MakeConfig(options);
 
     CHECK(std::string_view{config.service_name} == "Sink");
+}
+
+TEST_CASE("telemetry service instance id defaults to a generated uuid", "[telemetry]")
+{
+    ClearTelemetryEnvironment();
+
+    const auto options = Parse({"test"});
+    const auto config = nestdaq::telemetry::MakeConfig(options);
+
+    CHECK(options.generatedServiceInstanceId);
+    REQUIRE_FALSE(options.serviceInstanceId.empty());
+    CHECK(IsUuidString(options.serviceInstanceId));
+    CHECK(std::string_view{config.service_instance_id} == options.serviceInstanceId);
+}
+
+TEST_CASE("telemetry service instance id follows plugin uuid option", "[telemetry]")
+{
+    ClearTelemetryEnvironment();
+
+    constexpr auto uuid = std::string_view{"123e4567-e89b-12d3-a456-426614174000"};
+    const auto optionsWithEquals = Parse({"test", "--uuid=123e4567-e89b-12d3-a456-426614174000"});
+    const auto configWithEquals = nestdaq::telemetry::MakeConfig(optionsWithEquals);
+
+    CHECK_FALSE(optionsWithEquals.generatedServiceInstanceId);
+    CHECK(std::string_view{configWithEquals.service_instance_id} == uuid);
+
+    const auto optionsWithSpace = Parse({"test", "--uuid", "123e4567-e89b-12d3-a456-426614174000"});
+    const auto configWithSpace = nestdaq::telemetry::MakeConfig(optionsWithSpace);
+
+    CHECK_FALSE(optionsWithSpace.generatedServiceInstanceId);
+    CHECK(std::string_view{configWithSpace.service_instance_id} == uuid);
+}
+
+TEST_CASE("explicit telemetry service instance id overrides plugin uuid option", "[telemetry]")
+{
+    ClearTelemetryEnvironment();
+
+    const auto options = Parse({
+        "test",
+        "--uuid=123e4567-e89b-12d3-a456-426614174000",
+        "--otel-service-instance-id=explicit-instance",
+    });
+    const auto config = nestdaq::telemetry::MakeConfig(options);
+
+    CHECK_FALSE(options.generatedServiceInstanceId);
+    CHECK(std::string_view{config.service_instance_id} == "explicit-instance");
+}
+
+TEST_CASE("telemetry service instance id is generated through Boost options", "[telemetry]")
+{
+    ClearTelemetryEnvironment();
+
+    const auto options = ReadWithBoostOptions({"daq-webctl"}, "daq-webctl");
+    const auto config = nestdaq::telemetry::MakeConfig(options);
+
+    CHECK(options.generatedServiceInstanceId);
+    REQUIRE_FALSE(options.serviceInstanceId.empty());
+    CHECK(IsUuidString(options.serviceInstanceId));
+    CHECK(std::string_view{config.service_instance_id} == options.serviceInstanceId);
+}
+
+TEST_CASE("generated telemetry uuid populates missing FairMQ uuid property", "[telemetry]")
+{
+    ClearTelemetryEnvironment();
+
+    auto options = Parse({"test"});
+    auto config = fair::mq::ProgOptions{};
+
+    nestdaq::telemetry::SetGeneratedUuidProperty(config, options);
+
+    REQUIRE(config.Count("uuid") == 1);
+    CHECK(config.GetProperty<std::string>("uuid") == options.serviceInstanceId);
+}
+
+TEST_CASE("generated telemetry uuid does not overwrite FairMQ uuid property", "[telemetry]")
+{
+    ClearTelemetryEnvironment();
+
+    constexpr auto existingUuid = std::string_view{"123e4567-e89b-12d3-a456-426614174000"};
+    auto options = Parse({"test"});
+    auto config = fair::mq::ProgOptions{};
+    config.SetProperty<std::string>("uuid", std::string{existingUuid});
+
+    nestdaq::telemetry::SetGeneratedUuidProperty(config, options);
+
+    CHECK(config.GetProperty<std::string>("uuid") == existingUuid);
 }
 
 TEST_CASE("empty telemetry protocol disables the selected signal", "[telemetry]")

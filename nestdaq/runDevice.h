@@ -127,7 +127,8 @@ int main(int argc, char* argv[])
             }
         });
 
-        runner.AddHook<InstantiateDevice>([](DeviceRunner& r) {
+        runner.AddHook<InstantiateDevice>([&telemetryOptions](DeviceRunner& r) {
+            nestdaq::telemetry::SetGeneratedUuidProperty(r.fConfig, telemetryOptions);
             r.fDevice = getDevice(r.fConfig);
         });
 

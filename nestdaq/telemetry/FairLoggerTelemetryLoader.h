@@ -5,6 +5,8 @@
 #include <fairlogger/Logger.h>
 
 #include <boost/program_options.hpp>
+#include <boost/uuid/uuid_generators.hpp>
+#include <boost/uuid/uuid_io.hpp>
 
 #include <nestdaq/telemetry/OpenTelemetryInitializer.h>
 
@@ -66,6 +68,7 @@ struct TelemetryOptions {
     uint32_t metricOtlpHttpJson{1};
     uint32_t traceOtlpHttpJson{1};
     bool required{false};
+    bool generatedServiceInstanceId{false};
 };
 
 struct SeverityParseResult {
@@ -90,6 +93,8 @@ inline auto AssignOption(TelemetryOptions& options,
                          std::string_view value) -> void;
 inline auto Basename(std::string_view path) -> std::string_view;
 inline auto Env(const char* name) -> const char*;
+inline auto EnsureServiceInstanceId(TelemetryOptions& options) -> void;
+inline auto GenerateUuidString() -> std::string;
 /**
  * @brief Build the C ABI config passed to `libnestdaq_otel.so`.
  *
@@ -110,6 +115,9 @@ inline auto ReadTelemetryOptions(const boost::program_options::variables_map& vm
                                  std::string_view defaultServiceName) -> TelemetryOptions;
 inline auto WarnUnknownSeverityFallback(std::string_view severity) -> void;
 inline auto SeverityToFairLoggerValue(std::string_view severity) -> int32_t;
+inline auto SetGeneratedUuidProperty(fair::mq::ProgOptions& config,
+                                     const TelemetryOptions& options,
+                                     std::string_view key = "uuid") -> void;
 inline auto SubscribeTelemetryOptionChanges(const fair::mq::ProgOptions& config,
                                             TelemetryLibrary& telemetry) -> void;
 inline auto UnsubscribeTelemetryOptionChanges(const fair::mq::ProgOptions& config) -> void;
@@ -272,6 +280,20 @@ inline auto Env(const char* name) -> const char*
     return std::getenv(name); // NOLINT(concurrency-mt-unsafe)
 }
 
+inline auto EnsureServiceInstanceId(TelemetryOptions& options) -> void
+{
+    if (!options.serviceInstanceId.empty()) {
+        return;
+    }
+    options.serviceInstanceId = GenerateUuidString();
+    options.generatedServiceInstanceId = true;
+}
+
+inline auto GenerateUuidString() -> std::string
+{
+    return boost::uuids::to_string(boost::uuids::random_generator{}());
+}
+
 inline auto MakeConfig(const TelemetryOptions& options) -> nestdaq_otel_config
 {
     nestdaq_otel_config config{};
@@ -337,6 +359,7 @@ inline auto ParseTelemetryOptions(int argc, char* argv[], // NOLINT(cppcoreguide
     options.serviceName = defaultServiceName;
     if (argv == nullptr) {
         ApplyEnvironment(options);
+        EnsureServiceInstanceId(options);
         return options;
     }
     if (argc > 0) {
@@ -346,6 +369,7 @@ inline auto ParseTelemetryOptions(int argc, char* argv[], // NOLINT(cppcoreguide
     }
     ApplyEnvironment(options);
     auto explicitTelemetryServiceName = false;
+    auto explicitTelemetryServiceInstanceId = false;
 
     for (int i = 1; i < argc; ++i) {
         const std::string_view arg{argv[i]}; // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
@@ -359,7 +383,7 @@ inline auto ParseTelemetryOptions(int argc, char* argv[], // NOLINT(cppcoreguide
         if (equals != std::string_view::npos) {
             value = key.substr(equals + 1);
             key = key.substr(0, equals);
-        } else if ((key.rfind("otel-", 0) == 0 || key == "service-name") && i + 1 < argc &&
+        } else if ((key.rfind("otel-", 0) == 0 || key == "service-name" || key == "uuid") && i + 1 < argc &&
                    std::string_view{argv[i + 1]}.rfind("--", 0) != 0) { // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
             value = argv[++i]; // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
         } else if (key == "otel-log-protocol" || key == "otel-metric-protocol" || key == "otel-trace-protocol") {
@@ -374,11 +398,21 @@ inline auto ParseTelemetryOptions(int argc, char* argv[], // NOLINT(cppcoreguide
             if (!explicitTelemetryServiceName) {
                 options.serviceName = value;
             }
+        } else if (key == "otel-service-instance-id") {
+            AssignOption(options, key, value);
+            options.generatedServiceInstanceId = false;
+            explicitTelemetryServiceInstanceId = true;
+        } else if (key == "uuid") {
+            if (!explicitTelemetryServiceInstanceId) {
+                options.serviceInstanceId = value;
+                options.generatedServiceInstanceId = false;
+            }
         } else {
             AssignOption(options, key, value);
         }
     }
 
+    EnsureServiceInstanceId(options);
     return options;
 }
 
@@ -460,6 +494,7 @@ inline auto ReadTelemetryOptions(const boost::program_options::variables_map& vm
     if (vm.count("otel-trace-http-json") != 0) {
         options.traceOtlpHttpJson = vm["otel-trace-http-json"].as<bool>() ? 1U : 0U;
     }
+    EnsureServiceInstanceId(options);
     return options;
 }
 
@@ -475,6 +510,20 @@ inline auto WarnUnknownSeverityFallback(std::string_view severity) -> void
 inline auto SeverityToFairLoggerValue(std::string_view severity) -> int32_t
 {
     return ParseFairLoggerSeverity(severity).value;
+}
+
+inline auto SetGeneratedUuidProperty(fair::mq::ProgOptions& config,
+                                     const TelemetryOptions& options,
+                                     std::string_view key) -> void
+{
+    if (!options.generatedServiceInstanceId || options.serviceInstanceId.empty()) {
+        return;
+    }
+    const auto propertyKey = std::string{key};
+    if (config.Count(propertyKey) != 0) {
+        return;
+    }
+    config.SetProperty<std::string>(propertyKey, options.serviceInstanceId);
 }
 
 /**

@@ -50,7 +50,9 @@ OpenTelemetry options.
 
 `daq-webctl` accepts the following options. OpenTelemetry options are also
 available through the shared NestDAQ telemetry option helper for the
-`daq-webctl` component.
+`daq-webctl` component. When `--otel-service-instance-id` is not specified,
+`daq-webctl` records a generated UUID in the OpenTelemetry
+`service.instance.id` resource attribute.
 
 | Option | Default | Description |
 | :-- | :-- | :-- |
