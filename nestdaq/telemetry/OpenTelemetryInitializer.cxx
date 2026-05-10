@@ -10,6 +10,7 @@
 #include <cctype>
 #include <cstdint>
 #include <exception>
+#include <fstream>
 #include <map>
 #include <memory>
 #include <mutex>
@@ -55,6 +56,7 @@
 #include <opentelemetry/sdk/metrics/meter_provider.h>
 #include <opentelemetry/sdk/metrics/meter_provider_factory.h>
 #include <opentelemetry/sdk/metrics/push_metric_exporter.h>
+#include <opentelemetry/sdk/metrics/view/view_registry_factory.h>
 #include <opentelemetry/sdk/resource/resource.h>
 #include <opentelemetry/sdk/trace/batch_span_processor_factory.h>
 #include <opentelemetry/sdk/trace/batch_span_processor_options.h>
@@ -68,6 +70,9 @@
 
 #include <fairlogger/Logger.h>
 #include <fairmq/Version.h>
+
+#include <sys/resource.h>
+#include <unistd.h>
 
 #include "nestdaq/telemetry/FairLoggerOpenTelemetrySink.h"
 #include "nestdaq/telemetry/FairMQThroughputLogParser.h"
@@ -136,6 +141,11 @@ struct FairMQThroughputMeasurement {
     double megabytesPerSecond = 0.0;
 };
 
+struct ProcessCpuUsageSample {
+    std::chrono::steady_clock::time_point timestamp;
+    double cpuSeconds = 0.0;
+};
+
 struct RuntimeState {
     std::mutex mutex;
     std::shared_ptr<opentelemetry::sdk::logs::LoggerProvider> loggerProvider;
@@ -147,7 +157,11 @@ struct RuntimeState {
     std::map<MetricKey, opentelemetry::nostd::unique_ptr<opentelemetry::metrics::Histogram<double>>> doubleHistograms;
     opentelemetry::nostd::shared_ptr<opentelemetry::metrics::ObservableInstrument> fairmqMessagesPerSecondGauge;
     opentelemetry::nostd::shared_ptr<opentelemetry::metrics::ObservableInstrument> fairmqMegabytesPerSecondGauge;
+    opentelemetry::nostd::shared_ptr<opentelemetry::metrics::ObservableInstrument> processCpuUsageGauge;
+    opentelemetry::nostd::shared_ptr<opentelemetry::metrics::ObservableInstrument> processMemoryRssGauge;
     std::map<std::pair<std::string, std::string>, FairMQThroughputMeasurement> fairmqThroughputMeasurements;
+    std::optional<ProcessCpuUsageSample> processCpuUsageSample;
+    long pageSize = 0;
     std::map<uint64_t, opentelemetry::nostd::shared_ptr<opentelemetry::trace::Span>> spans;
     std::atomic<uint64_t> nextSpanHandle{1};
     std::string lastError;
@@ -160,6 +174,7 @@ auto AppendAttribute(AttributeStorage &storage, const nestdaq_otel_attribute &at
 auto BuildAttributes(const nestdaq_otel_attribute *attributes, uint64_t attributeCount) -> AttributeStorage;
 auto ClearLastError() -> void;
 auto ConfigureFairMQThroughputMetrics(RuntimeState &state) -> void;
+auto ConfigureProcessMetrics(RuntimeState &state) -> void;
 auto CreateLogExporter(const nestdaq_otel_config &config, Protocol protocol)
 -> std::unique_ptr<opentelemetry::sdk::logs::LogRecordExporter>;
 auto CreateLogProcessor(std::unique_ptr<opentelemetry::sdk::logs::LogRecordExporter> exporter,
@@ -191,9 +206,14 @@ auto ParseProtocolToken(std::string_view protocol, Protocol &out) -> bool;
 auto ObserveFairMQMegabytesPerSecond(opentelemetry::metrics::ObserverResult observer, void *state) noexcept -> void;
 auto ObserveFairMQMessagesPerSecond(opentelemetry::metrics::ObserverResult observer, void *state) noexcept -> void;
 auto ObserveFairMQThroughput(opentelemetry::metrics::ObserverResult observer, bool observeMegabytes) noexcept -> void;
+auto ObserveProcessCpuUsage(opentelemetry::metrics::ObserverResult observer, void *state) noexcept -> void;
+auto ObserveProcessMemoryRss(opentelemetry::metrics::ObserverResult observer, void *state) noexcept -> void;
+auto ReadProcessCpuUsage() noexcept -> std::optional<ProcessCpuUsageSample>;
+auto ReadProcessMemoryRssMiB(long pageSize) -> std::optional<double>;
 auto SetLastError(std::string message) -> int;
 auto SignalEnabled(const nestdaq_otel_signal_config &config) noexcept -> bool;
 auto State() -> RuntimeState &;
+auto TimevalToSeconds(const timeval &value) noexcept -> double;
 auto TimeoutFromMs(uint64_t timeoutMs) noexcept -> std::chrono::microseconds;
 auto ToLower(std::string_view value) -> std::string;
 auto TraceEndpointHttp(const nestdaq_otel_config &config) -> const char *;
@@ -279,6 +299,32 @@ auto ConfigureFairMQThroughputMetrics(RuntimeState &state) -> void
         "MB/s");
     if (state.fairmqMegabytesPerSecondGauge) {
         state.fairmqMegabytesPerSecondGauge->AddCallback(ObserveFairMQMegabytesPerSecond, nullptr);
+    }
+}
+
+auto ConfigureProcessMetrics(RuntimeState &state) -> void
+{
+    if (!state.meter) {
+        return;
+    }
+
+    state.pageSize = sysconf(_SC_PAGESIZE);
+    state.processCpuUsageSample = ReadProcessCpuUsage();
+
+    state.processCpuUsageGauge = state.meter->CreateDoubleObservableGauge(
+        "process.cpu.usage_percent",
+        "Process CPU usage in top/htop style percent",
+        "%");
+    if (state.processCpuUsageGauge) {
+        state.processCpuUsageGauge->AddCallback(ObserveProcessCpuUsage, nullptr);
+    }
+
+    state.processMemoryRssGauge = state.meter->CreateDoubleObservableGauge(
+        "process.memory.rss_mib",
+        "Process resident memory usage",
+        "MiBy");
+    if (state.processMemoryRssGauge) {
+        state.processMemoryRssGauge->AddCallback(ObserveProcessMemoryRss, nullptr);
     }
 }
 
@@ -642,6 +688,95 @@ auto ObserveFairMQThroughput(opentelemetry::metrics::ObserverResult observer, bo
     }
 }
 
+auto ObserveProcessCpuUsage(opentelemetry::metrics::ObserverResult observer, void * /* state */) noexcept -> void
+{
+    using DoubleObserver = opentelemetry::nostd::shared_ptr<opentelemetry::metrics::ObserverResultT<double>>;
+    if (!opentelemetry::nostd::holds_alternative<DoubleObserver>(observer)) {
+        return;
+    }
+
+    const auto result = opentelemetry::nostd::get<DoubleObserver>(observer);
+    if (!result) {
+        return;
+    }
+
+    const auto currentSample = ReadProcessCpuUsage();
+    if (!currentSample) {
+        return;
+    }
+
+    auto value = 0.0;
+    {
+        auto &state = State();
+        std::lock_guard lock{state.mutex};
+        if (state.processCpuUsageSample) {
+            const auto elapsedSeconds =
+                std::chrono::duration<double>{currentSample->timestamp - state.processCpuUsageSample->timestamp}.count();
+            if (elapsedSeconds > 0.0) {
+                value = ((currentSample->cpuSeconds - state.processCpuUsageSample->cpuSeconds) / elapsedSeconds) * 100.0;
+            }
+        }
+        state.processCpuUsageSample = currentSample;
+    }
+
+    result->Observe(value);
+}
+
+auto ObserveProcessMemoryRss(opentelemetry::metrics::ObserverResult observer, void * /* state */) noexcept -> void
+{
+    using DoubleObserver = opentelemetry::nostd::shared_ptr<opentelemetry::metrics::ObserverResultT<double>>;
+    if (!opentelemetry::nostd::holds_alternative<DoubleObserver>(observer)) {
+        return;
+    }
+
+    const auto result = opentelemetry::nostd::get<DoubleObserver>(observer);
+    if (!result) {
+        return;
+    }
+
+    auto pageSize = 0L;
+    {
+        auto &state = State();
+        std::lock_guard lock{state.mutex};
+        pageSize = state.pageSize;
+    }
+
+    const auto value = ReadProcessMemoryRssMiB(pageSize);
+    if (!value) {
+        return;
+    }
+    result->Observe(*value);
+}
+
+auto ReadProcessCpuUsage() noexcept -> std::optional<ProcessCpuUsageSample>
+{
+    auto usage = rusage{};
+    if (getrusage(RUSAGE_SELF, &usage) != 0) {
+        return std::nullopt;
+    }
+    return ProcessCpuUsageSample{
+        .timestamp = std::chrono::steady_clock::now(),
+        .cpuSeconds = TimevalToSeconds(usage.ru_utime) + TimevalToSeconds(usage.ru_stime),
+    };
+}
+
+auto ReadProcessMemoryRssMiB(long pageSize) -> std::optional<double>
+{
+    if (pageSize <= 0) {
+        return std::nullopt;
+    }
+
+    auto statm = std::ifstream{"/proc/self/statm"};
+    auto totalPages = uint64_t{0};
+    auto residentPages = uint64_t{0};
+    if (!(statm >> totalPages >> residentPages)) {
+        return std::nullopt;
+    }
+
+    const auto bytes = static_cast<double>(residentPages) * static_cast<double>(pageSize);
+    return bytes / (1024.0 * 1024.0);
+}
+
 auto SetLastError(std::string message) -> int
 {
     auto &state = State();
@@ -659,6 +794,11 @@ auto State() -> RuntimeState &
 {
     static auto state = RuntimeState{};
     return state;
+}
+
+auto TimevalToSeconds(const timeval &value) noexcept -> double
+{
+    return static_cast<double>(value.tv_sec) + (static_cast<double>(value.tv_usec) / 1'000'000.0);
 }
 
 auto TimeoutFromMs(uint64_t timeoutMs) noexcept -> std::chrono::microseconds
@@ -785,8 +925,9 @@ auto OpenTelemetryInitializer::Initialize(const nestdaq_otel_config *config) -> 
         }
 
         if (!metricProtocols.empty()) {
+            auto views = opentelemetry::sdk::metrics::ViewRegistryFactory::Create();
             meterProvider = std::shared_ptr<opentelemetry::sdk::metrics::MeterProvider>{
-                opentelemetry::sdk::metrics::MeterProviderFactory::Create(nullptr, resource)};
+                opentelemetry::sdk::metrics::MeterProviderFactory::Create(std::move(views), resource)};
             for (const auto protocol : metricProtocols) {
                 meterProvider->AddMetricReader(CreateMetricReader(CreateMetricExporter(localConfig, protocol), localConfig));
             }
@@ -812,6 +953,7 @@ auto OpenTelemetryInitializer::Initialize(const nestdaq_otel_config *config) -> 
             state.tracer = {};
             if (meterProvider) {
                 state.meter = meterProvider->GetMeter("nestdaq", std::string{NESTDAQ_VERSION});
+                ConfigureProcessMetrics(state);
                 ConfigureFairMQThroughputMetrics(state);
             }
             if (tracerProvider) {
@@ -976,7 +1118,11 @@ auto OpenTelemetryInitializer::Shutdown(uint64_t timeout_ms) -> int
             state.doubleHistograms.clear();
             state.fairmqMessagesPerSecondGauge = {};
             state.fairmqMegabytesPerSecondGauge = {};
+            state.processCpuUsageGauge = {};
+            state.processMemoryRssGauge = {};
             state.fairmqThroughputMeasurements.clear();
+            state.processCpuUsageSample = std::nullopt;
+            state.pageSize = 0;
             state.spans.clear();
         }
         FairLoggerOpenTelemetrySink::Shutdown();

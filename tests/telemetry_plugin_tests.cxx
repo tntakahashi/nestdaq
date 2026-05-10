@@ -9,11 +9,13 @@
 
 #include <nestdaq/telemetry/Telemetry.h>
 
+#include <chrono>
 #include <iostream>
 #include <nlohmann/json.hpp>
 #include <sstream>
 #include <string>
 #include <string_view>
+#include <thread>
 
 namespace {
 
@@ -50,6 +52,34 @@ auto LogOnlyConfig() -> nestdaq_otel_config
     options.metricProtocol.clear();
     options.traceProtocol.clear();
     options.serviceName = "nestdaq-test";
+    return nestdaq::telemetry::MakeConfig(options);
+}
+
+auto MetricsConsoleConfig() -> nestdaq_otel_config
+{
+    auto options = nestdaq::telemetry::TelemetryOptions{};
+    options.logProtocol.clear();
+    options.metricProtocol = "console";
+    options.traceProtocol.clear();
+    options.serviceName = "nestdaq-test";
+    options.serviceNamespace = "nestdaq";
+    options.serviceInstanceId = "test-instance";
+    options.timeoutMs = 50;
+    options.metricExportIntervalMs = 100;
+    return nestdaq::telemetry::MakeConfig(options);
+}
+
+auto LogsAndMetricsConsoleConfig() -> nestdaq_otel_config
+{
+    auto options = nestdaq::telemetry::TelemetryOptions{};
+    options.logProtocol = "console";
+    options.metricProtocol = "console";
+    options.traceProtocol.clear();
+    options.serviceName = "nestdaq-test";
+    options.serviceNamespace = "nestdaq";
+    options.serviceInstanceId = "test-instance";
+    options.timeoutMs = 50;
+    options.metricExportIntervalMs = 100;
     return nestdaq::telemetry::MakeConfig(options);
 }
 
@@ -165,6 +195,67 @@ TEST_CASE("FairMQ build metadata is logged instead of stored as resource attribu
     CHECK(logs.find("fairmq.repo_url") == std::string::npos);
     CHECK(logs.find("fairmq.license") == std::string::npos);
     CHECK(logs.find("fairmq.copyright") == std::string::npos);
+}
+
+TEST_CASE("metrics console initializes and exports resource attributes", "[telemetry][plugin]")
+{
+    auto capture = CoutCapture{};
+
+    auto library = nestdaq::telemetry::TelemetryLibrary{};
+    REQUIRE(library.Load(NESTDAQ_OTEL_LIBRARY_PATH));
+    REQUIRE(library.InitializeWith(MetricsConsoleConfig()));
+
+    auto telemetry = nestdaq::telemetry::Telemetry{library};
+    CHECK(telemetry.AddDoubleCounter("probe.counter", 42.0, "1", "probe counter"));
+
+    std::this_thread::sleep_for(std::chrono::milliseconds{250});
+    library.ShutdownTelemetry(nestdaq::telemetry::kDefaultTimeoutMs);
+
+    const auto output = capture.output.str();
+    CHECK(output.find("probe.counter") != std::string::npos);
+    CHECK(output.find("service.name") != std::string::npos);
+    CHECK(output.find("nestdaq-test") != std::string::npos);
+    CHECK(output.find("service.namespace") != std::string::npos);
+    CHECK(output.find("service.instance.id") != std::string::npos);
+    CHECK(output.find("test-instance") != std::string::npos);
+}
+
+TEST_CASE("process metrics export without FairLogger logs or MetricsPlugin", "[telemetry][plugin]")
+{
+    auto capture = CoutCapture{};
+
+    auto library = nestdaq::telemetry::TelemetryLibrary{};
+    REQUIRE(library.Load(NESTDAQ_OTEL_LIBRARY_PATH));
+    REQUIRE(library.InitializeWith(MetricsConsoleConfig()));
+
+    std::this_thread::sleep_for(std::chrono::milliseconds{250});
+    library.ShutdownTelemetry(nestdaq::telemetry::kDefaultTimeoutMs);
+
+    const auto output = capture.output.str();
+    CHECK(output.find("process.cpu.usage_percent") != std::string::npos);
+    CHECK(output.find("process.memory.rss_mib") != std::string::npos);
+    CHECK(output.find("fairmq.channel.messages_per_second") == std::string::npos);
+    CHECK(output.find("data: in:") == std::string::npos);
+}
+
+TEST_CASE("FairMQ throughput metrics export parsed rate log samples", "[telemetry][plugin]")
+{
+    auto capture = CoutCapture{};
+
+    auto library = nestdaq::telemetry::TelemetryLibrary{};
+    REQUIRE(library.Load(NESTDAQ_OTEL_LIBRARY_PATH));
+    REQUIRE(library.InitializeWith(LogsAndMetricsConsoleConfig()));
+
+    LOG(info) << "data: in: 123 (4.5 MB) out: 6.7 (8.9 MB)";
+
+    std::this_thread::sleep_for(std::chrono::milliseconds{250});
+    library.ShutdownTelemetry(nestdaq::telemetry::kDefaultTimeoutMs);
+
+    const auto output = capture.output.str();
+    CHECK(output.find("fairmq.channel.messages_per_second") != std::string::npos);
+    CHECK(output.find("fairmq.channel.megabytes_per_second") != std::string::npos);
+    CHECK(output.find("fairmq.channel.name") != std::string::npos);
+    CHECK(output.find("network.io.direction") != std::string::npos);
 }
 
 TEST_CASE("disabled metric and trace signals are no-op through loaded plugin", "[telemetry][plugin]")
