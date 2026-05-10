@@ -14,7 +14,7 @@
 
 #include <boost/program_options.hpp>
 
-#include <nestdaq/telemetry/FairLoggerTelemetryLoader.h>
+#include <nestdaq/telemetry/Telemetry.h>
 
 #include <cstddef>
 #include <exception>
@@ -106,6 +106,7 @@ int main(int argc, char* argv[])
                     }
                 } else {
                     telemetryInitialized = true;
+                    nestdaq::telemetry::SetActiveTelemetryLibrary(telemetry.get());
                     nestdaq::telemetry::WarnUnknownSeverityFallback(telemetryOptions.severity);
                 }
             }
@@ -140,6 +141,7 @@ int main(int argc, char* argv[])
             nestdaq::telemetry::UnsubscribeTelemetryOptionChanges(runner.fConfig);
         }
         if (telemetryLoaded) {
+            nestdaq::telemetry::SetActiveTelemetryLibrary(nullptr);
             telemetry->ShutdownTelemetry(telemetryOptions.timeoutMs);
         }
         return rc;

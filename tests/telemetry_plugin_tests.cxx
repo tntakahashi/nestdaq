@@ -69,6 +69,19 @@ auto MetricsConsoleConfig() -> nestdaq_otel_config
     return nestdaq::telemetry::MakeConfig(options);
 }
 
+auto TraceConsoleConfig() -> nestdaq_otel_config
+{
+    auto options = nestdaq::telemetry::TelemetryOptions{};
+    options.logProtocol.clear();
+    options.metricProtocol.clear();
+    options.traceProtocol = "console";
+    options.serviceName = "nestdaq-test";
+    options.serviceNamespace = "nestdaq";
+    options.serviceInstanceId = "test-instance";
+    options.timeoutMs = 50;
+    return nestdaq::telemetry::MakeConfig(options);
+}
+
 auto LogsAndMetricsConsoleConfig() -> nestdaq_otel_config
 {
     auto options = nestdaq::telemetry::TelemetryOptions{};
@@ -272,8 +285,15 @@ TEST_CASE("metrics console initializes and exports resource attributes", "[telem
 
     auto telemetry = nestdaq::telemetry::Telemetry{library};
     CHECK(telemetry.AddDoubleCounter("probe.counter", 42.0, "1", "probe counter"));
+    nestdaq::telemetry::SetActiveTelemetryLibrary(&library);
+    auto userTelemetry = nestdaq::telemetry::GetTelemetry();
+    CHECK(userTelemetry.Counter("user.messages.total", "1", "user messages")
+              .Add(3.0, {{"channel", "data"}, {"running", true}, {"partition", uint64_t{2}}}));
+    CHECK(userTelemetry.Histogram("user.decode.duration", "ms", "user decode duration")
+              .Record(4.5, {{"channel", "data"}, {"attempt", int64_t{1}}, {"ratio", 0.5}}));
 
     std::this_thread::sleep_for(std::chrono::milliseconds{250});
+    nestdaq::telemetry::SetActiveTelemetryLibrary(nullptr);
     library.ShutdownTelemetry(nestdaq::telemetry::kDefaultTimeoutMs);
 
     const auto output = capture.output.str();
@@ -283,6 +303,53 @@ TEST_CASE("metrics console initializes and exports resource attributes", "[telem
     CHECK(output.find("service.namespace") != std::string::npos);
     CHECK(output.find("service.instance.id") != std::string::npos);
     CHECK(output.find("test-instance") != std::string::npos);
+    CHECK(output.find("user.messages.total") != std::string::npos);
+    CHECK(output.find("user.decode.duration") != std::string::npos);
+    CHECK(output.find("channel") != std::string::npos);
+    CHECK(output.find("data") != std::string::npos);
+    CHECK(output.find("running") != std::string::npos);
+    CHECK(output.find("partition") != std::string::npos);
+    CHECK(output.find("attempt") != std::string::npos);
+    CHECK(output.find("ratio") != std::string::npos);
+}
+
+TEST_CASE("user telemetry facade is no-op before a backend is registered", "[telemetry][plugin]")
+{
+    nestdaq::telemetry::SetActiveTelemetryLibrary(nullptr);
+
+    auto telemetry = nestdaq::telemetry::GetTelemetry();
+    CHECK(telemetry.Counter("unregistered.counter", "1", "unregistered counter").Add(1.0));
+    CHECK(telemetry.Histogram("unregistered.histogram", "ms", "unregistered histogram").Record(2.0));
+
+    auto span = telemetry.StartSpan("unregistered-span", {{"component", "test"}});
+    CHECK_FALSE(span.SetAttribute({"payload.bytes", int64_t{128}}));
+}
+
+TEST_CASE("user telemetry facade exports RAII spans and attributes", "[telemetry][plugin]")
+{
+    auto capture = CoutCapture{};
+
+    auto library = nestdaq::telemetry::TelemetryLibrary{};
+    REQUIRE(library.Load(NESTDAQ_OTEL_LIBRARY_PATH));
+    REQUIRE(library.InitializeWith(TraceConsoleConfig()));
+    nestdaq::telemetry::SetActiveTelemetryLibrary(&library);
+
+    {
+        auto span = nestdaq::telemetry::GetTelemetry().StartSpan("user-decode", {{"channel", "data"}});
+        CHECK(span.SetAttribute({"payload.bytes", int64_t{128}}));
+        auto moved = std::move(span);
+        CHECK(moved.SetAttribute({"ok", true}));
+    }
+
+    nestdaq::telemetry::SetActiveTelemetryLibrary(nullptr);
+    library.ShutdownTelemetry(nestdaq::telemetry::kDefaultTimeoutMs);
+
+    const auto output = capture.output.str();
+    CHECK(output.find("user-decode") != std::string::npos);
+    CHECK(output.find("channel") != std::string::npos);
+    CHECK(output.find("data") != std::string::npos);
+    CHECK(output.find("payload.bytes") != std::string::npos);
+    CHECK(output.find("ok") != std::string::npos);
 }
 
 TEST_CASE("process metrics export without FairLogger logs or MetricsPlugin", "[telemetry][plugin]")
