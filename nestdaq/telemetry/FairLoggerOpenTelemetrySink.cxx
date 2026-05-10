@@ -154,8 +154,9 @@ auto EmitLogRecord(const std::string &content, const fair::LogMetaData &metadata
         if (severityName.empty()) {
             severityName = FairLoggerSeverityName(metadata.severity);
         }
+        logRecord->SetAttribute("fairlogger.severity.number", static_cast<int64_t>(metadata.severity));
         if (!severityName.empty()) {
-            logRecord->SetAttribute("log.severity.text", ToStringView(severityName));
+            logRecord->SetAttribute("fairlogger.severity.text", ToStringView(severityName));
         }
         if (!metadata.process_name.empty()) {
             logRecord->SetAttribute("process.name", ToStringView(metadata.process_name));

@@ -99,6 +99,27 @@ TEST_CASE("FairMQ throughput logs are safe when metrics are disabled", "[telemet
     library.ShutdownTelemetry(nestdaq::telemetry::kDefaultTimeoutMs);
 }
 
+TEST_CASE("FairLogger severity attributes preserve original severity", "[telemetry][plugin]")
+{
+    auto capture = CoutCapture{};
+
+    auto library = nestdaq::telemetry::TelemetryLibrary{};
+    REQUIRE(library.Load(NESTDAQ_OTEL_LIBRARY_PATH));
+    REQUIRE(library.InitializeWith(LogOnlyConfig()));
+
+    LOG(warn) << "severity attribute probe";
+
+    library.ShutdownTelemetry(nestdaq::telemetry::kDefaultTimeoutMs);
+
+    const auto logs = capture.output.str();
+    CHECK(logs.find("severity attribute probe") != std::string::npos);
+    CHECK(logs.find("severity_num       : 13") != std::string::npos);
+    CHECK(logs.find("severity_text      : WARN") != std::string::npos);
+    CHECK(logs.find("fairlogger.severity.number: 10") != std::string::npos);
+    CHECK(logs.find("fairlogger.severity.text: WARN") != std::string::npos);
+    CHECK(logs.find("log.severity.text:") == std::string::npos);
+}
+
 TEST_CASE("FairMQ build metadata is logged instead of stored as resource attributes", "[telemetry][plugin]")
 {
     auto capture = CoutCapture{};
