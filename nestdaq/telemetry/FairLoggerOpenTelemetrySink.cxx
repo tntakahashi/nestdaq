@@ -11,6 +11,8 @@
 #include <cstdint>
 #include <functional>
 #include <iostream>
+#include <mutex>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <thread>
@@ -66,7 +68,10 @@ constexpr auto ConvertSeverity(fair::Severity severity) noexcept -> opentelemetr
 auto CurrentThreadId() noexcept -> uint64_t;
 auto EmitLogRecord(const std::string &content, const fair::LogMetaData &metadata) noexcept -> void;
 auto FairLoggerSeverityName(fair::Severity severity) noexcept -> std::string_view;
+auto InstanceId() -> std::string &;
+auto InstanceIdMutex() -> std::mutex &;
 auto MinSeverity() -> std::atomic<int32_t>&;
+auto ParseInstanceIndex(std::string_view instanceId) noexcept -> std::optional<std::pair<std::string_view, int64_t>>;
 auto ParseLine(std::string_view line) noexcept -> int64_t;
 auto ShouldEmit(fair::Severity severity) noexcept -> bool;
 auto SinkRegistered() -> std::atomic<bool>&;
@@ -158,6 +163,18 @@ auto EmitLogRecord(const std::string &content, const fair::LogMetaData &metadata
         if (!severityName.empty()) {
             logRecord->SetAttribute("fairlogger.severity.text", ToStringView(severityName));
         }
+        auto instanceId = std::string{};
+        {
+            std::lock_guard lock{InstanceIdMutex()};
+            instanceId = InstanceId();
+        }
+        if (!instanceId.empty()) {
+            logRecord->SetAttribute("nestdaq.instance.id", ToStringView(instanceId));
+            if (const auto parsed = ParseInstanceIndex(instanceId)) {
+                logRecord->SetAttribute("nestdaq.instance.name", ToStringView(parsed->first));
+                logRecord->SetAttribute("nestdaq.instance.index", parsed->second);
+            }
+        }
         if (!metadata.process_name.empty()) {
             logRecord->SetAttribute("process.name", ToStringView(metadata.process_name));
         }
@@ -193,10 +210,40 @@ auto FairLoggerSeverityName(fair::Severity severity) noexcept -> std::string_vie
     return fair::Logger::SeverityName(severity);
 }
 
+auto InstanceId() -> std::string &
+{
+    static auto value = std::string{};
+    return value;
+}
+
+auto InstanceIdMutex() -> std::mutex &
+{
+    static auto value = std::mutex{};
+    return value;
+}
+
 auto MinSeverity() -> std::atomic<int32_t>&
 {
     static std::atomic<int32_t> value{static_cast<int32_t>(fair::Severity::trace)};
     return value;
+}
+
+auto ParseInstanceIndex(std::string_view instanceId) noexcept -> std::optional<std::pair<std::string_view, int64_t>>
+{
+    const auto separator = instanceId.rfind('-');
+    if (separator == std::string_view::npos || separator == 0 || separator + 1 == instanceId.size()) {
+        return std::nullopt;
+    }
+
+    auto index = int64_t{0};
+    const auto suffix = instanceId.substr(separator + 1);
+    const auto *first = suffix.data();
+    const auto *last = suffix.data() + suffix.size();
+    const auto result = std::from_chars(first, last, index);
+    if (result.ec != std::errc{} || result.ptr != last) {
+        return std::nullopt;
+    }
+    return std::pair{instanceId.substr(0, separator), index};
 }
 
 auto ParseLine(std::string_view line) noexcept -> int64_t
@@ -254,6 +301,12 @@ auto FairLoggerOpenTelemetrySink::Initialize() -> void
     }
 }
 
+auto FairLoggerOpenTelemetrySink::SetNestdaqInstanceId(std::string_view instanceId) -> void
+{
+    std::lock_guard lock{InstanceIdMutex()};
+    InstanceId() = instanceId;
+}
+
 auto FairLoggerOpenTelemetrySink::SetMinSeverity(int32_t severity) noexcept -> void
 {
     MinSeverity().store(severity, std::memory_order_release);
@@ -261,6 +314,8 @@ auto FairLoggerOpenTelemetrySink::SetMinSeverity(int32_t severity) noexcept -> v
 
 auto FairLoggerOpenTelemetrySink::Shutdown() noexcept -> void
 {
+    SetNestdaqInstanceId({});
+
     bool expected = true;
     if (!SinkRegistered().compare_exchange_strong(expected, false, std::memory_order_acq_rel)) {
         return;

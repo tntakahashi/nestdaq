@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stdint.h>
+#include <string_view>
 
 namespace nestdaq {
 
@@ -17,6 +18,7 @@ public:
 
     static auto GetMinSeverity() noexcept -> int32_t;
     static auto Initialize() -> void;
+    static auto SetNestdaqInstanceId(std::string_view instanceId) -> void;
     static auto SetMinSeverity(int32_t severity) noexcept -> void;
     static auto Shutdown() noexcept -> void;
 };

@@ -1087,6 +1087,13 @@ auto OpenTelemetryInitializer::RecordFairMQThroughput(const telemetry::FairMQThr
     }
 }
 
+auto OpenTelemetryInitializer::SetNestdaqInstanceId(const char *instance_id) -> int
+{
+    FairLoggerOpenTelemetrySink::SetNestdaqInstanceId(IsEmpty(instance_id) ? "" : instance_id);
+    ClearLastError();
+    return NESTDAQ_OTEL_OK;
+}
+
 auto OpenTelemetryInitializer::SetMinSeverity(int32_t severity) -> int
 {
     if (!ValidateSeverity(severity)) {
@@ -1258,6 +1265,11 @@ extern "C" {
     NESTDAQ_OTEL_EXPORT int nestdaq_otel_set_min_severity(int32_t severity)
     {
         return nestdaq::OpenTelemetryInitializer::SetMinSeverity(severity);
+    }
+
+    NESTDAQ_OTEL_EXPORT int nestdaq_otel_set_nestdaq_instance_id(const char *instance_id)
+    {
+        return nestdaq::OpenTelemetryInitializer::SetNestdaqInstanceId(instance_id);
     }
 
     NESTDAQ_OTEL_EXPORT int nestdaq_otel_shutdown(uint64_t timeout_ms)

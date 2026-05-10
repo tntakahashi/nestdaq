@@ -150,6 +150,71 @@ TEST_CASE("FairLogger severity attributes preserve original severity", "[telemet
     CHECK(logs.find("log.severity.text:") == std::string::npos);
 }
 
+TEST_CASE("FairLogger logs include NestDAQ instance id attributes", "[telemetry][plugin]")
+{
+    auto capture = CoutCapture{};
+
+    auto library = nestdaq::telemetry::TelemetryLibrary{};
+    REQUIRE(library.Load(NESTDAQ_OTEL_LIBRARY_PATH));
+    REQUIRE(library.InitializeWith(LogOnlyConfig()));
+    REQUIRE(library.SetNestdaqInstanceId("sampler-0"));
+
+    LOG(warn) << "nestdaq instance id probe";
+
+    library.ShutdownTelemetry(nestdaq::telemetry::kDefaultTimeoutMs);
+
+    const auto logs = capture.output.str();
+    CHECK(logs.find("nestdaq instance id probe") != std::string::npos);
+    CHECK(logs.find("nestdaq.instance.id: sampler-0") != std::string::npos);
+    CHECK(logs.find("nestdaq.instance.name: sampler") != std::string::npos);
+    CHECK(logs.find("nestdaq.instance.index: 0") != std::string::npos);
+}
+
+TEST_CASE("FairLogger logs omit derived NestDAQ instance fields for non-indexed ids", "[telemetry][plugin]")
+{
+    auto capture = CoutCapture{};
+
+    auto library = nestdaq::telemetry::TelemetryLibrary{};
+    REQUIRE(library.Load(NESTDAQ_OTEL_LIBRARY_PATH));
+    REQUIRE(library.InitializeWith(LogOnlyConfig()));
+    REQUIRE(library.SetNestdaqInstanceId("sampler-main"));
+
+    LOG(warn) << "nestdaq non indexed instance id probe";
+
+    library.ShutdownTelemetry(nestdaq::telemetry::kDefaultTimeoutMs);
+
+    const auto logs = capture.output.str();
+    CHECK(logs.find("nestdaq non indexed instance id probe") != std::string::npos);
+    CHECK(logs.find("nestdaq.instance.id: sampler-main") != std::string::npos);
+    CHECK(logs.find("nestdaq.instance.name:") == std::string::npos);
+    CHECK(logs.find("nestdaq.instance.index:") == std::string::npos);
+}
+
+TEST_CASE("FairLogger NestDAQ instance id is cleared on shutdown", "[telemetry][plugin]")
+{
+    auto capture = CoutCapture{};
+
+    auto library = nestdaq::telemetry::TelemetryLibrary{};
+    REQUIRE(library.Load(NESTDAQ_OTEL_LIBRARY_PATH));
+    REQUIRE(library.InitializeWith(LogOnlyConfig()));
+    REQUIRE(library.SetNestdaqInstanceId("sink-1"));
+    LOG(warn) << "before instance id clear";
+    library.ShutdownTelemetry(nestdaq::telemetry::kDefaultTimeoutMs);
+
+    auto libraryAfterShutdown = nestdaq::telemetry::TelemetryLibrary{};
+    REQUIRE(libraryAfterShutdown.Load(NESTDAQ_OTEL_LIBRARY_PATH));
+    REQUIRE(libraryAfterShutdown.InitializeWith(LogOnlyConfig()));
+    LOG(warn) << "after instance id clear";
+    libraryAfterShutdown.ShutdownTelemetry(nestdaq::telemetry::kDefaultTimeoutMs);
+
+    const auto logs = capture.output.str();
+    CHECK(logs.find("before instance id clear") != std::string::npos);
+    CHECK(logs.find("nestdaq.instance.id: sink-1") != std::string::npos);
+    const auto after = logs.find("after instance id clear");
+    REQUIRE(after != std::string::npos);
+    CHECK(logs.find("nestdaq.instance.id:", after) == std::string::npos);
+}
+
 TEST_CASE("FairMQ build metadata is logged instead of stored as resource attributes", "[telemetry][plugin]")
 {
     auto capture = CoutCapture{};

@@ -630,6 +630,7 @@ public:
         fShutdown = Resolve<int (*)(uint64_t)>("nestdaq_otel_shutdown");
         fLastErrorFunction = Resolve<const char* (*)()>("nestdaq_otel_last_error");
         fSetMinSeverity = Resolve<int (*)(int32_t)>("nestdaq_otel_set_min_severity");
+        fSetNestdaqInstanceId = Resolve<int (*)(const char*)>("nestdaq_otel_set_nestdaq_instance_id");
         fMetricAddDoubleCounter = Resolve<int (*)(const char*, double, const char*, const char*, const nestdaq_otel_attribute*, uint64_t)>(
             "nestdaq_otel_metric_add_double_counter");
         fMetricRecordDoubleHistogram = Resolve<int (*)(const char*, double, const char*, const char*, const nestdaq_otel_attribute*, uint64_t)>(
@@ -646,6 +647,7 @@ public:
             fShutdown = nullptr;
             fLastErrorFunction = nullptr;
             fSetMinSeverity = nullptr;
+            fSetNestdaqInstanceId = nullptr;
             fMetricAddDoubleCounter = nullptr;
             fMetricRecordDoubleHistogram = nullptr;
             fSpanEnd = nullptr;
@@ -674,6 +676,16 @@ public:
             return false;
         }
         return StoreResult(fSpanSetAttribute(spanHandle, &attribute));
+    }
+
+    /** Update the NestDAQ FairMQ device instance id attached to log records. */
+    auto SetNestdaqInstanceId(std::string_view instanceId) -> bool
+    {
+        if (!fSetNestdaqInstanceId) {
+            return false;
+        }
+        const auto value = std::string{instanceId};
+        return StoreResult(fSetNestdaqInstanceId(value.data()));
     }
 
     /** Start a span and return the plugin-owned span handle. */
@@ -759,6 +771,7 @@ private:
     std::function<int(uint64_t)> fShutdown;
     std::function<const char*()> fLastErrorFunction;
     std::function<int(int32_t)> fSetMinSeverity;
+    std::function<int(const char*)> fSetNestdaqInstanceId;
     std::function<int(const char*, double, const char*, const char*, const nestdaq_otel_attribute*, uint64_t)> fMetricAddDoubleCounter;
     std::function<int(const char*, double, const char*, const char*, const nestdaq_otel_attribute*, uint64_t)> fMetricRecordDoubleHistogram;
     std::function<int(uint64_t)> fSpanEnd;
@@ -773,10 +786,14 @@ inline auto SubscribeTelemetryOptionChanges(const fair::mq::ProgOptions& config,
 {
     config.SubscribeAsString(std::string{kTelemetryConfigSubscriber},
                              [&telemetry](const fair::mq::PropertyChange::KeyType& key, std::string value) {
-                                 if (key != "otel-log-severity") {
+                                 if (key == "id") {
+                                     if (!telemetry.SetNestdaqInstanceId(value)) {
+                                         LOG(error) << "Failed to update OTel NestDAQ instance id: "
+                                                    << telemetry.GetLastError();
+                                     }
                                      return;
                                  }
-                                 if (!telemetry.SetMinSeverity(value)) {
+                                 if (key == "otel-log-severity" && !telemetry.SetMinSeverity(value)) {
                                      LOG(error) << "Failed to update OTel log severity: "
                                                 << telemetry.GetLastError();
                                  }

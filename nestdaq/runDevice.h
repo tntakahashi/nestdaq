@@ -127,9 +127,12 @@ int main(int argc, char* argv[])
             }
         });
 
-        runner.AddHook<InstantiateDevice>([&telemetryOptions](DeviceRunner& r) {
+        runner.AddHook<InstantiateDevice>([&telemetryOptions, telemetryInitialized, telemetry = telemetry.get()](DeviceRunner& r) {
             nestdaq::telemetry::SetGeneratedUuidProperty(r.fConfig, telemetryOptions);
             r.fDevice = getDevice(r.fConfig);
+            if (telemetryInitialized && r.fConfig.Count("id") != 0) {
+                telemetry->SetNestdaqInstanceId(r.fConfig.GetProperty<std::string>("id"));
+            }
         });
 
         const auto rc = runner.Run();

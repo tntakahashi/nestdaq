@@ -151,6 +151,10 @@ NESTDAQ_OTEL_EXPORT int nestdaq_otel_metric_record_double_histogram(const char *
  */
 NESTDAQ_OTEL_EXPORT int nestdaq_otel_set_min_severity(int32_t severity);
 /**
+ * @brief Update the NestDAQ FairMQ device instance id attached to log records.
+ */
+NESTDAQ_OTEL_EXPORT int nestdaq_otel_set_nestdaq_instance_id(const char *instance_id);
+/**
  * @brief Flush, shut down, and uninstall all telemetry providers.
  */
 NESTDAQ_OTEL_EXPORT int nestdaq_otel_shutdown(uint64_t timeout_ms);
@@ -210,6 +214,7 @@ public:
                                             const nestdaq_otel_attribute *attributes,
                                             uint64_t attribute_count) -> int;
     static auto RecordFairMQThroughput(const telemetry::FairMQThroughputSample &sample) noexcept -> void;
+    static auto SetNestdaqInstanceId(const char *instance_id) -> int;
     static auto SetMinSeverity(int32_t severity) -> int;
     static auto Shutdown(uint64_t timeout_ms) -> int;
     static auto SpanEnd(uint64_t span_handle) -> int;
