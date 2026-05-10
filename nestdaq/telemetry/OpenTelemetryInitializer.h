@@ -76,8 +76,8 @@ typedef struct nestdaq_otel_signal_config {
  * Callers must set @p size to `sizeof(nestdaq_otel_config)`. String pointers
  * are borrowed for the duration of @ref nestdaq_otel_init only. Logs, metrics,
  * and traces are configured independently but share OpenTelemetry resource
- * attributes. @p min_severity is the FairLogger severity threshold in the range
- * 0..15. A zero timeout means the OpenTelemetry SDK default/no-limit timeout.
+ * attributes. @p min_severity is the FairLogger severity threshold numeric
+ * value. A zero timeout means the OpenTelemetry SDK default/no-limit timeout.
  */
 typedef struct nestdaq_otel_config {
     uint32_t size;
@@ -96,7 +96,7 @@ typedef struct nestdaq_otel_config {
     const char *fairmq_repo_url;     /* FAIRMQ_REPO_URL. */
     const char *fairmq_license;      /* FAIRMQ_LICENSE. */
     const char *fairmq_copyright;    /* FAIRMQ_COPYRIGHT. */
-    int32_t min_severity;            /* fair::Severity numeric value, 0..15. */
+    int32_t min_severity;            /* fair::Severity numeric value. */
     uint32_t timeout_ms;             /* Optional exporter force-flush/shutdown timeout. */
     uint32_t metric_export_interval_ms;
 } nestdaq_otel_config;

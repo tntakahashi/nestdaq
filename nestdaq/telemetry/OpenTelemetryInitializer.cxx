@@ -64,6 +64,8 @@
 #include <opentelemetry/trace/provider.h>
 #include <opentelemetry/trace/tracer.h>
 
+#include <fairlogger/Logger.h>
+
 #include "nestdaq/telemetry/FairLoggerOpenTelemetrySink.h"
 #include "nestdaq/telemetry/FairMQThroughputLogParser.h"
 
@@ -93,7 +95,6 @@ constexpr std::string_view kDefaultMetricHttpEndpoint{"http://localhost:4318/v1/
 constexpr std::string_view kDefaultTraceHttpEndpoint{"http://localhost:4318/v1/traces"};
 constexpr std::string_view kDefaultGrpcEndpoint{"localhost:4317"};
 constexpr uint32_t kDefaultMetricExportIntervalMs{60000};
-constexpr int32_t kMaxFairLoggerSeverity{15};
 
 struct AttributeStorage {
     std::vector<std::string> keys;
@@ -391,7 +392,7 @@ auto DefaultConfig() -> nestdaq_otel_config
     config.traces.endpoint_grpc = kDefaultGrpcEndpoint.data();
     config.traces.otlp_http_json = 1U;
     config.service_name = "nestdaq";
-    config.min_severity = 1;
+    config.min_severity = static_cast<int32_t>(fair::Severity::trace);
     config.timeout_ms = 5000;
     config.metric_export_interval_ms = kDefaultMetricExportIntervalMs;
     return config;
@@ -633,7 +634,8 @@ auto ValidateAttribute(const nestdaq_otel_attribute *attribute) noexcept -> bool
 
 auto ValidateSeverity(int32_t severity) noexcept -> bool
 {
-    return severity >= 0 && severity <= kMaxFairLoggerSeverity;
+    return severity >= static_cast<int32_t>(fair::Severity::nolog) &&
+           static_cast<size_t>(severity) < fair::Logger::fSeverityNames.size();
 }
 
 } // namespace
@@ -683,7 +685,7 @@ auto OpenTelemetryInitializer::Initialize(const nestdaq_otel_config *config) -> 
         localConfig = *config;
     }
     if (!ValidateSeverity(localConfig.min_severity)) {
-        return SetLastError("min_severity must be a fair::Severity numeric value in the range 0..15");
+        return SetLastError("min_severity must be a valid fair::Severity numeric value");
     }
 
     auto logProtocols = std::vector<Protocol>{};
@@ -872,7 +874,7 @@ auto OpenTelemetryInitializer::RecordFairMQThroughput(const telemetry::FairMQThr
 auto OpenTelemetryInitializer::SetMinSeverity(int32_t severity) -> int
 {
     if (!ValidateSeverity(severity)) {
-        return SetLastError("severity must be a fair::Severity numeric value in the range 0..15");
+        return SetLastError("severity must be a valid fair::Severity numeric value");
     }
     FairLoggerOpenTelemetrySink::SetMinSeverity(severity);
     ClearLastError();

@@ -44,6 +44,20 @@ TEST_CASE("telemetry plugin loads unified nestdaq_otel library", "[telemetry][pl
     library.ShutdownTelemetry(nestdaq::telemetry::kDefaultTimeoutMs);
 }
 
+TEST_CASE("telemetry plugin rejects severity values outside FairLogger range", "[telemetry][plugin]")
+{
+    auto library = nestdaq::telemetry::TelemetryLibrary{};
+
+    REQUIRE(library.Load(NESTDAQ_OTEL_LIBRARY_PATH));
+    REQUIRE(library.InitializeWith(DisabledConfig()));
+
+    CHECK(library.SetMinSeverity(static_cast<int32_t>(fair::Severity::fatal)));
+    CHECK_FALSE(library.SetMinSeverity(-1));
+    CHECK_FALSE(library.SetMinSeverity(static_cast<int32_t>(fair::Logger::fSeverityNames.size())));
+
+    library.ShutdownTelemetry(nestdaq::telemetry::kDefaultTimeoutMs);
+}
+
 TEST_CASE("FairMQ throughput logs are safe when metrics are disabled", "[telemetry][plugin]")
 {
     auto library = nestdaq::telemetry::TelemetryLibrary{};
