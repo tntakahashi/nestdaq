@@ -4,6 +4,7 @@
 
 #include "nestdaq/telemetry/FairLoggerOpenTelemetrySink.h"
 
+#include <array>
 #include <atomic>
 #include <charconv>
 #include <chrono>
@@ -46,6 +47,7 @@ constexpr std::string_view kSinkKey{"nestdaq-otel-log-sink"};
 auto ConvertSeverity(fair::Severity severity) noexcept -> opentelemetry::logs::Severity;
 auto CurrentThreadId() noexcept -> uint64_t;
 auto EmitLogRecord(const std::string &content, const fair::LogMetaData &metadata) noexcept -> void;
+auto FairLoggerSeverityName(fair::Severity severity) noexcept -> std::string_view;
 auto MinSeverity() -> std::atomic<int32_t>&;
 auto ParseLine(std::string_view line) noexcept -> int64_t;
 auto ShouldEmit(fair::Severity severity) noexcept -> bool;
@@ -54,39 +56,35 @@ auto ToStringView(std::string_view value) noexcept -> opentelemetry::nostd::stri
 
 auto ConvertSeverity(fair::Severity severity) noexcept -> opentelemetry::logs::Severity
 {
-    switch (severity) {
-    case fair::Severity::fatal:
-        return opentelemetry::logs::Severity::kFatal4;
-    case fair::Severity::critical:
-        return opentelemetry::logs::Severity::kFatal;
-    case fair::Severity::error:
-        return opentelemetry::logs::Severity::kError;
-    case fair::Severity::alarm:
-        return opentelemetry::logs::Severity::kWarn3;
-    case fair::Severity::important:
-        return opentelemetry::logs::Severity::kWarn2;
-    case fair::Severity::warn:
-        return opentelemetry::logs::Severity::kWarn;
-    case fair::Severity::state:
-        return opentelemetry::logs::Severity::kInfo2;
-    case fair::Severity::info:
-        return opentelemetry::logs::Severity::kInfo;
-    case fair::Severity::detail:
-    case fair::Severity::debug:
-        return opentelemetry::logs::Severity::kDebug4;
-    case fair::Severity::debug1:
-        return opentelemetry::logs::Severity::kDebug3;
-    case fair::Severity::debug2:
-        return opentelemetry::logs::Severity::kDebug2;
-    case fair::Severity::debug3:
-    case fair::Severity::debug4:
-        return opentelemetry::logs::Severity::kDebug;
-    case fair::Severity::trace:
-        return opentelemetry::logs::Severity::kTrace;
-    case fair::Severity::nolog:
-    default:
-        return opentelemetry::logs::Severity::kInvalid;
+    using opentelemetry::logs::Severity;
+    static constexpr auto kSeverityMap = std::array{
+        Severity::kInvalid, // nolog
+        Severity::kTrace,
+        Severity::kDebug,
+        Severity::kDebug,
+        Severity::kDebug2,
+        Severity::kDebug3,
+        Severity::kDebug4,
+        Severity::kDebug4,
+        Severity::kInfo,
+        Severity::kInfo2,
+        Severity::kWarn,
+        Severity::kWarn2,
+        Severity::kWarn3,
+        Severity::kError,
+        Severity::kFatal,
+        Severity::kFatal4,
+    };
+
+    const auto value = static_cast<int32_t>(severity);
+    if (value < 0) {
+        return Severity::kInvalid;
     }
+    const auto index = static_cast<size_t>(value);
+    if (index >= kSeverityMap.size()) {
+        return Severity::kInvalid;
+    }
+    return kSeverityMap.at(index);
 }
 
 auto CurrentThreadId() noexcept -> uint64_t
@@ -132,8 +130,12 @@ auto EmitLogRecord(const std::string &content, const fair::LogMetaData &metadata
         logRecord->SetSeverity(ConvertSeverity(metadata.severity));
         logRecord->SetBody(ToStringView(content));
 
-        if (!metadata.severity_name.empty()) {
-            logRecord->SetAttribute("log.severity.text", ToStringView(metadata.severity_name));
+        auto severityName = std::string_view{metadata.severity_name};
+        if (severityName.empty()) {
+            severityName = FairLoggerSeverityName(metadata.severity);
+        }
+        if (!severityName.empty()) {
+            logRecord->SetAttribute("log.severity.text", ToStringView(severityName));
         }
         if (!metadata.process_name.empty()) {
             logRecord->SetAttribute("process.name", ToStringView(metadata.process_name));
@@ -156,6 +158,18 @@ auto EmitLogRecord(const std::string &content, const fair::LogMetaData &metadata
     } catch (...) {
         std::cerr << "FairLoggerOpenTelemetrySink: failed to emit log record\n";
     }
+}
+
+auto FairLoggerSeverityName(fair::Severity severity) noexcept -> std::string_view
+{
+    const auto value = static_cast<int32_t>(severity);
+    if (value < 0) {
+        return {};
+    }
+    if (static_cast<size_t>(value) >= fair::Logger::fSeverityNames.size()) {
+        return {};
+    }
+    return fair::Logger::SeverityName(severity);
 }
 
 auto MinSeverity() -> std::atomic<int32_t>&

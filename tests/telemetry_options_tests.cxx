@@ -107,12 +107,30 @@ TEST_CASE("telemetry command line options populate multi-signal config", "[telem
     CHECK(std::string_view{config.logs.headers} == "log-key=log-value");
     CHECK(std::string_view{config.metrics.headers} == "metric-key=metric-value");
     CHECK(std::string_view{config.traces.headers} == "trace-key=trace-value");
-    CHECK(config.min_severity == nestdaq::telemetry::kSeverityWarn);
+    CHECK(config.min_severity == static_cast<int32_t>(fair::Severity::warn));
     CHECK(config.timeout_ms == 1234);
     CHECK(config.metric_export_interval_ms == 5678);
     CHECK(config.logs.otlp_http_json == 0);
     CHECK(config.metrics.otlp_http_json == 1);
     CHECK(config.traces.otlp_http_json == 0);
+}
+
+TEST_CASE("telemetry log severity parsing follows FairLogger severity names", "[telemetry]")
+{
+    using nestdaq::telemetry::ParseFairLoggerSeverity;
+    using nestdaq::telemetry::SeverityToFairLoggerValue;
+
+    CHECK_FALSE(ParseFairLoggerSeverity("warn").usedFallback);
+    CHECK(SeverityToFairLoggerValue("warn") == static_cast<int32_t>(fair::Severity::warn));
+    CHECK(SeverityToFairLoggerValue("warning") == static_cast<int32_t>(fair::Severity::warn));
+    CHECK(SeverityToFairLoggerValue("WARN") == static_cast<int32_t>(fair::Severity::warn));
+    CHECK(SeverityToFairLoggerValue("fatal") == static_cast<int32_t>(fair::Severity::fatal));
+    CHECK(SeverityToFairLoggerValue("NOLOG") == static_cast<int32_t>(fair::Severity::nolog));
+
+    const auto unknownSeverity = ParseFairLoggerSeverity("unknown");
+    CHECK(unknownSeverity.usedFallback);
+    CHECK(unknownSeverity.value == static_cast<int32_t>(fair::Severity::info));
+    CHECK(SeverityToFairLoggerValue("unknown") == static_cast<int32_t>(fair::Severity::info));
 }
 
 TEST_CASE("empty telemetry protocol disables the selected signal", "[telemetry]")

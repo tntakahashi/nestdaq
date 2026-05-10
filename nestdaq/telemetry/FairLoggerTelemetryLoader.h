@@ -28,22 +28,6 @@ static constexpr std::string_view kDefaultTraceHttpEndpoint{"http://localhost:43
 static constexpr std::string_view kDefaultGrpcEndpoint{"localhost:4317"};
 static constexpr uint32_t kDefaultTimeoutMs{5000};
 static constexpr uint32_t kDefaultMetricExportIntervalMs{60000};
-static constexpr int32_t kSeverityNoLog{0};
-static constexpr int32_t kSeverityTrace{1};
-static constexpr int32_t kSeverityDebug4{2};
-static constexpr int32_t kSeverityDebug3{3};
-static constexpr int32_t kSeverityDebug2{4};
-static constexpr int32_t kSeverityDebug1{5};
-static constexpr int32_t kSeverityDebug{6};
-static constexpr int32_t kSeverityDetail{7};
-static constexpr int32_t kSeverityInfo{8};
-static constexpr int32_t kSeverityState{9};
-static constexpr int32_t kSeverityWarn{10};
-static constexpr int32_t kSeverityImportant{11};
-static constexpr int32_t kSeverityAlarm{12};
-static constexpr int32_t kSeverityError{13};
-static constexpr int32_t kSeverityCritical{14};
-static constexpr int32_t kSeverityFatal{15};
 static constexpr std::string_view kTelemetryConfigSubscriber{"nestdaq-telemetry"};
 
 /**
@@ -84,6 +68,11 @@ struct TelemetryOptions {
     bool required{false};
 };
 
+struct SeverityParseResult {
+    int32_t value{static_cast<int32_t>(fair::Severity::info)};
+    bool usedFallback{false};
+};
+
 class TelemetryLibrary;
 
 /**
@@ -114,9 +103,11 @@ inline auto MakeSignalConfig(std::string_view protocol,
 inline auto ParseBool(std::string_view value) -> bool;
 inline auto ParseTelemetryOptions(int argc, char* argv[], // NOLINT(cppcoreguidelines-avoid-c-arrays)
                                   std::string_view defaultServiceName = "nestdaq") -> TelemetryOptions;
+inline auto ParseFairLoggerSeverity(std::string_view severity) -> SeverityParseResult;
 inline auto ParseUInt32(std::string_view value, uint32_t fallback) -> uint32_t;
 inline auto ReadTelemetryOptions(const boost::program_options::variables_map& vm,
                                  std::string_view defaultServiceName) -> TelemetryOptions;
+inline auto WarnUnknownSeverityFallback(std::string_view severity) -> void;
 inline auto SeverityToFairLoggerValue(std::string_view severity) -> int32_t;
 inline auto SubscribeTelemetryOptionChanges(const fair::mq::ProgOptions& config,
                                             TelemetryLibrary& telemetry) -> void;
@@ -302,7 +293,7 @@ inline auto MakeConfig(const TelemetryOptions& options) -> nestdaq_otel_config
     config.fairmq_repo_url = FAIRMQ_REPO_URL;
     config.fairmq_license = FAIRMQ_LICENSE;
     config.fairmq_copyright = FAIRMQ_COPYRIGHT;
-    config.min_severity = SeverityToFairLoggerValue(options.severity);
+    config.min_severity = ParseFairLoggerSeverity(options.severity).value;
     config.timeout_ms = options.timeoutMs;
     config.metric_export_interval_ms = options.metricExportIntervalMs;
     return config;
@@ -360,6 +351,21 @@ inline auto ParseTelemetryOptions(int argc, char* argv[], // NOLINT(cppcoreguide
     }
 
     return options;
+}
+
+inline auto ParseFairLoggerSeverity(std::string_view severity) -> SeverityParseResult
+{
+    if (const auto it = fair::Logger::fSeverityMap.find(severity);
+        it != fair::Logger::fSeverityMap.end()) {
+        return SeverityParseResult{
+            .value = static_cast<int32_t>(it->second),
+            .usedFallback = false,
+        };
+    }
+    return SeverityParseResult{
+        .value = static_cast<int32_t>(fair::Severity::info),
+        .usedFallback = true,
+    };
 }
 
 inline auto ParseUInt32(std::string_view value, uint32_t fallback) -> uint32_t
@@ -428,57 +434,18 @@ inline auto ReadTelemetryOptions(const boost::program_options::variables_map& vm
     return options;
 }
 
+inline auto WarnUnknownSeverityFallback(std::string_view severity) -> void
+{
+    if (!ParseFairLoggerSeverity(severity).usedFallback) {
+        return;
+    }
+    LOG(warn) << "Unknown otel-log-severity '" << severity << "', using FairLogger severity '"
+              << fair::Logger::SeverityName(fair::Severity::info) << "'";
+}
+
 inline auto SeverityToFairLoggerValue(std::string_view severity) -> int32_t
 {
-    if (severity == "nolog") {
-        return kSeverityNoLog;
-    }
-    if (severity == "trace") {
-        return kSeverityTrace;
-    }
-    if (severity == "debug4") {
-        return kSeverityDebug4;
-    }
-    if (severity == "debug3") {
-        return kSeverityDebug3;
-    }
-    if (severity == "debug2") {
-        return kSeverityDebug2;
-    }
-    if (severity == "debug1") {
-        return kSeverityDebug1;
-    }
-    if (severity == "debug") {
-        return kSeverityDebug;
-    }
-    if (severity == "detail") {
-        return kSeverityDetail;
-    }
-    if (severity == "info") {
-        return kSeverityInfo;
-    }
-    if (severity == "state") {
-        return kSeverityState;
-    }
-    if (severity == "warn" || severity == "warning") {
-        return kSeverityWarn;
-    }
-    if (severity == "important") {
-        return kSeverityImportant;
-    }
-    if (severity == "alarm") {
-        return kSeverityAlarm;
-    }
-    if (severity == "error") {
-        return kSeverityError;
-    }
-    if (severity == "critical") {
-        return kSeverityCritical;
-    }
-    if (severity == "fatal") {
-        return kSeverityFatal;
-    }
-    return kSeverityInfo;
+    return ParseFairLoggerSeverity(severity).value;
 }
 
 /**
@@ -650,7 +617,12 @@ public:
     /** Update the FairLogger severity threshold by name. */
     auto SetMinSeverity(std::string_view severity) -> bool
     {
-        return SetMinSeverity(SeverityToFairLoggerValue(severity));
+        const auto parsedSeverity = ParseFairLoggerSeverity(severity);
+        const auto updated = SetMinSeverity(parsedSeverity.value);
+        if (updated && parsedSeverity.usedFallback) {
+            WarnUnknownSeverityFallback(severity);
+        }
+        return updated;
     }
 
     /** Update the FairLogger severity threshold by numeric FairLogger value. */

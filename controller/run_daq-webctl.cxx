@@ -173,6 +173,8 @@ int main(int argc, char* argv[]) // NOLINT(bugprone-exception-escape)
                     return EXIT_FAILURE;
                 }
                 telemetryLoaded = false;
+            } else {
+                nestdaq::telemetry::WarnUnknownSeverityFallback(telemetryOptions.severity);
             }
         }
     }

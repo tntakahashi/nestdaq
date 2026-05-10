@@ -106,6 +106,7 @@ int main(int argc, char* argv[])
                     }
                 } else {
                     telemetryInitialized = true;
+                    nestdaq::telemetry::WarnUnknownSeverityFallback(telemetryOptions.severity);
                 }
             }
         }
