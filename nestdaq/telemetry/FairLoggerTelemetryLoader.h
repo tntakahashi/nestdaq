@@ -88,6 +88,7 @@ inline auto ApplyEnvironment(TelemetryOptions& options) -> void;
 inline auto AssignOption(TelemetryOptions& options,
                          std::string_view key,
                          std::string_view value) -> void;
+inline auto Basename(std::string_view path) -> std::string_view;
 inline auto Env(const char* name) -> const char*;
 /**
  * @brief Build the C ABI config passed to `libnestdaq_otel.so`.
@@ -257,6 +258,15 @@ inline auto AssignOption(TelemetryOptions& options,
     }
 }
 
+inline auto Basename(std::string_view path) -> std::string_view
+{
+    const auto slash = path.find_last_of("/\\");
+    if (slash == std::string_view::npos) {
+        return path;
+    }
+    return path.substr(slash + 1);
+}
+
 inline auto Env(const char* name) -> const char*
 {
     return std::getenv(name); // NOLINT(concurrency-mt-unsafe)
@@ -325,7 +335,17 @@ inline auto ParseTelemetryOptions(int argc, char* argv[], // NOLINT(cppcoreguide
 {
     auto options = TelemetryOptions{};
     options.serviceName = defaultServiceName;
+    if (argv == nullptr) {
+        ApplyEnvironment(options);
+        return options;
+    }
+    if (argc > 0) {
+        if (const auto executable = Basename(argv[0]); !executable.empty()) { // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+            options.serviceName = executable;
+        }
+    }
     ApplyEnvironment(options);
+    auto explicitTelemetryServiceName = false;
 
     for (int i = 1; i < argc; ++i) {
         const std::string_view arg{argv[i]}; // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
@@ -339,7 +359,7 @@ inline auto ParseTelemetryOptions(int argc, char* argv[], // NOLINT(cppcoreguide
         if (equals != std::string_view::npos) {
             value = key.substr(equals + 1);
             key = key.substr(0, equals);
-        } else if (key.rfind("otel-", 0) == 0 && i + 1 < argc &&
+        } else if ((key.rfind("otel-", 0) == 0 || key == "service-name") && i + 1 < argc &&
                    std::string_view{argv[i + 1]}.rfind("--", 0) != 0) { // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
             value = argv[++i]; // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
         } else if (key == "otel-log-protocol" || key == "otel-metric-protocol" || key == "otel-trace-protocol") {
@@ -347,7 +367,16 @@ inline auto ParseTelemetryOptions(int argc, char* argv[], // NOLINT(cppcoreguide
         } else {
             continue;
         }
-        AssignOption(options, key, value);
+        if (key == "otel-service-name") {
+            AssignOption(options, key, value);
+            explicitTelemetryServiceName = true;
+        } else if (key == "service-name") {
+            if (!explicitTelemetryServiceName) {
+                options.serviceName = value;
+            }
+        } else {
+            AssignOption(options, key, value);
+        }
     }
 
     return options;

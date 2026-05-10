@@ -50,6 +50,24 @@ auto Parse(std::vector<std::string> arguments) -> nestdaq::telemetry::TelemetryO
     return nestdaq::telemetry::ParseTelemetryOptions(static_cast<int>(argv.size()), argv.data(), "test-service");
 }
 
+auto ReadWithBoostOptions(std::vector<std::string> arguments,
+                          std::string_view defaultServiceName) -> nestdaq::telemetry::TelemetryOptions
+{
+    namespace bpo = boost::program_options;
+    auto argv = std::vector<char*>{};
+    argv.reserve(arguments.size());
+    for (auto& argument : arguments) {
+        argv.emplace_back(argument.data());
+    }
+
+    auto description = bpo::options_description{"test"};
+    nestdaq::telemetry::AddTelemetryOptions(description, defaultServiceName);
+    auto vm = bpo::variables_map{};
+    bpo::store(bpo::command_line_parser(static_cast<int>(argv.size()), argv.data()).options(description).run(), vm);
+    bpo::notify(vm);
+    return nestdaq::telemetry::ReadTelemetryOptions(vm, defaultServiceName);
+}
+
 } // namespace
 
 TEST_CASE("telemetry options keep unified otel library default", "[telemetry]")
@@ -131,6 +149,56 @@ TEST_CASE("telemetry log severity parsing follows FairLogger severity names", "[
     CHECK(unknownSeverity.usedFallback);
     CHECK(unknownSeverity.value == static_cast<int32_t>(fair::Severity::info));
     CHECK(SeverityToFairLoggerValue("unknown") == static_cast<int32_t>(fair::Severity::info));
+}
+
+TEST_CASE("telemetry service name follows DAQ service option for devices", "[telemetry]")
+{
+    ClearTelemetryEnvironment();
+
+    const auto optionsWithEquals = Parse({"test", "--service-name=Sampler"});
+    const auto configWithEquals = nestdaq::telemetry::MakeConfig(optionsWithEquals);
+
+    CHECK(std::string_view{configWithEquals.service_name} == "Sampler");
+
+    const auto optionsWithSpace = Parse({"test", "--service-name", "Processor"});
+    const auto configWithSpace = nestdaq::telemetry::MakeConfig(optionsWithSpace);
+
+    CHECK(std::string_view{configWithSpace.service_name} == "Processor");
+}
+
+TEST_CASE("explicit telemetry service name overrides DAQ service option", "[telemetry]")
+{
+    ClearTelemetryEnvironment();
+
+    const auto optionsAfter = Parse({"test", "--service-name=Sampler", "--otel-service-name=explicit"});
+    const auto configAfter = nestdaq::telemetry::MakeConfig(optionsAfter);
+
+    CHECK(std::string_view{configAfter.service_name} == "explicit");
+
+    const auto optionsBefore = Parse({"test", "--otel-service-name=explicit", "--service-name=Sampler"});
+    const auto configBefore = nestdaq::telemetry::MakeConfig(optionsBefore);
+
+    CHECK(std::string_view{configBefore.service_name} == "explicit");
+}
+
+TEST_CASE("telemetry service name keeps daq-webctl default through Boost options", "[telemetry]")
+{
+    ClearTelemetryEnvironment();
+
+    const auto options = ReadWithBoostOptions({"daq-webctl"}, "daq-webctl");
+    const auto config = nestdaq::telemetry::MakeConfig(options);
+
+    CHECK(std::string_view{config.service_name} == "daq-webctl");
+}
+
+TEST_CASE("telemetry service name falls back to executable basename for devices", "[telemetry]")
+{
+    ClearTelemetryEnvironment();
+
+    const auto options = Parse({"/opt/nestdaq/bin/Sink"});
+    const auto config = nestdaq::telemetry::MakeConfig(options);
+
+    CHECK(std::string_view{config.service_name} == "Sink");
 }
 
 TEST_CASE("empty telemetry protocol disables the selected signal", "[telemetry]")

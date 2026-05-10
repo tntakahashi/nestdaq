@@ -52,7 +52,7 @@ signal.
 | `--otel-log-http-json` | none | `true` | Use JSON content type for OTLP HTTP logs. |
 | `--otel-metric-http-json` | none | `true` | Use JSON content type for OTLP HTTP metrics. |
 | `--otel-trace-http-json` | none | `true` | Use JSON content type for OTLP HTTP traces. |
-| `--otel-service-name` | none | caller default | `service.name` resource attribute. |
+| `--otel-service-name` | none | caller default | `service.name` resource attribute. FairMQ device wrappers default this to `--service-name`, or to the executable basename when `--service-name` is unset. |
 | `--otel-service-namespace` | none | empty | `service.namespace` resource attribute. |
 | `--otel-service-instance-id` | none | empty | `service.instance.id` resource attribute. |
 | `--otel-fairmq-id` | none | empty | `fairmq.id` resource attribute. |
