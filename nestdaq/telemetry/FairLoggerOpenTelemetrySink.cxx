@@ -43,8 +43,26 @@ constexpr std::string_view kLibraryName{"FairLogger"};
 constexpr std::string_view kLibraryVersion{FAIRLOGGER_VERSION};
 constexpr std::string_view kSchemaUrl;
 constexpr std::string_view kSinkKey{"nestdaq-otel-log-sink"};
+constexpr auto kSeverityMap = std::array{
+    opentelemetry::logs::Severity::kInvalid, // nolog
+    opentelemetry::logs::Severity::kTrace,
+    opentelemetry::logs::Severity::kTrace2,
+    opentelemetry::logs::Severity::kTrace2,
+    opentelemetry::logs::Severity::kTrace3,
+    opentelemetry::logs::Severity::kTrace4,
+    opentelemetry::logs::Severity::kDebug,
+    opentelemetry::logs::Severity::kDebug2,
+    opentelemetry::logs::Severity::kInfo,
+    opentelemetry::logs::Severity::kInfo2,
+    opentelemetry::logs::Severity::kWarn,
+    opentelemetry::logs::Severity::kWarn2,
+    opentelemetry::logs::Severity::kWarn3,
+    opentelemetry::logs::Severity::kError,
+    opentelemetry::logs::Severity::kError2,
+    opentelemetry::logs::Severity::kFatal,
+};
 
-auto ConvertSeverity(fair::Severity severity) noexcept -> opentelemetry::logs::Severity;
+constexpr auto ConvertSeverity(fair::Severity severity) noexcept -> opentelemetry::logs::Severity;
 auto CurrentThreadId() noexcept -> uint64_t;
 auto EmitLogRecord(const std::string &content, const fair::LogMetaData &metadata) noexcept -> void;
 auto FairLoggerSeverityName(fair::Severity severity) noexcept -> std::string_view;
@@ -54,28 +72,9 @@ auto ShouldEmit(fair::Severity severity) noexcept -> bool;
 auto SinkRegistered() -> std::atomic<bool>&;
 auto ToStringView(std::string_view value) noexcept -> opentelemetry::nostd::string_view;
 
-auto ConvertSeverity(fair::Severity severity) noexcept -> opentelemetry::logs::Severity
+constexpr auto ConvertSeverity(fair::Severity severity) noexcept -> opentelemetry::logs::Severity
 {
     using opentelemetry::logs::Severity;
-    static constexpr auto kSeverityMap = std::array{
-        Severity::kInvalid, // nolog
-        Severity::kTrace,
-        Severity::kDebug,
-        Severity::kDebug,
-        Severity::kDebug2,
-        Severity::kDebug3,
-        Severity::kDebug4,
-        Severity::kDebug4,
-        Severity::kInfo,
-        Severity::kInfo2,
-        Severity::kWarn,
-        Severity::kWarn2,
-        Severity::kWarn3,
-        Severity::kError,
-        Severity::kFatal,
-        Severity::kFatal4,
-    };
-
     const auto value = static_cast<int32_t>(severity);
     if (value < 0) {
         return Severity::kInvalid;
@@ -86,6 +85,27 @@ auto ConvertSeverity(fair::Severity severity) noexcept -> opentelemetry::logs::S
     }
     return kSeverityMap.at(index);
 }
+
+static_assert(kSeverityMap.size() == fair::Logger::fSeverityNames.size());
+static_assert(ConvertSeverity(fair::Severity::nolog) == opentelemetry::logs::Severity::kInvalid);
+static_assert(ConvertSeverity(fair::Severity::trace) == opentelemetry::logs::Severity::kTrace);
+static_assert(ConvertSeverity(fair::Severity::debug4) == opentelemetry::logs::Severity::kTrace2);
+static_assert(ConvertSeverity(fair::Severity::debug3) == opentelemetry::logs::Severity::kTrace2);
+static_assert(ConvertSeverity(fair::Severity::debug2) == opentelemetry::logs::Severity::kTrace3);
+static_assert(ConvertSeverity(fair::Severity::debug1) == opentelemetry::logs::Severity::kTrace4);
+static_assert(ConvertSeverity(fair::Severity::debug) == opentelemetry::logs::Severity::kDebug);
+static_assert(ConvertSeverity(fair::Severity::detail) == opentelemetry::logs::Severity::kDebug2);
+static_assert(ConvertSeverity(fair::Severity::info) == opentelemetry::logs::Severity::kInfo);
+static_assert(ConvertSeverity(fair::Severity::state) == opentelemetry::logs::Severity::kInfo2);
+static_assert(ConvertSeverity(fair::Severity::warn) == opentelemetry::logs::Severity::kWarn);
+static_assert(ConvertSeverity(fair::Severity::important) == opentelemetry::logs::Severity::kWarn2);
+static_assert(ConvertSeverity(fair::Severity::alarm) == opentelemetry::logs::Severity::kWarn3);
+static_assert(ConvertSeverity(fair::Severity::error) == opentelemetry::logs::Severity::kError);
+static_assert(ConvertSeverity(fair::Severity::critical) == opentelemetry::logs::Severity::kError2);
+static_assert(ConvertSeverity(fair::Severity::fatal) == opentelemetry::logs::Severity::kFatal);
+static_assert(ConvertSeverity(static_cast<fair::Severity>(-1)) == opentelemetry::logs::Severity::kInvalid);
+static_assert(ConvertSeverity(static_cast<fair::Severity>(fair::Logger::fSeverityNames.size())) ==
+              opentelemetry::logs::Severity::kInvalid);
 
 auto CurrentThreadId() noexcept -> uint64_t
 {
