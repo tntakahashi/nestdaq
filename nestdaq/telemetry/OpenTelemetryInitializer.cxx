@@ -14,6 +14,7 @@
 #include <memory>
 #include <mutex>
 #include <optional>
+#include <sstream>
 #include <string>
 #include <string_view>
 #include <tuple>
@@ -163,6 +164,7 @@ auto CreateSpanProcessor(std::unique_ptr<opentelemetry::sdk::trace::SpanExporter
 auto DefaultConfig() -> nestdaq_otel_config;
 auto InstallNoopProviders() -> void;
 auto IsEmpty(const char *value) noexcept -> bool;
+auto FairMQMetadataLogBody(const nestdaq_otel_config &config) -> std::string;
 auto MakeResource(const nestdaq_otel_config &config) -> opentelemetry::sdk::resource::Resource;
 auto MetricEndpointHttp(const nestdaq_otel_config &config) -> const char *;
 auto MetricEndpointGrpc(const nestdaq_otel_config &config) -> const char *;
@@ -416,6 +418,21 @@ auto IsEmpty(const char *value) noexcept -> bool
     return value == nullptr || *value == '\0';
 }
 
+auto FairMQMetadataLogBody(const nestdaq_otel_config &config) -> std::string
+{
+    auto body = std::ostringstream{};
+    body << "FairMQ git_version: " << (IsEmpty(config.fairmq_git_version) ? "unknown" : config.fairmq_git_version)
+         << '\n'
+         << "FairMQ build_type: " << (IsEmpty(config.fairmq_build_type) ? "unknown" : config.fairmq_build_type)
+         << '\n'
+         << "FairMQ repo_url: " << (IsEmpty(config.fairmq_repo_url) ? "unknown" : config.fairmq_repo_url)
+         << '\n'
+         << "FairMQ license: " << (IsEmpty(config.fairmq_license) ? "unknown" : config.fairmq_license)
+         << '\n'
+         << "FairMQ copyright: " << (IsEmpty(config.fairmq_copyright) ? "unknown" : config.fairmq_copyright);
+    return body.str();
+}
+
 auto LogEndpointGrpc(const nestdaq_otel_config &config) -> const char *
 {
     return IsEmpty(config.logs.endpoint_grpc) ? kDefaultGrpcEndpoint.data() : config.logs.endpoint_grpc;
@@ -437,11 +454,6 @@ auto MakeResource(const nestdaq_otel_config &config) -> opentelemetry::sdk::reso
     AddStringAttribute(attributes, "fairmq.device", config.fairmq_device);
     AddStringAttribute(attributes, "fairmq.session", config.fairmq_session);
     AddStringAttribute(attributes, "fairmq.transport", config.fairmq_transport);
-    AddStringAttribute(attributes, "fairmq.git_version", config.fairmq_git_version);
-    AddStringAttribute(attributes, "fairmq.build_type", config.fairmq_build_type);
-    AddStringAttribute(attributes, "fairmq.repo_url", config.fairmq_repo_url);
-    AddStringAttribute(attributes, "fairmq.license", config.fairmq_license);
-    AddStringAttribute(attributes, "fairmq.copyright", config.fairmq_copyright);
     return opentelemetry::sdk::resource::Resource::Create(attributes);
 }
 
@@ -754,6 +766,7 @@ auto OpenTelemetryInitializer::Initialize(const nestdaq_otel_config *config) -> 
                     std::shared_ptr<opentelemetry::logs::LoggerProvider>{loggerProvider}});
             FairLoggerOpenTelemetrySink::SetMinSeverity(localConfig.min_severity);
             FairLoggerOpenTelemetrySink::Initialize();
+            LOG(info) << FairMQMetadataLogBody(localConfig);
         }
         if (meterProvider) {
             opentelemetry::metrics::Provider::SetMeterProvider(

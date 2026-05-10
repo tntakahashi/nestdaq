@@ -9,9 +9,27 @@
 
 #include <nestdaq/telemetry/Telemetry.h>
 
+#include <iostream>
+#include <sstream>
 #include <string_view>
 
 namespace {
+
+struct CoutCapture {
+    std::ostringstream output;
+    std::streambuf* oldBuffer{std::cout.rdbuf(output.rdbuf())};
+
+    CoutCapture() = default;
+    CoutCapture(const CoutCapture&) = delete;
+    CoutCapture& operator=(const CoutCapture&) = delete;
+    CoutCapture(CoutCapture&&) = delete;
+    CoutCapture& operator=(CoutCapture&&) = delete;
+
+    ~CoutCapture()
+    {
+        std::cout.rdbuf(oldBuffer);
+    }
+};
 
 auto DisabledConfig() -> nestdaq_otel_config
 {
@@ -67,6 +85,28 @@ TEST_CASE("FairMQ throughput logs are safe when metrics are disabled", "[telemet
     LOG(info) << "data: in: 123 (4.5 MB) out: 6.7 (8.9 MB)";
 
     library.ShutdownTelemetry(nestdaq::telemetry::kDefaultTimeoutMs);
+}
+
+TEST_CASE("FairMQ build metadata is logged instead of stored as resource attributes", "[telemetry][plugin]")
+{
+    auto capture = CoutCapture{};
+
+    auto library = nestdaq::telemetry::TelemetryLibrary{};
+    REQUIRE(library.Load(NESTDAQ_OTEL_LIBRARY_PATH));
+    REQUIRE(library.InitializeWith(LogOnlyConfig()));
+    library.ShutdownTelemetry(nestdaq::telemetry::kDefaultTimeoutMs);
+
+    const auto logs = capture.output.str();
+    CHECK(logs.find("FairMQ git_version:") != std::string::npos);
+    CHECK(logs.find("FairMQ build_type:") != std::string::npos);
+    CHECK(logs.find("FairMQ repo_url:") != std::string::npos);
+    CHECK(logs.find("FairMQ license:") != std::string::npos);
+    CHECK(logs.find("FairMQ copyright:") != std::string::npos);
+    CHECK(logs.find("fairmq.git_version") == std::string::npos);
+    CHECK(logs.find("fairmq.build_type") == std::string::npos);
+    CHECK(logs.find("fairmq.repo_url") == std::string::npos);
+    CHECK(logs.find("fairmq.license") == std::string::npos);
+    CHECK(logs.find("fairmq.copyright") == std::string::npos);
 }
 
 TEST_CASE("disabled metric and trace signals are no-op through loaded plugin", "[telemetry][plugin]")
