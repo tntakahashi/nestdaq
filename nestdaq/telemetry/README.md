@@ -10,7 +10,7 @@ The plugin can export three OpenTelemetry signals:
 | Signal  | Default            | Source in NestDAQ                                      |
 | ------- | ------------------ | ----------------------------------------------------- |
 | Logs    | `console` exporter | FairLogger custom sink                                |
-| Metrics | disabled           | `nestdaq::telemetry::Telemetry` counter/histogram API |
+| Metrics | disabled           | `nestdaq::telemetry::Telemetry` counter/histogram/gauge API |
 | Traces  | disabled           | `nestdaq::telemetry::TelemetrySpan` RAII API          |
 
 `libnestdaq_otel.so` is built and installed only when `opentelemetry-cpp` is
@@ -22,6 +22,12 @@ NestDAQ installs process-wide OpenTelemetry providers inside the telemetry
 plugin. FairLogger logs are captured by a process-wide custom sink. Metrics and
 traces are recorded through the NestDAQ thin wrapper API, which does not expose
 OpenTelemetry C++ headers.
+
+The runtime plugin keeps the public C ABI in `OpenTelemetryInitializer.cxx` and
+organizes the implementation internally by signal area: logs, metrics, traces,
+and shared runtime helpers. Applications should use `TelemetryLibrary`,
+`Telemetry`, `Counter`, `Histogram`, `Gauge`, `TelemetrySpan`, and
+`GetTelemetry()` instead of depending on those internal implementation files.
 
 Each signal accepts a comma-separated protocol list. Supported protocols are
 `console`, `otlp-http`, and `otlp-grpc`; the aliases `http`, `otlp_http`, `grpc`,
@@ -110,6 +116,14 @@ if (!library.InitializeWith(config)) {
 
 auto telemetry = nestdaq::telemetry::Telemetry{library};
 telemetry.AddDoubleCounter("events.total", 1.0, "1", "Total processed events");
+telemetry.RecordDoubleHistogram("event.size", 4096.0, "By", "Input event size");
+telemetry.RecordDoubleGauge("queue.depth", 12.0, "{message}", "Latest queue depth");
+
+auto events = telemetry.Counter("events.total", "1", "Total processed events");
+events.Add(1.0, {{"channel", "data"}});
+
+auto queueDepth = telemetry.Gauge("queue.depth", "{message}", "Latest queue depth");
+queueDepth.Record(12.0, {{"channel", "data"}});
 
 auto span = telemetry.StartSpan("process-event");
 span.SetAttribute({
