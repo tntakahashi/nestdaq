@@ -291,6 +291,10 @@ TEST_CASE("metrics console initializes and exports resource attributes", "[telem
               .Add(3.0, {{"channel", "data"}, {"running", true}, {"partition", uint64_t{2}}}));
     CHECK(userTelemetry.Histogram("user.decode.duration", "ms", "user decode duration")
               .Record(4.5, {{"channel", "data"}, {"attempt", int64_t{1}}, {"ratio", 0.5}}));
+    CHECK(userTelemetry.Gauge("user.queue.depth", "1", "user queue depth")
+              .Record(1234.0, {{"channel", "data"}, {"slot", uint64_t{2}}}));
+    CHECK(userTelemetry.Gauge("user.queue.depth", "1", "user queue depth")
+              .Record(9876.5, {{"channel", "data"}, {"slot", uint64_t{2}}}));
 
     std::this_thread::sleep_for(std::chrono::milliseconds{250});
     nestdaq::telemetry::SetActiveTelemetryLibrary(nullptr);
@@ -305,12 +309,15 @@ TEST_CASE("metrics console initializes and exports resource attributes", "[telem
     CHECK(output.find("test-instance") != std::string::npos);
     CHECK(output.find("user.messages.total") != std::string::npos);
     CHECK(output.find("user.decode.duration") != std::string::npos);
+    CHECK(output.find("user.queue.depth") != std::string::npos);
     CHECK(output.find("channel") != std::string::npos);
     CHECK(output.find("data") != std::string::npos);
     CHECK(output.find("running") != std::string::npos);
     CHECK(output.find("partition") != std::string::npos);
     CHECK(output.find("attempt") != std::string::npos);
     CHECK(output.find("ratio") != std::string::npos);
+    CHECK(output.find("slot") != std::string::npos);
+    CHECK(output.find("9876.5") != std::string::npos);
 }
 
 TEST_CASE("user telemetry facade is no-op before a backend is registered", "[telemetry][plugin]")
@@ -320,6 +327,7 @@ TEST_CASE("user telemetry facade is no-op before a backend is registered", "[tel
     auto telemetry = nestdaq::telemetry::GetTelemetry();
     CHECK(telemetry.Counter("unregistered.counter", "1", "unregistered counter").Add(1.0));
     CHECK(telemetry.Histogram("unregistered.histogram", "ms", "unregistered histogram").Record(2.0));
+    CHECK(telemetry.Gauge("unregistered.gauge", "1", "unregistered gauge").Record(3.0));
 
     auto span = telemetry.StartSpan("unregistered-span", {{"component", "test"}});
     CHECK_FALSE(span.SetAttribute({"payload.bytes", int64_t{128}}));
@@ -399,6 +407,7 @@ TEST_CASE("disabled metric and trace signals are no-op through loaded plugin", "
     auto telemetry = nestdaq::telemetry::Telemetry{library};
     CHECK(telemetry.AddDoubleCounter("disabled.counter", 1.0, "1", "disabled counter"));
     CHECK(telemetry.RecordDoubleHistogram("disabled.histogram", 2.0, "ms", "disabled histogram"));
+    CHECK(telemetry.RecordDoubleGauge("disabled.gauge", 3.0, "1", "disabled gauge"));
 
     auto span = telemetry.StartSpan("disabled-span");
     const auto attribute = nestdaq_otel_attribute{

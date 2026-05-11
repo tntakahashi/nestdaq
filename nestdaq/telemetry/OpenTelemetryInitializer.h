@@ -147,6 +147,18 @@ NESTDAQ_OTEL_EXPORT int nestdaq_otel_metric_record_double_histogram(const char *
                                                                     const nestdaq_otel_attribute *attributes,
                                                                     uint64_t attribute_count);
 /**
+ * @brief Record the latest value for a double observable gauge instrument.
+ *
+ * If metrics are disabled this is a successful no-op. @p name must be non-empty
+ * when metrics are enabled. Instrument identity is `(name, unit, description)`.
+ */
+NESTDAQ_OTEL_EXPORT int nestdaq_otel_metric_record_double_gauge(const char *name,
+                                                                double value,
+                                                                const char *unit,
+                                                                const char *description,
+                                                                const nestdaq_otel_attribute *attributes,
+                                                                uint64_t attribute_count);
+/**
  * @brief Update the FairLogger severity threshold exported to OpenTelemetry logs.
  */
 NESTDAQ_OTEL_EXPORT int nestdaq_otel_set_min_severity(int32_t severity);
@@ -213,6 +225,12 @@ public:
                                             const char *description,
                                             const nestdaq_otel_attribute *attributes,
                                             uint64_t attribute_count) -> int;
+    static auto MetricRecordDoubleGauge(const char *name,
+                                        double value,
+                                        const char *unit,
+                                        const char *description,
+                                        const nestdaq_otel_attribute *attributes,
+                                        uint64_t attribute_count) -> int;
     static auto RecordFairMQThroughput(const telemetry::FairMQThroughputSample &sample) noexcept -> void;
     static auto SetNestdaqInstanceId(const char *instance_id) -> int;
     static auto SetMinSeverity(int32_t severity) -> int;

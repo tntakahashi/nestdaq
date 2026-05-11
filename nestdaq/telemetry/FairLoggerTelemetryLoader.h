@@ -613,6 +613,25 @@ public:
                                                         attributeCount));
     }
 
+    /** Forward a double gauge measurement through the loaded plugin. */
+    auto MetricRecordDoubleGauge(std::string_view name,
+                                 double value,
+                                 std::string_view unit = "",
+                                 std::string_view description = "",
+                                 const nestdaq_otel_attribute* attributes = nullptr,
+                                 uint64_t attributeCount = 0) -> bool
+    {
+        if (!fMetricRecordDoubleGauge) {
+            return false;
+        }
+        return StoreResult(fMetricRecordDoubleGauge(name.data(),
+                                                    value,
+                                                    unit.data(),
+                                                    description.data(),
+                                                    attributes,
+                                                    attributeCount));
+    }
+
     /**
      * @brief Load the telemetry shared library and resolve ABI symbols.
      *
@@ -635,6 +654,8 @@ public:
             "nestdaq_otel_metric_add_double_counter");
         fMetricRecordDoubleHistogram = Resolve<int (*)(const char*, double, const char*, const char*, const nestdaq_otel_attribute*, uint64_t)>(
             "nestdaq_otel_metric_record_double_histogram");
+        fMetricRecordDoubleGauge = Resolve<int (*)(const char*, double, const char*, const char*, const nestdaq_otel_attribute*, uint64_t)>(
+            "nestdaq_otel_metric_record_double_gauge");
         fSpanEnd = Resolve<int (*)(uint64_t)>("nestdaq_otel_span_end");
         fSpanSetAttribute = Resolve<int (*)(uint64_t, const nestdaq_otel_attribute*)>("nestdaq_otel_span_set_attribute");
         fSpanStart = Resolve<uint64_t (*)(const char*, const nestdaq_otel_attribute*, uint64_t)>("nestdaq_otel_span_start");
@@ -650,6 +671,7 @@ public:
             fSetNestdaqInstanceId = nullptr;
             fMetricAddDoubleCounter = nullptr;
             fMetricRecordDoubleHistogram = nullptr;
+            fMetricRecordDoubleGauge = nullptr;
             fSpanEnd = nullptr;
             fSpanSetAttribute = nullptr;
             fSpanStart = nullptr;
@@ -774,6 +796,7 @@ private:
     std::function<int(const char*)> fSetNestdaqInstanceId;
     std::function<int(const char*, double, const char*, const char*, const nestdaq_otel_attribute*, uint64_t)> fMetricAddDoubleCounter;
     std::function<int(const char*, double, const char*, const char*, const nestdaq_otel_attribute*, uint64_t)> fMetricRecordDoubleHistogram;
+    std::function<int(const char*, double, const char*, const char*, const nestdaq_otel_attribute*, uint64_t)> fMetricRecordDoubleGauge;
     std::function<int(uint64_t)> fSpanEnd;
     std::function<int(uint64_t, const nestdaq_otel_attribute*)> fSpanSetAttribute;
     std::function<uint64_t(const char*, const nestdaq_otel_attribute*, uint64_t)> fSpanStart;

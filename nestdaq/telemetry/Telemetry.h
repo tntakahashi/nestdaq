@@ -212,6 +212,33 @@ private:
     std::string fDescription;
 };
 
+class Gauge {
+public:
+    Gauge() = default;
+    Gauge(TelemetryLibrary* library, std::string_view name, std::string_view unit, std::string_view description)
+        : fLibrary{library}
+        , fName{name}
+        , fUnit{unit}
+        , fDescription{description}
+    {
+    }
+
+    auto Record(double value, std::initializer_list<Attribute> attributes = {}) const -> bool
+    {
+        if (fLibrary == nullptr) {
+            return true;
+        }
+        const auto attrs = MakeOtelAttributes(std::span<const Attribute>{attributes.begin(), attributes.size()});
+        return fLibrary->MetricRecordDoubleGauge(fName, value, fUnit, fDescription, attrs.data(), attrs.size());
+    }
+
+private:
+    TelemetryLibrary* fLibrary{nullptr};
+    std::string fName;
+    std::string fUnit;
+    std::string fDescription;
+};
+
 /**
  * @brief Thin metrics/traces facade over a loaded @ref TelemetryLibrary.
  *
@@ -280,6 +307,26 @@ public:
     }
 
     /**
+     * @brief Record the latest @p value for a double gauge instrument.
+     */
+    auto RecordDoubleGauge(std::string_view name,
+                           double value,
+                           std::string_view unit = "",
+                           std::string_view description = "",
+                           std::span<const nestdaq_otel_attribute> attributes = {}) -> bool
+    {
+        if (fLibrary == nullptr) {
+            return true;
+        }
+        return fLibrary->MetricRecordDoubleGauge(name,
+                                                 value,
+                                                 unit,
+                                                 description,
+                                                 attributes.data(),
+                                                 attributes.size());
+    }
+
+    /**
      * @brief Start a span.
      *
      * The returned span is inactive when tracing is disabled or span creation
@@ -304,6 +351,13 @@ public:
     auto Histogram(std::string_view name,
                    std::string_view unit = "",
                    std::string_view description = "") const -> nestdaq::telemetry::Histogram
+    {
+        return {fLibrary, name, unit, description};
+    }
+
+    auto Gauge(std::string_view name,
+               std::string_view unit = "",
+               std::string_view description = "") const -> nestdaq::telemetry::Gauge
     {
         return {fLibrary, name, unit, description};
     }

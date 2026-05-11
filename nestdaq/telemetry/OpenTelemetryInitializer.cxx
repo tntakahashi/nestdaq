@@ -105,6 +105,7 @@ enum class Protocol : std::uint8_t {
 enum class MetricKind : std::uint8_t {
     DoubleCounter,
     DoubleHistogram,
+    DoubleGauge,
 };
 
 constexpr std::string_view kDefaultLogProtocol{"console"};
@@ -120,7 +121,7 @@ struct AttributeStorage {
 };
 
 struct MetricKey {
-    MetricKind kind;
+    MetricKind kind{MetricKind::DoubleCounter};
     std::string name;
     std::string unit;
     std::string description;
@@ -130,6 +131,66 @@ struct MetricKey {
         return std::tie(kind, name, unit, description) <
                std::tie(other.kind, other.name, other.unit, other.description);
     }
+
+    auto operator==(const MetricKey &other) const -> bool
+    {
+        return std::tie(kind, name, unit, description) ==
+               std::tie(other.kind, other.name, other.unit, other.description);
+    }
+};
+
+struct GaugeAttribute {
+    std::string key;
+    nestdaq_otel_attribute_type type{NESTDAQ_OTEL_ATTRIBUTE_STRING};
+    std::string stringValue;
+    int64_t intValue{0};
+    uint64_t uintValue{0};
+    double doubleValue{0.0};
+    bool boolValue{false};
+
+    auto operator<(const GaugeAttribute &other) const -> bool
+    {
+        return std::tie(key, type, stringValue, intValue, uintValue, doubleValue, boolValue) <
+               std::tie(other.key,
+                        other.type,
+                        other.stringValue,
+                        other.intValue,
+                        other.uintValue,
+                        other.doubleValue,
+                        other.boolValue);
+    }
+
+    auto operator==(const GaugeAttribute &other) const -> bool
+    {
+        return std::tie(key, type, stringValue, intValue, uintValue, doubleValue, boolValue) ==
+               std::tie(other.key,
+                        other.type,
+                        other.stringValue,
+                        other.intValue,
+                        other.uintValue,
+                        other.doubleValue,
+                        other.boolValue);
+    }
+};
+
+struct GaugeSampleKey {
+    MetricKey metric;
+    std::vector<GaugeAttribute> attributes;
+
+    auto operator<(const GaugeSampleKey &other) const -> bool
+    {
+        return std::tie(metric, attributes) < std::tie(other.metric, other.attributes);
+    }
+};
+
+struct GaugeMeasurement {
+    std::vector<GaugeAttribute> attributes;
+    double value{0.0};
+};
+
+struct GaugeInstrument {
+    opentelemetry::nostd::shared_ptr<opentelemetry::metrics::ObservableInstrument> instrument;
+    MetricKey callbackKey;
 };
 
 struct FairMQThroughputMeasurement {
@@ -155,6 +216,8 @@ struct RuntimeState {
     opentelemetry::nostd::shared_ptr<opentelemetry::trace::Tracer> tracer;
     std::map<MetricKey, opentelemetry::nostd::unique_ptr<opentelemetry::metrics::Counter<double>>> doubleCounters;
     std::map<MetricKey, opentelemetry::nostd::unique_ptr<opentelemetry::metrics::Histogram<double>>> doubleHistograms;
+    std::map<MetricKey, GaugeInstrument> doubleGauges;
+    std::map<GaugeSampleKey, double> doubleGaugeMeasurements;
     opentelemetry::nostd::shared_ptr<opentelemetry::metrics::ObservableInstrument> fairmqMessagesPerSecondGauge;
     opentelemetry::nostd::shared_ptr<opentelemetry::metrics::ObservableInstrument> fairmqMegabytesPerSecondGauge;
     opentelemetry::nostd::shared_ptr<opentelemetry::metrics::ObservableInstrument> processCpuUsageGauge;
@@ -172,6 +235,7 @@ auto AddStringAttribute(opentelemetry::sdk::resource::ResourceAttributes &attrib
                         const char *value) -> void;
 auto AppendAttribute(AttributeStorage &storage, const nestdaq_otel_attribute &attribute) -> void;
 auto BuildAttributes(const nestdaq_otel_attribute *attributes, uint64_t attributeCount) -> AttributeStorage;
+auto BuildGaugeAttributes(const nestdaq_otel_attribute *attributes, uint64_t attributeCount) -> std::vector<GaugeAttribute>;
 auto ClearLastError() -> void;
 auto ConfigureFairMQThroughputMetrics(RuntimeState &state) -> void;
 auto ConfigureProcessMetrics(RuntimeState &state) -> void;
@@ -208,6 +272,7 @@ auto ObserveFairMQMessagesPerSecond(opentelemetry::metrics::ObserverResult obser
 auto ObserveFairMQThroughput(opentelemetry::metrics::ObserverResult observer, bool observeMegabytes) noexcept -> void;
 auto ObserveProcessCpuUsage(opentelemetry::metrics::ObserverResult observer, void *state) noexcept -> void;
 auto ObserveProcessMemoryRss(opentelemetry::metrics::ObserverResult observer, void *state) noexcept -> void;
+auto ObserveUserDoubleGauge(opentelemetry::metrics::ObserverResult observer, void *state) noexcept -> void;
 auto ReadProcessCpuUsage() noexcept -> std::optional<ProcessCpuUsageSample>;
 auto ReadProcessMemoryRssMiB(long pageSize) -> std::optional<double>;
 auto SetLastError(std::string message) -> int;
@@ -270,6 +335,46 @@ auto BuildAttributes(const nestdaq_otel_attribute *attributes, uint64_t attribut
         AppendAttribute(storage, attributes[i]); // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
     }
     return storage;
+}
+
+auto BuildGaugeAttributes(const nestdaq_otel_attribute *attributes, uint64_t attributeCount) -> std::vector<GaugeAttribute>
+{
+    auto values = std::vector<GaugeAttribute>{};
+    values.reserve(attributeCount);
+    if (attributes == nullptr) {
+        return values;
+    }
+
+    for (uint64_t i = 0; i < attributeCount; ++i) {
+        const auto &attribute = attributes[i]; // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+        if (!ValidateAttribute(&attribute)) {
+            continue;
+        }
+
+        auto value = GaugeAttribute{};
+        value.key = attribute.key;
+        value.type = attribute.type;
+        switch (attribute.type) {
+        case NESTDAQ_OTEL_ATTRIBUTE_STRING:
+            value.stringValue = IsEmpty(attribute.string_value) ? "" : attribute.string_value;
+            break;
+        case NESTDAQ_OTEL_ATTRIBUTE_INT64:
+            value.intValue = attribute.int_value;
+            break;
+        case NESTDAQ_OTEL_ATTRIBUTE_UINT64:
+            value.uintValue = attribute.uint_value;
+            break;
+        case NESTDAQ_OTEL_ATTRIBUTE_DOUBLE:
+            value.doubleValue = attribute.double_value;
+            break;
+        case NESTDAQ_OTEL_ATTRIBUTE_BOOL:
+            value.boolValue = attribute.bool_value != 0;
+            break;
+        }
+        values.emplace_back(std::move(value));
+    }
+    std::sort(values.begin(), values.end());
+    return values;
 }
 
 auto ClearLastError() -> void
@@ -748,6 +853,61 @@ auto ObserveProcessMemoryRss(opentelemetry::metrics::ObserverResult observer, vo
     result->Observe(*value);
 }
 
+auto ObserveUserDoubleGauge(opentelemetry::metrics::ObserverResult observer, void *state) noexcept -> void
+{
+    using DoubleObserver = opentelemetry::nostd::shared_ptr<opentelemetry::metrics::ObserverResultT<double>>;
+    if (!opentelemetry::nostd::holds_alternative<DoubleObserver>(observer) || state == nullptr) {
+        return;
+    }
+
+    const auto result = opentelemetry::nostd::get<DoubleObserver>(observer);
+    if (!result) {
+        return;
+    }
+
+    const auto *metric = static_cast<const MetricKey*>(state);
+    auto measurements = std::vector<GaugeMeasurement>{};
+    {
+        auto &runtime = State();
+        std::lock_guard lock{runtime.mutex};
+        for (const auto &[sample, value] : runtime.doubleGaugeMeasurements) {
+            if (sample.metric == *metric) {
+                measurements.emplace_back(GaugeMeasurement{
+                    .attributes = sample.attributes,
+                    .value = value,
+                });
+            }
+        }
+    }
+
+    for (const auto &measurement : measurements) {
+        auto attributes =
+            std::vector<std::pair<opentelemetry::nostd::string_view, opentelemetry::common::AttributeValue>>{};
+        attributes.reserve(measurement.attributes.size());
+        for (const auto &attribute : measurement.attributes) {
+            auto key = opentelemetry::nostd::string_view{attribute.key};
+            switch (attribute.type) {
+            case NESTDAQ_OTEL_ATTRIBUTE_STRING:
+                attributes.emplace_back(key, opentelemetry::nostd::string_view{attribute.stringValue});
+                break;
+            case NESTDAQ_OTEL_ATTRIBUTE_INT64:
+                attributes.emplace_back(key, attribute.intValue);
+                break;
+            case NESTDAQ_OTEL_ATTRIBUTE_UINT64:
+                attributes.emplace_back(key, attribute.uintValue);
+                break;
+            case NESTDAQ_OTEL_ATTRIBUTE_DOUBLE:
+                attributes.emplace_back(key, attribute.doubleValue);
+                break;
+            case NESTDAQ_OTEL_ATTRIBUTE_BOOL:
+                attributes.emplace_back(key, attribute.boolValue);
+                break;
+            }
+        }
+        result->Observe(measurement.value, attributes);
+    }
+}
+
 auto ReadProcessCpuUsage() noexcept -> std::optional<ProcessCpuUsageSample>
 {
     auto usage = rusage{};
@@ -1058,6 +1218,52 @@ auto OpenTelemetryInitializer::MetricRecordDoubleHistogram(const char *name,
     return NESTDAQ_OTEL_OK;
 }
 
+auto OpenTelemetryInitializer::MetricRecordDoubleGauge(const char *name,
+                                                       double value,
+                                                       const char *unit,
+                                                       const char *description,
+                                                       const nestdaq_otel_attribute *attributes,
+                                                       uint64_t attribute_count) -> int
+{
+    if (IsEmpty(name)) {
+        return SetLastError("metric gauge name is empty");
+    }
+    auto gaugeAttributes = BuildGaugeAttributes(attributes, attribute_count);
+    auto key = MetricKey{.kind = MetricKind::DoubleGauge,
+                         .name = name,
+                         .unit = IsEmpty(unit) ? "" : unit,
+                         .description = IsEmpty(description) ? "" : description};
+
+    opentelemetry::nostd::shared_ptr<opentelemetry::metrics::ObservableInstrument> newGauge;
+    MetricKey *callbackKey = nullptr;
+    {
+        auto &state = State();
+        std::lock_guard lock{state.mutex};
+        if (!state.meter) {
+            state.lastError.clear();
+            return NESTDAQ_OTEL_OK;
+        }
+
+        auto [gauge, _] = state.doubleGauges.try_emplace(key);
+        if (!gauge->second.instrument) {
+            gauge->second.callbackKey = key;
+            gauge->second.instrument = state.meter->CreateDoubleObservableGauge(key.name, key.description, key.unit);
+            if (gauge->second.instrument) {
+                newGauge = gauge->second.instrument;
+                callbackKey = &gauge->second.callbackKey;
+            }
+        }
+
+        state.doubleGaugeMeasurements[GaugeSampleKey{.metric = std::move(key),
+                                                     .attributes = std::move(gaugeAttributes)}] = value;
+        state.lastError.clear();
+    }
+    if (newGauge) {
+        newGauge->AddCallback(ObserveUserDoubleGauge, callbackKey);
+    }
+    return NESTDAQ_OTEL_OK;
+}
+
 auto OpenTelemetryInitializer::RecordFairMQThroughput(const telemetry::FairMQThroughputSample &sample) noexcept
 -> void
 {
@@ -1123,6 +1329,8 @@ auto OpenTelemetryInitializer::Shutdown(uint64_t timeout_ms) -> int
             state.tracer = {};
             state.doubleCounters.clear();
             state.doubleHistograms.clear();
+            state.doubleGauges.clear();
+            state.doubleGaugeMeasurements.clear();
             state.fairmqMessagesPerSecondGauge = {};
             state.fairmqMegabytesPerSecondGauge = {};
             state.processCpuUsageGauge = {};
@@ -1259,6 +1467,17 @@ extern "C" {
                                                                         uint64_t attribute_count)
     {
         return nestdaq::OpenTelemetryInitializer::MetricRecordDoubleHistogram(
+            name, value, unit, description, attributes, attribute_count);
+    }
+
+    NESTDAQ_OTEL_EXPORT int nestdaq_otel_metric_record_double_gauge(const char *name,
+                                                                    double value,
+                                                                    const char *unit,
+                                                                    const char *description,
+                                                                    const nestdaq_otel_attribute *attributes,
+                                                                    uint64_t attribute_count)
+    {
+        return nestdaq::OpenTelemetryInitializer::MetricRecordDoubleGauge(
             name, value, unit, description, attributes, attribute_count);
     }
 
