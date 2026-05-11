@@ -29,7 +29,7 @@ static constexpr std::string_view kDefaultMetricHttpEndpoint{"http://localhost:4
 static constexpr std::string_view kDefaultTraceHttpEndpoint{"http://localhost:4318/v1/traces"};
 static constexpr std::string_view kDefaultGrpcEndpoint{"localhost:4317"};
 static constexpr uint32_t kDefaultTimeoutMs{5000};
-static constexpr uint32_t kDefaultMetricExportIntervalMs{60000};
+static constexpr uint32_t kDefaultMetricExportIntervalMs{1000};
 static constexpr std::string_view kTelemetryConfigSubscriber{"nestdaq-telemetry"};
 static constexpr std::string_view kDefaultServiceNamespace{"nestdaq"};
 

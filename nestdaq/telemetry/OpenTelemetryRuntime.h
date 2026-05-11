@@ -59,7 +59,7 @@ inline constexpr std::string_view kDefaultLogHttpEndpoint{"http://localhost:4318
 inline constexpr std::string_view kDefaultMetricHttpEndpoint{"http://localhost:4318/v1/metrics"};
 inline constexpr std::string_view kDefaultTraceHttpEndpoint{"http://localhost:4318/v1/traces"};
 inline constexpr std::string_view kDefaultGrpcEndpoint{"localhost:4317"};
-inline constexpr uint32_t kDefaultMetricExportIntervalMs{60000};
+inline constexpr uint32_t kDefaultMetricExportIntervalMs{1000};
 
 // NOLINTNEXTLINE(cppcoreguidelines-pro-type-member-init)
 struct AttributeStorage {

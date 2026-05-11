@@ -92,6 +92,10 @@ TEST_CASE("telemetry options keep unified otel library default", "[telemetry]")
     CHECK(options.logProtocol == "console");
     CHECK(options.metricProtocol.empty());
     CHECK(options.traceProtocol.empty());
+    CHECK(options.metricExportIntervalMs == 1000);
+
+    const auto config = nestdaq::telemetry::MakeConfig(options);
+    CHECK(config.metric_export_interval_ms == 1000);
 }
 
 TEST_CASE("telemetry command line options populate multi-signal config", "[telemetry]")

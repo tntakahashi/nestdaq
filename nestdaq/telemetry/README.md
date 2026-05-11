@@ -54,7 +54,7 @@ signal.
 | `--otel-log-severity` | `NESTDAQ_OTEL_LOG_SEVERITY` | `info` | Minimum FairLogger severity exported. |
 | `--otel-log-required` | `NESTDAQ_OTEL_LOG_REQUIRED` | `false` | Fail startup if telemetry cannot load or initialize. |
 | `--otel-timeout-ms` | none | `5000` | Force-flush, shutdown, and exporter timeout in milliseconds. |
-| `--otel-metric-export-interval-ms` | none | `60000` | Periodic metric export interval in milliseconds. |
+| `--otel-metric-export-interval-ms` | none | `1000` | Periodic metric export interval in milliseconds. |
 | `--otel-log-http-json` | none | `true` | Use JSON content type for OTLP HTTP logs. |
 | `--otel-metric-http-json` | none | `true` | Use JSON content type for OTLP HTTP metrics. |
 | `--otel-trace-http-json` | none | `true` | Use JSON content type for OTLP HTTP traces. |
