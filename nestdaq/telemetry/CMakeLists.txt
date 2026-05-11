@@ -21,6 +21,10 @@ if(opentelemetry-cpp_FOUND)
   add_library(nestdaq_otel SHARED
     FairLoggerOpenTelemetrySink.cxx
     OpenTelemetryInitializer.cxx
+    OpenTelemetryLogs.cxx
+    OpenTelemetryMetrics.cxx
+    OpenTelemetryRuntime.cxx
+    OpenTelemetryTraces.cxx
   )
 
   target_include_directories(nestdaq_otel PRIVATE
