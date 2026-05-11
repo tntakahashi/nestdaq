@@ -14,6 +14,12 @@
 
 namespace nestdaq::telemetry {
 
+namespace detail {
+template<typename T>
+concept MetricValue = std::is_arithmetic_v<std::remove_cvref_t<T>> &&
+                      !std::is_same_v<std::remove_cvref_t<T>, bool>;
+} // namespace detail
+
 class Attribute {
 public:
     Attribute(std::string_view key, std::string_view value)
@@ -178,6 +184,12 @@ public:
         return fLibrary->MetricAddDoubleCounter(fName, value, fUnit, fDescription, attrs.data(), attrs.size());
     }
 
+    template<detail::MetricValue T>
+    auto Add(T value, std::initializer_list<Attribute> attributes = {}) const -> bool
+    {
+        return Add(static_cast<double>(value), attributes);
+    }
+
 private:
     TelemetryLibrary* fLibrary{nullptr};
     std::string fName;
@@ -205,6 +217,12 @@ public:
         return fLibrary->MetricRecordDoubleHistogram(fName, value, fUnit, fDescription, attrs.data(), attrs.size());
     }
 
+    template<detail::MetricValue T>
+    auto Record(T value, std::initializer_list<Attribute> attributes = {}) const -> bool
+    {
+        return Record(static_cast<double>(value), attributes);
+    }
+
 private:
     TelemetryLibrary* fLibrary{nullptr};
     std::string fName;
@@ -230,6 +248,12 @@ public:
         }
         const auto attrs = MakeOtelAttributes(std::span<const Attribute>{attributes.begin(), attributes.size()});
         return fLibrary->MetricRecordDoubleGauge(fName, value, fUnit, fDescription, attrs.data(), attrs.size());
+    }
+
+    template<detail::MetricValue T>
+    auto Record(T value, std::initializer_list<Attribute> attributes = {}) const -> bool
+    {
+        return Record(static_cast<double>(value), attributes);
     }
 
 private:
@@ -287,6 +311,19 @@ public:
     }
 
     /**
+     * @brief Add @p value to a counter instrument.
+     */
+    template<detail::MetricValue T>
+    auto AddCounter(std::string_view name,
+                    T value,
+                    std::string_view unit = "",
+                    std::string_view description = "",
+                    std::span<const nestdaq_otel_attribute> attributes = {}) -> bool
+    {
+        return AddDoubleCounter(name, static_cast<double>(value), unit, description, attributes);
+    }
+
+    /**
      * @brief Record @p value in a double histogram instrument.
      */
     auto RecordDoubleHistogram(std::string_view name,
@@ -307,6 +344,19 @@ public:
     }
 
     /**
+     * @brief Record @p value in a histogram instrument.
+     */
+    template<detail::MetricValue T>
+    auto RecordHistogram(std::string_view name,
+                         T value,
+                         std::string_view unit = "",
+                         std::string_view description = "",
+                         std::span<const nestdaq_otel_attribute> attributes = {}) -> bool
+    {
+        return RecordDoubleHistogram(name, static_cast<double>(value), unit, description, attributes);
+    }
+
+    /**
      * @brief Record the latest @p value for a double gauge instrument.
      */
     auto RecordDoubleGauge(std::string_view name,
@@ -324,6 +374,19 @@ public:
                                                  description,
                                                  attributes.data(),
                                                  attributes.size());
+    }
+
+    /**
+     * @brief Record the latest @p value for a gauge instrument.
+     */
+    template<detail::MetricValue T>
+    auto RecordGauge(std::string_view name,
+                     T value,
+                     std::string_view unit = "",
+                     std::string_view description = "",
+                     std::span<const nestdaq_otel_attribute> attributes = {}) -> bool
+    {
+        return RecordDoubleGauge(name, static_cast<double>(value), unit, description, attributes);
     }
 
     /**

@@ -287,12 +287,15 @@ TEST_CASE("metrics console initializes and exports resource attributes", "[telem
     CHECK(telemetry.AddDoubleCounter("probe.counter", 42.0, "1", "probe counter"));
     nestdaq::telemetry::SetActiveTelemetryLibrary(&library);
     auto userTelemetry = nestdaq::telemetry::GetTelemetry();
+    CHECK(userTelemetry.AddCounter("user.inferred.counter", 1, "1", "inferred counter"));
+    CHECK(userTelemetry.RecordHistogram("user.inferred.histogram", uint64_t{4096}, "By", "inferred histogram"));
+    CHECK(userTelemetry.RecordGauge("user.inferred.gauge", 12.5F, "1", "inferred gauge"));
     CHECK(userTelemetry.Counter("user.messages.total", "1", "user messages")
-              .Add(3.0, {{"channel", "data"}, {"running", true}, {"partition", uint64_t{2}}}));
+              .Add(3, {{"channel", "data"}, {"running", true}, {"partition", uint64_t{2}}}));
     CHECK(userTelemetry.Histogram("user.decode.duration", "ms", "user decode duration")
-              .Record(4.5, {{"channel", "data"}, {"attempt", int64_t{1}}, {"ratio", 0.5}}));
+              .Record(4.5F, {{"channel", "data"}, {"attempt", int64_t{1}}, {"ratio", 0.5}}));
     CHECK(userTelemetry.Gauge("user.queue.depth", "1", "user queue depth")
-              .Record(1234.0, {{"channel", "data"}, {"slot", uint64_t{2}}}));
+              .Record(uint64_t{1234}, {{"channel", "data"}, {"slot", uint64_t{2}}}));
     CHECK(userTelemetry.Gauge("user.queue.depth", "1", "user queue depth")
               .Record(9876.5, {{"channel", "data"}, {"slot", uint64_t{2}}}));
 
@@ -310,6 +313,9 @@ TEST_CASE("metrics console initializes and exports resource attributes", "[telem
     CHECK(output.find("user.messages.total") != std::string::npos);
     CHECK(output.find("user.decode.duration") != std::string::npos);
     CHECK(output.find("user.queue.depth") != std::string::npos);
+    CHECK(output.find("user.inferred.counter") != std::string::npos);
+    CHECK(output.find("user.inferred.histogram") != std::string::npos);
+    CHECK(output.find("user.inferred.gauge") != std::string::npos);
     CHECK(output.find("channel") != std::string::npos);
     CHECK(output.find("data") != std::string::npos);
     CHECK(output.find("running") != std::string::npos);
@@ -325,6 +331,9 @@ TEST_CASE("user telemetry facade is no-op before a backend is registered", "[tel
     nestdaq::telemetry::SetActiveTelemetryLibrary(nullptr);
 
     auto telemetry = nestdaq::telemetry::GetTelemetry();
+    CHECK(telemetry.AddCounter("unregistered.counter", 1));
+    CHECK(telemetry.RecordHistogram("unregistered.histogram", 2));
+    CHECK(telemetry.RecordGauge("unregistered.gauge", 3));
     CHECK(telemetry.Counter("unregistered.counter", "1", "unregistered counter").Add(1.0));
     CHECK(telemetry.Histogram("unregistered.histogram", "ms", "unregistered histogram").Record(2.0));
     CHECK(telemetry.Gauge("unregistered.gauge", "1", "unregistered gauge").Record(3.0));

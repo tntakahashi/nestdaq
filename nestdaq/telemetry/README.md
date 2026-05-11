@@ -115,15 +115,15 @@ if (!library.InitializeWith(config)) {
 }
 
 auto telemetry = nestdaq::telemetry::Telemetry{library};
-telemetry.AddDoubleCounter("events.total", 1.0, "1", "Total processed events");
-telemetry.RecordDoubleHistogram("event.size", 4096.0, "By", "Input event size");
-telemetry.RecordDoubleGauge("queue.depth", 12.0, "{message}", "Latest queue depth");
+telemetry.AddCounter("events.total", 1, "1", "Total processed events");
+telemetry.RecordHistogram("event.size", 4096, "By", "Input event size");
+telemetry.RecordGauge("queue.depth", 12, "{message}", "Latest queue depth");
 
 auto events = telemetry.Counter("events.total", "1", "Total processed events");
-events.Add(1.0, {{"channel", "data"}});
+events.Add(1, {{"channel", "data"}});
 
 auto queueDepth = telemetry.Gauge("queue.depth", "{message}", "Latest queue depth");
-queueDepth.Record(12.0, {{"channel", "data"}});
+queueDepth.Record(12, {{"channel", "data"}});
 
 auto span = telemetry.StartSpan("process-event");
 span.SetAttribute({
