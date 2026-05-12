@@ -9,12 +9,17 @@ configure this directory with `find_package(NestDAQ)`.
 | Executable | Purpose |
 | :-- | :-- |
 | `NullDevice` | Minimal FairMQ device that exercises the NestDAQ `runDevice.h` entry point and lifecycle hooks without data channels. |
-| `Sampler` | Sends text messages through an output channel and demonstrates custom command-line options. |
-| `Sink` | Receives single-part or multipart messages through an input channel and demonstrates channel callback setup. |
+| `Sampler` | Sends text messages through an output channel and demonstrates custom command-line options, spans, and metrics. |
+| `Sink` | Receives single-part or multipart messages through an input channel and demonstrates channel callback setup, spans, and metrics. |
 
 Each executable links to `NestDAQ::NestDAQ`, which provides the NestDAQ
 `runDevice.h` integration, FairMQ/FairLogger dependencies, plugin search paths,
 and optional telemetry loader support.
+
+`Sampler` and `Sink` use the NestDAQ telemetry facade to demonstrate trace spans
+and metrics without including OpenTelemetry headers. Enable them at runtime with
+the telemetry options, for example `--otel-metric-protocol=console` and
+`--otel-trace-protocol=console`.
 
 ## Build
 

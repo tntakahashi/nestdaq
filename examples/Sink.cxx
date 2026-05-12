@@ -17,6 +17,12 @@ static constexpr std::chrono::milliseconds kDrainRetryInterval{200};
 namespace bpo = boost::program_options;
 
 //_____________________________________________________________________________
+// NOLINTNEXTLINE(cppcoreguidelines-pro-type-member-init)
+Sink::Sink()
+{
+}
+
+//_____________________________________________________________________________
 void addCustomOptions(bpo::options_description &options)
 {
     using opt = Sink::OptionKey;
@@ -48,22 +54,54 @@ void PrintConfig(const fair::mq::ProgOptions* config, std::string_view name, std
 //_____________________________________________________________________________
 bool Sink::HandleData(fair::mq::MessagePtr &msg, int index)
 {
+    auto span = nestdaq::telemetry::GetTelemetry().StartSpan("sink.receive",
+        {{"fairmq.channel.name", fInputChannelName},
+         {"fairmq.channel.index", index},
+         {"message.size", msg->GetSize()},
+         {"message.multipart", false}});
+    static_cast<void>(span);
     const auto ptr = static_cast<char*>(msg->GetData());
     std::string s(ptr, msg->GetSize());
     LOG(debug) << __FUNCTION__ << " received = " << s << " [" << index << "] " << fNumMessages;
+    fMessagesReceived.Add(1, {{"fairmq.channel.name", fInputChannelName},
+                              {"fairmq.channel.index", index},
+                              {"message.multipart", false}});
+    fMessageSize.Record(msg->GetSize(), {{"fairmq.channel.name", fInputChannelName},
+                                         {"fairmq.channel.index", index},
+                                         {"message.multipart", false}});
     ++fNumMessages;
+    fMessagesTotal.Record(fNumMessages, {{"fairmq.channel.name", fInputChannelName}});
     return true;
 }
 
 //_____________________________________________________________________________
 bool Sink::HandleMultipartData(fair::mq::Parts &msgParts, int index)
 {
+    auto multipartSpan = nestdaq::telemetry::GetTelemetry().StartSpan("sink.receive.multipart",
+        {{"fairmq.channel.name", fInputChannelName},
+         {"fairmq.channel.index", index},
+         {"message.multipart", true},
+         {"message.parts", msgParts.Size()}});
+    static_cast<void>(multipartSpan);
     for (const auto& msg : msgParts) {
+        auto partSpan = nestdaq::telemetry::GetTelemetry().StartSpan("sink.receive.part",
+            {{"fairmq.channel.name", fInputChannelName},
+             {"fairmq.channel.index", index},
+             {"message.size", msg->GetSize()},
+             {"message.multipart", true}});
+        static_cast<void>(partSpan);
         const auto ptr = static_cast<char*>(msg->GetData());
         std::string s(ptr, msg->GetSize());
         LOG(debug) << __FUNCTION__ << " received = " << s << " [" << index << "] " << fNumMessages;
         LOG(debug) << s;
+        fMessagesReceived.Add(1, {{"fairmq.channel.name", fInputChannelName},
+                                  {"fairmq.channel.index", index},
+                                  {"message.multipart", true}});
+        fMessageSize.Record(msg->GetSize(), {{"fairmq.channel.name", fInputChannelName},
+                                             {"fairmq.channel.index", index},
+                                             {"message.multipart", true}});
         ++fNumMessages;
+        fMessagesTotal.Record(fNumMessages, {{"fairmq.channel.name", fInputChannelName}});
     }
     return true;
 }
@@ -88,6 +126,11 @@ void Sink::InitTask()
 
     fInputChannelName = fConfig->GetProperty<std::string>(opt::InputChannelName);
     LOG(debug) << " input channel = " << fInputChannelName;
+
+    auto telemetry = nestdaq::telemetry::GetTelemetry();
+    fMessagesReceived = telemetry.Counter("examples.sink.messages.received", "{message}", "Messages received by the Sink example");
+    fMessageSize = telemetry.Histogram("examples.sink.message.size", "By", "Sink example message size");
+    fMessagesTotal = telemetry.Gauge("examples.sink.messages.total", "{message}", "Total messages received by the Sink example");
 
     const auto &isMultipart = fConfig->GetProperty<std::string>(opt::Multipart);
     if (isMultipart=="true" || isMultipart=="1") {

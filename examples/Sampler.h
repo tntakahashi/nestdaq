@@ -9,6 +9,7 @@
 #include <string>
 
 #include <fairmq/Device.h>
+#include <nestdaq/telemetry/Telemetry.h>
 
 class Sampler : public fair::mq::Device
 {
@@ -24,6 +25,10 @@ private:
     std::string fId;
     std::string fOutputChannelName;
     std::string fText;
+    nestdaq::telemetry::Counter fMessagesSent;
+    nestdaq::telemetry::Counter fMessagesFailed;
+    nestdaq::telemetry::Histogram fMessageSize;
+    nestdaq::telemetry::Gauge fIteration;
     uint64_t fMaxIterations{0};
     uint64_t fNumIterations{0};
     int fNumSubChannels{0};

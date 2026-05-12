@@ -11,6 +11,7 @@
 #include <string>
 
 #include <fairmq/Device.h>
+#include <nestdaq/telemetry/Telemetry.h>
 
 class Sink : public fair::mq::Device {
 public:
@@ -20,7 +21,7 @@ public:
         static constexpr const char* Multipart{"multipart"};
     };
 
-    Sink() = default;
+    Sink();
     Sink(const Sink&) = delete;
     Sink &operator=(const Sink&) = delete;
     Sink(Sink&&) = delete;
@@ -35,6 +36,9 @@ private:
     void PostRun() override;
 
     std::string fInputChannelName;
+    nestdaq::telemetry::Counter fMessagesReceived;
+    nestdaq::telemetry::Histogram fMessageSize;
+    nestdaq::telemetry::Gauge fMessagesTotal;
     uint64_t fNumMessages{0};
 
 };

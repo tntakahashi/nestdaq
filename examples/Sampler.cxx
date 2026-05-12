@@ -42,6 +42,7 @@ void PrintConfig(const fair::mq::ProgOptions* config, std::string_view name, std
 }
 
 //_____________________________________________________________________________
+// NOLINTNEXTLINE(cppcoreguidelines-pro-type-member-init)
 Sampler::Sampler()
 {
     LOG(debug) << "Sampler : hello";
@@ -78,6 +79,12 @@ void Sampler::InitTask()
     fMaxIterations = std::stoull(fConfig->GetProperty<std::string>("max-iterations"));
 
     fNumSubChannels = static_cast<int>(GetNumSubChannels(fOutputChannelName));
+
+    auto telemetry = nestdaq::telemetry::GetTelemetry();
+    fMessagesSent = telemetry.Counter("examples.sampler.messages.sent", "{message}", "Messages sent by the Sampler example");
+    fMessagesFailed = telemetry.Counter("examples.sampler.messages.failed", "{message}", "Messages the Sampler example failed to send");
+    fMessageSize = telemetry.Histogram("examples.sampler.message.size", "By", "Sampler example message size");
+    fIteration = telemetry.Gauge("examples.sampler.iteration", "1", "Sampler example iteration number");
 }
 
 //_____________________________________________________________________________
@@ -103,13 +110,27 @@ bool Sampler::ConditionalRun()
 
         LOG(info) << "Sending \"" << txt << "\"";
 
+        auto span = nestdaq::telemetry::GetTelemetry().StartSpan("sampler.send",
+            {{"fairmq.channel.name", fOutputChannelName},
+             {"fairmq.channel.index", iSubChannel},
+             {"message.size", text->length()}});
+
         if (Send(msg, fOutputChannelName, iSubChannel) < 0) {
             LOG(warn) << "failed to send. event:  " << fNumIterations << ", sub channel = " << iSubChannel;
+            fMessagesFailed.Add(1, {{"fairmq.channel.name", fOutputChannelName},
+                                    {"fairmq.channel.index", iSubChannel}});
+            span.SetAttribute({"send.ok", false});
             return false;
         }
+        fMessagesSent.Add(1, {{"fairmq.channel.name", fOutputChannelName},
+                              {"fairmq.channel.index", iSubChannel}});
+        fMessageSize.Record(text->length(), {{"fairmq.channel.name", fOutputChannelName},
+                                             {"fairmq.channel.index", iSubChannel}});
+        span.SetAttribute({"send.ok", true});
     }
 
     ++fNumIterations;
+    fIteration.Record(fNumIterations);
     if (fMaxIterations > 0 && fNumIterations >= fMaxIterations) {
         LOG(info) << "Configured maximum number of iterations reached. Leaving RUNNING state. " << fNumIterations << " / " << fMaxIterations;
         return false;
