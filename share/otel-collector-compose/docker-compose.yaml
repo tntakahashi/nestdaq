@@ -36,6 +36,60 @@ services:
     networks:
       - otel-net
 
+  victoriametrics:
+    image: docker.io/victoriametrics/victoria-metrics:latest
+    container_name: victoriametrics
+    command:
+      - -storageDataPath=/victoria-metrics-data
+    ports:
+      - "${VICTORIAMETRICS_PORT:-8428}:8428"
+    volumes:
+      - ${VICTORIAMETRICS_DATA_DIR:-./victoriametrics-data}:/victoria-metrics-data:Z
+    networks:
+      - otel-net
+
+  victorialogs:
+    image: docker.io/victoriametrics/victoria-logs:latest
+    container_name: victorialogs
+    command:
+      - -storageDataPath=/victoria-logs-data
+    ports:
+      - "${VICTORIALOGS_PORT:-9428}:9428"
+    volumes:
+      - ${VICTORIALOGS_DATA_DIR:-./victorialogs-data}:/victoria-logs-data:Z
+    networks:
+      - otel-net
+
+  victoriatraces:
+    image: docker.io/victoriametrics/victoria-traces:latest
+    container_name: victoriatraces
+    command:
+      - -storageDataPath=/victoria-traces-data
+    ports:
+      - "${VICTORIATRACES_PORT:-10428}:10428"
+    volumes:
+      - ${VICTORIATRACES_DATA_DIR:-./victoriatraces-data}:/victoria-traces-data:Z
+    networks:
+      - otel-net
+
+  grafana:
+    image: docker.io/grafana/grafana:latest
+    container_name: grafana
+    environment:
+      GF_INSTALL_PLUGINS: "victoriametrics-metrics-datasource,victoriametrics-logs-datasource"
+      GF_SECURITY_ADMIN_PASSWORD: "${GRAFANA_ADMIN_PASSWORD:-admin}"
+    ports:
+      - "${GRAFANA_PORT:-3000}:3000"
+    volumes:
+      - ${GRAFANA_DATA_DIR:-./grafana-data}:/var/lib/grafana:Z
+      - ${GRAFANA_PROVISIONING_DIR:-./grafana/provisioning}:/etc/grafana/provisioning:ro,Z
+    depends_on:
+      - victoriametrics
+      - victorialogs
+      - victoriatraces
+    networks:
+      - otel-net
+
   otel-collector:
     image: docker.io/otel/opentelemetry-collector-contrib:0.150.1
     container_name: otel-collector
@@ -48,6 +102,12 @@ services:
     depends_on:
       opensearch:
         condition: service_healthy
+      victoriametrics:
+        condition: service_started
+      victorialogs:
+        condition: service_started
+      victoriatraces:
+        condition: service_started
     networks:
       - otel-net
 

@@ -4,3 +4,8 @@ install(FILES
   otel-collector-config.yaml;
   DESTINATION ${CMAKE_INSTALL_DATADIR}/otel-collector-compose
 )
+
+install(DIRECTORY
+  grafana
+  DESTINATION ${CMAKE_INSTALL_DATADIR}/otel-collector-compose
+)
