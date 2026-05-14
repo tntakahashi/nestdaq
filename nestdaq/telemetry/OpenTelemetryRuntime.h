@@ -9,8 +9,10 @@
 #include <memory>
 #include <mutex>
 #include <optional>
+#include <span>
 #include <string>
 #include <string_view>
+#include <thread>
 #include <tuple>
 #include <utility>
 #include <vector>
@@ -151,17 +153,58 @@ struct FairMQThroughputMeasurement {
     double megabytesPerSecond = 0.0;
 };
 
+struct ProcessUsageMeasurement {
+    double cpuUsagePercent = 0.0;
+    double memoryRssMiB = 0.0;
+};
+
 struct ProcessCpuUsageSample {
     std::chrono::steady_clock::time_point timestamp;
     double cpuSeconds = 0.0;
 };
 
+struct FairMQStateMeasurement {
+    int64_t stateId = 0;
+    std::string stateName;
+};
+
+struct SignalConfigStorage {
+    std::string protocol;
+    std::string endpointHttp;
+    std::string endpointGrpc;
+    std::string headers;
+    uint32_t otlpHttpJson = 1U;
+};
+
+struct FrameworkMetricConfigStorage {
+    SignalConfigStorage metrics;
+    uint32_t timeoutMs = 5000;
+    uint32_t metricExportIntervalMs = kDefaultMetricExportIntervalMs;
+
+    auto ToConfig() const -> nestdaq_otel_config
+    {
+        auto config = nestdaq_otel_config{};
+        config.size = sizeof(config);
+        config.metrics.protocol = metrics.protocol.data();
+        config.metrics.endpoint_http = metrics.endpointHttp.data();
+        config.metrics.endpoint_grpc = metrics.endpointGrpc.data();
+        config.metrics.headers = metrics.headers.data();
+        config.metrics.otlp_http_json = metrics.otlpHttpJson;
+        config.timeout_ms = timeoutMs;
+        config.metric_export_interval_ms = metricExportIntervalMs;
+        return config;
+    }
+};
+
 struct RuntimeState {
-    std::mutex mutex;
+    std::recursive_mutex mutex;
+    std::mutex frameworkReconfigureMutex;
     std::shared_ptr<opentelemetry::sdk::logs::LoggerProvider> loggerProvider;
     std::shared_ptr<opentelemetry::sdk::metrics::MeterProvider> meterProvider;
+    std::shared_ptr<opentelemetry::sdk::metrics::MeterProvider> frameworkMeterProvider;
     std::shared_ptr<opentelemetry::sdk::trace::TracerProvider> tracerProvider;
     opentelemetry::nostd::shared_ptr<opentelemetry::metrics::Meter> meter;
+    opentelemetry::nostd::shared_ptr<opentelemetry::metrics::Meter> frameworkMeter;
     opentelemetry::nostd::shared_ptr<opentelemetry::trace::Tracer> tracer;
     std::map<MetricKey, opentelemetry::nostd::unique_ptr<opentelemetry::metrics::Counter<double>>> doubleCounters;
     std::map<MetricKey, opentelemetry::nostd::unique_ptr<opentelemetry::metrics::Histogram<double>>> doubleHistograms;
@@ -171,9 +214,21 @@ struct RuntimeState {
     opentelemetry::nostd::shared_ptr<opentelemetry::metrics::ObservableInstrument> fairmqMegabytesPerSecondGauge;
     opentelemetry::nostd::shared_ptr<opentelemetry::metrics::ObservableInstrument> processCpuUsageGauge;
     opentelemetry::nostd::shared_ptr<opentelemetry::metrics::ObservableInstrument> processMemoryRssGauge;
-    std::map<std::pair<std::string, std::string>, FairMQThroughputMeasurement> fairmqThroughputMeasurements;
+    opentelemetry::nostd::shared_ptr<opentelemetry::metrics::ObservableInstrument> fairmqStateGauge;
+    std::vector<FairMQThroughputMeasurement> pendingFairMQThroughputMeasurements;
+    std::vector<FairMQThroughputMeasurement> exportingFairMQThroughputMeasurements;
+    std::vector<ProcessUsageMeasurement> pendingProcessUsageMeasurements;
+    std::vector<ProcessUsageMeasurement> exportingProcessUsageMeasurements;
+    std::vector<FairMQStateMeasurement> pendingFairMQStateMeasurements;
+    std::vector<FairMQStateMeasurement> exportingFairMQStateMeasurements;
     std::optional<ProcessCpuUsageSample> processCpuUsageSample;
     long pageSize = 0;
+    std::thread processMetricsThread;
+    std::atomic<bool> stopProcessMetricsThread{false};
+    std::chrono::milliseconds processMetricsInterval{kDefaultMetricExportIntervalMs};
+    std::vector<Protocol> frameworkMetricProtocols;
+    FrameworkMetricConfigStorage frameworkMetricConfig;
+    std::optional<opentelemetry::sdk::resource::Resource> frameworkMetricResource;
     std::map<uint64_t, opentelemetry::nostd::shared_ptr<opentelemetry::trace::Span>> spans;
     std::atomic<uint64_t> nextSpanHandle{1};
     std::string lastError;
@@ -201,7 +256,10 @@ auto CreateSpanProcessor(std::unique_ptr<opentelemetry::sdk::trace::SpanExporter
                          Protocol protocol) -> std::unique_ptr<opentelemetry::sdk::trace::SpanProcessor>;
 auto ConfigureFairMQThroughputMetrics(RuntimeState &state) -> void;
 auto ConfigureProcessMetrics(RuntimeState &state) -> void;
+auto ConfigureFairMQStateMetrics(RuntimeState &state) -> void;
+auto ConfigureFrameworkMetricsProvider(RuntimeState &state) -> void;
 auto DefaultConfig() -> nestdaq_otel_config;
+auto FlushFrameworkMetricsIfDirty(uint64_t timeoutMs) -> int;
 auto FairMQMetadataLogBody(const nestdaq_otel_config &config) -> std::string;
 auto InstallNoopProviders() -> void;
 auto IsEmpty(const char *value) noexcept -> bool;
@@ -213,7 +271,13 @@ auto ParseHeaders(const char *headers) -> opentelemetry::exporter::otlp::OtlpHea
 auto ParseProtocols(const char *protocols, std::vector<Protocol> &out) -> bool;
 auto SetLastError(std::string message) -> int;
 auto SignalEnabled(const nestdaq_otel_signal_config &config) noexcept -> bool;
+auto StartProcessMetricsThread(uint32_t intervalMs) -> void;
 auto State() -> RuntimeState &;
+auto StoreFrameworkMetricConfig(RuntimeState &state,
+                                const nestdaq_otel_config &config,
+                                std::span<const Protocol> protocols,
+                                opentelemetry::sdk::resource::Resource resource) -> void;
+auto StopProcessMetricsThread() -> void;
 auto TimeoutFromMs(uint64_t timeoutMs) noexcept -> std::chrono::microseconds;
 auto ValidateAttribute(const nestdaq_otel_attribute *attribute) noexcept -> bool;
 auto ValidateSeverity(int32_t severity) noexcept -> bool;

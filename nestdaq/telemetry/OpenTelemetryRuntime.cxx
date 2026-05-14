@@ -2,7 +2,9 @@
 
 #include <algorithm>
 #include <cctype>
+#include <chrono>
 #include <string>
+#include <thread>
 #include <utility>
 
 #include <nlohmann/json.hpp>
@@ -178,6 +180,82 @@ auto ClearLastError() -> void
     state.lastError.clear();
 }
 
+auto FlushFrameworkMetricsIfDirty(uint64_t timeoutMs) -> int
+{
+    std::shared_ptr<opentelemetry::sdk::metrics::MeterProvider> frameworkMeterProvider;
+    auto throughputCount = std::size_t{0};
+    auto processCount = std::size_t{0};
+    auto stateCount = std::size_t{0};
+    {
+        auto &state = State();
+        std::lock_guard lock{state.mutex};
+        if (state.pendingFairMQThroughputMeasurements.empty() &&
+            state.pendingProcessUsageMeasurements.empty() &&
+            state.pendingFairMQStateMeasurements.empty()) {
+            state.lastError.clear();
+            return NESTDAQ_OTEL_OK;
+        }
+        frameworkMeterProvider = state.frameworkMeterProvider;
+        if (!frameworkMeterProvider) {
+            state.lastError.clear();
+            return NESTDAQ_OTEL_OK;
+        }
+        state.exportingFairMQThroughputMeasurements = state.pendingFairMQThroughputMeasurements;
+        state.exportingProcessUsageMeasurements = state.pendingProcessUsageMeasurements;
+        state.exportingFairMQStateMeasurements = state.pendingFairMQStateMeasurements;
+        throughputCount = state.exportingFairMQThroughputMeasurements.size();
+        processCount = state.exportingProcessUsageMeasurements.size();
+        stateCount = state.exportingFairMQStateMeasurements.size();
+    }
+
+    const auto ok = frameworkMeterProvider->ForceFlush(TimeoutFromMs(timeoutMs));
+    auto shouldRecreateProvider = false;
+    auto &state = State();
+    if (ok) {
+        std::lock_guard reconfigureLock{state.frameworkReconfigureMutex};
+        {
+            std::lock_guard lock{state.mutex};
+            state.exportingFairMQThroughputMeasurements.clear();
+            state.exportingProcessUsageMeasurements.clear();
+            state.exportingFairMQStateMeasurements.clear();
+            state.pendingFairMQThroughputMeasurements.erase(
+                state.pendingFairMQThroughputMeasurements.begin(),
+                state.pendingFairMQThroughputMeasurements.begin() +
+                    std::min(throughputCount, state.pendingFairMQThroughputMeasurements.size()));
+            state.pendingProcessUsageMeasurements.erase(
+                state.pendingProcessUsageMeasurements.begin(),
+                state.pendingProcessUsageMeasurements.begin() +
+                    std::min(processCount, state.pendingProcessUsageMeasurements.size()));
+            state.pendingFairMQStateMeasurements.erase(
+                state.pendingFairMQStateMeasurements.begin(),
+                state.pendingFairMQStateMeasurements.begin() +
+                    std::min(stateCount, state.pendingFairMQStateMeasurements.size()));
+            if (state.frameworkMeterProvider == frameworkMeterProvider) {
+                state.frameworkMeterProvider.reset();
+                state.frameworkMeter = {};
+                state.fairmqMessagesPerSecondGauge = {};
+                state.fairmqMegabytesPerSecondGauge = {};
+                state.processCpuUsageGauge = {};
+                state.processMemoryRssGauge = {};
+                state.fairmqStateGauge = {};
+                shouldRecreateProvider = true;
+            }
+            state.lastError.clear();
+        }
+        if (shouldRecreateProvider) {
+            ConfigureFrameworkMetricsProvider(state);
+        }
+        return NESTDAQ_OTEL_OK;
+    }
+    {
+        std::lock_guard lock{state.mutex};
+        state.exportingFairMQThroughputMeasurements.clear();
+        state.exportingProcessUsageMeasurements.clear();
+        state.exportingFairMQStateMeasurements.clear();
+    }
+    return SetLastError("OpenTelemetry framework metrics force flush failed");
+}
+
 auto DefaultConfig() -> nestdaq_otel_config
 {
     auto config = nestdaq_otel_config{};
@@ -348,6 +426,24 @@ auto SetLastError(std::string message) -> int
 auto SignalEnabled(const nestdaq_otel_signal_config &config) noexcept -> bool
 {
     return !IsEmpty(config.protocol);
+}
+
+auto StoreFrameworkMetricConfig(RuntimeState &state,
+                                const nestdaq_otel_config &config,
+                                std::span<const Protocol> protocols,
+                                opentelemetry::sdk::resource::Resource resource) -> void
+{
+    state.frameworkMetricProtocols.assign(protocols.begin(), protocols.end());
+    state.frameworkMetricConfig.metrics.protocol = IsEmpty(config.metrics.protocol) ? "" : config.metrics.protocol;
+    state.frameworkMetricConfig.metrics.endpointHttp =
+        IsEmpty(config.metrics.endpoint_http) ? "" : config.metrics.endpoint_http;
+    state.frameworkMetricConfig.metrics.endpointGrpc =
+        IsEmpty(config.metrics.endpoint_grpc) ? "" : config.metrics.endpoint_grpc;
+    state.frameworkMetricConfig.metrics.headers = IsEmpty(config.metrics.headers) ? "" : config.metrics.headers;
+    state.frameworkMetricConfig.metrics.otlpHttpJson = config.metrics.otlp_http_json;
+    state.frameworkMetricConfig.timeoutMs = config.timeout_ms;
+    state.frameworkMetricConfig.metricExportIntervalMs = config.metric_export_interval_ms;
+    state.frameworkMetricResource = std::move(resource);
 }
 
 auto State() -> RuntimeState &

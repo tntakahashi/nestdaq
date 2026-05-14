@@ -17,6 +17,7 @@
 #include <nestdaq/telemetry/Telemetry.h>
 
 #include <cstddef>
+#include <cstdint>
 #include <exception>
 #include <memory>
 #include <string>
@@ -40,6 +41,8 @@ void addCustomOptions(boost::program_options::options_description& options);
 std::unique_ptr<fair::mq::Device> getDevice(const fair::mq::ProgOptions& config);
 
 namespace nestdaq::run_device_detail {
+
+inline constexpr std::string_view kTelemetryStateSubscriber{"nestdaq-otel-framework-state"};
 
 struct ProgramArguments {
     std::vector<std::string> storage;
@@ -134,9 +137,22 @@ int main(int argc, char* argv[])
             if (telemetryInitialized && r.fConfig.Count("id") != 0) {
                 telemetry->SetNestdaqInstanceId(r.fConfig.GetProperty<std::string>("id"));
             }
+            if (telemetryInitialized && r.fDevice) {
+                r.fDevice->SubscribeToStateChange(
+                    std::string{nestdaq::run_device_detail::kTelemetryStateSubscriber},
+                    [telemetry](const fair::mq::State newState) {
+                        telemetry->RecordFrameworkFairMQState(
+                            static_cast<int64_t>(newState),
+                            fair::mq::GetStateName(newState));
+                    });
+            }
         });
 
         const auto rc = runner.Run();
+        if (telemetryInitialized && runner.fDevice) {
+            runner.fDevice->UnsubscribeFromStateChange(
+                std::string{nestdaq::run_device_detail::kTelemetryStateSubscriber});
+        }
         if (telemetryInitialized) {
             nestdaq::telemetry::UnsubscribeTelemetryOptionChanges(runner.fConfig);
         }

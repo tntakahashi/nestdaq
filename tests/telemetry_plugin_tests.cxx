@@ -12,6 +12,7 @@
 #include <chrono>
 #include <iostream>
 #include <nlohmann/json.hpp>
+#include <cstdint>
 #include <sstream>
 #include <string>
 #include <string_view>
@@ -104,6 +105,20 @@ auto ExtractJsonLog(std::string_view logs, std::string_view root) -> nlohmann::j
     const auto lineEnd = logs.find('\n', begin);
     const auto jsonText = logs.substr(begin, lineEnd == std::string_view::npos ? logs.size() - begin : lineEnd - begin);
     return nlohmann::json::parse(jsonText);
+}
+
+auto CountOccurrences(std::string_view haystack, std::string_view needle) -> std::size_t
+{
+    auto count = std::size_t{0};
+    auto offset = std::size_t{0};
+    while (true) {
+        offset = haystack.find(needle, offset);
+        if (offset == std::string_view::npos) {
+            return count;
+        }
+        ++count;
+        offset += needle.size();
+    }
 }
 
 } // namespace
@@ -387,6 +402,25 @@ TEST_CASE("process metrics export without FairLogger logs or MetricsPlugin", "[t
     CHECK(output.find("data: in:") == std::string::npos);
 }
 
+TEST_CASE("user force flush exports no framework metrics when no framework samples are pending", "[telemetry][plugin]")
+{
+    auto capture = CoutCapture{};
+
+    auto library = nestdaq::telemetry::TelemetryLibrary{};
+    REQUIRE(library.Load(NESTDAQ_OTEL_LIBRARY_PATH));
+    REQUIRE(library.InitializeWith(MetricsConsoleConfig()));
+
+    CHECK(library.ForceFlush(nestdaq::telemetry::kDefaultTimeoutMs));
+    library.ShutdownTelemetry(nestdaq::telemetry::kDefaultTimeoutMs);
+
+    const auto output = capture.output.str();
+    CHECK(output.find("process.cpu.usage_percent") == std::string::npos);
+    CHECK(output.find("process.memory.rss_mib") == std::string::npos);
+    CHECK(output.find("fairmq.channel.messages_per_second") == std::string::npos);
+    CHECK(output.find("fairmq.channel.megabytes_per_second") == std::string::npos);
+    CHECK(output.find("fairmq.state.id") == std::string::npos);
+}
+
 TEST_CASE("FairMQ throughput metrics export parsed rate log samples", "[telemetry][plugin]")
 {
     auto capture = CoutCapture{};
@@ -405,6 +439,77 @@ TEST_CASE("FairMQ throughput metrics export parsed rate log samples", "[telemetr
     CHECK(output.find("fairmq.channel.megabytes_per_second") != std::string::npos);
     CHECK(output.find("fairmq.channel.name") != std::string::npos);
     CHECK(output.find("network.io.direction") != std::string::npos);
+}
+
+TEST_CASE("FairMQ throughput metrics are not re-exported without a new log sample", "[telemetry][plugin]")
+{
+    auto capture = CoutCapture{};
+
+    auto library = nestdaq::telemetry::TelemetryLibrary{};
+    REQUIRE(library.Load(NESTDAQ_OTEL_LIBRARY_PATH));
+    REQUIRE(library.InitializeWith(LogsAndMetricsConsoleConfig()));
+
+    LOG(info) << "data: in: 123 (4.5 MB) out: 6.7 (8.9 MB)";
+
+    const auto afterLog = capture.output.str();
+    REQUIRE(afterLog.find("fairmq.channel.messages_per_second") != std::string::npos);
+    REQUIRE(afterLog.find("fairmq.channel.megabytes_per_second") != std::string::npos);
+    const auto messagesCount = CountOccurrences(afterLog, "fairmq.channel.messages_per_second");
+    const auto megabytesCount = CountOccurrences(afterLog, "fairmq.channel.megabytes_per_second");
+
+    CHECK(library.ForceFlush(nestdaq::telemetry::kDefaultTimeoutMs));
+    library.ShutdownTelemetry(nestdaq::telemetry::kDefaultTimeoutMs);
+
+    const auto output = capture.output.str();
+    CHECK(CountOccurrences(output, "fairmq.channel.messages_per_second") == messagesCount);
+    CHECK(CountOccurrences(output, "fairmq.channel.megabytes_per_second") == megabytesCount);
+}
+
+TEST_CASE("FairMQ state metrics export transitions once", "[telemetry][plugin]")
+{
+    auto capture = CoutCapture{};
+
+    auto library = nestdaq::telemetry::TelemetryLibrary{};
+    REQUIRE(library.Load(NESTDAQ_OTEL_LIBRARY_PATH));
+    REQUIRE(library.InitializeWith(MetricsConsoleConfig()));
+
+    library.RecordFrameworkFairMQState(12, "RUNNING");
+
+    const auto afterState = capture.output.str();
+    REQUIRE(afterState.find("fairmq.state.id") != std::string::npos);
+    REQUIRE(afterState.find("fairmq.state.name") != std::string::npos);
+    REQUIRE(afterState.find("RUNNING") != std::string::npos);
+    const auto stateMetricCount = CountOccurrences(afterState, "fairmq.state.id");
+
+    CHECK(library.ForceFlush(nestdaq::telemetry::kDefaultTimeoutMs));
+    library.ShutdownTelemetry(nestdaq::telemetry::kDefaultTimeoutMs);
+
+    const auto output = capture.output.str();
+    CHECK(CountOccurrences(output, "fairmq.state.id") == stateMetricCount);
+}
+
+TEST_CASE("framework metrics flush does not export user metrics", "[telemetry][plugin]")
+{
+    auto capture = CoutCapture{};
+
+    auto library = nestdaq::telemetry::TelemetryLibrary{};
+    REQUIRE(library.Load(NESTDAQ_OTEL_LIBRARY_PATH));
+    REQUIRE(library.InitializeWith(MetricsConsoleConfig()));
+
+    auto telemetry = nestdaq::telemetry::Telemetry{library};
+    CHECK(telemetry.AddDoubleCounter("user.framework_isolation.counter", 1.0, "1", "framework isolation"));
+
+    library.RecordFrameworkFairMQState(11, "READY");
+
+    const auto afterFrameworkFlush = capture.output.str();
+    CHECK(afterFrameworkFlush.find("fairmq.state.id") != std::string::npos);
+    CHECK(afterFrameworkFlush.find("user.framework_isolation.counter") == std::string::npos);
+
+    CHECK(library.ForceFlush(nestdaq::telemetry::kDefaultTimeoutMs));
+    library.ShutdownTelemetry(nestdaq::telemetry::kDefaultTimeoutMs);
+
+    const auto output = capture.output.str();
+    CHECK(output.find("user.framework_isolation.counter") != std::string::npos);
 }
 
 TEST_CASE("disabled metric and trace signals are no-op through loaded plugin", "[telemetry][plugin]")

@@ -575,6 +575,25 @@ public:
         return true;
     }
 
+    /** Force-flush user telemetry signals through the loaded plugin. */
+    auto ForceFlush(uint64_t timeoutMs) -> bool
+    {
+        if (!fForceFlush) {
+            return false;
+        }
+        return StoreResult(fForceFlush(timeoutMs));
+    }
+
+    /** Forward a FairMQ state transition to the framework metrics pipeline. */
+    auto RecordFrameworkFairMQState(int64_t stateId, std::string_view stateName) -> void
+    {
+        if (!fRecordFrameworkFairMQState) {
+            return;
+        }
+        const auto value = std::string{stateName};
+        fRecordFrameworkFairMQState(stateId, value.data());
+    }
+
     /** Forward a double counter measurement through the loaded plugin. */
     auto MetricAddDoubleCounter(std::string_view name,
                                 double value,
@@ -646,8 +665,11 @@ public:
         }
 
         fInitialize = Resolve<int (*)(const nestdaq_otel_config*)>("nestdaq_otel_init");
+        fForceFlush = Resolve<int (*)(uint64_t)>("nestdaq_otel_force_flush");
         fShutdown = Resolve<int (*)(uint64_t)>("nestdaq_otel_shutdown");
         fLastErrorFunction = Resolve<const char* (*)()>("nestdaq_otel_last_error");
+        fRecordFrameworkFairMQState = Resolve<void (*)(int64_t, const char*)>(
+            "nestdaq_otel_framework_record_fairmq_state");
         fSetMinSeverity = Resolve<int (*)(int32_t)>("nestdaq_otel_set_min_severity");
         fSetNestdaqInstanceId = Resolve<int (*)(const char*)>("nestdaq_otel_set_nestdaq_instance_id");
         fMetricAddDoubleCounter = Resolve<int (*)(const char*, double, const char*, const char*, const nestdaq_otel_attribute*, uint64_t)>(
@@ -665,8 +687,10 @@ public:
             dlclose(fHandle);
             fHandle = nullptr;
             fInitialize = nullptr;
+            fForceFlush = nullptr;
             fShutdown = nullptr;
             fLastErrorFunction = nullptr;
+            fRecordFrameworkFairMQState = nullptr;
             fSetMinSeverity = nullptr;
             fSetNestdaqInstanceId = nullptr;
             fMetricAddDoubleCounter = nullptr;
@@ -790,8 +814,10 @@ private:
 
     void* fHandle{nullptr};
     std::function<int(const nestdaq_otel_config*)> fInitialize;
+    std::function<int(uint64_t)> fForceFlush;
     std::function<int(uint64_t)> fShutdown;
     std::function<const char*()> fLastErrorFunction;
+    std::function<void(int64_t, const char*)> fRecordFrameworkFairMQState;
     std::function<int(int32_t)> fSetMinSeverity;
     std::function<int(const char*)> fSetNestdaqInstanceId;
     std::function<int(const char*, double, const char*, const char*, const nestdaq_otel_attribute*, uint64_t)> fMetricAddDoubleCounter;

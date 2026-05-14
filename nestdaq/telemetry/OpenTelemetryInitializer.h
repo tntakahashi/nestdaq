@@ -106,6 +106,8 @@ typedef struct nestdaq_otel_config {
  * @return `NESTDAQ_OTEL_OK` on success, otherwise `NESTDAQ_OTEL_ERROR`.
  */
 NESTDAQ_OTEL_EXPORT int nestdaq_otel_force_flush(uint64_t timeout_ms);
+NESTDAQ_OTEL_EXPORT void nestdaq_otel_framework_record_fairmq_state(int64_t state_id,
+                                                                    const char *state_name);
 /**
  * @brief Initialize process-wide OpenTelemetry providers and the FairLogger sink.
  *
@@ -231,6 +233,10 @@ public:
                                         const char *description,
                                         const nestdaq_otel_attribute *attributes,
                                         uint64_t attribute_count) -> int;
+    static auto FlushFrameworkMetricsIfDirty(uint64_t timeout_ms) -> int;
+    static auto RecordFrameworkFairMQState(int64_t state_id, const char *state_name) noexcept -> void;
+    static auto RecordFrameworkFairMQThroughput(const telemetry::FairMQThroughputSample &sample) noexcept -> void;
+    static auto RecordFrameworkProcessUsage(double cpu_usage_percent, double memory_rss_mib) noexcept -> void;
     static auto RecordFairMQThroughput(const telemetry::FairMQThroughputSample &sample) noexcept -> void;
     static auto SetNestdaqInstanceId(const char *instance_id) -> int;
     static auto SetMinSeverity(int32_t severity) -> int;

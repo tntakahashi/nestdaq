@@ -67,6 +67,11 @@ auto OpenTelemetryInitializer::ForceFlush(uint64_t timeout_ms) -> int
     }
 }
 
+auto OpenTelemetryInitializer::FlushFrameworkMetricsIfDirty(uint64_t timeout_ms) -> int
+{
+    return otel_detail::FlushFrameworkMetricsIfDirty(timeout_ms);
+}
+
 auto OpenTelemetryInitializer::Initialize(const nestdaq_otel_config *config) -> int
 {
     auto localConfig = DefaultConfig();
@@ -130,16 +135,22 @@ auto OpenTelemetryInitializer::Initialize(const nestdaq_otel_config *config) -> 
             state.meterProvider = meterProvider;
             state.tracerProvider = tracerProvider;
             state.meter = {};
+            state.frameworkMeter = {};
             state.tracer = {};
             if (meterProvider) {
                 state.meter = meterProvider->GetMeter("nestdaq", std::string{NESTDAQ_VERSION});
-                ConfigureProcessMetrics(state);
-                ConfigureFairMQThroughputMetrics(state);
+            }
+            if (!metricProtocols.empty()) {
+                StoreFrameworkMetricConfig(state, localConfig, metricProtocols, resource);
+                ConfigureFrameworkMetricsProvider(state);
             }
             if (tracerProvider) {
                 state.tracer = tracerProvider->GetTracer("nestdaq", std::string{NESTDAQ_VERSION});
             }
             state.lastError.clear();
+        }
+        if (!metricProtocols.empty()) {
+            StartProcessMetricsThread(localConfig.metric_export_interval_ms);
         }
 
         if (loggerProvider) {
@@ -196,19 +207,26 @@ auto OpenTelemetryInitializer::SetMinSeverity(int32_t severity) -> int
 auto OpenTelemetryInitializer::Shutdown(uint64_t timeout_ms) -> int
 {
     try {
+        StopProcessMetricsThread();
+        auto &runtimeState = State();
+        std::lock_guard reconfigureLock{runtimeState.frameworkReconfigureMutex};
         std::shared_ptr<opentelemetry::sdk::logs::LoggerProvider> loggerProvider;
         std::shared_ptr<opentelemetry::sdk::metrics::MeterProvider> meterProvider;
+        std::shared_ptr<opentelemetry::sdk::metrics::MeterProvider> frameworkMeterProvider;
         std::shared_ptr<opentelemetry::sdk::trace::TracerProvider> tracerProvider;
         {
-            auto &state = State();
+            auto &state = runtimeState;
             std::lock_guard lock{state.mutex};
             loggerProvider = std::move(state.loggerProvider);
             meterProvider = std::move(state.meterProvider);
+            frameworkMeterProvider = std::move(state.frameworkMeterProvider);
             tracerProvider = std::move(state.tracerProvider);
             state.loggerProvider.reset();
             state.meterProvider.reset();
+            state.frameworkMeterProvider.reset();
             state.tracerProvider.reset();
             state.meter = {};
+            state.frameworkMeter = {};
             state.tracer = {};
             state.doubleCounters.clear();
             state.doubleHistograms.clear();
@@ -218,7 +236,13 @@ auto OpenTelemetryInitializer::Shutdown(uint64_t timeout_ms) -> int
             state.fairmqMegabytesPerSecondGauge = {};
             state.processCpuUsageGauge = {};
             state.processMemoryRssGauge = {};
-            state.fairmqThroughputMeasurements.clear();
+            state.fairmqStateGauge = {};
+            state.pendingFairMQThroughputMeasurements.clear();
+            state.exportingFairMQThroughputMeasurements.clear();
+            state.pendingProcessUsageMeasurements.clear();
+            state.exportingProcessUsageMeasurements.clear();
+            state.pendingFairMQStateMeasurements.clear();
+            state.exportingFairMQStateMeasurements.clear();
             state.processCpuUsageSample = std::nullopt;
             state.pageSize = 0;
             state.spans.clear();
@@ -231,6 +255,10 @@ auto OpenTelemetryInitializer::Shutdown(uint64_t timeout_ms) -> int
         if (meterProvider) {
             meterProvider->ForceFlush(TimeoutFromMs(timeout_ms));
             meterProvider->Shutdown(TimeoutFromMs(timeout_ms));
+        }
+        if (frameworkMeterProvider) {
+            frameworkMeterProvider->ForceFlush(TimeoutFromMs(timeout_ms));
+            frameworkMeterProvider->Shutdown(TimeoutFromMs(timeout_ms));
         }
         if (tracerProvider) {
             tracerProvider->ForceFlush(TimeoutFromMs(timeout_ms));
@@ -253,6 +281,12 @@ extern "C" {
     NESTDAQ_OTEL_EXPORT int nestdaq_otel_force_flush(uint64_t timeout_ms)
     {
         return nestdaq::OpenTelemetryInitializer::ForceFlush(timeout_ms);
+    }
+
+    NESTDAQ_OTEL_EXPORT void nestdaq_otel_framework_record_fairmq_state(int64_t state_id,
+                                                                        const char *state_name)
+    {
+        nestdaq::OpenTelemetryInitializer::RecordFrameworkFairMQState(state_id, state_name);
     }
 
     NESTDAQ_OTEL_EXPORT int nestdaq_otel_init(const nestdaq_otel_config *config)
