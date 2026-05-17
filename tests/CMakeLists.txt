@@ -13,6 +13,7 @@ target_include_directories(nestdaq_telemetry_options_tests PRIVATE
 )
 
 target_link_libraries(nestdaq_telemetry_options_tests PRIVATE
+  nestdaq_telemetry
   nestdaq_fairmq_throughput_parser
   Catch2::Catch2WithMain
   FairMQ::FairMQ
@@ -37,6 +38,7 @@ if(opentelemetry-cpp_FOUND)
   )
 
   target_link_libraries(nestdaq_telemetry_plugin_tests PRIVATE
+    nestdaq_telemetry
     Catch2::Catch2WithMain
     FairMQ::FairMQ
     Boost::program_options

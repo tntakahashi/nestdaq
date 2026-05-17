@@ -252,6 +252,7 @@ add_subdirectory(nestdaq)
 
 if(NOT TARGET NestDAQ::NestDAQ)
   set(_nestdaq_build_tree_link_libraries
+    nestdaq_telemetry
     ${Boost_LIBRARIES}
     ${fmt_LIB}
     FairLogger

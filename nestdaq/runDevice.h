@@ -14,6 +14,7 @@
 
 #include <boost/program_options.hpp>
 
+#include <nestdaq/telemetry/FairLoggerTelemetryLoader.h>
 #include <nestdaq/telemetry/Telemetry.h>
 
 #include <cstddef>

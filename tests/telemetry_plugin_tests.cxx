@@ -5,8 +5,10 @@
 
 #include <catch2/catch_test_macros.hpp>
 
+#include <fairmq/Version.h>
 #include <fairlogger/Logger.h>
 
+#include <nestdaq/telemetry/FairLoggerTelemetryLoader.h>
 #include <nestdaq/telemetry/Telemetry.h>
 
 #include <chrono>
@@ -36,65 +38,77 @@ struct CoutCapture {
     }
 };
 
+auto BaseConfig() -> nestdaq_otel_config
+{
+    auto config = nestdaq_otel_config{};
+    config.size = sizeof(config);
+    config.logs = nestdaq::telemetry::MakeSignalConfig(
+        "", nestdaq::telemetry::kDefaultLogHttpEndpoint, nestdaq::telemetry::kDefaultGrpcEndpoint, "", 1U);
+    config.metrics = nestdaq::telemetry::MakeSignalConfig(
+        "", nestdaq::telemetry::kDefaultMetricHttpEndpoint, nestdaq::telemetry::kDefaultGrpcEndpoint, "", 1U);
+    config.traces = nestdaq::telemetry::MakeSignalConfig(
+        "", nestdaq::telemetry::kDefaultTraceHttpEndpoint, nestdaq::telemetry::kDefaultGrpcEndpoint, "", 1U);
+    config.service_name = "nestdaq-test";
+    config.service_namespace = "nestdaq";
+    config.service_instance_id = "test-instance";
+    config.fairmq_id = "";
+    config.fairmq_device = "";
+    config.fairmq_session = "";
+    config.fairmq_transport = "";
+    config.fairmq_git_version = FAIRMQ_GIT_VERSION;
+    config.fairmq_build_type = FAIRMQ_BUILD_TYPE;
+    config.fairmq_repo_url = FAIRMQ_REPO_URL;
+    config.fairmq_license = FAIRMQ_LICENSE;
+    config.fairmq_copyright = FAIRMQ_COPYRIGHT;
+    config.min_severity = static_cast<int32_t>(fair::Severity::info);
+    config.timeout_ms = nestdaq::telemetry::kDefaultTimeoutMs;
+    config.metric_export_interval_ms = nestdaq::telemetry::kDefaultMetricExportIntervalMs;
+    return config;
+}
+
 auto DisabledConfig() -> nestdaq_otel_config
 {
-    auto options = nestdaq::telemetry::TelemetryOptions{};
-    options.logProtocol.clear();
-    options.metricProtocol.clear();
-    options.traceProtocol.clear();
-    options.serviceName = "nestdaq-test";
-    return nestdaq::telemetry::MakeConfig(options);
+    return BaseConfig();
 }
 
 auto LogOnlyConfig() -> nestdaq_otel_config
 {
-    auto options = nestdaq::telemetry::TelemetryOptions{};
-    options.logProtocol = "console";
-    options.metricProtocol.clear();
-    options.traceProtocol.clear();
-    options.serviceName = "nestdaq-test";
-    return nestdaq::telemetry::MakeConfig(options);
+    auto config = BaseConfig();
+    config.logs.protocol = "console";
+    return config;
 }
 
 auto MetricsConsoleConfig() -> nestdaq_otel_config
 {
-    auto options = nestdaq::telemetry::TelemetryOptions{};
-    options.logProtocol.clear();
-    options.metricProtocol = "console";
-    options.traceProtocol.clear();
-    options.serviceName = "nestdaq-test";
-    options.serviceNamespace = "nestdaq";
-    options.serviceInstanceId = "test-instance";
-    options.timeoutMs = 50;
-    options.metricExportIntervalMs = 100;
-    return nestdaq::telemetry::MakeConfig(options);
+    auto config = BaseConfig();
+    config.metrics.protocol = "console";
+    config.service_namespace = "nestdaq";
+    config.service_instance_id = "test-instance";
+    config.timeout_ms = 50;
+    config.metric_export_interval_ms = 100;
+    return config;
 }
 
 auto TraceConsoleConfig() -> nestdaq_otel_config
 {
-    auto options = nestdaq::telemetry::TelemetryOptions{};
-    options.logProtocol.clear();
-    options.metricProtocol.clear();
-    options.traceProtocol = "console";
-    options.serviceName = "nestdaq-test";
-    options.serviceNamespace = "nestdaq";
-    options.serviceInstanceId = "test-instance";
-    options.timeoutMs = 50;
-    return nestdaq::telemetry::MakeConfig(options);
+    auto config = BaseConfig();
+    config.traces.protocol = "console";
+    config.service_namespace = "nestdaq";
+    config.service_instance_id = "test-instance";
+    config.timeout_ms = 50;
+    return config;
 }
 
 auto LogsAndMetricsConsoleConfig() -> nestdaq_otel_config
 {
-    auto options = nestdaq::telemetry::TelemetryOptions{};
-    options.logProtocol = "console";
-    options.metricProtocol = "console";
-    options.traceProtocol.clear();
-    options.serviceName = "nestdaq-test";
-    options.serviceNamespace = "nestdaq";
-    options.serviceInstanceId = "test-instance";
-    options.timeoutMs = 50;
-    options.metricExportIntervalMs = 100;
-    return nestdaq::telemetry::MakeConfig(options);
+    auto config = BaseConfig();
+    config.logs.protocol = "console";
+    config.metrics.protocol = "console";
+    config.service_namespace = "nestdaq";
+    config.service_instance_id = "test-instance";
+    config.timeout_ms = 50;
+    config.metric_export_interval_ms = 100;
+    return config;
 }
 
 auto ExtractJsonLog(std::string_view logs, std::string_view root) -> nlohmann::json

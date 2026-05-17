@@ -5,6 +5,9 @@
 
 #include <catch2/catch_test_macros.hpp>
 
+#include <boost/program_options.hpp>
+#include <fairmq/ProgOptions.h>
+#include <fairlogger/Logger.h>
 #include <nestdaq/telemetry/FairLoggerTelemetryLoader.h>
 
 #include <array>

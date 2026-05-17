@@ -5,6 +5,50 @@ install(FILES
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/nestdaq/telemetry
 )
 
+add_library(nestdaq_telemetry SHARED
+  FairLoggerTelemetryLoader.cxx
+  Telemetry.cxx
+)
+
+target_include_directories(nestdaq_telemetry PUBLIC
+  "$<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}>"
+  "$<BUILD_INTERFACE:${CMAKE_BINARY_DIR}>"
+  "$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>"
+)
+
+target_include_directories(nestdaq_telemetry SYSTEM PUBLIC
+  ${Boost_INCLUDE_DIRS}
+  ${FairLogger_INCDIR}
+  ${FairMQ_INCDIR}
+)
+
+target_link_directories(nestdaq_telemetry PUBLIC
+  ${Boost_LIBRARY_DIRS}
+  ${FairLogger_LIBDIR}
+  ${FairMQ_LIBDIR}
+)
+
+target_link_libraries(nestdaq_telemetry PUBLIC
+  ${Boost_LIBRARIES}
+  FairLogger
+  ${CMAKE_DL_LIBS}
+)
+
+if(FairMQ_VERSION VERSION_GREATER_EQUAL 1.8.0)
+  target_link_libraries(nestdaq_telemetry PUBLIC fairmq)
+elseif((FairMQ_VERSION VERSION_GREATER_EQUAL 1.4.55)
+    AND (FairMQ_VERSION VERSION_LESS_EQUAL 1.4.56))
+  target_link_libraries(nestdaq_telemetry PUBLIC FairMQ)
+else()
+  message(FATAL_ERROR "Unsupported FairMQ version ${FairMQ_VERSION}")
+endif()
+
+install(TARGETS nestdaq_telemetry
+  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+)
+
 add_library(nestdaq_fairmq_throughput_parser STATIC
   FairMQThroughputLogParser.cxx
 )

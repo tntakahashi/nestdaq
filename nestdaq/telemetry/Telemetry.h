@@ -1,18 +1,18 @@
 #pragma once
 
-#include <nestdaq/telemetry/FairLoggerTelemetryLoader.h>
+#include <nestdaq/telemetry/OpenTelemetryInitializer.h>
 
-#include <atomic>
 #include <cstdint>
 #include <initializer_list>
 #include <span>
 #include <string>
 #include <string_view>
 #include <type_traits>
-#include <utility>
 #include <vector>
 
 namespace nestdaq::telemetry {
+
+class TelemetryLibrary;
 
 namespace detail {
 template<typename T>
@@ -22,23 +22,9 @@ concept MetricValue = std::is_arithmetic_v<std::remove_cvref_t<T>> &&
 
 class Attribute {
 public:
-    Attribute(std::string_view key, std::string_view value)
-        : fKey{key}
-        , fStringValue{value}
-    {
-    }
-
-    Attribute(std::string_view key, const char* value)
-        : Attribute{key, value == nullptr ? std::string_view{} : std::string_view{value}}
-    {
-    }
-
-    Attribute(std::string_view key, bool value)
-        : fKey{key}
-        , fType{NESTDAQ_OTEL_ATTRIBUTE_BOOL}
-        , fBoolValue{value ? 1U : 0U}
-    {
-    }
+    Attribute(std::string_view key, std::string_view value);
+    Attribute(std::string_view key, const char* value);
+    Attribute(std::string_view key, bool value);
 
     template<typename T>
         requires(std::is_integral_v<T> && std::is_signed_v<T> && !std::is_same_v<std::remove_cv_t<T>, bool>)
@@ -67,18 +53,7 @@ public:
     {
     }
 
-    auto ToOtelAttribute() const noexcept -> nestdaq_otel_attribute
-    {
-        return nestdaq_otel_attribute{
-            .key = fKey.data(),
-            .type = fType,
-            .string_value = fStringValue.data(),
-            .int_value = fIntValue,
-            .uint_value = fUIntValue,
-            .double_value = fDoubleValue,
-            .bool_value = fBoolValue,
-        };
-    }
+    auto ToOtelAttribute() const noexcept -> nestdaq_otel_attribute;
 
 private:
     std::string fKey;
@@ -90,15 +65,7 @@ private:
     uint32_t fBoolValue{0};
 };
 
-inline auto MakeOtelAttributes(std::span<const Attribute> attributes) -> std::vector<nestdaq_otel_attribute>
-{
-    auto values = std::vector<nestdaq_otel_attribute>{};
-    values.reserve(attributes.size());
-    for (const auto& attribute : attributes) {
-        values.push_back(attribute.ToOtelAttribute());
-    }
-    return values;
-}
+auto MakeOtelAttributes(std::span<const Attribute> attributes) -> std::vector<nestdaq_otel_attribute>;
 
 /**
  * @brief Movable RAII wrapper for a span handle owned by the telemetry plugin.
@@ -110,54 +77,16 @@ inline auto MakeOtelAttributes(std::span<const Attribute> attributes) -> std::ve
 class TelemetrySpan {
 public:
     TelemetrySpan() = default;
-    TelemetrySpan(TelemetryLibrary& telemetry, uint64_t handle) noexcept
-        : fTelemetry{&telemetry}
-        , fHandle{handle}
-    {
-    }
+    TelemetrySpan(TelemetryLibrary& telemetry, uint64_t handle) noexcept;
     TelemetrySpan(const TelemetrySpan&) = delete;
     auto operator=(const TelemetrySpan&) -> TelemetrySpan& = delete;
-    TelemetrySpan(TelemetrySpan&& other) noexcept
-        : fTelemetry{other.fTelemetry}
-        , fHandle{other.fHandle}
-    {
-        other.fTelemetry = nullptr;
-        other.fHandle = 0;
-    }
-    auto operator=(TelemetrySpan&& other) noexcept -> TelemetrySpan&
-    {
-        if (this != &other) {
-            End();
-            fTelemetry = other.fTelemetry;
-            fHandle = other.fHandle;
-            other.fTelemetry = nullptr;
-            other.fHandle = 0;
-        }
-        return *this;
-    }
-    ~TelemetrySpan()
-    {
-        End();
-    }
+    TelemetrySpan(TelemetrySpan&& other) noexcept;
+    auto operator=(TelemetrySpan&& other) noexcept -> TelemetrySpan&;
+    ~TelemetrySpan();
 
-    auto End() noexcept -> void
-    {
-        if (fTelemetry != nullptr && fHandle != 0) {
-            fTelemetry->SpanEnd(fHandle);
-            fHandle = 0;
-        }
-    }
-
-    auto SetAttribute(const nestdaq_otel_attribute& attribute) -> bool
-    {
-        return fTelemetry != nullptr && fHandle != 0 && fTelemetry->SpanSetAttribute(fHandle, attribute);
-    }
-
-    auto SetAttribute(const Attribute& attribute) -> bool
-    {
-        const auto otelAttribute = attribute.ToOtelAttribute();
-        return SetAttribute(otelAttribute);
-    }
+    auto End() noexcept -> void;
+    auto SetAttribute(const nestdaq_otel_attribute& attribute) -> bool;
+    auto SetAttribute(const Attribute& attribute) -> bool;
 
 private:
     TelemetryLibrary* fTelemetry{nullptr};
@@ -167,22 +96,9 @@ private:
 class Counter {
 public:
     Counter() = default;
-    Counter(TelemetryLibrary* library, std::string_view name, std::string_view unit, std::string_view description)
-        : fLibrary{library}
-        , fName{name}
-        , fUnit{unit}
-        , fDescription{description}
-    {
-    }
+    Counter(TelemetryLibrary* library, std::string_view name, std::string_view unit, std::string_view description);
 
-    auto Add(double value, std::initializer_list<Attribute> attributes = {}) const -> bool
-    {
-        if (fLibrary == nullptr) {
-            return true;
-        }
-        const auto attrs = MakeOtelAttributes(std::span<const Attribute>{attributes.begin(), attributes.size()});
-        return fLibrary->MetricAddDoubleCounter(fName, value, fUnit, fDescription, attrs.data(), attrs.size());
-    }
+    auto Add(double value, std::initializer_list<Attribute> attributes = {}) const -> bool;
 
     template<detail::MetricValue T>
     auto Add(T value, std::initializer_list<Attribute> attributes = {}) const -> bool
@@ -200,22 +116,9 @@ private:
 class Histogram {
 public:
     Histogram() = default;
-    Histogram(TelemetryLibrary* library, std::string_view name, std::string_view unit, std::string_view description)
-        : fLibrary{library}
-        , fName{name}
-        , fUnit{unit}
-        , fDescription{description}
-    {
-    }
+    Histogram(TelemetryLibrary* library, std::string_view name, std::string_view unit, std::string_view description);
 
-    auto Record(double value, std::initializer_list<Attribute> attributes = {}) const -> bool
-    {
-        if (fLibrary == nullptr) {
-            return true;
-        }
-        const auto attrs = MakeOtelAttributes(std::span<const Attribute>{attributes.begin(), attributes.size()});
-        return fLibrary->MetricRecordDoubleHistogram(fName, value, fUnit, fDescription, attrs.data(), attrs.size());
-    }
+    auto Record(double value, std::initializer_list<Attribute> attributes = {}) const -> bool;
 
     template<detail::MetricValue T>
     auto Record(T value, std::initializer_list<Attribute> attributes = {}) const -> bool
@@ -233,22 +136,9 @@ private:
 class Gauge {
 public:
     Gauge() = default;
-    Gauge(TelemetryLibrary* library, std::string_view name, std::string_view unit, std::string_view description)
-        : fLibrary{library}
-        , fName{name}
-        , fUnit{unit}
-        , fDescription{description}
-    {
-    }
+    Gauge(TelemetryLibrary* library, std::string_view name, std::string_view unit, std::string_view description);
 
-    auto Record(double value, std::initializer_list<Attribute> attributes = {}) const -> bool
-    {
-        if (fLibrary == nullptr) {
-            return true;
-        }
-        const auto attrs = MakeOtelAttributes(std::span<const Attribute>{attributes.begin(), attributes.size()});
-        return fLibrary->MetricRecordDoubleGauge(fName, value, fUnit, fDescription, attrs.data(), attrs.size());
-    }
+    auto Record(double value, std::initializer_list<Attribute> attributes = {}) const -> bool;
 
     template<detail::MetricValue T>
     auto Record(T value, std::initializer_list<Attribute> attributes = {}) const -> bool
@@ -273,46 +163,15 @@ private:
 class Telemetry {
 public:
     Telemetry() = default;
+    explicit Telemetry(TelemetryLibrary& library) noexcept;
+    explicit Telemetry(TelemetryLibrary* library) noexcept;
 
-    /**
-     * @brief Bind the facade to a loaded telemetry library.
-     *
-     * The caller must keep @p library alive longer than this facade and any
-     * spans created from it.
-     */
-    explicit Telemetry(TelemetryLibrary& library) noexcept
-        : fLibrary{&library}
-    {
-    }
-
-    explicit Telemetry(TelemetryLibrary* library) noexcept
-        : fLibrary{library}
-    {
-    }
-
-    /**
-     * @brief Add @p value to a double counter instrument.
-     */
     auto AddDoubleCounter(std::string_view name,
                           double value,
                           std::string_view unit = "",
                           std::string_view description = "",
-                          std::span<const nestdaq_otel_attribute> attributes = {}) -> bool
-    {
-        if (fLibrary == nullptr) {
-            return true;
-        }
-        return fLibrary->MetricAddDoubleCounter(name,
-                                                value,
-                                                unit,
-                                                description,
-                                                attributes.data(),
-                                                attributes.size());
-    }
+                          std::span<const nestdaq_otel_attribute> attributes = {}) -> bool;
 
-    /**
-     * @brief Add @p value to a counter instrument.
-     */
     template<detail::MetricValue T>
     auto AddCounter(std::string_view name,
                     T value,
@@ -323,29 +182,12 @@ public:
         return AddDoubleCounter(name, static_cast<double>(value), unit, description, attributes);
     }
 
-    /**
-     * @brief Record @p value in a double histogram instrument.
-     */
     auto RecordDoubleHistogram(std::string_view name,
                                double value,
                                std::string_view unit = "",
                                std::string_view description = "",
-                               std::span<const nestdaq_otel_attribute> attributes = {}) -> bool
-    {
-        if (fLibrary == nullptr) {
-            return true;
-        }
-        return fLibrary->MetricRecordDoubleHistogram(name,
-                                                     value,
-                                                     unit,
-                                                     description,
-                                                     attributes.data(),
-                                                     attributes.size());
-    }
+                               std::span<const nestdaq_otel_attribute> attributes = {}) -> bool;
 
-    /**
-     * @brief Record @p value in a histogram instrument.
-     */
     template<detail::MetricValue T>
     auto RecordHistogram(std::string_view name,
                          T value,
@@ -356,29 +198,12 @@ public:
         return RecordDoubleHistogram(name, static_cast<double>(value), unit, description, attributes);
     }
 
-    /**
-     * @brief Record the latest @p value for a double gauge instrument.
-     */
     auto RecordDoubleGauge(std::string_view name,
                            double value,
                            std::string_view unit = "",
                            std::string_view description = "",
-                           std::span<const nestdaq_otel_attribute> attributes = {}) -> bool
-    {
-        if (fLibrary == nullptr) {
-            return true;
-        }
-        return fLibrary->MetricRecordDoubleGauge(name,
-                                                 value,
-                                                 unit,
-                                                 description,
-                                                 attributes.data(),
-                                                 attributes.size());
-    }
+                           std::span<const nestdaq_otel_attribute> attributes = {}) -> bool;
 
-    /**
-     * @brief Record the latest @p value for a gauge instrument.
-     */
     template<detail::MetricValue T>
     auto RecordGauge(std::string_view name,
                      T value,
@@ -389,70 +214,27 @@ public:
         return RecordDoubleGauge(name, static_cast<double>(value), unit, description, attributes);
     }
 
-    /**
-     * @brief Start a span.
-     *
-     * The returned span is inactive when tracing is disabled or span creation
-     * fails.
-     */
     auto StartSpan(std::string_view name,
-                   std::span<const nestdaq_otel_attribute> attributes = {}) -> TelemetrySpan
-    {
-        if (fLibrary == nullptr) {
-            return {};
-        }
-        return TelemetrySpan{*fLibrary, fLibrary->SpanStart(name, attributes.data(), attributes.size())};
-    }
+                   std::span<const nestdaq_otel_attribute> attributes = {}) -> TelemetrySpan;
 
     auto Counter(std::string_view name,
                  std::string_view unit = "",
-                 std::string_view description = "") const -> nestdaq::telemetry::Counter
-    {
-        return {fLibrary, name, unit, description};
-    }
-
+                 std::string_view description = "") const -> nestdaq::telemetry::Counter;
     auto Histogram(std::string_view name,
                    std::string_view unit = "",
-                   std::string_view description = "") const -> nestdaq::telemetry::Histogram
-    {
-        return {fLibrary, name, unit, description};
-    }
-
+                   std::string_view description = "") const -> nestdaq::telemetry::Histogram;
     auto Gauge(std::string_view name,
                std::string_view unit = "",
-               std::string_view description = "") const -> nestdaq::telemetry::Gauge
-    {
-        return {fLibrary, name, unit, description};
-    }
+               std::string_view description = "") const -> nestdaq::telemetry::Gauge;
 
     auto StartSpan(std::string_view name,
-                   std::initializer_list<Attribute> attributes) -> TelemetrySpan
-    {
-        if (fLibrary == nullptr) {
-            return {};
-        }
-        const auto attrs = MakeOtelAttributes(std::span<const Attribute>{attributes.begin(), attributes.size()});
-        return TelemetrySpan{*fLibrary, fLibrary->SpanStart(name, attrs.data(), attrs.size())};
-    }
+                   std::initializer_list<Attribute> attributes) -> TelemetrySpan;
 
 private:
     TelemetryLibrary* fLibrary{nullptr};
 };
 
-inline auto ActiveTelemetryLibrary() noexcept -> std::atomic<TelemetryLibrary*>&
-{
-    static auto value = std::atomic<TelemetryLibrary*>{nullptr};
-    return value;
-}
-
-inline auto SetActiveTelemetryLibrary(TelemetryLibrary* library) noexcept -> void
-{
-    ActiveTelemetryLibrary().store(library, std::memory_order_release);
-}
-
-inline auto GetTelemetry() noexcept -> Telemetry
-{
-    return Telemetry{ActiveTelemetryLibrary().load(std::memory_order_acquire)};
-}
+auto SetActiveTelemetryLibrary(TelemetryLibrary* library) noexcept -> void;
+auto GetTelemetry() noexcept -> Telemetry;
 
 } // namespace nestdaq::telemetry

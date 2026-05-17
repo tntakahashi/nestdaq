@@ -11,7 +11,19 @@ if(NOT TARGET NestDAQ::NestDAQ)
     message(FATAL_ERROR "NestDAQ include directory does not contain nestdaq/runDevice.h: ${_nestdaq_include_dir}")
   endif()
 
+  find_library(_nestdaq_telemetry_library
+    NAMES nestdaq_telemetry
+    PATHS
+      "${PACKAGE_PREFIX_DIR}/lib64"
+      "${PACKAGE_PREFIX_DIR}/lib"
+    NO_DEFAULT_PATH
+  )
+  if(NOT _nestdaq_telemetry_library)
+    message(FATAL_ERROR "NestDAQ telemetry library was not found under ${PACKAGE_PREFIX_DIR}")
+  endif()
+
   set(_nestdaq_link_libraries
+    ${_nestdaq_telemetry_library}
     ${Boost_LIBRARIES}
     ${fmt_LIB}
     FairLogger
@@ -37,5 +49,6 @@ if(NOT TARGET NestDAQ::NestDAQ)
   )
 
   unset(_nestdaq_include_dir)
+  unset(_nestdaq_telemetry_library)
   unset(_nestdaq_link_libraries)
 endif()
