@@ -66,6 +66,8 @@ bool Sink::HandleData(fair::mq::MessagePtr &msg, int index)
     fMessagesReceived.Add(1, {{"fairmq.channel.name", fInputChannelName},
                               {"fairmq.channel.index", index},
                               {"message.multipart", false}});
+    // These receiver metrics demonstrate counting accepted messages, observing
+    // payload sizes, and tracking the current total for a single-part stream.
     fMessageSize.Record(msg->GetSize(), {{"fairmq.channel.name", fInputChannelName},
                                          {"fairmq.channel.index", index},
                                          {"message.multipart", false}});
@@ -97,6 +99,8 @@ bool Sink::HandleMultipartData(fair::mq::Parts &msgParts, int index)
         fMessagesReceived.Add(1, {{"fairmq.channel.name", fInputChannelName},
                                   {"fairmq.channel.index", index},
                                   {"message.multipart", true}});
+        // The multipart path uses the same metric names with attributes that
+        // distinguish multipart traffic from single-part traffic.
         fMessageSize.Record(msg->GetSize(), {{"fairmq.channel.name", fInputChannelName},
                                              {"fairmq.channel.index", index},
                                              {"message.multipart", true}});
@@ -127,6 +131,8 @@ void Sink::InitTask()
     fInputChannelName = fConfig->GetProperty<std::string>(opt::InputChannelName);
     LOG(debug) << " input channel = " << fInputChannelName;
 
+    // These instruments show the intended consumer metrics: received message
+    // count, payload size distribution, and current total received messages.
     auto telemetry = nestdaq::telemetry::GetTelemetry();
     fMessagesReceived = telemetry.Counter("examples.sink.messages.received", "{message}", "Messages received by the Sink example");
     fMessageSize = telemetry.Histogram("examples.sink.message.size", "By", "Sink example message size");

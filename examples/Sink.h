@@ -36,6 +36,9 @@ private:
     void PostRun() override;
 
     std::string fInputChannelName;
+    // Telemetry handles are kept as members to demonstrate receiver-side
+    // metrics through the NestDAQ facade, without linking this example to the
+    // OTel SDK.
     nestdaq::telemetry::Counter fMessagesReceived;
     nestdaq::telemetry::Histogram fMessageSize;
     nestdaq::telemetry::Gauge fMessagesTotal;

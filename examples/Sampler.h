@@ -25,6 +25,8 @@ private:
     std::string fId;
     std::string fOutputChannelName;
     std::string fText;
+    // Telemetry handles are kept as members to demonstrate sender-side metrics
+    // through the NestDAQ facade, without linking this example to the OTel SDK.
     nestdaq::telemetry::Counter fMessagesSent;
     nestdaq::telemetry::Counter fMessagesFailed;
     nestdaq::telemetry::Histogram fMessageSize;

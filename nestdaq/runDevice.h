@@ -18,6 +18,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <cstdlib>
 #include <exception>
 #include <memory>
 #include <string>
@@ -60,9 +61,13 @@ auto NormalizeArguments(int argc, char* argv[]) -> ProgramArguments // NOLINT(cp
     arguments.storage.reserve(static_cast<std::size_t>(argc));
     arguments.argv.reserve(static_cast<std::size_t>(argc));
 
+    // Keep normalized arguments in owned storage so both telemetry option
+    // parsing and FairMQ DeviceRunner receive stable argv pointers.
     for (int i = 0; i < argc; ++i) {
         const auto arg = std::string_view{argv[i]}; // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
         if (arg == "--otel-log-protocol=") {
+            // Treat an explicit empty log protocol as the option's implicit
+            // empty value before handing the same argv to FairMQ.
             arguments.storage.emplace_back("--otel-log-protocol");
         } else {
             arguments.storage.emplace_back(argv[i]); // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
@@ -97,7 +102,7 @@ int main(int argc, char* argv[])
                 LOG(error) << "Failed to load telemetry library '" << telemetryOptions.library
                            << "': " << telemetry->GetLastError();
                 if (telemetryOptions.required) {
-                    return 1;
+                    return EXIT_FAILURE;
                 }
             } else {
                 const auto config = nestdaq::telemetry::MakeConfig(telemetryOptions);
@@ -105,7 +110,7 @@ int main(int argc, char* argv[])
                     LOG(error) << "Failed to initialize telemetry library '" << telemetryOptions.library
                                << "': " << telemetry->GetLastError();
                     if (telemetryOptions.required) {
-                        return 1;
+                        return EXIT_FAILURE;
                     }
                 } else {
                     telemetryInitialized = true;
@@ -163,9 +168,9 @@ int main(int argc, char* argv[])
         return rc;
     } catch (std::exception& e) {
         LOG(error) << "Uncaught exception reached the top of main: " << e.what();
-        return 1;
+        return EXIT_FAILURE;
     } catch (...) {
         LOG(error) << "Uncaught exception reached the top of main.";
-        return 1;
+        return EXIT_FAILURE;
     }
 }
