@@ -1,3 +1,7 @@
+/** @file
+ *  @brief Implements shared OpenTelemetry plugin runtime helpers.
+ */
+
 #include "nestdaq/telemetry/OpenTelemetryRuntime.h"
 
 #include <algorithm>
@@ -208,6 +212,9 @@ auto FlushFrameworkMetricsIfDirty(uint64_t timeoutMs) -> int
         stateCount = state.exportingFairMQStateMeasurements.size();
     }
 
+    // Export a snapshot of pending framework samples. Successful flushes erase
+    // only the exported prefix and recreate observable instruments so already
+    // exported one-shot samples cannot be observed again.
     const auto ok = frameworkMeterProvider->ForceFlush(TimeoutFromMs(timeoutMs));
     auto shouldRecreateProvider = false;
     auto &state = State();

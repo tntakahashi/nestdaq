@@ -9,13 +9,19 @@
 
 namespace daq::service {
 
-// key space fixed names
+/** @brief Top-level Redis namespace for DAQ service data. */
 static constexpr std::string_view TopPrefix{"daq_service"};
+/** @brief Redis namespace for live service presence keys. */
 static constexpr std::string_view PresencePrefix{"presence"};
+/** @brief Redis namespace for service health hashes. */
 static constexpr std::string_view HealthPrefix{"health"};
+/** @brief Redis namespace for FairMQ state values. */
 static constexpr std::string_view FairMQStatePrefix{"fair-mq-state"};
+/** @brief Redis field/key prefix for last update timestamps. */
 static constexpr std::string_view UpdateTimePrefix{"updatedTime"};
+/** @brief Redis namespace for published FairMQ program options. */
 static constexpr std::string_view ProgOptionPrefix{"option"};
+/** @brief Redis key prefix used for service instance index bookkeeping. */
 static constexpr std::string_view ServiceInstanceIndexPrefix{"service-instance-index"};
 
 static constexpr std::string_view Separator{"separator"};
@@ -39,6 +45,7 @@ static constexpr std::string_view StateChannelName{"daqstate"}; // daq command p
 }
 
 namespace fairmq::command {
+/** @brief FairMQ command string constants accepted by the service plugin. */
 static constexpr std::string_view Bind{"BIND"};
 static constexpr std::string_view CompleteInit{"COMPLETE INIT"};
 static constexpr std::string_view Connect{"CONNECT"};
@@ -53,6 +60,7 @@ static constexpr std::string_view Stop{"STOP"};
 }
 
 namespace daq::command {
+/** @brief Redis pub/sub channel used for DAQ control commands. */
 static constexpr std::string_view Channel{"daqctl"};
 static constexpr std::string_view Exit{"exit"};
 static constexpr std::string_view Quit{"quit"};

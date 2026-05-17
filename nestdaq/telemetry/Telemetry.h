@@ -15,17 +15,35 @@ namespace nestdaq::telemetry {
 class TelemetryLibrary;
 
 namespace detail {
+/**
+ * @brief Numeric metric value accepted by the convenience metric overloads.
+ *
+ * Boolean values are intentionally excluded because OpenTelemetry numeric
+ * instruments expect counters, histograms, and gauges to carry numeric
+ * quantities rather than flags.
+ */
 template<typename T>
 concept MetricValue = std::is_arithmetic_v<std::remove_cvref_t<T>> &&
                       !std::is_same_v<std::remove_cvref_t<T>, bool>;
 } // namespace detail
 
+/**
+ * @brief Owns one telemetry attribute until it is converted to the C ABI form.
+ *
+ * `nestdaq_otel_attribute` stores borrowed pointers, so this wrapper keeps
+ * string keys and string values alive while user-facing metric and span calls
+ * prepare the temporary C ABI arrays passed to @ref TelemetryLibrary.
+ */
 class Attribute {
 public:
+    /** @brief Create a string attribute. */
     Attribute(std::string_view key, std::string_view value);
+    /** @brief Create a string attribute from a nullable C string. */
     Attribute(std::string_view key, const char* value);
+    /** @brief Create a boolean attribute. */
     Attribute(std::string_view key, bool value);
 
+    /** @brief Create a signed integer attribute. */
     template<typename T>
         requires(std::is_integral_v<T> && std::is_signed_v<T> && !std::is_same_v<std::remove_cv_t<T>, bool>)
     Attribute(std::string_view key, T value)
@@ -35,6 +53,7 @@ public:
     {
     }
 
+    /** @brief Create an unsigned integer attribute. */
     template<typename T>
         requires(std::is_integral_v<T> && std::is_unsigned_v<T> && !std::is_same_v<std::remove_cv_t<T>, bool>)
     Attribute(std::string_view key, T value)
@@ -44,6 +63,7 @@ public:
     {
     }
 
+    /** @brief Create a floating-point attribute. */
     template<typename T>
         requires(std::is_floating_point_v<T>)
     Attribute(std::string_view key, T value)
@@ -53,6 +73,12 @@ public:
     {
     }
 
+    /**
+     * @brief Return the borrowed C ABI representation.
+     *
+     * The returned pointers remain valid only while this @ref Attribute object
+     * remains alive.
+     */
     auto ToOtelAttribute() const noexcept -> nestdaq_otel_attribute;
 
 private:
@@ -65,6 +91,12 @@ private:
     uint32_t fBoolValue{0};
 };
 
+/**
+ * @brief Convert owned C++ attributes into the C ABI array representation.
+ *
+ * The returned array borrows string storage from @p attributes, so callers must
+ * pass it to the telemetry backend before the input attributes are destroyed.
+ */
 auto MakeOtelAttributes(std::span<const Attribute> attributes) -> std::vector<nestdaq_otel_attribute>;
 
 /**
@@ -77,6 +109,7 @@ auto MakeOtelAttributes(std::span<const Attribute> attributes) -> std::vector<ne
 class TelemetrySpan {
 public:
     TelemetrySpan() = default;
+    /** @brief Wrap a non-zero span handle returned by @ref TelemetryLibrary. */
     TelemetrySpan(TelemetryLibrary& telemetry, uint64_t handle) noexcept;
     TelemetrySpan(const TelemetrySpan&) = delete;
     auto operator=(const TelemetrySpan&) -> TelemetrySpan& = delete;
@@ -84,8 +117,11 @@ public:
     auto operator=(TelemetrySpan&& other) noexcept -> TelemetrySpan&;
     ~TelemetrySpan();
 
+    /** @brief End the span if it is active; safe to call more than once. */
     auto End() noexcept -> void;
+    /** @brief Set an attribute on the active span handle. */
     auto SetAttribute(const nestdaq_otel_attribute& attribute) -> bool;
+    /** @brief Set an attribute on the active span using the C++ wrapper type. */
     auto SetAttribute(const Attribute& attribute) -> bool;
 
 private:
@@ -93,13 +129,23 @@ private:
     uint64_t fHandle{0};
 };
 
+/**
+ * @brief User-facing handle for a double counter instrument.
+ *
+ * A default-constructed counter or a counter created without an active backend
+ * is a successful no-op. This lets example and user code keep metric calls even
+ * when the OpenTelemetry plugin is not loaded.
+ */
 class Counter {
 public:
     Counter() = default;
+    /** @brief Bind the counter identity to a backend and instrument metadata. */
     Counter(TelemetryLibrary* library, std::string_view name, std::string_view unit, std::string_view description);
 
+    /** @brief Add a double value with optional attributes. */
     auto Add(double value, std::initializer_list<Attribute> attributes = {}) const -> bool;
 
+    /** @brief Add an arithmetic value after converting it to double. */
     template<detail::MetricValue T>
     auto Add(T value, std::initializer_list<Attribute> attributes = {}) const -> bool
     {
@@ -113,13 +159,19 @@ private:
     std::string fDescription;
 };
 
+/**
+ * @brief User-facing handle for a double histogram instrument.
+ */
 class Histogram {
 public:
     Histogram() = default;
+    /** @brief Bind the histogram identity to a backend and instrument metadata. */
     Histogram(TelemetryLibrary* library, std::string_view name, std::string_view unit, std::string_view description);
 
+    /** @brief Record a double value with optional attributes. */
     auto Record(double value, std::initializer_list<Attribute> attributes = {}) const -> bool;
 
+    /** @brief Record an arithmetic value after converting it to double. */
     template<detail::MetricValue T>
     auto Record(T value, std::initializer_list<Attribute> attributes = {}) const -> bool
     {
@@ -133,13 +185,23 @@ private:
     std::string fDescription;
 };
 
+/**
+ * @brief User-facing handle for a double observable gauge instrument.
+ *
+ * Gauge samples are last-value observations in the user metrics pipeline. The
+ * OpenTelemetry plugin owns the observable instrument and exports the latest
+ * value for each attribute set when its reader collects.
+ */
 class Gauge {
 public:
     Gauge() = default;
+    /** @brief Bind the gauge identity to a backend and instrument metadata. */
     Gauge(TelemetryLibrary* library, std::string_view name, std::string_view unit, std::string_view description);
 
+    /** @brief Record a double value with optional attributes. */
     auto Record(double value, std::initializer_list<Attribute> attributes = {}) const -> bool;
 
+    /** @brief Record an arithmetic value after converting it to double. */
     template<detail::MetricValue T>
     auto Record(T value, std::initializer_list<Attribute> attributes = {}) const -> bool
     {
@@ -163,15 +225,28 @@ private:
 class Telemetry {
 public:
     Telemetry() = default;
+    /**
+     * @brief Bind the facade to a loaded telemetry library.
+     *
+     * The caller must keep @p library alive longer than this facade and any
+     * spans created from it.
+     */
     explicit Telemetry(TelemetryLibrary& library) noexcept;
+    /** @brief Bind the facade to an optional telemetry library pointer. */
     explicit Telemetry(TelemetryLibrary* library) noexcept;
 
+    /**
+     * @brief Add @p value to a double counter instrument.
+     *
+     * Returns true without exporting when no backend is active.
+     */
     auto AddDoubleCounter(std::string_view name,
                           double value,
                           std::string_view unit = "",
                           std::string_view description = "",
                           std::span<const nestdaq_otel_attribute> attributes = {}) -> bool;
 
+    /** @brief Add an arithmetic value to a counter after converting it to double. */
     template<detail::MetricValue T>
     auto AddCounter(std::string_view name,
                     T value,
@@ -182,12 +257,18 @@ public:
         return AddDoubleCounter(name, static_cast<double>(value), unit, description, attributes);
     }
 
+    /**
+     * @brief Record @p value in a double histogram instrument.
+     *
+     * Returns true without exporting when no backend is active.
+     */
     auto RecordDoubleHistogram(std::string_view name,
                                double value,
                                std::string_view unit = "",
                                std::string_view description = "",
                                std::span<const nestdaq_otel_attribute> attributes = {}) -> bool;
 
+    /** @brief Record an arithmetic histogram value after converting it to double. */
     template<detail::MetricValue T>
     auto RecordHistogram(std::string_view name,
                          T value,
@@ -198,12 +279,18 @@ public:
         return RecordDoubleHistogram(name, static_cast<double>(value), unit, description, attributes);
     }
 
+    /**
+     * @brief Record the latest @p value for a double gauge instrument.
+     *
+     * Returns true without exporting when no backend is active.
+     */
     auto RecordDoubleGauge(std::string_view name,
                            double value,
                            std::string_view unit = "",
                            std::string_view description = "",
                            std::span<const nestdaq_otel_attribute> attributes = {}) -> bool;
 
+    /** @brief Record an arithmetic gauge value after converting it to double. */
     template<detail::MetricValue T>
     auto RecordGauge(std::string_view name,
                      T value,
@@ -214,19 +301,28 @@ public:
         return RecordDoubleGauge(name, static_cast<double>(value), unit, description, attributes);
     }
 
+    /**
+     * @brief Start a span through the active backend.
+     *
+     * Returns an inactive span when no backend is active or tracing is disabled.
+     */
     auto StartSpan(std::string_view name,
                    std::span<const nestdaq_otel_attribute> attributes = {}) -> TelemetrySpan;
 
+    /** @brief Create a reusable counter handle for one instrument identity. */
     auto Counter(std::string_view name,
                  std::string_view unit = "",
                  std::string_view description = "") const -> nestdaq::telemetry::Counter;
+    /** @brief Create a reusable histogram handle for one instrument identity. */
     auto Histogram(std::string_view name,
                    std::string_view unit = "",
                    std::string_view description = "") const -> nestdaq::telemetry::Histogram;
+    /** @brief Create a reusable gauge handle for one instrument identity. */
     auto Gauge(std::string_view name,
                std::string_view unit = "",
                std::string_view description = "") const -> nestdaq::telemetry::Gauge;
 
+    /** @brief Start a span with C++ attribute wrappers. */
     auto StartSpan(std::string_view name,
                    std::initializer_list<Attribute> attributes) -> TelemetrySpan;
 
@@ -234,7 +330,19 @@ private:
     TelemetryLibrary* fLibrary{nullptr};
 };
 
+/**
+ * @brief Register the process-wide telemetry backend used by @ref GetTelemetry.
+ *
+ * Passing null disables user-facing telemetry calls. The caller owns the
+ * library object and must unregister it before destroying the object.
+ */
 auto SetActiveTelemetryLibrary(TelemetryLibrary* library) noexcept -> void;
+/**
+ * @brief Return a lightweight facade bound to the currently active backend.
+ *
+ * If no backend is active, the returned facade performs successful no-op metric
+ * calls and returns inactive spans.
+ */
 auto GetTelemetry() noexcept -> Telemetry;
 
 } // namespace nestdaq::telemetry

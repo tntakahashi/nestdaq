@@ -344,6 +344,9 @@ daq::service::MetricsPlugin::~MetricsPlugin()
 }
 
 //_____________________________________________________________________________
+/**
+ * @brief Create RedisTimeSeries keys for one socket direction and its sum.
+ */
 bool daq::service::MetricsPlugin::CreateSocketTS(std::string_view keyMsg,
         std::string_view keyBytes,
         std::string_view labelMsg,
@@ -381,6 +384,9 @@ bool daq::service::MetricsPlugin::CreateSocketTS(std::string_view keyMsg,
 }
 
 //_____________________________________________________________________________
+/**
+ * @brief Create RedisTimeSeries keys for all configured FairMQ sockets.
+ */
 bool daq::service::MetricsPlugin::CreateSocketTS()
 {
     //LOG(warn) << __func__ << ":" << __LINE__;
@@ -418,6 +424,9 @@ bool daq::service::MetricsPlugin::CreateSocketTS()
 }
 
 //_____________________________________________________________________________
+/**
+ * @brief Queue creation of one RedisTimeSeries key with standard labels.
+ */
 bool daq::service::MetricsPlugin::CreateTimeseries(std::string_view key,
         const std::unordered_map<std::string, std::string> &labels)
 {
@@ -454,6 +463,9 @@ bool daq::service::MetricsPlugin::CreateTimeseries(std::string_view key,
 }
 
 //_____________________________________________________________________________
+/**
+ * @brief Delete stale Redis hash fields for service instances past the metrics TTL.
+ */
 void daq::service::MetricsPlugin::DeleteExpiredFields()
 {
     while (true) {
@@ -514,6 +526,9 @@ void daq::service::MetricsPlugin::DeleteExpiredFields()
 }
 
 //_____________________________________________________________________________
+/**
+ * @brief Delete RedisTimeSeries keys created by this plugin instance.
+ */
 void daq::service::MetricsPlugin::DeleteTSKeys()
 {
     if (!fRegisteredTSKeys.empty()) {
@@ -524,6 +539,9 @@ void daq::service::MetricsPlugin::DeleteTSKeys()
 }
 
 //_____________________________________________________________________________
+/**
+ * @brief Read FairMQ channel properties and cache per-socket metadata.
+ */
 void daq::service::MetricsPlugin::InitializeSocketProperties()
 {
     // Get parameters of channel configuration as std::map<sstd::tring, std::1string>
@@ -573,6 +591,9 @@ void daq::service::MetricsPlugin::InitializeSocketProperties()
 }
 
 //_____________________________________________________________________________
+/**
+ * @brief Check whether time-series keys should be recreated when running starts.
+ */
 bool daq::service::MetricsPlugin::IsRecreateTS()
 {
     //LOG(warn) << __func__ << ":" << __LINE__;
@@ -587,6 +608,9 @@ bool daq::service::MetricsPlugin::IsRecreateTS()
 }
 
 //_____________________________________________________________________________
+/**
+ * @brief Read cumulative CPU time consumed by this process.
+ */
 auto daq::service::MetricsPlugin::ReadProcessUsage() const -> ProcessUsageSample
 {
     rusage usage{};
@@ -603,6 +627,9 @@ auto daq::service::MetricsPlugin::ReadProcessUsage() const -> ProcessUsageSample
 }
 
 //_____________________________________________________________________________
+/**
+ * @brief Read resident memory usage of this process in MiB.
+ */
 auto daq::service::MetricsPlugin::ReadResidentMemoryMiB() const -> double
 {
     std::ifstream input{"/proc/self/statm"};
@@ -618,6 +645,9 @@ auto daq::service::MetricsPlugin::ReadResidentMemoryMiB() const -> double
 }
 
 //_____________________________________________________________________________
+/**
+ * @brief Record CPU, memory, state, and last-update metrics.
+ */
 void daq::service::MetricsPlugin::SendProcessMetrics()
 {
     //std::cout << MyClass << " " << __FUNCTION__;
@@ -664,6 +694,9 @@ void daq::service::MetricsPlugin::SendProcessMetrics()
 }
 
 //_____________________________________________________________________________
+/**
+ * @brief Parse a FairMQ throughput log line and record socket metrics.
+ */
 void daq::service::MetricsPlugin::SendSocketMetrics(const std::string &content)
 {
     //LOG(debug) << MyClass << " " << __FUNCTION__;

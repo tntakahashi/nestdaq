@@ -1,3 +1,7 @@
+/** @file
+ *  @brief Implements the OpenTelemetry-unlinked user telemetry facade.
+ */
+
 #include "nestdaq/telemetry/Telemetry.h"
 
 #include "nestdaq/telemetry/FairLoggerTelemetryLoader.h"
@@ -233,6 +237,13 @@ auto Telemetry::StartSpan(std::string_view name, std::initializer_list<Attribute
 }
 
 namespace {
+/**
+ * @brief Process-wide backend pointer used by user-facing convenience APIs.
+ *
+ * Ownership remains with the caller that loaded the telemetry plugin. Atomic
+ * access lets FairMQ callbacks and user code read the active backend without
+ * taking locks.
+ */
 auto ActiveTelemetryLibrary() noexcept -> std::atomic<TelemetryLibrary*>&
 {
     static auto value = std::atomic<TelemetryLibrary*>{nullptr};

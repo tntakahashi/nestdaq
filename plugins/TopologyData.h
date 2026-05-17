@@ -11,9 +11,13 @@
 
 namespace daq::service {
 
+/** @brief Default FairMQ socket buffer size used when topology omits one. */
 static constexpr int kDefaultSocketBufferSize{1000};
+/** @brief Default FairMQ socket linger value used when topology omits one. */
 static constexpr int kDefaultSocketLinger{500};
+/** @brief Lower bound for automatically assigned TCP ports. */
 static constexpr int kDefaultPortRangeMin{22000};
+/** @brief Upper bound for automatically assigned TCP ports. */
 static constexpr int kDefaultPortRangeMax{32000};
 
 /**
@@ -36,9 +40,11 @@ struct SocketProperty {
     bool autoBind{true};
     int numSockets{0};
 
-    // Following fields are used by TopologyConfig.
+    /** @brief True when TopologyConfig should derive subchannels automatically. */
     bool autoSubChannel{false};
+    /** @brief True after a bind address has been resolved and published. */
     bool bound{false};
+    /** @brief True when connect setup must wait for peer state. */
     bool waitForPeerConnection{true};
 };
 

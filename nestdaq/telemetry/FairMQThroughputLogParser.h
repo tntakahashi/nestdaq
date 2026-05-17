@@ -9,6 +9,9 @@ namespace nestdaq::telemetry {
 
 /**
  * @brief Parsed FairMQ channel throughput rates from the standard Device log line.
+ *
+ * The OpenTelemetry FairLogger sink and the legacy Redis metrics plugin share
+ * this value type so FairMQ rate log interpretation stays consistent.
  */
 struct FairMQThroughputSample {
     std::string channelName;

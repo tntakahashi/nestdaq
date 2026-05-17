@@ -1,3 +1,7 @@
+/** @file
+ *  @brief Implements user metrics and one-shot framework metrics export.
+ */
+
 #include "nestdaq/telemetry/OpenTelemetryRuntime.h"
 
 #include <chrono>
@@ -403,6 +407,9 @@ auto StartProcessMetricsThread(uint32_t intervalMs) -> void
             intervalMs == 0 ? kDefaultMetricExportIntervalMs : intervalMs};
     }
 
+    // CPU usage needs two process CPU samples. The first tick establishes the
+    // baseline; later ticks enqueue one-shot process metrics and trigger the
+    // framework metrics pipeline through RecordFrameworkProcessUsage().
     state.processMetricsThread = std::thread{[] {
         while (true) {
             auto interval = std::chrono::milliseconds{kDefaultMetricExportIntervalMs};

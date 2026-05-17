@@ -55,18 +55,24 @@ static constexpr std::string_view LastUpdateNSPrefix{"last-update-ns"};
 static constexpr std::string_view HostnamePrefix{"hostname"};
 static constexpr std::string_view HostIpAddressPrefix{"host-ip"};
 
-// labels for time series data
+/** @brief RedisTimeSeries label names attached to socket metric series. */
 static constexpr std::string_view DataType{"data"};
 static constexpr std::string_view SocketName{"name"};
 static constexpr std::string_view SocketType{"socket"};
 static constexpr std::string_view SocketTransport{"transport"};
 static constexpr std::string_view SocketMethod{"method"};
 
+/**
+ * @brief Process CPU sample used to compute CPU usage between timer ticks.
+ */
 struct ProcessUsageSample {
     double cpuSeconds{0.0};
     std::chrono::steady_clock::time_point timestamp;
 };
 
+/**
+ * @brief Per-socket throughput values parsed from FairMQ rate log lines.
+ */
 struct SocketMetrics {
     double msgIn{0};
     double msgOut{0};
@@ -74,12 +80,14 @@ struct SocketMetrics {
     double bytesOut{0};
 };
 
+/** @brief Redis hash and time-series keys for process-level metrics. */
 struct ProcessStatKey {
     std::string cpu;
     std::string ram;
     std::string stateId;
 };
 
+/** @brief Redis hash and time-series keys for one socket metric group. */
 struct SocketMetricsKey {
     std::string msgIn;
     std::string msgOut;
@@ -87,11 +95,19 @@ struct SocketMetricsKey {
     std::string bytesOut;
 };
 
+/**
+ * @brief FairMQ plugin that exports process and socket metrics to Redis.
+ *
+ * The plugin samples CPU/RSS on a timer and parses FairMQ throughput log lines
+ * for channel metrics. It can also manage RedisTimeSeries keys when the Redis
+ * module is available.
+ */
 class MetricsPlugin : public fair::mq::Plugin
 {
 public:
     using work_guard_t = net::executor_work_guard<net::io_context::executor_type>;
 
+    /** @brief Command-line option names for metrics plugin configuration. */
     struct OptionKey {
         static constexpr std::string_view UpdateInterval{"proc-stat-update-interval"};
         static constexpr std::string_view ServerUri{"metrics-uri"};
@@ -100,6 +116,7 @@ public:
         static constexpr std::string_view MaxTtl{"metrics-max-ttl"};
     };
 
+    /** @brief Construct and initialize the Redis-backed metrics plugin. */
     MetricsPlugin(std::string_view name,
                   const fair::mq::Plugin::Version &version,
                   std::string_view maintainer,
@@ -112,21 +129,32 @@ public:
     ~MetricsPlugin() override;
 
 private:
+    /** @brief Create RedisTimeSeries entries for one socket metric pair. */
     bool CreateSocketTS(std::string_view keyMsg,
                         std::string_view keyBytes,
                         std::string_view labelMsg,
                         std::string_view labelBytes,
                         const std::unordered_map<std::string, std::string> &labels);
+    /** @brief Create all configured socket RedisTimeSeries entries. */
     bool CreateSocketTS();
+    /** @brief Create one RedisTimeSeries key with labels and retention. */
     bool CreateTimeseries(std::string_view key,
                           const std::unordered_map<std::string, std::string> &labels);
+    /** @brief Remove stale hash fields whose update timestamp exceeded max TTL. */
     void DeleteExpiredFields();
+    /** @brief Delete RedisTimeSeries keys owned by this metrics instance. */
     void DeleteTSKeys();
+    /** @brief Load socket metadata from topology keys for metric labels. */
     void InitializeSocketProperties();
+    /** @brief Return whether time-series keys should be recreated on startup. */
     bool IsRecreateTS();
+    /** @brief Read process user/system CPU time for usage deltas. */
     ProcessUsageSample ReadProcessUsage() const;
+    /** @brief Read resident memory in MiB from `/proc/self/stat`. */
     double ReadResidentMemoryMiB() const;
+    /** @brief Publish process CPU, RSS, and FairMQ state metrics to Redis. */
     void SendProcessMetrics();
+    /** @brief Parse and publish socket throughput metrics from a FairMQ log line. */
     void SendSocketMetrics(const std::string &content);
 
     //pid_t fPid;
@@ -191,6 +219,9 @@ private:
 };
 
 //_____________________________________________________________________________
+/**
+ * @brief Declare metrics plugin command-line options.
+ */
 auto MetricsPluginProgramOptions() -> fair::mq::Plugin::ProgOptions;
 
 // NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables,cppcoreguidelines-pro-type-reinterpret-cast,performance-no-int-to-ptr)

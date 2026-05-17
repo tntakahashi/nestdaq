@@ -681,6 +681,12 @@ void Plugin::ReadRunNumber()
 }
 
 //_____________________________________________________________________________
+/**
+ * @brief Register the FairMQ service instance in Redis.
+ *
+ * This records health, presence, state, and command-line option metadata, then
+ * starts the periodic TTL refresh timer used by the service registry.
+ */
 void Plugin::Register()
 {
     auto registryUri = GetProperty<std::string>(std::string{ServiceRegistryUri});
@@ -766,6 +772,12 @@ void Plugin::Register()
 }
 
 //_____________________________________________________________________________
+/**
+ * @brief Refresh registry TTLs and liveness timestamps for this service.
+ *
+ * The refresh keeps the service presence, FairMQ state, health hash, program
+ * option hash, and topology entries alive while the process is running.
+ */
 void Plugin::ResetTtl()
 {
 //  LOG(debug) << " reset presence ttl";
@@ -792,6 +804,9 @@ void Plugin::ResetTtl()
 }
 
 //_____________________________________________________________________________
+/**
+ * @brief Drive the device from Idle toward the configured startup state.
+ */
 void Plugin::RunStartupSequence()
 {
     // Idle -> .. -> DeviceReady
@@ -823,6 +838,9 @@ void Plugin::RunStartupSequence()
 }
 
 //_____________________________________________________________________________
+/**
+ * @brief Drive the device through the shutdown path and release control.
+ */
 void Plugin::RunShutdownSequence()
 {
     LOG(debug) << MyClass << " RunShutdownSequence()";
@@ -983,6 +1001,13 @@ void Plugin::SetProcessName()
 }
 
 //_____________________________________________________________________________
+/**
+ * @brief Subscribe to DAQ control commands published through Redis.
+ *
+ * Matching commands are translated to FairMQ state transitions for this service
+ * instance. Exit-like commands also request plugin shutdown so the state-control
+ * thread can run the shutdown sequence.
+ */
 void Plugin::SubscribeToDaqCommand()
 {
     LOG(debug) << " create a sbuscriber. ";
@@ -1064,6 +1089,9 @@ void Plugin::SubscribeToDaqCommand()
 }
 
 //_____________________________________________________________________________
+/**
+ * @brief Remove service registry keys and allocated instance-index fields.
+ */
 void Plugin::Unregister()
 {
     LOG(debug) << MyClass << " Unregister";
@@ -1089,6 +1117,9 @@ void Plugin::Unregister()
 }
 
 //_____________________________________________________________________________
+/**
+ * @brief Write FairMQ program options to the service registry.
+ */
 void Plugin::WriteProgOptions()
 {
     std::lock_guard<std::mutex> lock{fMutex};
@@ -1116,6 +1147,9 @@ void Plugin::WriteProgOptions()
     .expire(fProgOptionKeyName, fMaxTtl);
 }
 //_____________________________________________________________________________
+/**
+ * @brief Record run start time in Redis and mirror it into FairMQ properties.
+ */
 void Plugin::WriteStartTime()
 {
     const auto &[uptimeNsec, updatedTime] = update_date(fHealth->createdTimeSystem, fHealth->createdTime);
@@ -1130,6 +1164,9 @@ void Plugin::WriteStartTime()
 }
 
 //_____________________________________________________________________________
+/**
+ * @brief Record run stop time in Redis and mirror it into FairMQ properties.
+ */
 void Plugin::WriteStopTime()
 {
     const auto &[uptimeNsec, updatedTime] = update_date(fHealth->createdTimeSystem, fHealth->createdTime);

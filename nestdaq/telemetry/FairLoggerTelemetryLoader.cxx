@@ -1,3 +1,7 @@
+/** @file
+ *  @brief Implements telemetry option parsing and the runtime OpenTelemetry plugin loader.
+ */
+
 #include "nestdaq/telemetry/FairLoggerTelemetryLoader.h"
 
 #include <fairmq/ProgOptions.h>
@@ -15,6 +19,12 @@
 namespace nestdaq::telemetry {
 namespace {
 
+/**
+ * @brief Resolve one symbol from the loaded telemetry plugin.
+ *
+ * The result is wrapped in `std::function` so callers can store optional C ABI
+ * entries uniformly and test whether a symbol was present before calling it.
+ */
 template<typename T>
 auto ResolveSymbol(void* handle, const char* symbol) -> std::function<T>
 {

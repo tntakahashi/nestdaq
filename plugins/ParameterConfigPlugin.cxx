@@ -69,6 +69,9 @@ const std::unordered_set<std::string_view> reservedOptionsVectorString
 namespace daq::service {
 
 //_____________________________________________________________________________
+/**
+ * @brief Return command-line options provided by the parameter configuration plugin.
+ */
 auto ParameterConfigPluginProgramOptions() -> fair::mq::Plugin::ProgOptions
 {
     namespace bpo = boost::program_options;
@@ -80,6 +83,9 @@ auto ParameterConfigPluginProgramOptions() -> fair::mq::Plugin::ProgOptions
 }
 
 //_____________________________________________________________________________
+/**
+ * @brief Construct the plugin, load Redis-backed parameters, and start watching for changes.
+ */
 ParameterConfigPlugin::ParameterConfigPlugin(std::string_view name,
         const fair::mq::Plugin::Version &version,
         std::string_view maintainer,
@@ -139,6 +145,9 @@ ParameterConfigPlugin::~ParameterConfigPlugin()
 }
 
 //_____________________________________________________________________________
+/**
+ * @brief Check whether a parameter name maps to a FairMQ reserved option type.
+ */
 bool ParameterConfigPlugin::IsReservedOption(std::string_view name)
 {
     if (reservedOptionsString.count(name)>0) {
@@ -166,6 +175,13 @@ bool ParameterConfigPlugin::IsReservedOption(std::string_view name)
 }
 
 //_____________________________________________________________________________
+/**
+ * @brief Parse one Redis parameter value and store it as a FairMQ property.
+ *
+ * Reserved FairMQ options are converted to their known target types. Other
+ * values are interpreted as strings, arrays, or maps based on comma and equals
+ * separators.
+ */
 void ParameterConfigPlugin::Parse(std::string_view name, std::string line)
 {
     //LOG(debug) << " parameter: field = " << name << ", value = " << line;
@@ -183,6 +199,9 @@ void ParameterConfigPlugin::Parse(std::string_view name, std::string line)
 }
 
 //_____________________________________________________________________________
+/**
+ * @brief Read a Redis hash and apply its fields as parameters.
+ */
 void ParameterConfigPlugin::ReadHash(const std::string& name)
 {
     std::unordered_map<std::string, std::string> h;
@@ -197,6 +216,9 @@ void ParameterConfigPlugin::ReadHash(const std::string& name)
 }
 
 //_____________________________________________________________________________
+/**
+ * @brief Read a Redis list and apply it as a vector property.
+ */
 void ParameterConfigPlugin::ReadList(const std::string& name)
 {
     std::vector<std::string> v;
@@ -213,6 +235,9 @@ void ParameterConfigPlugin::ReadList(const std::string& name)
 }
 
 //_____________________________________________________________________________
+/**
+ * @brief Load group, instance, and nested parameter keys from Redis.
+ */
 void ParameterConfigPlugin::ReadParameters()
 {
     //LOG(debug) << MyClass << " " << __FUNCTION__;
@@ -290,6 +315,9 @@ void ParameterConfigPlugin::ReadParameters()
 }
 
 //_____________________________________________________________________________
+/**
+ * @brief Read a Redis set and apply it as an unordered-set property.
+ */
 void ParameterConfigPlugin::ReadSet(const std::string& name)
 {
     std::unordered_set<std::string> members;
@@ -307,6 +335,9 @@ void ParameterConfigPlugin::ReadSet(const std::string& name)
 }
 
 //_____________________________________________________________________________
+/**
+ * @brief Read a Redis string and parse it as a parameter value.
+ */
 void ParameterConfigPlugin::ReadString(const std::string& name)
 {
     auto value = fClient->get(name);
@@ -319,6 +350,9 @@ void ParameterConfigPlugin::ReadString(const std::string& name)
 }
 
 //_____________________________________________________________________________
+/**
+ * @brief Read a Redis sorted set and apply it as a value-to-score map property.
+ */
 void ParameterConfigPlugin::ReadZset(const std::string& name)
 {
     std::unordered_map<std::string, double> m;
@@ -335,6 +369,9 @@ void ParameterConfigPlugin::ReadZset(const std::string& name)
 }
 
 //_____________________________________________________________________________
+/**
+ * @brief Convert and store a Redis value for a FairMQ reserved option.
+ */
 void ParameterConfigPlugin::SetPropertyOfReservedOption(std::string_view name, std::string_view value)
 {
     if (reservedOptionsString.count(name)>0) {
@@ -369,6 +406,9 @@ void ParameterConfigPlugin::SetPropertyOfReservedOption(std::string_view name, s
 }
 
 //_____________________________________________________________________________
+/**
+ * @brief Subscribe to Redis keyspace notifications for parameter changes.
+ */
 void ParameterConfigPlugin::SubscribeToParameterChange()
 {
     using opt = ParameterConfigPlugin::OptionKey;
@@ -412,6 +452,9 @@ void ParameterConfigPlugin::SubscribeToParameterChange()
 }
 
 //_____________________________________________________________________________
+/**
+ * @brief Convert a delimited Redis value into a vector property.
+ */
 void ParameterConfigPlugin::ToArray(std::string_view name, std::string line)
 {
     std::vector<std::string> v;
@@ -428,6 +471,9 @@ void ParameterConfigPlugin::ToArray(std::string_view name, std::string line)
 }
 
 //_____________________________________________________________________________
+/**
+ * @brief Convert a delimited key-value Redis value into a map property.
+ */
 void ParameterConfigPlugin::ToMap(std::string_view name, std::string line)
 {
     // Assuming the counts of "," and "=" are the same.

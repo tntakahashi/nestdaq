@@ -36,11 +36,19 @@ class Redis;
 
 namespace daq::service {
 
+/**
+ * @brief Redis key used to advertise that a DAQ service instance is alive.
+ */
 struct Presence {
     std::string key;
 };
 
-/** Current health record tracked for a DAQ service instance. */
+/**
+ * @brief Current health record tracked for a DAQ service instance.
+ *
+ * The service plugin updates this record periodically so controllers can detect
+ * stale or disappeared FairMQ devices.
+ */
 struct Health {
     std::string key;
     std::string hostName;
@@ -54,6 +62,10 @@ class TopologyConfig;
 
 /**
  * @brief FairMQ plugin that publishes service presence, health, and state.
+ *
+ * The plugin owns the Redis connection used by topology, parameter, and metrics
+ * helpers. It also subscribes to DAQ command channels and translates commands
+ * into FairMQ device state transitions.
  */
 class Plugin : public fair::mq::Plugin
 {
@@ -61,6 +73,7 @@ public:
     using DeviceState = fair::mq::Plugin::DeviceState;
     using work_guard_t = net::executor_work_guard<net::io_context::executor_type>;
 
+    /** @brief Construct and initialize the Redis-backed service plugin. */
     Plugin(std::string_view name,
            const fair::mq::Plugin::Version &version,
            std::string_view maintainer,
@@ -72,40 +85,61 @@ public:
     Plugin& operator=(Plugin&&) = delete;
     ~Plugin() override;
 
+    /** @brief Return the current health record published for this instance. */
     const Health& GetHealth() const {
         return *fHealth;
     }
+    /** @brief Return the plugin mutex shared with topology helpers. */
     std::mutex& GetMutex() {
         return fMutex;
     }
+    /** @brief Return the Redis client used by service-related helpers. */
     std::shared_ptr<sw::redis::Redis> GetClient() const {
         return fClient;
     }
+    /** @brief Return true when shutdown or reset cancellation was requested. */
     bool IsCanceled() const {
         return fResetDeviceRequested || fPluginShutdownRequested;
     }
+    /** @brief Return true when a Redis command requested FairMQ RESET DEVICE. */
     bool IsResetDeviceRequested() const {
         return fResetDeviceRequested;
     }
+    /** @brief Return true when the plugin shutdown sequence has started. */
     bool IsShutdownRequested() const {
         return fPluginShutdownRequested;
     }
 
 private:
+    /** @brief Execute a multi-step DAQ command sequence such as start or stop. */
     void ChangeDeviceStateByMultiCommand(std::string_view cmd);
+    /** @brief Execute a single FairMQ command received from Redis. */
     void ChangeDeviceStateBySingleCommand(std::string_view cmd);
+    /** @brief Read the current run number from Redis run information. */
     void ReadRunNumber();
+    /** @brief Register presence, health, state, and option keys in Redis. */
     void Register();
+    /** @brief Refresh TTLs for Redis keys owned by this plugin. */
     void ResetTtl();
+    /** @brief Run startup registration and initial topology configuration. */
     void RunStartupSequence();
+    /** @brief Run shutdown cleanup and Redis unregistration. */
     void RunShutdownSequence();
+    /** @brief Capture the process current working directory for health data. */
     void SetCurrentWorkingDirectory();
+    /** @brief Resolve the service instance id from options or generated UUID. */
     void SetId();
+    /** @brief Capture the process name for health data. */
     void SetProcessName();
+    /** @brief Subscribe to DAQ command messages from Redis pub/sub. */
     void SubscribeToDaqCommand();
+    /** @brief Remove service keys and subscriptions owned by this plugin. */
     void Unregister();
+    /** @brief Publish FairMQ program options under the service option key. */
     void WriteProgOptions();
+    /** @brief Publish run start timestamps to Redis. */
     void WriteStartTime();
+    /** @brief Publish run stop timestamps to Redis. */
     void WriteStopTime();
 
     std::string fSeparator;
@@ -146,6 +180,9 @@ private:
 };
 
 //_____________________________________________________________________________
+/**
+ * @brief Declare DAQ service plugin command-line options.
+ */
 auto PluginProgramOptions() -> fair::mq::Plugin::ProgOptions;
 
 // NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables,cppcoreguidelines-pro-type-reinterpret-cast,performance-no-int-to-ptr)

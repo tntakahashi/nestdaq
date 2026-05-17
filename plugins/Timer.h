@@ -13,6 +13,9 @@ namespace daq::service {
 namespace net = boost::asio;
 using strand_t = net::strand<net::io_context::executor_type>;
 
+/**
+ * @brief Repeating timer that keeps invoking a callback until it returns false.
+ */
 class Timer {
 public:
     Timer() = default;
@@ -22,6 +25,12 @@ public:
     Timer& operator=(Timer&&) = delete;
     ~Timer() noexcept;
 
+    /**
+     * @brief Start the timer on @p ctx with a fixed millisecond interval.
+     *
+     * The callback receives the Asio error code. Returning true schedules the
+     * next tick; returning false stops the repeating timer.
+     */
     void Start(const std::shared_ptr<net::io_context> &ctx,
 //           const std::shared_ptr<strand_t> &strand,
                unsigned int timeoutMS,
