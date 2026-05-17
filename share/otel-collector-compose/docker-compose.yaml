@@ -6,7 +6,6 @@ services:
       discovery.type: single-node
       plugins.security.disabled: "true"
       OPENSEARCH_JAVA_OPTS: "-Xms512m -Xmx512m"
-      OPENSEARCH_INITIAL_ADMIN_PASSWORD: "${OPENSEARCH_INITIAL_ADMIN_PASSWORD:-yourStrongPassWord123!}"
     ports:
       - "${OPENSEARCH_PORT:-9200}:9200"
     volumes:
@@ -37,8 +36,9 @@ services:
       - otel-net
 
   victoriametrics:
-    image: docker.io/victoriametrics/victoria-metrics:latest
+    image: docker.io/victoriametrics/victoria-metrics:v1.143.0
     container_name: victoriametrics
+    profiles: ["victoria"]
     command:
       - -storageDataPath=/victoria-metrics-data
     ports:
@@ -49,8 +49,9 @@ services:
       - otel-net
 
   victorialogs:
-    image: docker.io/victoriametrics/victoria-logs:latest
+    image: docker.io/victoriametrics/victoria-logs:v1.50.0
     container_name: victorialogs
+    profiles: ["victoria"]
     command:
       - -storageDataPath=/victoria-logs-data
     ports:
@@ -61,8 +62,9 @@ services:
       - otel-net
 
   victoriatraces:
-    image: docker.io/victoriametrics/victoria-traces:latest
+    image: docker.io/victoriametrics/victoria-traces:v0.8.2
     container_name: victoriatraces
+    profiles: ["victoria"]
     command:
       - -storageDataPath=/victoria-traces-data
     ports:
@@ -73,8 +75,9 @@ services:
       - otel-net
 
   grafana:
-    image: docker.io/grafana/grafana:latest
+    image: docker.io/grafana/grafana:12.4.0
     container_name: grafana
+    profiles: ["victoria"]
     environment:
       GF_INSTALL_PLUGINS: "victoriametrics-metrics-datasource,victoriametrics-logs-datasource"
       GF_SECURITY_ADMIN_PASSWORD: "${GRAFANA_ADMIN_PASSWORD:-admin}"
@@ -102,17 +105,9 @@ services:
     depends_on:
       opensearch:
         condition: service_healthy
-      victoriametrics:
-        condition: service_started
-      victorialogs:
-        condition: service_started
-      victoriatraces:
-        condition: service_started
     networks:
       - otel-net
 
 networks:
   otel-net:
-    external: true
     name: otel-net
-#    driver: bridge

@@ -25,14 +25,27 @@ exporters:
     traces_index: "otel-traces-%{service.name}"
     traces_index_fallback: "unknown-service"
     traces_index_time_format: "yyyy.MM.dd"
+  otlphttp/victoriametrics:
+    compression: gzip
+    metrics_endpoint: "http://victoriametrics:8428/opentelemetry/v1/metrics"
+  otlphttp/victorialogs:
+    compression: gzip
+    logs_endpoint: "http://victorialogs:9428/insert/opentelemetry/v1/logs"
+  otlphttp/victoriatraces:
+    compression: gzip
+    traces_endpoint: "http://victoriatraces:10428/insert/opentelemetry/v1/traces"
 
 service:
   pipelines:
     logs:
       receivers: [otlp]
       processors: [memory_limiter, batch]
-      exporters: [opensearch]
+      exporters: [opensearch, otlphttp/victorialogs]
     traces:
       receivers: [otlp]
       processors: [memory_limiter, batch]
-      exporters: [opensearch]
+      exporters: [opensearch, otlphttp/victoriatraces]
+    metrics:
+      receivers: [otlp]
+      processors: [memory_limiter, batch]
+      exporters: [otlphttp/victoriametrics]
