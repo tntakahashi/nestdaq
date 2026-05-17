@@ -115,17 +115,20 @@ cmake --install ./build
   If the external dependencies are installed in a different location, specify that directory with `-DCMAKE_PREFIX_PATH=xxx`.
 - To run `clang-tidy` during the NestDAQ build, add `-DNESTDAQ_ENABLE_CLANG_TIDY=ON`.
   This requires the `clang-tidy` command, provided by `clang-tools-extra` on AlmaLinux.
-- To build and install Doxygen documentation, add `-DWITH_DOCS=ON`.
+- To build and install Doxygen documentation, add `-DNestDAQ_BUILD_DOCS=ON`.
   This requires the `doxygen` command. If Doxygen is not found, documentation generation is skipped. If `dot` from Graphviz is available, Doxygen can use it to generate diagrams.
+- Example devices are built and installed by default. Add `-DNestDAQ_BUILD_EXAMPLES=OFF`
+  to skip `Sampler`, `Sink`, and `NullDevice`.
 - The Doxygen HTML output uses `doxygen-awesome-css` from `CMAKE_PREFIX_PATH/share/doxygen-awesome-css` by default. To use another location, specify `-DNESTDAQ_DOXYGEN_AWESOME_DIR=/path/to/doxygen-awesome-css`.
 - When `doxygen-awesome-css` is available, it is installed with the generated documentation under `./install/share/doc/nestdaq/doxygen-awesome-css`.
-- When `-DWITH_DOCS=ON` and Doxygen is available, the HTML documentation is generated under `./build/docs/html` and installed under `./install/share/doc/nestdaq/html`.
+- When `-DNestDAQ_BUILD_DOCS=ON` and Doxygen is available, the HTML documentation is generated under `./build/docs/html` and installed under `./install/share/doc/nestdaq/html`.
 
 ### Build and install examples
 
-The examples are built as a separate CMake project. Build and install the main
-NestDAQ package first, then configure the examples with `find_package(NestDAQ)`
-using the NestDAQ install prefix.
+The examples are included in the main NestDAQ build by default. They can also be
+built as a separate CMake project after installing NestDAQ. For a separate
+examples build, configure the examples with `find_package(NestDAQ)` using the
+NestDAQ install prefix.
 
 ```bash
 cmake \

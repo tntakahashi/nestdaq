@@ -1,8 +1,8 @@
 # Examples
 
 This directory contains small NestDAQ device examples. The examples are a
-standalone CMake project: build and install the main NestDAQ package first, then
-configure this directory with `find_package(NestDAQ)`.
+standalone CMake project, and are also included in the main NestDAQ build when
+`NestDAQ_BUILD_EXAMPLES=ON` is set. `NestDAQ_BUILD_EXAMPLES` defaults to `ON`.
 
 ## Example Devices
 
@@ -23,8 +23,11 @@ the telemetry options, for example `--otel-metric-protocol=console` and
 
 ## Build
 
-Install NestDAQ first, then configure the examples with the NestDAQ install
-prefix in `CMAKE_PREFIX_PATH`.
+The main NestDAQ build builds and installs these examples by default. Configure
+with `-DNestDAQ_BUILD_EXAMPLES=OFF` to skip them.
+
+For a separate examples build, install NestDAQ first, then configure the
+examples with the NestDAQ install prefix in `CMAKE_PREFIX_PATH`.
 
 ```sh
 cmake \

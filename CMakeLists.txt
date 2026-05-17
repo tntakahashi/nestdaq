@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.24)
 
 include(cmake/GitHelper.cmake)
 
-project(nestdaq VERSION "${PROJECT_VERSION}" LANGUAGES CXX C)
+project(NestDAQ VERSION "${PROJECT_VERSION}" LANGUAGES CXX C)
 
 message(STATUS "PROJECT_NAME: ${PROJECT_NAME}")
 
@@ -17,7 +17,8 @@ if(NESTDAQ_ENABLE_CLANG_TIDY)
   message(STATUS "clang-tidy enabled: ${CLANG_TIDY_EXE}")
 endif()
 
-option(WITH_DOCS "Build and install NestDAQ Doxygen documentation" OFF)
+option(NestDAQ_BUILD_DOCS "Build and install NestDAQ Doxygen documentation" OFF)
+option(NestDAQ_BUILD_EXAMPLES "Build and install NestDAQ example devices" ON)
 
 set(NESTDAQ_CMAKE_INSTALL_DIR "${CMAKE_INSTALL_LIBDIR}/cmake/NestDAQ")
 
@@ -120,10 +121,10 @@ else()
   message(STATUS "opentelemetry-cpp not found: skipping nestdaq telemetry library")
 endif()
 
-if(WITH_DOCS)
+if(NestDAQ_BUILD_DOCS)
   find_package(Doxygen QUIET)
 endif()
-if(WITH_DOCS AND Doxygen_FOUND)
+if(NestDAQ_BUILD_DOCS AND Doxygen_FOUND)
   set(NESTDAQ_DOXYGEN_AWESOME_DEFAULT_DIR "")
   foreach(prefix IN LISTS CMAKE_PREFIX_PATH)
     set(candidate "${prefix}/${CMAKE_INSTALL_DATADIR}/doxygen-awesome-css")
@@ -240,14 +241,56 @@ if(WITH_DOCS AND Doxygen_FOUND)
       DESTINATION "${CMAKE_INSTALL_DATADIR}/doc/nestdaq/doxygen-awesome-css"
     )
   endif()
-elseif(WITH_DOCS)
+elseif(NestDAQ_BUILD_DOCS)
   message(STATUS "Doxygen not found: skipping NestDAQ documentation")
 else()
-  message(STATUS "WITH_DOCS is OFF: skipping NestDAQ documentation")
+  message(STATUS "NestDAQ_BUILD_DOCS is OFF: skipping NestDAQ documentation")
 endif()
 
 #------------------------------------------------------------------------------
 add_subdirectory(nestdaq)
+
+if(NOT TARGET NestDAQ::NestDAQ)
+  set(_nestdaq_build_tree_link_libraries
+    ${Boost_LIBRARIES}
+    ${fmt_LIB}
+    FairLogger
+  )
+
+  if(FairMQ_VERSION VERSION_GREATER_EQUAL 1.8.0)
+    list(APPEND _nestdaq_build_tree_link_libraries fairmq)
+  elseif((FairMQ_VERSION VERSION_GREATER_EQUAL 1.4.55)
+      AND (FairMQ_VERSION VERSION_LESS_EQUAL 1.4.56))
+    list(APPEND _nestdaq_build_tree_link_libraries FairMQ)
+  else()
+    message(FATAL_ERROR "Unsupported FairMQ version ${FairMQ_VERSION}")
+  endif()
+
+  if(CMAKE_DL_LIBS)
+    list(APPEND _nestdaq_build_tree_link_libraries ${CMAKE_DL_LIBS})
+  endif()
+
+  add_library(nestdaq_build_tree_interface INTERFACE)
+  add_library(NestDAQ::NestDAQ ALIAS nestdaq_build_tree_interface)
+  target_include_directories(nestdaq_build_tree_interface INTERFACE
+    "${CMAKE_CURRENT_SOURCE_DIR}"
+    "${CMAKE_CURRENT_BINARY_DIR}"
+    ${Boost_INCLUDE_DIRS}
+    ${FairLogger_INCDIR}
+    ${FairMQ_INCDIR}
+  )
+  target_link_directories(nestdaq_build_tree_interface INTERFACE
+    ${Boost_LIBRARY_DIRS}
+    ${FairLogger_LIBDIR}
+    ${FairMQ_LIBDIR}
+  )
+  target_link_libraries(nestdaq_build_tree_interface INTERFACE
+    ${_nestdaq_build_tree_link_libraries}
+  )
+
+  unset(_nestdaq_build_tree_link_libraries)
+endif()
+
 if(BUILD_TESTING)
   add_subdirectory(tests)
 endif()
@@ -255,3 +298,6 @@ add_subdirectory(plugins)
 add_subdirectory(controller)
 add_subdirectory(share)
 add_subdirectory(scripts)
+if(NestDAQ_BUILD_EXAMPLES)
+  add_subdirectory(examples)
+endif()
