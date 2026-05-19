@@ -34,6 +34,58 @@ Each signal accepts a comma-separated protocol list. Supported protocols are
 and `otlp_grpc` are also accepted by the plugin. An empty protocol disables the
 signal.
 
+## Resource Attributes
+
+Logs, metrics, and traces share one OpenTelemetry resource. NestDAQ sets these
+resource attributes when values are available:
+
+| Attribute | Value |
+| --------- | ----- |
+| `service.name` | Configured telemetry service name, or `nestdaq` when unset. |
+| `service.version` | `NESTDAQ_VERSION`. |
+| `service.namespace` | Configured telemetry service namespace. |
+| `service.instance.id` | Configured telemetry service instance id. |
+| `fairmq.id` | FairMQ device id. |
+| `fairmq.device` | FairMQ device name. |
+| `fairmq.session` | FairMQ session. |
+| `fairmq.transport` | FairMQ transport. |
+
+Detailed NestDAQ and FairMQ build/git metadata is emitted as structured startup
+log bodies, not as resource attributes.
+
+## FairLogger Log Records
+
+The FairLogger custom sink converts each emitted FairLogger message into an
+OpenTelemetry LogRecord when the message severity is at or above
+`--otel-log-severity`.
+
+| LogRecord field or attribute | Source |
+| ---------------------------- | ------ |
+| Body | FairLogger message text. |
+| Timestamp | FairLogger `metadata.timestamp + metadata.us`. |
+| Observed timestamp | Time when the custom sink creates the LogRecord. |
+| SeverityNumber | OpenTelemetry severity mapped from FairLogger severity. |
+| SeverityText | OpenTelemetry-defined text for the mapped severity. |
+| `fairlogger.severity.number` | Original FairLogger severity number. |
+| `fairlogger.severity.text` | Original FairLogger severity name. |
+| `nestdaq.instance.id` | Instance id set through the telemetry loader. |
+| `nestdaq.instance.name` | Prefix parsed from an instance id ending in `-<number>`. |
+| `nestdaq.instance.index` | Numeric suffix parsed from an instance id ending in `-<number>`. |
+| `process.name` | FairLogger process name metadata. |
+| `code.file.path` | FairLogger source file metadata. |
+| `code.line.number` | FairLogger source line metadata. |
+| `code.function.name` | FairLogger function metadata. |
+| `thread.id` | Native Linux thread id, or a hashed C++ thread id on other platforms. |
+
+The instrumentation scope uses logger/library name `FairLogger` and library
+version `FAIRLOGGER_VERSION`. NestDAQ does not add a custom
+`log.severity.text` attribute; `SeverityText` is the standard OpenTelemetry
+LogRecord field.
+
+FairMQ throughput log lines are parsed for framework metrics before the log
+severity filter is applied. A throughput sample can therefore update framework
+metrics even when the original log message is below the exported log severity.
+
 ## Command-Line Options
 
 | Option | Env var | Default | Meaning |
