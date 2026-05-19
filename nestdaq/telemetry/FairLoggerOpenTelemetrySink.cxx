@@ -152,6 +152,8 @@ auto EmitLogRecord(const std::string &content, const fair::LogMetaData &metadata
             std::chrono::seconds{metadata.timestamp} + metadata.us};
         logRecord->SetTimestamp(opentelemetry::common::SystemTimestamp{timestamp});
         logRecord->SetObservedTimestamp(opentelemetry::common::SystemTimestamp{std::chrono::system_clock::now()});
+        // SetSeverity records the OpenTelemetry-defined SeverityNumber and SeverityText.
+        // The FairLogger original level is kept below as fairlogger.severity.* attributes.
         logRecord->SetSeverity(ConvertSeverity(metadata.severity));
         logRecord->SetBody(ToStringView(content));
 

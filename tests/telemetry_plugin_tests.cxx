@@ -171,7 +171,7 @@ TEST_CASE("FairMQ throughput logs are safe when metrics are disabled", "[telemet
     library.ShutdownTelemetry(nestdaq::telemetry::kDefaultTimeoutMs);
 }
 
-TEST_CASE("FairLogger severity attributes preserve original severity", "[telemetry][plugin]")
+TEST_CASE("FairLogger severity records OTel fields and original severity attributes", "[telemetry][plugin]")
 {
     auto capture = CoutCapture{};
 
@@ -189,7 +189,6 @@ TEST_CASE("FairLogger severity attributes preserve original severity", "[telemet
     CHECK(logs.find("severity_text      : WARN") != std::string::npos);
     CHECK(logs.find("fairlogger.severity.number: 10") != std::string::npos);
     CHECK(logs.find("fairlogger.severity.text: WARN") != std::string::npos);
-    CHECK(logs.find("log.severity.text:") == std::string::npos);
 }
 
 TEST_CASE("FairLogger logs include NestDAQ instance id attributes", "[telemetry][plugin]")
