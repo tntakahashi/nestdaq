@@ -1,4 +1,5 @@
 install(FILES
+  README.md
   docker-compose.yaml;
   opensearch_dashboards.yaml;
   otel-collector-config.yaml;

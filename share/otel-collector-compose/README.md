@@ -10,6 +10,12 @@ This stack is intended for local validation only. It disables OpenSearch
 security and publishes service ports on the host, so do not expose it on a
 public or shared network.
 
+OpenSearch 2.12 and later, including OpenSearch 3.x, requires
+`OPENSEARCH_INITIAL_ADMIN_PASSWORD` when the bundled demo security
+configuration is installed. This local validation compose disables that demo
+configuration installer and the Security plugin, so no OpenSearch admin
+password is required for this stack.
+
 The installed package provides `docker-compose.yaml` together with the collector
 OpenSearch Dashboards configuration file and Grafana provisioning files.
 
@@ -29,17 +35,10 @@ OpenSearch Dashboards configuration file and Grafana provisioning files.
 
 ## Start
 
-After installation, copy the installed compose file, config files, and Grafana
-provisioning files to a working directory.
+After installation, copy the installed compose setup to a working directory.
+If `./otel-collector-compose` already exists, remove it first or choose a different destination.
 ```bash
-mkdir -p ./otel-collector-compose
-cp <install-prefix>/share/otel-collector-compose/docker-compose.yaml \
-   <install-prefix>/share/otel-collector-compose/otel-collector-config.yaml \
-   <install-prefix>/share/otel-collector-compose/otel-collector-config-victoria.yaml \
-   <install-prefix>/share/otel-collector-compose/opensearch_dashboards.yaml \
-   ./otel-collector-compose/
-cp -r <install-prefix>/share/otel-collector-compose/grafana \
-   ./otel-collector-compose/
+cp -a <install-prefix>/share/otel-collector-compose ./otel-collector-compose
 ```
 
 Then run Compose with the copied compose file.
@@ -50,12 +49,45 @@ For Docker:
 docker compose -f ./otel-collector-compose/docker-compose.yaml up
 ```
 
-For Podman, create writable data directories first:
+For rootless Podman, OpenSearch runs as `uid=1000,gid=1000` inside the
+container. The host directory bind-mounted to `/usr/share/opensearch/data`
+must be readable and writable by that container uid/gid. One reliable setup is
+to create the directory and set its ownership from the Podman user namespace:
 
 ```bash
 mkdir -p ./otel-collector-compose/opensearch-data
 podman unshare chown -R 1000:1000 ./otel-collector-compose/opensearch-data
+podman unshare chmod -R u+rwX ./otel-collector-compose/opensearch-data
 podman compose -f ./otel-collector-compose/docker-compose.yaml up
+```
+
+Alternatively, map the container's `1000:1000` user to the host user that
+starts Podman Compose:
+
+```bash
+mkdir -p ./otel-collector-compose/opensearch-data
+PODMAN_USERNS="keep-id:uid=1000,gid=1000" \
+podman compose --in-pod=false -f ./otel-collector-compose/docker-compose.yaml up
+```
+
+The `PODMAN_USERNS` setting changes the user namespace mapping. It does not
+change the OpenSearch image's runtime user, which remains container
+`uid=1000,gid=1000`.
+
+If a previous run failed while requesting
+`OPENSEARCH_INITIAL_ADMIN_PASSWORD`, stop the stack and remove the local
+OpenSearch data directory before starting again:
+
+```bash
+docker compose -f ./otel-collector-compose/docker-compose.yaml down
+rm -rf ./otel-collector-compose/opensearch-data
+```
+
+For Podman:
+
+```bash
+podman compose -f ./otel-collector-compose/docker-compose.yaml down
+podman unshare rm -rf ./otel-collector-compose/opensearch-data
 ```
 
 To also start VictoriaMetrics, VictoriaLogs, VictoriaTraces, and Grafana, use
@@ -66,14 +98,24 @@ OTEL_COLLECTOR_CONFIG_FILE=./otel-collector-config-victoria.yaml \
 docker compose -f ./otel-collector-compose/docker-compose.yaml --profile victoria up
 ```
 
-For Podman with the `victoria` profile:
+For rootless Podman with the `victoria` profile, the additional bind-mounted
+data directories must also be writable by the users used inside their
+containers. A simple local validation setup is:
 
 ```bash
+mkdir -p ./otel-collector-compose/opensearch-data
+podman unshare chown -R 1000:1000 ./otel-collector-compose/opensearch-data
+podman unshare chmod -R u+rwX ./otel-collector-compose/opensearch-data
 mkdir -p ./otel-collector-compose/victoriametrics-data \
          ./otel-collector-compose/victorialogs-data \
          ./otel-collector-compose/victoriatraces-data \
          ./otel-collector-compose/grafana-data
 podman unshare chown -R 1000:1000 \
+  ./otel-collector-compose/victoriametrics-data \
+  ./otel-collector-compose/victorialogs-data \
+  ./otel-collector-compose/victoriatraces-data \
+  ./otel-collector-compose/grafana-data
+podman unshare chmod -R u+rwX \
   ./otel-collector-compose/victoriametrics-data \
   ./otel-collector-compose/victorialogs-data \
   ./otel-collector-compose/victoriatraces-data \
@@ -152,8 +194,11 @@ uses `./otel-collector-compose/victoriatraces-data`, and Grafana uses
 Compose file applies the `:Z` label option to the mounted paths.
 
 With rootless Podman, bind-mounted data directories can otherwise be created
-with ownership that containers cannot write to. Create them first and set the
-ownership from the Podman user namespace:
+with ownership that containers cannot write to. OpenSearch writes to
+`/usr/share/opensearch/data` as container `uid=1000,gid=1000`; that uid/gid
+must have read, write, and directory search permissions on the host directory
+as seen from the Podman user namespace. Create data directories first and set
+ownership and owner permissions from that namespace:
 
 ```bash
 mkdir -p ./otel-collector-compose/opensearch-data \
@@ -162,6 +207,12 @@ mkdir -p ./otel-collector-compose/opensearch-data \
          ./otel-collector-compose/victoriatraces-data \
          ./otel-collector-compose/grafana-data
 podman unshare chown -R 1000:1000 \
+  ./otel-collector-compose/opensearch-data \
+  ./otel-collector-compose/victoriametrics-data \
+  ./otel-collector-compose/victorialogs-data \
+  ./otel-collector-compose/victoriatraces-data \
+  ./otel-collector-compose/grafana-data
+podman unshare chmod -R u+rwX \
   ./otel-collector-compose/opensearch-data \
   ./otel-collector-compose/victoriametrics-data \
   ./otel-collector-compose/victorialogs-data \
@@ -179,7 +230,23 @@ mkdir -p "$OPENSEARCH_DATA_DIR" "$VICTORIAMETRICS_DATA_DIR" \
 podman unshare chown -R 1000:1000 "$OPENSEARCH_DATA_DIR" \
   "$VICTORIAMETRICS_DATA_DIR" "$VICTORIALOGS_DATA_DIR" \
   "$VICTORIATRACES_DATA_DIR" "$GRAFANA_DATA_DIR"
+podman unshare chmod -R u+rwX "$OPENSEARCH_DATA_DIR" \
+  "$VICTORIAMETRICS_DATA_DIR" "$VICTORIALOGS_DATA_DIR" \
+  "$VICTORIATRACES_DATA_DIR" "$GRAFANA_DATA_DIR"
 ```
+
+As an alternative to changing ownership, rootless Podman can map the
+container's `1000:1000` user to the host user that starts the stack:
+
+```bash
+PODMAN_USERNS="keep-id:uid=1000,gid=1000" \
+podman compose --in-pod=false -f ./otel-collector-compose/docker-compose.yaml up
+```
+
+Use the same environment setting with `--profile victoria` when starting the
+Victoria/Grafana stack. This is Podman-specific and may depend on the compose
+provider, so `podman unshare chown` is the more explicit setup for shared
+instructions.
 
 If config variables are not set, the Compose file uses
 `otel-collector-config.yaml`, `opensearch_dashboards.yaml`, and
