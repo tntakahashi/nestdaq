@@ -25,10 +25,9 @@ Default endpoints:
 - RedisInsight: `http://localhost:8001`
 
 Redis server data is bind-mounted from `redis-stack-data` next to the script to
-`/data` in the container when `REDIS_VOLUME_MODE=bind` is set. By default,
-Redis server data is stored in the named volume
-`nestdaq-redis-stack-data`, and RedisInsight data is stored in the named volume
-`nestdaq-redis-stack-redisinsight`.
+`/data` in the container. RedisInsight data is bind-mounted from
+`redisinsight-data` to `/redisinsight`, so RedisInsight can create its internal
+subdirectories under that mounted directory.
 
 ## Start Redis Stack Server Only
 
@@ -42,17 +41,16 @@ Default endpoint:
 
 - Redis: `localhost:6379`
 
-Data is stored in the named volume `nestdaq-redis-stack-server-data` by
-default. Set `REDIS_VOLUME_MODE=bind` to bind-mount
-`redis-stack-server-data` next to the script to `/data` in the container.
+Data is bind-mounted from `redis-stack-server-data` next to the script to
+`/data` in the container.
 
 ## Rerun Behavior
 
 By default, each script removes any existing container with the configured
 container name before starting a new one. This makes repeated invocations safe
 after a previous terminal was interrupted or a same-name container was left
-behind. Persistent Redis data remains in the configured named volume or
-bind-mounted data directory.
+behind. Persistent Redis data remains in the configured bind-mounted data directory
+or named volume.
 
 Set `REDIS_CONTAINER_REPLACE=0` to make the script fail instead when a
 same-name container already exists.
@@ -68,11 +66,8 @@ option is applied to both Redis and RedisInsight bind mounts.
 
 ## Directory Permissions
 
-The default named-volume mode lets Docker or Podman manage ownership, which
-avoids most uid/gid mismatches between rootful and rootless runtimes.
-
-With `REDIS_VOLUME_MODE=bind`, the scripts create bind-mounted data directories
-as the host user running the script and do not change directory permissions.
+By default, the scripts create bind-mounted data directories as the host user
+running the script and do not change directory permissions.
 On rootless Podman, container root normally maps to the host user running the
 container, so the created directories are usually writable without extra
 permission changes.
@@ -86,9 +81,8 @@ helper scripts.
 
 ## Named Volumes
 
-Named volumes are the default because they work consistently across rootful and
-rootless Docker or Podman without requiring host-side `chmod` or ownership
-changes.
+Named volumes are optional. Use `REDIS_VOLUME_MODE=volume` when you want Docker
+or Podman to manage Redis data outside the helper script directory.
 
 Inspect volumes with:
 
@@ -97,7 +91,7 @@ docker volume ls
 podman volume ls
 ```
 
-Remove default volumes when you want to discard local Redis data:
+Remove named volumes when you want to discard local Redis data:
 
 ```sh
 docker volume rm nestdaq-redis-stack-data nestdaq-redis-stack-redisinsight
@@ -111,11 +105,11 @@ podman volume rm nestdaq-redis-stack-data nestdaq-redis-stack-redisinsight
 podman volume rm nestdaq-redis-stack-server-data
 ```
 
-Use bind mounts when you want the data directory to be directly visible next
-to the helper scripts:
+Use named volumes when you do not want Redis data directories next to the
+helper scripts:
 
 ```sh
-REDIS_VOLUME_MODE=bind ./run-redis-stack.sh
+REDIS_VOLUME_MODE=volume ./run-redis-stack.sh
 ```
 
 ## Runtime Options
@@ -132,7 +126,7 @@ scripts keep bind-mounted data next to the copied scripts.
 | `REDIS_IMAGE` | `redis/redis-stack:7.4.0-v8` or `redis/redis-stack-server:7.4.0-v8` | Container image. |
 | `REDIS_PORT` | `6379` | Host port mapped to Redis port `6379`. |
 | `REDIS_INSIGHT_PORT` | `8001` | Host port mapped to RedisInsight port `8001`; used only by `run-redis-stack.sh`. |
-| `REDIS_VOLUME_MODE` | `volume` | Storage mode. Use `volume` for named volumes or `bind` for host bind mounts. |
+| `REDIS_VOLUME_MODE` | `bind` | Storage mode. Use `bind` for host bind mounts or `volume` for named volumes. |
 | `REDIS_DATA_VOLUME` | Container-name-based volume | Named volume mounted to `/data`; used only in `volume` mode. |
 | `REDIS_INSIGHT_VOLUME` | Container-name-based volume | Named volume mounted to `/redisinsight`; used only by `run-redis-stack.sh` in `volume` mode. |
 | `REDIS_DATA_DIR` | Data directory next to the script | Host directory bind-mounted to `/data`; used only in `bind` mode. |
@@ -156,4 +150,4 @@ CONTAINER_RUNTIME=podman ./run-redis-stack-server.sh
 ```
 
 Stop the foreground container with Ctrl-C. The container is removed on exit, but
-the named volume or bind-mounted data directory is kept.
+the bind-mounted data directory or named volume is kept.
