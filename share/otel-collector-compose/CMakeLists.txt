@@ -9,5 +9,6 @@ install(FILES
 
 install(DIRECTORY
   grafana
+  opensearch-dashboards
   DESTINATION ${CMAKE_INSTALL_DATADIR}/otel-collector-compose
 )

@@ -16,14 +16,17 @@ configuration is installed. This local validation compose disables that demo
 configuration installer and the Security plugin, so no OpenSearch admin
 password is required for this stack.
 
-The installed package provides `docker-compose.yaml` together with the collector
-OpenSearch Dashboards configuration file and Grafana provisioning files.
+The installed package provides `docker-compose.yaml` together with the collector,
+OpenSearch Dashboards configuration file, OpenSearch Dashboards setup script,
+and Grafana provisioning files.
 
 ## Components
 
 - `otel-collector`: receives OTLP data over gRPC and HTTP.
 - `opensearch`: stores logs and traces exported by the collector.
 - `opensearch-dashboards`: provides the web UI for OpenSearch.
+- `opensearch-dashboards-setup`: creates the initial logs and traces Data
+  Views in OpenSearch Dashboards if they do not already exist.
 - `victoriametrics`: stores metrics exported by the collector when the
   `victoria` profile is enabled.
 - `victorialogs`: stores logs exported by the collector when the `victoria`
@@ -131,6 +134,19 @@ By default, these services are available on host ports:
 - OTLP gRPC receiver: `localhost:4317`
 - OTLP HTTP receiver: `http://localhost:4318`
 
+## OpenSearch Dashboards
+
+Open `http://localhost:5601/app/discover` after the stack starts. The
+`opensearch-dashboards-setup` service creates Data Views for `otel-logs-*`
+and `otel-traces-*` when they do not already exist. It sets `otel-logs-*` as
+the default Data View only when no default is already configured. Existing Data
+Views and the existing default Data View are left unchanged on later runs.
+
+Use the Data View selector in Discover to switch from logs to traces. If no
+documents are shown, widen the time range and confirm that NestDAQ is exporting
+OTLP logs or traces and that OpenSearch has matching `otel-logs-*` or
+`otel-traces-*` indices.
+
 With the `victoria` profile, these additional services are available:
 
 - VictoriaMetrics: `http://localhost:8428`
@@ -162,6 +178,7 @@ with environment variables. Victoria and Grafana options are used when the
 | `GRAFANA_DATA_DIR`                      | `./grafana-data`                | no       | Host directory bind-mounted to `/var/lib/grafana`.                                                                                                        |
 | `OTEL_COLLECTOR_CONFIG_FILE`            | `./otel-collector-config.yaml`  | no       | Host path to the OpenTelemetry Collector config file.                                                                                                     |
 | `OPENSEARCH_DASHBOARDS_CONFIG_FILE`     | `./opensearch_dashboards.yaml`  | no       | Host path to the OpenSearch Dashboards config file.                                                                                                       |
+| `OPENSEARCH_DASHBOARDS_SETUP_SCRIPT`    | `./opensearch-dashboards/setup-dashboards.js` | no | Host path to the OpenSearch Dashboards setup script. |
 | `GRAFANA_PROVISIONING_DIR`              | `./grafana/provisioning`        | no       | Host path to Grafana provisioning files.                                                                                                                  |
 
 ```bash
@@ -180,6 +197,7 @@ VICTORIATRACES_DATA_DIR=/path/to/victoriatraces-data \
 GRAFANA_DATA_DIR=/path/to/grafana-data \
 OTEL_COLLECTOR_CONFIG_FILE=/path/to/otel-collector-config.yaml \
 OPENSEARCH_DASHBOARDS_CONFIG_FILE=/path/to/opensearch_dashboards.yaml \
+OPENSEARCH_DASHBOARDS_SETUP_SCRIPT=/path/to/setup-dashboards.js \
 GRAFANA_PROVISIONING_DIR=/path/to/grafana/provisioning \
 docker compose -f ./otel-collector-compose/docker-compose.yaml up
 ```
@@ -249,14 +267,15 @@ provider, so `podman unshare chown` is the more explicit setup for shared
 instructions.
 
 If config variables are not set, the Compose file uses
-`otel-collector-config.yaml`, `opensearch_dashboards.yaml`, and
-`grafana/provisioning` next to the copied `docker-compose.yaml`. With the
+`otel-collector-config.yaml`, `opensearch_dashboards.yaml`,
+`opensearch-dashboards/setup-dashboards.js`, and `grafana/provisioning` next
+to the copied `docker-compose.yaml`. With the
 example above, these are expected under `./otel-collector-compose/`.
 
 To use different collector, OpenSearch Dashboards, or Grafana provisioning
 files, set `OTEL_COLLECTOR_CONFIG_FILE`, `OPENSEARCH_DASHBOARDS_CONFIG_FILE`,
-and `GRAFANA_PROVISIONING_DIR` when running Compose, or edit the copied
-`docker-compose.yaml`.
+`OPENSEARCH_DASHBOARDS_SETUP_SCRIPT`, and `GRAFANA_PROVISIONING_DIR` when
+running Compose, or edit the copied `docker-compose.yaml`.
 
 Use `OTEL_COLLECTOR_CONFIG_FILE=./otel-collector-config-victoria.yaml` together
 with `--profile victoria` to export logs and traces to VictoriaLogs and

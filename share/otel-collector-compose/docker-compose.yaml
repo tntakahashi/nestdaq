@@ -36,6 +36,22 @@ services:
     networks:
       - otel-net
 
+  opensearch-dashboards-setup:
+    image: docker.io/opensearchproject/opensearch-dashboards:3
+    container_name: dashboards-setup
+    environment:
+      OPENSEARCH_DASHBOARDS_URL: "http://opensearch-dashboards:5601"
+    command:
+      - /usr/share/opensearch-dashboards/node/bin/node
+      - /usr/share/opensearch-dashboards/setup/setup-dashboards.js
+    volumes:
+      - ${OPENSEARCH_DASHBOARDS_SETUP_SCRIPT:-./opensearch-dashboards/setup-dashboards.js}:/usr/share/opensearch-dashboards/setup/setup-dashboards.js:ro,Z
+    depends_on:
+      opensearch-dashboards:
+        condition: service_started
+    networks:
+      - otel-net
+
   victoriametrics:
     image: docker.io/victoriametrics/victoria-metrics:v1.143.0
     container_name: victoriametrics
