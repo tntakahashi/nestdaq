@@ -2,9 +2,11 @@
 
 #MY_TERM=xterm
 
-DAQSERVICE_URI=' --registry-uri tcp://127.0.0.1:6379/0'
-METRICS_URI=' --metrics-uri tcp://127.0.0.1:6379/1'
-CONFIG_URI=' --parameter-config-uri tcp://127.0.0.1:6379/2'
+MY_REDIS_SERVER=${MY_REDIS_SERVER:-127.0.0.1:6379}
+
+DAQSERVICE_URI=" --registry-uri tcp://${MY_REDIS_SERVER}/0"
+METRICS_URI=" --metrics-uri tcp://${MY_REDIS_SERVER}/1"
+CONFIG_URI=" --parameter-config-uri tcp://${MY_REDIS_SERVER}/2"
 
 #---------------------------------------------------------
 if [[ $1 =~ fairmq- ]]; then
@@ -26,6 +28,7 @@ echo "PLUGIN_SEARCH_PATH = $PLUGIN_SEARCH_PATH"
 echo "DAQSERVICE_PLUGIN  = $DAQSERVICE_PLUGIN"
 echo "METRICS_PLUGIN     = $METRICS_PLUGIN"
 echo "CONFIG_PLUGIN      = $CONFIG_PLUGIN"
+echo "MY_REDIS_SERVER    = $MY_REDIS_SERVER"
 echo "DAQSERVICE_URI     = $DAQSERVICE_URI"
 echo "METRICS_URI        = $METRICS_URI"
 echo "CONFIG_URI         = $CONFIG_URI"

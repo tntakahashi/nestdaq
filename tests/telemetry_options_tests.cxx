@@ -177,22 +177,22 @@ TEST_CASE("telemetry service name follows DAQ service option for devices", "[tel
     const auto optionsWithEquals = Parse({"test", "--service-name=Sampler"});
     const auto configWithEquals = nestdaq::telemetry::MakeConfig(optionsWithEquals);
 
-    CHECK(std::string_view{configWithEquals.service_name} == "Sampler");
+    CHECK(std::string_view{configWithEquals.service_name} == "sampler");
 
     const auto optionsWithSpace = Parse({"test", "--service-name", "Processor"});
     const auto configWithSpace = nestdaq::telemetry::MakeConfig(optionsWithSpace);
 
-    CHECK(std::string_view{configWithSpace.service_name} == "Processor");
+    CHECK(std::string_view{configWithSpace.service_name} == "processor");
 }
 
 TEST_CASE("explicit telemetry service name overrides DAQ service option", "[telemetry]")
 {
     ClearTelemetryEnvironment();
 
-    const auto optionsAfter = Parse({"test", "--service-name=Sampler", "--otel-service-name=explicit"});
+    const auto optionsAfter = Parse({"test", "--service-name=Sampler", "--otel-service-name=NullDevice"});
     const auto configAfter = nestdaq::telemetry::MakeConfig(optionsAfter);
 
-    CHECK(std::string_view{configAfter.service_name} == "explicit");
+    CHECK(std::string_view{configAfter.service_name} == "nulldevice");
 
     const auto optionsBefore = Parse({"test", "--otel-service-name=explicit", "--service-name=Sampler"});
     const auto configBefore = nestdaq::telemetry::MakeConfig(optionsBefore);
@@ -217,7 +217,7 @@ TEST_CASE("telemetry service name falls back to executable basename for devices"
     const auto options = Parse({"/opt/nestdaq/bin/Sink"});
     const auto config = nestdaq::telemetry::MakeConfig(options);
 
-    CHECK(std::string_view{config.service_name} == "Sink");
+    CHECK(std::string_view{config.service_name} == "sink");
 }
 
 TEST_CASE("telemetry service namespace defaults to nestdaq", "[telemetry]")

@@ -301,6 +301,9 @@ otel-traces-%{service.name}-yyyy.MM.dd
 ```
 
 If `service.name` is missing, `unknown-service` is used as the fallback.
+OpenSearch requires lowercase index names. NestDAQ telemetry lowercases ASCII
+uppercase letters in `service.name` before export; external OTLP clients should
+also send lowercase `service.name` values when using this compose setup.
 
 The default collector config stores logs and traces in OpenSearch. It does not
 configure a metrics pipeline. Use the `victoria` profile with

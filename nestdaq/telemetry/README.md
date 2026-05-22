@@ -110,7 +110,7 @@ metrics even when the original log message is below the exported log severity.
 | `--otel-log-http-json` | none | `true` | Use JSON content type for OTLP HTTP logs. |
 | `--otel-metric-http-json` | none | `true` | Use JSON content type for OTLP HTTP metrics. |
 | `--otel-trace-http-json` | none | `true` | Use JSON content type for OTLP HTTP traces. |
-| `--otel-service-name` | none | caller default | `service.name` resource attribute. FairMQ device wrappers default this to `--service-name`, or to the executable basename when `--service-name` is unset. |
+| `--otel-service-name` | none | caller default | `service.name` resource attribute. FairMQ device wrappers default this to `--service-name`, or to the executable basename when `--service-name` is unset. NestDAQ converts ASCII uppercase letters to lowercase because collector pipelines may use this value in OpenSearch index names. |
 | `--otel-service-namespace` | none | `nestdaq` | `service.namespace` resource attribute. |
 | `--otel-service-instance-id` | none | generated UUID | `service.instance.id` resource attribute. FairMQ device wrappers use `--uuid` when this option is unset; otherwise they generate a UUID. |
 | `--otel-fairmq-id` | none | empty | `fairmq.id` resource attribute. |

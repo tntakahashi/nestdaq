@@ -12,6 +12,7 @@
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>
 
+#include <algorithm>
 #include <dlfcn.h>
 
 #include <cstdlib>
@@ -204,6 +205,23 @@ auto GenerateUuidString() -> std::string
     return boost::uuids::to_string(boost::uuids::random_generator{}());
 }
 
+auto ToLowerAscii(std::string_view value) -> std::string
+{
+    auto lowered = std::string{value};
+    std::transform(lowered.begin(), lowered.end(), lowered.begin(), [](unsigned char ch) {
+        if (ch >= 'A' && ch <= 'Z') {
+            return static_cast<char>(ch - 'A' + 'a');
+        }
+        return static_cast<char>(ch);
+    });
+    return lowered;
+}
+
+auto NormalizeServiceName(TelemetryOptions& options) -> void
+{
+    options.serviceName = ToLowerAscii(options.serviceName);
+}
+
 auto MakeConfig(const TelemetryOptions& options) -> nestdaq_otel_config
 {
     nestdaq_otel_config config{};
@@ -322,6 +340,7 @@ auto ParseTelemetryOptions(int argc, char* argv[], // NOLINT(cppcoreguidelines-a
         }
     }
 
+    NormalizeServiceName(options);
     EnsureServiceInstanceId(options);
     return options;
 }
@@ -404,6 +423,7 @@ auto ReadTelemetryOptions(const boost::program_options::variables_map& vm,
     if (vm.count("otel-trace-http-json") != 0) {
         options.traceOtlpHttpJson = vm["otel-trace-http-json"].as<bool>() ? 1U : 0U;
     }
+    NormalizeServiceName(options);
     EnsureServiceInstanceId(options);
     return options;
 }
