@@ -16,15 +16,6 @@ processors:
     send_batch_size: 1024
 
 exporters:
-  opensearch:
-    http:
-      endpoint: "http://opensearch:9200"
-    logs_index: "otel-logs-%{service.name}"
-    logs_index_fallback: "unknown-service"
-    logs_index_time_format: "yyyy.MM.dd"
-    traces_index: "otel-traces-%{service.name}"
-    traces_index_fallback: "unknown-service"
-    traces_index_time_format: "yyyy.MM.dd"
   otlphttp/victoriametrics:
     compression: gzip
     metrics_endpoint: "http://victoriametrics:8428/opentelemetry/v1/metrics"
@@ -40,11 +31,11 @@ service:
     logs:
       receivers: [otlp]
       processors: [memory_limiter, batch]
-      exporters: [opensearch, otlphttp/victorialogs]
+      exporters: [otlphttp/victorialogs]
     traces:
       receivers: [otlp]
       processors: [memory_limiter, batch]
-      exporters: [opensearch, otlphttp/victoriatraces]
+      exporters: [otlphttp/victoriatraces]
     metrics:
       receivers: [otlp]
       processors: [memory_limiter, batch]
