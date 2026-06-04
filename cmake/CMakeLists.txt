@@ -29,6 +29,12 @@ include("${NESTDAQ_DEPENDENCIES_CMAKE_DIR}/Catch2.cmake")
 set(nlohmann_json_VERSION "3.12.0" CACHE STRING "nlohmann/json version tag")
 include("${NESTDAQ_DEPENDENCIES_CMAKE_DIR}/nlohmann_json.cmake")
 
+option(WITH_SPDLOG "Build and install spdlog" OFF)
+if(WITH_SPDLOG)
+  set(spdlog_VERSION "1.17.0" CACHE STRING "spdlog version tag")
+  include("${NESTDAQ_DEPENDENCIES_CMAKE_DIR}/spdlog.cmake")
+endif()
+
 option(WITH_REDIS_STACK "Build and install Redis Stack" ON)
 if(WITH_REDIS_STACK)
   set(Redis_VERSION "8.6.2" CACHE STRING "Redis version tag")

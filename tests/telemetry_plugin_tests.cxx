@@ -5,11 +5,19 @@
 
 #include <catch2/catch_test_macros.hpp>
 
+#if NESTDAQ_HAVE_SPDLOG
+#  include <spdlog/spdlog.h>
+#endif
+
 #include <fairmq/Version.h>
 #include <fairlogger/Logger.h>
 
 #include <nestdaq/telemetry/FairLoggerTelemetryLoader.h>
 #include <nestdaq/telemetry/Telemetry.h>
+
+#if NESTDAQ_HAVE_SPDLOG
+#  include <nestdaq/telemetry/SpdlogOpenTelemetrySink.h>
+#endif
 
 #include <chrono>
 #include <iostream>
@@ -255,6 +263,60 @@ TEST_CASE("FairLogger NestDAQ instance id is cleared on shutdown", "[telemetry][
     REQUIRE(after != std::string::npos);
     CHECK(logs.find("nestdaq.instance.id:", after) == std::string::npos);
 }
+
+#if NESTDAQ_HAVE_SPDLOG
+TEST_CASE("spdlog sink exports logs independently from FairLogger instrumentation", "[telemetry][plugin][spdlog]")
+{
+    auto capture = CoutCapture{};
+
+    auto library = nestdaq::telemetry::TelemetryLibrary{};
+    REQUIRE(library.Load(NESTDAQ_OTEL_LIBRARY_PATH));
+    REQUIRE(library.InitializeWith(LogOnlyConfig()));
+    REQUIRE(library.SetMinSeverity(static_cast<int32_t>(fair::Severity::fatal)));
+
+    auto logger = spdlog::logger{"otel-spdlog-test", {nestdaq::telemetry::CreateSpdlogOpenTelemetrySink()}};
+    logger.set_level(spdlog::level::trace);
+    logger.warn("spdlog warning probe");
+
+    LOG(warn) << "fairlogger warning filtered by fatal threshold";
+
+    library.ShutdownTelemetry(nestdaq::telemetry::kDefaultTimeoutMs);
+
+    const auto logs = capture.output.str();
+    CHECK(logs.find("spdlog warning probe") != std::string::npos);
+    CHECK(logs.find("fairlogger warning filtered by fatal threshold") == std::string::npos);
+    CHECK(logs.find("severity_num       : 13") != std::string::npos);
+    CHECK(logs.find("severity_text      : WARN") != std::string::npos);
+    CHECK(logs.find("spdlog.logger.name: otel-spdlog-test") != std::string::npos);
+    CHECK(logs.find("spdlog.level: warn") != std::string::npos);
+}
+
+TEST_CASE("spdlog sink records source location attributes", "[telemetry][plugin][spdlog]")
+{
+    auto capture = CoutCapture{};
+
+    auto library = nestdaq::telemetry::TelemetryLibrary{};
+    REQUIRE(library.Load(NESTDAQ_OTEL_LIBRARY_PATH));
+    REQUIRE(library.InitializeWith(LogOnlyConfig()));
+
+    auto logger = spdlog::logger{"otel-spdlog-source-test", {nestdaq::telemetry::CreateSpdlogOpenTelemetrySink()}};
+    logger.set_level(spdlog::level::trace);
+    logger.log(spdlog::source_loc{"source-file.cxx", 123, "source_function"},
+               spdlog::level::err,
+               "spdlog source probe");
+
+    library.ShutdownTelemetry(nestdaq::telemetry::kDefaultTimeoutMs);
+
+    const auto logs = capture.output.str();
+    CHECK(logs.find("spdlog source probe") != std::string::npos);
+    CHECK(logs.find("severity_num       : 17") != std::string::npos);
+    CHECK(logs.find("severity_text      : ERROR") != std::string::npos);
+    CHECK(logs.find("code.file.path: source-file.cxx") != std::string::npos);
+    CHECK(logs.find("code.line.number: 123") != std::string::npos);
+    CHECK(logs.find("code.function.name: source_function") != std::string::npos);
+    CHECK(logs.find("thread.id") != std::string::npos);
+}
+#endif
 
 TEST_CASE("FairMQ build metadata is logged instead of stored as resource attributes", "[telemetry][plugin]")
 {

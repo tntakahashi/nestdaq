@@ -37,6 +37,16 @@ if(opentelemetry-cpp_FOUND)
     NESTDAQ_OTEL_LIBRARY_PATH="$<TARGET_FILE:nestdaq_otel>"
   )
 
+  if(spdlog_FOUND)
+    target_compile_definitions(nestdaq_telemetry_plugin_tests PRIVATE
+      NESTDAQ_HAVE_SPDLOG=1
+    )
+  else()
+    target_compile_definitions(nestdaq_telemetry_plugin_tests PRIVATE
+      NESTDAQ_HAVE_SPDLOG=0
+    )
+  endif()
+
   target_link_libraries(nestdaq_telemetry_plugin_tests PRIVATE
     nestdaq_telemetry
     Catch2::Catch2WithMain
@@ -45,6 +55,13 @@ if(opentelemetry-cpp_FOUND)
     nlohmann_json::nlohmann_json
     ${CMAKE_DL_LIBS}
   )
+
+  if(spdlog_FOUND)
+    target_link_libraries(nestdaq_telemetry_plugin_tests PRIVATE
+      nestdaq_otel
+      spdlog::spdlog
+    )
+  endif()
 
   add_dependencies(nestdaq_telemetry_plugin_tests nestdaq_otel)
   catch_discover_tests(nestdaq_telemetry_plugin_tests)

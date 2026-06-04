@@ -9,7 +9,7 @@ The plugin can export three OpenTelemetry signals:
 
 | Signal  | Default            | Source in NestDAQ                                      |
 | ------- | ------------------ | ----------------------------------------------------- |
-| Logs    | `console` exporter | FairLogger custom sink                                |
+| Logs    | `console` exporter | FairLogger custom sink; optional spdlog sink          |
 | Metrics | disabled           | `nestdaq::telemetry::Telemetry` counter/histogram/gauge API |
 | Traces  | disabled           | `nestdaq::telemetry::TelemetrySpan` RAII API          |
 
@@ -19,9 +19,10 @@ found at CMake configure time.
 ## Runtime Model
 
 NestDAQ installs process-wide OpenTelemetry providers inside the telemetry
-plugin. FairLogger logs are captured by a process-wide custom sink. Metrics and
-traces are recorded through the NestDAQ thin wrapper API, which does not expose
-OpenTelemetry C++ headers.
+plugin. FairLogger logs are captured by a process-wide custom sink. spdlog logs
+are exported only from loggers that explicitly attach the NestDAQ spdlog sink.
+Metrics and traces are recorded through the NestDAQ thin wrapper API, which
+does not expose OpenTelemetry C++ headers.
 
 The runtime plugin keeps the public C ABI in `OpenTelemetryInitializer.cxx` and
 organizes the implementation internally by signal area: logs, metrics, traces,
@@ -85,6 +86,42 @@ LogRecord field.
 FairMQ throughput log lines are parsed for framework metrics before the log
 severity filter is applied. A throughput sample can therefore update framework
 metrics even when the original log message is below the exported log severity.
+
+## spdlog Log Records
+
+When NestDAQ is built with both `opentelemetry-cpp` and spdlog available,
+`nestdaq/telemetry/SpdlogOpenTelemetrySink.h` is installed. The spdlog
+instrumentation is independent from FairLogger instrumentation: NestDAQ does not
+change spdlog's default logger, registry, or log level. Applications attach the
+returned sink to each spdlog logger that should export OpenTelemetry records.
+
+```cpp
+#include <nestdaq/telemetry/SpdlogOpenTelemetrySink.h>
+
+#include <spdlog/spdlog.h>
+
+auto logger = spdlog::logger{
+    "sampler",
+    {nestdaq::telemetry::CreateSpdlogOpenTelemetrySink()},
+};
+logger.info("event accepted");
+```
+
+The spdlog sink records these OpenTelemetry fields and attributes:
+
+| LogRecord field or attribute | Source |
+| ---------------------------- | ------ |
+| Body | spdlog message payload. |
+| Timestamp | spdlog message timestamp. |
+| Observed timestamp | Time when the sink creates the LogRecord. |
+| SeverityNumber | OpenTelemetry severity mapped from spdlog level. |
+| SeverityText | OpenTelemetry-defined text for the mapped severity. |
+| `spdlog.logger.name` | spdlog logger name. |
+| `spdlog.level` | Original spdlog level text. |
+| `code.file.path` | spdlog source file metadata, when present. |
+| `code.line.number` | spdlog source line metadata, when present. |
+| `code.function.name` | spdlog function metadata, when present. |
+| `thread.id` | spdlog thread id metadata. |
 
 ## Command-Line Options
 
