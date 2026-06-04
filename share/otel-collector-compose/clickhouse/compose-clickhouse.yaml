@@ -27,7 +27,7 @@ services:
       - "${GRAFANA_PORT:-3000}:3000"
     volumes:
       - ${GRAFANA_DATA_DIR:-./grafana-data}:/var/lib/grafana:Z
-      - ${GRAFANA_PROVISIONING_DIR:-./grafana-clickhouse/provisioning}:/etc/grafana/provisioning:ro,Z
+      - ${GRAFANA_PROVISIONING_DIR:-./grafana/provisioning}:/etc/grafana/provisioning:ro,Z
     depends_on:
       clickhouse:
         condition: service_healthy
