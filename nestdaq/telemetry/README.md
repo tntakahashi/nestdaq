@@ -107,6 +107,23 @@ auto logger = spdlog::logger{
 logger.info("event accepted");
 ```
 
+The usual spdlog member functions, such as `logger.info(...)` and
+`logger.warn(...)`, do not automatically attach source location metadata. Use
+the standard spdlog macros when OpenTelemetry records should include file path,
+line number, and function name:
+
+```cpp
+SPDLOG_LOGGER_INFO(&logger, "accepted event {}", eventId);
+SPDLOG_LOGGER_WARN(&logger, "queue depth is {}", depth);
+```
+
+For the default spdlog logger, use the corresponding default-logger macros:
+
+```cpp
+SPDLOG_INFO("accepted event {}", eventId);
+SPDLOG_WARN("queue depth is {}", depth);
+```
+
 The spdlog sink records these OpenTelemetry fields and attributes:
 
 | LogRecord field or attribute | Source |
