@@ -46,6 +46,8 @@ resource attributes when values are available:
 | `service.version` | `NESTDAQ_VERSION`. |
 | `service.namespace` | Configured telemetry service namespace. |
 | `service.instance.id` | Configured telemetry service instance id. |
+| `nestdaq.instance.id` | FairMQ device id after it is known. |
+| `nestdaq.instance.id.status` | `unresolved` before the FairMQ device id is known, otherwise `resolved`. |
 | `fairmq.id` | FairMQ device id. |
 | `fairmq.device` | FairMQ device name. |
 | `fairmq.session` | FairMQ session. |
@@ -69,7 +71,7 @@ OpenTelemetry LogRecord when the message severity is at or above
 | SeverityText | OpenTelemetry-defined text for the mapped severity. |
 | `fairlogger.severity.number` | Original FairLogger severity number. |
 | `fairlogger.severity.text` | Original FairLogger severity name. |
-| `nestdaq.instance.id` | Instance id set through the telemetry loader. |
+| `nestdaq.instance.id` | Per-record instance id set through the telemetry loader after the FairMQ device id is known. |
 | `nestdaq.instance.name` | Prefix parsed from an instance id ending in `-<number>`. |
 | `nestdaq.instance.index` | Numeric suffix parsed from an instance id ending in `-<number>`. |
 | `process.name` | FairLogger process name metadata. |
@@ -86,6 +88,10 @@ LogRecord field.
 FairMQ throughput log lines are parsed for framework metrics before the log
 severity filter is applied. A throughput sample can therefore update framework
 metrics even when the original log message is below the exported log severity.
+Metrics and traces are initialized only after the FairMQ device id is known so
+their resource contains `nestdaq.instance.id`. Logs are initialized at process
+startup with `nestdaq.instance.id.status=unresolved`, then reinitialized with
+`nestdaq.instance.id.status=resolved` when the id becomes available.
 
 ## spdlog Log Records
 

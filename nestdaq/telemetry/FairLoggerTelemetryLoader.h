@@ -56,6 +56,8 @@ struct TelemetryOptions {
     std::string serviceName{"nestdaq"};
     std::string serviceNamespace{kDefaultServiceNamespace};
     std::string serviceInstanceId;
+    std::string nestdaqInstanceId;
+    std::string nestdaqInstanceIdStatus{"unresolved"};
     std::string fairmqId;
     std::string fairmqDevice;
     std::string fairmqSession;

@@ -59,6 +59,8 @@ auto BaseConfig() -> nestdaq_otel_config
     config.service_name = "nestdaq-test";
     config.service_namespace = "nestdaq";
     config.service_instance_id = "test-instance";
+    config.nestdaq_instance_id = "";
+    config.nestdaq_instance_id_status = "unresolved";
     config.fairmq_id = "";
     config.fairmq_device = "";
     config.fairmq_session = "";
@@ -92,6 +94,8 @@ auto MetricsConsoleConfig() -> nestdaq_otel_config
     config.metrics.protocol = "console";
     config.service_namespace = "nestdaq";
     config.service_instance_id = "test-instance";
+    config.nestdaq_instance_id = "sampler-0";
+    config.nestdaq_instance_id_status = "resolved";
     config.timeout_ms = 50;
     config.metric_export_interval_ms = 100;
     return config;
@@ -103,6 +107,8 @@ auto TraceConsoleConfig() -> nestdaq_otel_config
     config.traces.protocol = "console";
     config.service_namespace = "nestdaq";
     config.service_instance_id = "test-instance";
+    config.nestdaq_instance_id = "sampler-0";
+    config.nestdaq_instance_id_status = "resolved";
     config.timeout_ms = 50;
     return config;
 }
@@ -114,6 +120,8 @@ auto LogsAndMetricsConsoleConfig() -> nestdaq_otel_config
     config.metrics.protocol = "console";
     config.service_namespace = "nestdaq";
     config.service_instance_id = "test-instance";
+    config.nestdaq_instance_id = "sampler-0";
+    config.nestdaq_instance_id_status = "resolved";
     config.timeout_ms = 50;
     config.metric_export_interval_ms = 100;
     return config;
@@ -217,6 +225,52 @@ TEST_CASE("FairLogger logs include NestDAQ instance id attributes", "[telemetry]
     CHECK(logs.find("nestdaq.instance.id: sampler-0") != std::string::npos);
     CHECK(logs.find("nestdaq.instance.name: sampler") != std::string::npos);
     CHECK(logs.find("nestdaq.instance.index: 0") != std::string::npos);
+}
+
+TEST_CASE("FairLogger logs use unresolved resource before NestDAQ instance id is known", "[telemetry][plugin]")
+{
+    auto capture = CoutCapture{};
+
+    auto library = nestdaq::telemetry::TelemetryLibrary{};
+    REQUIRE(library.Load(NESTDAQ_OTEL_LIBRARY_PATH));
+    REQUIRE(library.InitializeWith(LogOnlyConfig()));
+
+    LOG(warn) << "early unresolved nestdaq instance id probe";
+
+    library.ShutdownTelemetry(nestdaq::telemetry::kDefaultTimeoutMs);
+
+    const auto logs = capture.output.str();
+    CHECK(logs.find("early unresolved nestdaq instance id probe") != std::string::npos);
+    CHECK(logs.find("nestdaq.instance.id.status: unresolved") != std::string::npos);
+    CHECK(logs.find("nestdaq.instance.id:") == std::string::npos);
+}
+
+TEST_CASE("FairLogger logs use resolved resource after NestDAQ instance id reinitialization", "[telemetry][plugin]")
+{
+    auto capture = CoutCapture{};
+
+    auto library = nestdaq::telemetry::TelemetryLibrary{};
+    REQUIRE(library.Load(NESTDAQ_OTEL_LIBRARY_PATH));
+    REQUIRE(library.InitializeWith(LogOnlyConfig()));
+
+    LOG(warn) << "before resolved nestdaq instance id";
+
+    auto resolvedConfig = LogOnlyConfig();
+    resolvedConfig.nestdaq_instance_id = "sampler-0";
+    resolvedConfig.nestdaq_instance_id_status = "resolved";
+    REQUIRE(library.InitializeWith(resolvedConfig));
+    REQUIRE(library.SetNestdaqInstanceId("sampler-0"));
+
+    LOG(warn) << "after resolved nestdaq instance id";
+
+    library.ShutdownTelemetry(nestdaq::telemetry::kDefaultTimeoutMs);
+
+    const auto logs = capture.output.str();
+    CHECK(logs.find("before resolved nestdaq instance id") != std::string::npos);
+    CHECK(logs.find("after resolved nestdaq instance id") != std::string::npos);
+    CHECK(logs.find("nestdaq.instance.id.status: unresolved") != std::string::npos);
+    CHECK(logs.find("nestdaq.instance.id.status: resolved") != std::string::npos);
+    CHECK(logs.find("nestdaq.instance.id: sampler-0") != std::string::npos);
 }
 
 TEST_CASE("FairLogger logs omit derived NestDAQ instance fields for non-indexed ids", "[telemetry][plugin]")
@@ -400,6 +454,10 @@ TEST_CASE("metrics console initializes and exports resource attributes", "[telem
     CHECK(output.find("service.namespace") != std::string::npos);
     CHECK(output.find("service.instance.id") != std::string::npos);
     CHECK(output.find("test-instance") != std::string::npos);
+    CHECK(output.find("nestdaq.instance.id") != std::string::npos);
+    CHECK(output.find("sampler-0") != std::string::npos);
+    CHECK(output.find("nestdaq.instance.id.status") != std::string::npos);
+    CHECK(output.find("resolved") != std::string::npos);
     CHECK(output.find("user.messages.total") != std::string::npos);
     CHECK(output.find("user.decode.duration") != std::string::npos);
     CHECK(output.find("user.queue.depth") != std::string::npos);
@@ -457,6 +515,10 @@ TEST_CASE("user telemetry facade exports RAII spans and attributes", "[telemetry
     CHECK(output.find("data") != std::string::npos);
     CHECK(output.find("payload.bytes") != std::string::npos);
     CHECK(output.find("ok") != std::string::npos);
+    CHECK(output.find("nestdaq.instance.id") != std::string::npos);
+    CHECK(output.find("sampler-0") != std::string::npos);
+    CHECK(output.find("nestdaq.instance.id.status") != std::string::npos);
+    CHECK(output.find("resolved") != std::string::npos);
 }
 
 TEST_CASE("process metrics export without FairLogger logs or MetricsPlugin", "[telemetry][plugin]")

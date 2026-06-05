@@ -95,6 +95,8 @@ typedef struct nestdaq_otel_config {
     const char *service_name;        /* OpenTelemetry service.name. */
     const char *service_namespace;   /* OpenTelemetry service.namespace. */
     const char *service_instance_id; /* OpenTelemetry service.instance.id. */
+    const char *nestdaq_instance_id;        /* NestDAQ FairMQ device instance id. */
+    const char *nestdaq_instance_id_status; /* "unresolved" before id is known, otherwise "resolved". */
     const char *fairmq_id;           /* FairMQ device id. */
     const char *fairmq_device;       /* FairMQ device/class name. */
     const char *fairmq_session;      /* FairMQ session id/name. */

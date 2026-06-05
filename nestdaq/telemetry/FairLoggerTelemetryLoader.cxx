@@ -244,6 +244,8 @@ auto MakeConfig(const TelemetryOptions& options) -> nestdaq_otel_config
     config.service_name = options.serviceName.data();
     config.service_namespace = options.serviceNamespace.data();
     config.service_instance_id = options.serviceInstanceId.data();
+    config.nestdaq_instance_id = options.nestdaqInstanceId.data();
+    config.nestdaq_instance_id_status = options.nestdaqInstanceIdStatus.data();
     config.fairmq_id = options.fairmqId.data();
     config.fairmq_device = options.fairmqDevice.data();
     config.fairmq_session = options.fairmqSession.data();

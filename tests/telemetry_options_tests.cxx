@@ -263,6 +263,17 @@ TEST_CASE("telemetry service instance id defaults to a generated uuid", "[teleme
     CHECK(std::string_view{config.service_instance_id} == options.serviceInstanceId);
 }
 
+TEST_CASE("telemetry NestDAQ instance id resource starts unresolved", "[telemetry]")
+{
+    ClearTelemetryEnvironment();
+
+    const auto options = Parse({"test"});
+    const auto config = nestdaq::telemetry::MakeConfig(options);
+
+    CHECK(std::string_view{config.nestdaq_instance_id}.empty());
+    CHECK(std::string_view{config.nestdaq_instance_id_status} == "unresolved");
+}
+
 TEST_CASE("telemetry service instance id follows plugin uuid option", "[telemetry]")
 {
     ClearTelemetryEnvironment();
