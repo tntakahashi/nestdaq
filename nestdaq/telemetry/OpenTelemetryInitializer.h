@@ -6,7 +6,7 @@
 
 #include <stdint.h>
 
-#if defined(_WIN32)
+#ifdef _WIN32
 #  define NESTDAQ_OTEL_EXPORT __declspec(dllexport)
 #else
 #  define NESTDAQ_OTEL_EXPORT __attribute__((visibility("default")))
@@ -32,7 +32,7 @@ extern "C" {
  * The C ABI exposes a small union-like attribute representation so that NestDAQ
  * executables do not include or link OpenTelemetry C++ headers.
  */
-typedef enum nestdaq_otel_attribute_type {
+typedef enum nestdaq_otel_attribute_type { // NOLINT(cppcoreguidelines-use-enum-class): C ABI enum.
     NESTDAQ_OTEL_ATTRIBUTE_STRING = 0,
     NESTDAQ_OTEL_ATTRIBUTE_INT64 = 1,
     NESTDAQ_OTEL_ATTRIBUTE_UINT64 = 2,

@@ -247,7 +247,7 @@ void OnClose(unsigned int id)
 {
     std::vector<std::pair<unsigned int, std::string>> v;
     {
-        std::lock_guard<std::mutex> lock{wsMutex};
+        std::scoped_lock<std::mutex> lock{wsMutex};
         wsSessions.erase(id);
         for (const auto& [i, t] : wsSessions) {
             v.emplace_back(i, t.second);
@@ -265,7 +265,7 @@ void OnConnect(const std::shared_ptr<websocket_session> &session)
     auto d = date();
     std::vector<std::pair<unsigned int, std::string>> v;
     {
-        std::lock_guard<std::mutex> lock{wsMutex};
+        std::scoped_lock<std::mutex> lock{wsMutex};
         id = session->id();
         msg += std::to_string(id) + " (Date: " + d + ")";
         wsSessions.emplace(id, std::make_pair(session, d));

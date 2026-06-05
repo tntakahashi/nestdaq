@@ -40,7 +40,7 @@ auto OpenTelemetryInitializer::ForceFlush(uint64_t timeout_ms) -> int
         std::shared_ptr<opentelemetry::sdk::trace::TracerProvider> tracerProvider;
         {
             auto &state = State();
-            std::lock_guard lock{state.mutex};
+            std::scoped_lock lock{state.mutex};
             loggerProvider = state.loggerProvider;
             meterProvider = state.meterProvider;
             tracerProvider = state.tracerProvider;
@@ -130,7 +130,7 @@ auto OpenTelemetryInitializer::Initialize(const nestdaq_otel_config *config) -> 
         Shutdown(localConfig.timeout_ms);
         {
             auto &state = State();
-            std::lock_guard lock{state.mutex};
+            std::scoped_lock lock{state.mutex};
             state.loggerProvider = loggerProvider;
             state.meterProvider = meterProvider;
             state.tracerProvider = tracerProvider;
@@ -183,7 +183,7 @@ auto OpenTelemetryInitializer::Initialize(const nestdaq_otel_config *config) -> 
 auto OpenTelemetryInitializer::LastError() noexcept -> const char *
 {
     auto &state = State();
-    std::lock_guard lock{state.mutex};
+    std::scoped_lock lock{state.mutex};
     return state.lastError.data();
 }
 
@@ -209,14 +209,14 @@ auto OpenTelemetryInitializer::Shutdown(uint64_t timeout_ms) -> int
     try {
         StopProcessMetricsThread();
         auto &runtimeState = State();
-        std::lock_guard reconfigureLock{runtimeState.frameworkReconfigureMutex};
+        std::scoped_lock reconfigureLock{runtimeState.frameworkReconfigureMutex};
         std::shared_ptr<opentelemetry::sdk::logs::LoggerProvider> loggerProvider;
         std::shared_ptr<opentelemetry::sdk::metrics::MeterProvider> meterProvider;
         std::shared_ptr<opentelemetry::sdk::metrics::MeterProvider> frameworkMeterProvider;
         std::shared_ptr<opentelemetry::sdk::trace::TracerProvider> tracerProvider;
         {
             auto &state = runtimeState;
-            std::lock_guard lock{state.mutex};
+            std::scoped_lock lock{state.mutex};
             loggerProvider = std::move(state.loggerProvider);
             meterProvider = std::move(state.meterProvider);
             frameworkMeterProvider = std::move(state.frameworkMeterProvider);

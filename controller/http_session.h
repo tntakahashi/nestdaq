@@ -17,11 +17,8 @@ class http_session : public std::enable_shared_from_this<http_session>
     // This queue is used for HTTP pipelining.
     class queue
     {
-        enum : std::uint8_t
-        {
-            // Maximum number of responses we will queue
-            limit = 8
-        };
+        // Maximum number of responses we will queue
+        static constexpr std::uint8_t limit = 8;
 
         // The type-erased, saved work item
         struct work

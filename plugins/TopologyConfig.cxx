@@ -1332,7 +1332,7 @@ void daq::service::TopologyConfig::WriteAddress(MQChannel &channels, std::functi
     auto &r    = *GetClient();
     auto pipe  = r.pipeline();
 
-    std::lock_guard<std::mutex> lock{GetMutex()};
+    std::scoped_lock<std::mutex> lock{GetMutex()};
     try {
         for (auto &[name, sp] : channels) {
             auto localKeyPrefix = "chans." + sp.name + ".";

@@ -8,6 +8,7 @@
 #include <cmath>
 #include <cctype>
 #include <cstdint>
+#include <memory>
 #include <system_error>
 
 namespace nestdaq::telemetry {
@@ -39,7 +40,7 @@ auto ParseDoubleToken(std::string_view &input, double &value) noexcept -> bool
 
     const auto token = input.substr(0, tokenEnd);
     const auto *first = token.data();
-    const auto *last = token.data() + token.size();
+    const auto *last = std::to_address(token.end());
     const auto result = std::from_chars(first, last, value);
     if (result.ec != std::errc{} || result.ptr != last || !std::isfinite(value) || value < 0.0) {
         return false;
@@ -86,7 +87,7 @@ auto ParseChannel(std::string_view value, FairMQThroughputSample &sample) -> boo
     const auto indexToken = value.substr(openBracket + 1, value.size() - openBracket - 2);
     uint64_t index = 0;
     const auto *first = indexToken.data();
-    const auto *last = indexToken.data() + indexToken.size();
+    const auto *last = std::to_address(indexToken.end());
     const auto result = std::from_chars(first, last, index);
     if (result.ec != std::errc{} || result.ptr != last) {
         return false;

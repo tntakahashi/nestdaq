@@ -252,7 +252,7 @@ daq::service::MetricsPlugin::MetricsPlugin(std::string_view name,
     {
         //const auto &[uptimeNSec, lastUpdate] = update_date(fCreatedTimeSystem, fCreatedTime);
         //auto lastUpdateNS = std::chrono::duration_cast<std::chrono::nanoseconds>(lastUpdate.time_since_epoch());
-        std::lock_guard<std::mutex> lock{fMutex};
+        std::scoped_lock<std::mutex> lock{fMutex};
         fPipe->hset(fCreatedTimeKey, fId, to_date(fCreatedTimeSystem))
         .hset(fHostNameKey,    fId, GetProperty<std::string>("hostname"))
         .hset(fIpAddressKey,   fId, GetProperty<std::string>("host-ip"))
@@ -261,7 +261,7 @@ daq::service::MetricsPlugin::MetricsPlugin(std::string_view name,
         .exec();
     }
     fair::Logger::AddCustomSink(MyClass.data(), "info", [this](const std::string &content, const fair::LogMetaData & /*metadata*/) {
-        std::lock_guard<std::mutex> lock{fMutex};
+        std::scoped_lock<std::mutex> lock{fMutex};
         SendSocketMetrics(content);
     });
 
@@ -273,7 +273,7 @@ daq::service::MetricsPlugin::MetricsPlugin(std::string_view name,
             (key==StopTimeNS)  ||
             (key==RunNumber)) {
             //LOG(debug) << MyClass << " (subscribed callback) key = " << key << ", value = " << value;
-            std::lock_guard<std::mutex> lock{fMutex};
+            std::scoped_lock<std::mutex> lock{fMutex};
             fClient->hset(join({fTopPrefix, key}, fSeparator), fId, value);
 
         }
@@ -284,7 +284,7 @@ daq::service::MetricsPlugin::MetricsPlugin(std::string_view name,
         const auto stateName = GetStateName(newState);
         LOG(debug) << MyClass << " state change: " << stateName;
         {
-            std::lock_guard<std::mutex> lock{fMutex};
+            std::scoped_lock<std::mutex> lock{fMutex};
             if (fPipe) {
                 fPipe->discard();
                 fPipe->hset(fStateKey,        fId, stateName)

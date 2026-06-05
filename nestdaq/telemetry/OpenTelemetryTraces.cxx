@@ -75,7 +75,7 @@ auto OpenTelemetryInitializer::SpanEnd(uint64_t span_handle) -> int
     opentelemetry::nostd::shared_ptr<opentelemetry::trace::Span> span;
     {
         auto &state = otel_detail::State();
-        std::lock_guard lock{state.mutex};
+        std::scoped_lock lock{state.mutex};
         auto it = state.spans.find(span_handle);
         if (it == state.spans.end()) {
             return otel_detail::SetLastError("OpenTelemetry span handle is not active");
@@ -96,7 +96,7 @@ auto OpenTelemetryInitializer::SpanSetAttribute(uint64_t span_handle, const nest
     opentelemetry::nostd::shared_ptr<opentelemetry::trace::Span> span;
     {
         auto &state = otel_detail::State();
-        std::lock_guard lock{state.mutex};
+        std::scoped_lock lock{state.mutex};
         auto it = state.spans.find(span_handle);
         if (it == state.spans.end()) {
             return otel_detail::SetLastError("OpenTelemetry span handle is not active");
@@ -124,7 +124,7 @@ auto OpenTelemetryInitializer::SpanStart(const char *name,
     }
     auto attrs = otel_detail::BuildAttributes(attributes, attribute_count);
     auto &state = otel_detail::State();
-    std::lock_guard lock{state.mutex};
+    std::scoped_lock lock{state.mutex};
     if (!state.tracer) {
         state.lastError.clear();
         return 0;

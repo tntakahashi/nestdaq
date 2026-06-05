@@ -14,7 +14,7 @@ const std::string daq::service::to_date(const std::chrono::system_clock::time_po
 {
     std::time_t t = std::chrono::system_clock::to_time_t(p);
     std::tm lt{};
-#if defined(_WIN32)
+#ifdef _WIN32
     localtime_s(&lt, &t);
 #else
     localtime_r(&t, &lt);

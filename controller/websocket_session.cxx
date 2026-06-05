@@ -28,7 +28,7 @@ void websocket_session::on_accept(beast::error_code ec)
     static unsigned int lastId{0};
     static std::mutex mtx;
     {
-        std::lock_guard<std::mutex> lock{mtx};
+        std::scoped_lock<std::mutex> lock{mtx};
         id_ = ++lastId;
         OnConnect(shared_from_this());
     }

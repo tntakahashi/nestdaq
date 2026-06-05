@@ -180,7 +180,7 @@ auto BuildGaugeAttributes(const nestdaq_otel_attribute *attributes, uint64_t att
 auto ClearLastError() -> void
 {
     auto &state = State();
-    std::lock_guard lock{state.mutex};
+    std::scoped_lock lock{state.mutex};
     state.lastError.clear();
 }
 
@@ -192,7 +192,7 @@ auto FlushFrameworkMetricsIfDirty(uint64_t timeoutMs) -> int
     auto stateCount = std::size_t{0};
     {
         auto &state = State();
-        std::lock_guard lock{state.mutex};
+        std::scoped_lock lock{state.mutex};
         if (state.pendingFairMQThroughputMeasurements.empty() &&
             state.pendingProcessUsageMeasurements.empty() &&
             state.pendingFairMQStateMeasurements.empty()) {
@@ -219,9 +219,9 @@ auto FlushFrameworkMetricsIfDirty(uint64_t timeoutMs) -> int
     auto shouldRecreateProvider = false;
     auto &state = State();
     if (ok) {
-        std::lock_guard reconfigureLock{state.frameworkReconfigureMutex};
+        std::scoped_lock reconfigureLock{state.frameworkReconfigureMutex};
         {
-            std::lock_guard lock{state.mutex};
+            std::scoped_lock lock{state.mutex};
             state.exportingFairMQThroughputMeasurements.clear();
             state.exportingProcessUsageMeasurements.clear();
             state.exportingFairMQStateMeasurements.clear();
@@ -255,7 +255,7 @@ auto FlushFrameworkMetricsIfDirty(uint64_t timeoutMs) -> int
         return NESTDAQ_OTEL_OK;
     }
     {
-        std::lock_guard lock{state.mutex};
+        std::scoped_lock lock{state.mutex};
         state.exportingFairMQThroughputMeasurements.clear();
         state.exportingProcessUsageMeasurements.clear();
         state.exportingFairMQStateMeasurements.clear();
@@ -425,7 +425,7 @@ auto ParseProtocols(const char *protocols, std::vector<Protocol> &out) -> bool
 auto SetLastError(std::string message) -> int
 {
     auto &state = State();
-    std::lock_guard lock{state.mutex};
+    std::scoped_lock lock{state.mutex};
     state.lastError = std::move(message);
     return NESTDAQ_OTEL_ERROR;
 }

@@ -299,7 +299,7 @@ void WebGui::PollState()
 void WebGui::ProcessData(unsigned int connid,
                          const std::string& arg)
 {
-    std::lock_guard<std::mutex> lock{fMutex};
+    std::scoped_lock<std::mutex> lock{fMutex};
     LOG(debug) << __func__ << " websocket connid = " << connid << " : arg =  " << arg;
     const auto &obj = to_json(arg);
     const auto& key = obj.get_optional<std::string>("command");

@@ -253,7 +253,7 @@ Plugin::Plugin(std::string_view name,
             fStateQueue.Push(newState);
 
             {
-                std::lock_guard<std::mutex> lock{fMutex};
+                std::scoped_lock<std::mutex> lock{fMutex};
                 auto pipe = fClient->pipeline();
                 pipe.setex(fFairMQStateKey, fMaxTtl, stateName)
                     .hset(fHealth->key, "fair:mq:state", stateName)
@@ -741,7 +741,7 @@ void Plugin::Register()
 
         {
             // pipeline
-            std::lock_guard<std::mutex> lock{fMutex};
+            std::scoped_lock<std::mutex> lock{fMutex};
             auto pipe = fClient->pipeline();
             pipe.hset(fHealth->key,
             {   std::make_pair("instanceID",  fId),
@@ -786,7 +786,7 @@ void Plugin::ResetTtl()
     const auto &[uptimeNsec, updatedTime] = update_date(fHealth->createdTimeSystem, fHealth->createdTime);
     const auto & lastChecked = to_date(updatedTime);
 
-    std::lock_guard<std::mutex> lock{fMutex};
+    std::scoped_lock<std::mutex> lock{fMutex};
     auto pipe = fClient->pipeline();
     pipe.hset(fHealth->key,
     {   std::make_pair("updatedTime", lastChecked),
@@ -1122,7 +1122,7 @@ void Plugin::Unregister()
  */
 void Plugin::WriteProgOptions()
 {
-    std::lock_guard<std::mutex> lock{fMutex};
+    std::scoped_lock<std::mutex> lock{fMutex};
     auto pipe = fClient->pipeline();
     pipe.hset(fProgOptionKeyName,
     {   std::make_pair("severity",            GetProperty<std::string>("severity")),

@@ -29,8 +29,8 @@
 namespace nestdaq::telemetry {
 namespace {
 
-#define NESTDAQ_STRINGIFY_IMPL(value) #value
-#define NESTDAQ_STRINGIFY(value) NESTDAQ_STRINGIFY_IMPL(value)
+#define NESTDAQ_STRINGIFY_IMPL(value) #value // NOLINT(cppcoreguidelines-macro-usage): stringify version macros.
+#define NESTDAQ_STRINGIFY(value) NESTDAQ_STRINGIFY_IMPL(value) // NOLINT(cppcoreguidelines-macro-usage)
 
 constexpr std::string_view kLoggerName{"spdlog"};
 constexpr std::string_view kLibraryName{"spdlog"};
@@ -98,7 +98,7 @@ protected:
             logRecord->SetAttribute("spdlog.level", ToStringView(spdlog::level::to_string_view(msg.level)));
             logRecord->SetAttribute(opentelemetry::semconv::thread::kThreadId, static_cast<int64_t>(msg.thread_id));
 
-            if (msg.source.filename != nullptr && msg.source.filename[0] != '\0') {
+            if (msg.source.filename != nullptr && !std::string_view{msg.source.filename}.empty()) {
                 logRecord->SetAttribute(opentelemetry::semconv::code::kCodeFilePath,
                                         ToStringView(std::string_view{msg.source.filename}));
             }
@@ -106,7 +106,7 @@ protected:
                 logRecord->SetAttribute(opentelemetry::semconv::code::kCodeLineNumber,
                                         static_cast<int64_t>(msg.source.line));
             }
-            if (msg.source.funcname != nullptr && msg.source.funcname[0] != '\0') {
+            if (msg.source.funcname != nullptr && !std::string_view{msg.source.funcname}.empty()) {
                 logRecord->SetAttribute(opentelemetry::semconv::code::kCodeFunctionName,
                                         ToStringView(std::string_view{msg.source.funcname}));
             }

@@ -85,7 +85,7 @@ auto ObserveFairMQThroughput(opentelemetry::metrics::ObserverResult observer, bo
     auto measurements = std::vector<FairMQThroughputMeasurement>{};
     {
         auto &state = State();
-        std::lock_guard lock{state.mutex};
+        std::scoped_lock lock{state.mutex};
         measurements = state.exportingFairMQThroughputMeasurements;
     }
 
@@ -121,7 +121,7 @@ auto ObserveProcessCpuUsage(opentelemetry::metrics::ObserverResult observer, voi
     auto measurements = std::vector<ProcessUsageMeasurement>{};
     {
         auto &state = State();
-        std::lock_guard lock{state.mutex};
+        std::scoped_lock lock{state.mutex};
         measurements = state.exportingProcessUsageMeasurements;
     }
 
@@ -145,7 +145,7 @@ auto ObserveProcessMemoryRss(opentelemetry::metrics::ObserverResult observer, vo
     auto measurements = std::vector<ProcessUsageMeasurement>{};
     {
         auto &state = State();
-        std::lock_guard lock{state.mutex};
+        std::scoped_lock lock{state.mutex};
         measurements = state.exportingProcessUsageMeasurements;
     }
 
@@ -170,7 +170,7 @@ auto ObserveUserDoubleGauge(opentelemetry::metrics::ObserverResult observer, voi
     auto measurements = std::vector<GaugeMeasurement>{};
     {
         auto &runtime = State();
-        std::lock_guard lock{runtime.mutex};
+        std::scoped_lock lock{runtime.mutex};
         for (const auto &[sample, value] : runtime.doubleGaugeMeasurements) {
             if (sample.metric == *metric) {
                 auto measurement = GaugeMeasurement{};
@@ -224,7 +224,7 @@ auto ObserveFairMQState(opentelemetry::metrics::ObserverResult observer, void * 
     auto measurements = std::vector<FairMQStateMeasurement>{};
     {
         auto &state = State();
-        std::lock_guard lock{state.mutex};
+        std::scoped_lock lock{state.mutex};
         measurements = state.exportingFairMQStateMeasurements;
     }
 
@@ -401,7 +401,7 @@ auto StartProcessMetricsThread(uint32_t intervalMs) -> void
     StopProcessMetricsThread();
     auto &state = State();
     {
-        std::lock_guard lock{state.mutex};
+        std::scoped_lock lock{state.mutex};
         state.stopProcessMetricsThread = false;
         state.processMetricsInterval = std::chrono::milliseconds{
             intervalMs == 0 ? kDefaultMetricExportIntervalMs : intervalMs};
@@ -415,7 +415,7 @@ auto StartProcessMetricsThread(uint32_t intervalMs) -> void
             auto interval = std::chrono::milliseconds{kDefaultMetricExportIntervalMs};
             {
                 auto &runtime = State();
-                std::lock_guard lock{runtime.mutex};
+                std::scoped_lock lock{runtime.mutex};
                 if (runtime.stopProcessMetricsThread) {
                     return;
                 }
@@ -428,7 +428,7 @@ auto StartProcessMetricsThread(uint32_t intervalMs) -> void
             auto pageSize = 0L;
             {
                 auto &runtime = State();
-                std::lock_guard lock{runtime.mutex};
+                std::scoped_lock lock{runtime.mutex};
                 if (runtime.stopProcessMetricsThread) {
                     return;
                 }
@@ -452,7 +452,7 @@ auto StartProcessMetricsThread(uint32_t intervalMs) -> void
             }
             {
                 auto &runtime = State();
-                std::lock_guard lock{runtime.mutex};
+                std::scoped_lock lock{runtime.mutex};
                 runtime.processCpuUsageSample = currentCpu;
             }
             nestdaq::OpenTelemetryInitializer::RecordFrameworkProcessUsage(cpuUsage, *currentRss);
@@ -464,7 +464,7 @@ auto StopProcessMetricsThread() -> void
 {
     auto &state = State();
     {
-        std::lock_guard lock{state.mutex};
+        std::scoped_lock lock{state.mutex};
         state.stopProcessMetricsThread = true;
     }
     if (state.processMetricsThread.joinable()) {
@@ -489,7 +489,7 @@ auto OpenTelemetryInitializer::MetricAddDoubleCounter(const char *name,
     }
     auto attrs = BuildAttributes(attributes, attribute_count);
     auto &state = State();
-    std::lock_guard lock{state.mutex};
+    std::scoped_lock lock{state.mutex};
     if (!state.meter) {
         state.lastError.clear();
         return NESTDAQ_OTEL_OK;
@@ -521,7 +521,7 @@ auto OpenTelemetryInitializer::MetricRecordDoubleHistogram(const char *name,
     }
     auto attrs = BuildAttributes(attributes, attribute_count);
     auto &state = State();
-    std::lock_guard lock{state.mutex};
+    std::scoped_lock lock{state.mutex};
     if (!state.meter) {
         state.lastError.clear();
         return NESTDAQ_OTEL_OK;
@@ -561,7 +561,7 @@ auto OpenTelemetryInitializer::MetricRecordDoubleGauge(const char *name,
     MetricKey *callbackKey = nullptr;
     {
         auto &state = State();
-        std::lock_guard lock{state.mutex};
+        std::scoped_lock lock{state.mutex};
         if (!state.meter) {
             state.lastError.clear();
             return NESTDAQ_OTEL_OK;
@@ -599,8 +599,8 @@ auto OpenTelemetryInitializer::RecordFrameworkFairMQThroughput(const telemetry::
     try {
         {
             auto &state = otel_detail::State();
-            std::lock_guard reconfigureLock{state.frameworkReconfigureMutex};
-            std::lock_guard lock{state.mutex};
+            std::scoped_lock reconfigureLock{state.frameworkReconfigureMutex};
+            std::scoped_lock lock{state.mutex};
             if (!state.frameworkMeterProvider) {
                 return;
             }
@@ -632,8 +632,8 @@ auto OpenTelemetryInitializer::RecordFrameworkProcessUsage(double cpu_usage_perc
     try {
         {
             auto &state = otel_detail::State();
-            std::lock_guard reconfigureLock{state.frameworkReconfigureMutex};
-            std::lock_guard lock{state.mutex};
+            std::scoped_lock reconfigureLock{state.frameworkReconfigureMutex};
+            std::scoped_lock lock{state.mutex};
             if (!state.frameworkMeterProvider) {
                 return;
             }
@@ -652,8 +652,8 @@ auto OpenTelemetryInitializer::RecordFrameworkFairMQState(int64_t state_id, cons
     try {
         {
             auto &state = otel_detail::State();
-            std::lock_guard reconfigureLock{state.frameworkReconfigureMutex};
-            std::lock_guard lock{state.mutex};
+            std::scoped_lock reconfigureLock{state.frameworkReconfigureMutex};
+            std::scoped_lock lock{state.mutex};
             if (!state.frameworkMeterProvider) {
                 return;
             }

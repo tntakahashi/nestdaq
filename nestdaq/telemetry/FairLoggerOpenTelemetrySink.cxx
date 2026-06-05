@@ -11,13 +11,14 @@
 #include <cstdint>
 #include <functional>
 #include <iostream>
+#include <memory>
 #include <mutex>
 #include <optional>
 #include <string>
 #include <string_view>
 #include <thread>
 
-#if defined(__linux__)
+#ifdef __linux__
 #  include <sys/syscall.h>
 #  include <unistd.h>
 #endif
@@ -114,7 +115,7 @@ static_assert(ConvertSeverity(static_cast<fair::Severity>(fair::Logger::fSeverit
 
 auto CurrentThreadId() noexcept -> uint64_t
 {
-#if defined(__linux__)
+#ifdef __linux__
     // Use the native Linux TID instead of std::this_thread::get_id() so logs can be correlated
     // with /proc, top -H, debuggers, and profilers. This matches spdlog's Linux thread id behavior.
     // NOLINTNEXTLINE(cppcoreguidelines-pro-type-vararg)
@@ -167,7 +168,7 @@ auto EmitLogRecord(const std::string &content, const fair::LogMetaData &metadata
         }
         auto instanceId = std::string{};
         {
-            std::lock_guard lock{InstanceIdMutex()};
+            std::scoped_lock lock{InstanceIdMutex()};
             instanceId = InstanceId();
         }
         if (!instanceId.empty()) {
@@ -240,7 +241,7 @@ auto ParseInstanceIndex(std::string_view instanceId) noexcept -> std::optional<s
     auto index = int64_t{0};
     const auto suffix = instanceId.substr(separator + 1);
     const auto *first = suffix.data();
-    const auto *last = suffix.data() + suffix.size();
+    const auto *last = std::to_address(suffix.end());
     const auto result = std::from_chars(first, last, index);
     if (result.ec != std::errc{} || result.ptr != last) {
         return std::nullopt;
@@ -252,7 +253,7 @@ auto ParseLine(std::string_view line) noexcept -> int64_t
 {
     int64_t value = 0;
     const auto *first = line.data();
-    const auto *last = line.data() + line.size();
+    const auto *last = std::to_address(line.end());
     const auto result = std::from_chars(first, last, value);
     if (result.ec != std::errc{} || result.ptr != last) {
         return 0;
@@ -305,7 +306,7 @@ auto FairLoggerOpenTelemetrySink::Initialize() -> void
 
 auto FairLoggerOpenTelemetrySink::SetNestdaqInstanceId(std::string_view instanceId) -> void
 {
-    std::lock_guard lock{InstanceIdMutex()};
+    std::scoped_lock lock{InstanceIdMutex()};
     InstanceId() = instanceId;
 }
 

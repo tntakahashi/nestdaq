@@ -25,7 +25,7 @@ std::string date()
     auto timePoint = std::chrono::system_clock::now();
     auto t         = std::chrono::system_clock::to_time_t(timePoint);
     std::tm lt{};
-#if defined(_WIN32)
+#ifdef _WIN32
     localtime_s(&lt, &t);
 #else
     localtime_r(&t, &lt);
