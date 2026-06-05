@@ -471,8 +471,16 @@ TEST_CASE("process metrics export without FairLogger logs or MetricsPlugin", "[t
     library.ShutdownTelemetry(nestdaq::telemetry::kDefaultTimeoutMs);
 
     const auto output = capture.output.str();
-    CHECK(output.find("process.cpu.usage_percent") != std::string::npos);
-    CHECK(output.find("process.memory.rss_mib") != std::string::npos);
+    CHECK(output.find("process.cpu.time") != std::string::npos);
+    CHECK(output.find("process.cpu.utilization") != std::string::npos);
+    CHECK(output.find("process.memory.usage") != std::string::npos);
+    CHECK(output.find("cpu.mode: user") != std::string::npos);
+    CHECK(output.find("cpu.mode: system") != std::string::npos);
+    CHECK(output.find("unit\t\t: s") != std::string::npos);
+    CHECK(output.find("unit\t\t: 1") != std::string::npos);
+    CHECK(output.find("unit\t\t: By") != std::string::npos);
+    CHECK(output.find("process.cpu.usage_percent") == std::string::npos);
+    CHECK(output.find("process.memory.rss_mib") == std::string::npos);
     CHECK(output.find("fairmq.channel.messages_per_second") == std::string::npos);
     CHECK(output.find("data: in:") == std::string::npos);
 }
@@ -489,6 +497,9 @@ TEST_CASE("user force flush exports no framework metrics when no framework sampl
     library.ShutdownTelemetry(nestdaq::telemetry::kDefaultTimeoutMs);
 
     const auto output = capture.output.str();
+    CHECK(output.find("process.cpu.time") == std::string::npos);
+    CHECK(output.find("process.cpu.utilization") == std::string::npos);
+    CHECK(output.find("process.memory.usage") == std::string::npos);
     CHECK(output.find("process.cpu.usage_percent") == std::string::npos);
     CHECK(output.find("process.memory.rss_mib") == std::string::npos);
     CHECK(output.find("fairmq.channel.messages_per_second") == std::string::npos);

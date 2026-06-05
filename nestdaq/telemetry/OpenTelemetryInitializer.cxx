@@ -234,8 +234,9 @@ auto OpenTelemetryInitializer::Shutdown(uint64_t timeout_ms) -> int
             state.doubleGaugeMeasurements.clear();
             state.fairmqMessagesPerSecondGauge = {};
             state.fairmqMegabytesPerSecondGauge = {};
-            state.processCpuUsageGauge = {};
-            state.processMemoryRssGauge = {};
+            state.processCpuTimeCounter = {};
+            state.processCpuUtilizationGauge = {};
+            state.processMemoryUsageCounter = {};
             state.fairmqStateGauge = {};
             state.pendingFairMQThroughputMeasurements.clear();
             state.exportingFairMQThroughputMeasurements.clear();
@@ -245,6 +246,7 @@ auto OpenTelemetryInitializer::Shutdown(uint64_t timeout_ms) -> int
             state.exportingFairMQStateMeasurements.clear();
             state.processCpuUsageSample = std::nullopt;
             state.pageSize = 0;
+            state.availableCpuCount = 0.0;
             state.spans.clear();
         }
         FairLoggerOpenTelemetrySink::Shutdown();

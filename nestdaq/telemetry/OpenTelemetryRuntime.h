@@ -185,16 +185,19 @@ struct FairMQThroughputMeasurement {
     double megabytesPerSecond = 0.0;
 };
 
-/** @brief One pending process CPU/RSS sample for framework metrics export. */
+/** @brief One pending process metrics sample for framework metrics export. */
 struct ProcessUsageMeasurement {
-    double cpuUsagePercent = 0.0;
-    double memoryRssMiB = 0.0;
+    double cpuUserSeconds = 0.0;
+    double cpuSystemSeconds = 0.0;
+    std::optional<double> cpuUtilization;
+    double memoryUsageBytes = 0.0;
 };
 
 /** @brief Previous process CPU sample used to compute usage deltas. */
 struct ProcessCpuUsageSample {
     std::chrono::steady_clock::time_point timestamp;
-    double cpuSeconds = 0.0;
+    double userSeconds = 0.0;
+    double systemSeconds = 0.0;
 };
 
 /** @brief One pending FairMQ state transition for framework metrics export. */
@@ -261,8 +264,9 @@ struct RuntimeState {
     std::map<GaugeSampleKey, double> doubleGaugeMeasurements;
     opentelemetry::nostd::shared_ptr<opentelemetry::metrics::ObservableInstrument> fairmqMessagesPerSecondGauge;
     opentelemetry::nostd::shared_ptr<opentelemetry::metrics::ObservableInstrument> fairmqMegabytesPerSecondGauge;
-    opentelemetry::nostd::shared_ptr<opentelemetry::metrics::ObservableInstrument> processCpuUsageGauge;
-    opentelemetry::nostd::shared_ptr<opentelemetry::metrics::ObservableInstrument> processMemoryRssGauge;
+    opentelemetry::nostd::shared_ptr<opentelemetry::metrics::ObservableInstrument> processCpuTimeCounter;
+    opentelemetry::nostd::shared_ptr<opentelemetry::metrics::ObservableInstrument> processCpuUtilizationGauge;
+    opentelemetry::nostd::shared_ptr<opentelemetry::metrics::ObservableInstrument> processMemoryUsageCounter;
     opentelemetry::nostd::shared_ptr<opentelemetry::metrics::ObservableInstrument> fairmqStateGauge;
     std::vector<FairMQThroughputMeasurement> pendingFairMQThroughputMeasurements;
     std::vector<FairMQThroughputMeasurement> exportingFairMQThroughputMeasurements;
@@ -272,6 +276,7 @@ struct RuntimeState {
     std::vector<FairMQStateMeasurement> exportingFairMQStateMeasurements;
     std::optional<ProcessCpuUsageSample> processCpuUsageSample;
     long pageSize = 0;
+    double availableCpuCount = 0.0;
     std::thread processMetricsThread;
     std::atomic<bool> stopProcessMetricsThread{false};
     std::chrono::milliseconds processMetricsInterval{kDefaultMetricExportIntervalMs};

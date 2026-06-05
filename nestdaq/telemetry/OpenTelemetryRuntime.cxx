@@ -242,8 +242,9 @@ auto FlushFrameworkMetricsIfDirty(uint64_t timeoutMs) -> int
                 state.frameworkMeter = {};
                 state.fairmqMessagesPerSecondGauge = {};
                 state.fairmqMegabytesPerSecondGauge = {};
-                state.processCpuUsageGauge = {};
-                state.processMemoryRssGauge = {};
+                state.processCpuTimeCounter = {};
+                state.processCpuUtilizationGauge = {};
+                state.processMemoryUsageCounter = {};
                 state.fairmqStateGauge = {};
                 shouldRecreateProvider = true;
             }

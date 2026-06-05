@@ -6,6 +6,10 @@
 
 #include <stdint.h>
 
+#ifdef __cplusplus
+#  include <optional>
+#endif
+
 #ifdef _WIN32
 #  define NESTDAQ_OTEL_EXPORT __declspec(dllexport)
 #else
@@ -260,7 +264,10 @@ public:
     /** @brief Record parsed FairMQ throughput through the framework metrics pipeline. */
     static auto RecordFrameworkFairMQThroughput(const telemetry::FairMQThroughputSample &sample) noexcept -> void;
     /** @brief Record one sampled process CPU/RSS pair through the framework metrics pipeline. */
-    static auto RecordFrameworkProcessUsage(double cpu_usage_percent, double memory_rss_mib) noexcept -> void;
+    static auto RecordFrameworkProcessUsage(double cpu_user_seconds,
+                                            double cpu_system_seconds,
+                                            std::optional<double> cpu_utilization,
+                                            double memory_usage_bytes) noexcept -> void;
     /** @brief Record parsed FairMQ throughput observed by the FairLogger sink. */
     static auto RecordFairMQThroughput(const telemetry::FairMQThroughputSample &sample) noexcept -> void;
     /** @brief Update log attributes derived from the NestDAQ instance id. */
