@@ -38,48 +38,52 @@ signal.
 ## Resource Attributes
 
 Logs, metrics, and traces share one OpenTelemetry resource. NestDAQ sets these
-resource attributes when values are available:
+resource attributes when values are available. The `service.*` and `host.*`
+keys below are OpenTelemetry semantic convention attributes; the `nestdaq.*`
+and `fairmq.*` keys are NestDAQ-specific attributes.
 
-| Attribute | Value |
-| --------- | ----- |
-| `service.name` | Configured telemetry service name, or `nestdaq` when unset. |
-| `service.version` | `NESTDAQ_VERSION`. |
-| `service.namespace` | Configured telemetry service namespace. |
-| `service.instance.id` | Configured telemetry service instance id. |
-| `host.name` | Host name detected at telemetry option parsing time. |
-| `nestdaq.instance.id` | FairMQ device id after it is known. |
-| `nestdaq.instance.id.status` | `unresolved` before the FairMQ device id is known, otherwise `resolved`. |
-| `fairmq.id` | FairMQ device id. |
-| `fairmq.device` | FairMQ device name. |
-| `fairmq.session` | FairMQ session. |
-| `fairmq.transport` | FairMQ transport. |
+| Attribute | Origin | Value |
+| --------- | ------ | ----- |
+| `service.name` | OTel semantic convention | Configured telemetry service name, or `nestdaq` when unset. |
+| `service.version` | OTel semantic convention | `NESTDAQ_VERSION`. |
+| `service.namespace` | OTel semantic convention | Configured telemetry service namespace. |
+| `service.instance.id` | OTel semantic convention | Configured telemetry service instance id. |
+| `host.name` | OTel semantic convention | Host name detected at telemetry option parsing time. |
+| `nestdaq.instance.id` | NestDAQ custom | FairMQ device id after it is known. |
+| `nestdaq.instance.id.status` | NestDAQ custom | `unresolved` before the FairMQ device id is known, otherwise `resolved`. |
+| `fairmq.id` | NestDAQ/FairMQ custom | FairMQ device id. |
+| `fairmq.device` | NestDAQ/FairMQ custom | FairMQ device name. |
+| `fairmq.session` | NestDAQ/FairMQ custom | FairMQ session. |
+| `fairmq.transport` | NestDAQ/FairMQ custom | FairMQ transport. |
 
 Detailed NestDAQ and FairMQ build/git metadata is emitted as structured startup
-log bodies, not as resource attributes.
+log bodies, not as resource attributes. The OpenTelemetry SDK may add its own
+SDK resource attributes independently; this table lists attributes explicitly
+set by NestDAQ.
 
 ## FairLogger Log Records
 
 The FairLogger custom sink converts each emitted FairLogger message into an
-OpenTelemetry LogRecord when the message severity is at or above
+OpenTelemetry LogRecord when the FairLogger severity is at or above
 `--otel-log-severity`.
 
-| LogRecord field or attribute | Source |
-| ---------------------------- | ------ |
-| Body | FairLogger message text. |
-| Timestamp | FairLogger `metadata.timestamp + metadata.us`. |
-| Observed timestamp | Time when the custom sink creates the LogRecord. |
-| SeverityNumber | OpenTelemetry severity mapped from FairLogger severity. |
-| SeverityText | OpenTelemetry-defined text for the mapped severity. |
-| `fairlogger.severity.number` | Original FairLogger severity number. |
-| `fairlogger.severity.text` | Original FairLogger severity name. |
-| `nestdaq.instance.id` | Per-record instance id set through the telemetry loader after the FairMQ device id is known. |
-| `nestdaq.instance.name` | Prefix parsed from an instance id ending in `-<number>`. |
-| `nestdaq.instance.index` | Numeric suffix parsed from an instance id ending in `-<number>`. |
-| `process.name` | FairLogger process name metadata. |
-| `code.file.path` | FairLogger source file metadata. |
-| `code.line.number` | FairLogger source line metadata. |
-| `code.function.name` | FairLogger function metadata. |
-| `thread.id` | Native Linux thread id, or a hashed C++ thread id on other platforms. |
+| LogRecord field or attribute | Origin | Source |
+| ---------------------------- | ------ | ------ |
+| Body | OTel LogRecord field | FairLogger message text. |
+| Timestamp | OTel LogRecord field | FairLogger `metadata.timestamp + metadata.us`. |
+| Observed timestamp | OTel LogRecord field | Time when the custom sink creates the LogRecord. |
+| SeverityNumber | OTel LogRecord field | OpenTelemetry severity mapped from FairLogger severity. |
+| SeverityText | OTel LogRecord field | OpenTelemetry-defined text for the mapped severity. |
+| `code.file.path` | OTel semantic convention | FairLogger source file metadata. |
+| `code.line.number` | OTel semantic convention | FairLogger source line metadata. |
+| `code.function.name` | OTel semantic convention | FairLogger function metadata. |
+| `thread.id` | OTel semantic convention | Native Linux thread id, or a hashed C++ thread id on other platforms. |
+| `fairlogger.severity.number` | NestDAQ/FairLogger custom | Original FairLogger severity number. |
+| `fairlogger.severity.text` | NestDAQ/FairLogger custom | Original FairLogger severity name. |
+| `nestdaq.instance.id` | NestDAQ custom | Per-record instance id set through the telemetry loader after the FairMQ device id is known. |
+| `nestdaq.instance.name` | NestDAQ custom | Prefix parsed from an instance id ending in `-<number>`. |
+| `nestdaq.instance.index` | NestDAQ custom | Numeric suffix parsed from an instance id ending in `-<number>`. |
+| `process.name` | NestDAQ/FairLogger custom | FairLogger process name metadata. This is not the OTel `process.executable.name` resource attribute. |
 
 The instrumentation scope uses logger/library name `FairLogger` and library
 version `FAIRLOGGER_VERSION`. NestDAQ does not add a custom
@@ -133,19 +137,67 @@ SPDLOG_WARN("queue depth is {}", depth);
 
 The spdlog sink records these OpenTelemetry fields and attributes:
 
-| LogRecord field or attribute | Source |
-| ---------------------------- | ------ |
-| Body | spdlog message payload. |
-| Timestamp | spdlog message timestamp. |
-| Observed timestamp | Time when the sink creates the LogRecord. |
-| SeverityNumber | OpenTelemetry severity mapped from spdlog level. |
-| SeverityText | OpenTelemetry-defined text for the mapped severity. |
-| `spdlog.logger.name` | spdlog logger name. |
-| `spdlog.level` | Original spdlog level text. |
-| `code.file.path` | spdlog source file metadata, when present. |
-| `code.line.number` | spdlog source line metadata, when present. |
-| `code.function.name` | spdlog function metadata, when present. |
-| `thread.id` | spdlog thread id metadata. |
+| LogRecord field or attribute | Origin | Source |
+| ---------------------------- | ------ | ------ |
+| Body | OTel LogRecord field | spdlog message payload. |
+| Timestamp | OTel LogRecord field | spdlog message timestamp. |
+| Observed timestamp | OTel LogRecord field | Time when the sink creates the LogRecord. |
+| SeverityNumber | OTel LogRecord field | OpenTelemetry severity mapped from spdlog level. |
+| SeverityText | OTel LogRecord field | OpenTelemetry-defined text for the mapped severity. |
+| `code.file.path` | OTel semantic convention | spdlog source file metadata, when present. |
+| `code.line.number` | OTel semantic convention | spdlog source line metadata, when present. |
+| `code.function.name` | OTel semantic convention | spdlog function metadata, when present. |
+| `thread.id` | OTel semantic convention | spdlog thread id metadata. |
+| `spdlog.logger.name` | NestDAQ/spdlog custom | spdlog logger name. |
+| `spdlog.level` | NestDAQ/spdlog custom | Original spdlog level text. |
+
+## Log Severity Mapping
+
+OpenTelemetry stores the normalized log level in the LogRecord
+`SeverityNumber` and `SeverityText` fields. The original logging-library level
+is kept separately as `fairlogger.severity.*` for FairLogger records and
+`spdlog.level` for spdlog records.
+
+`--otel-log-severity` is a FairLogger sink filter. It controls the minimum
+FairLogger severity exported to OpenTelemetry logs. It does not filter records
+emitted through the optional spdlog sink; spdlog filtering remains controlled by
+the spdlog logger and sink levels.
+
+### FairLogger Severity Mapping
+
+| FairLogger level | OTel SeverityNumber | OTel SeverityText | Original level attributes |
+| ---------------- | ------------------- | ----------------- | ------------------------- |
+| `nolog` | `0` | invalid / unspecified | `fairlogger.severity.*` |
+| `trace` | `1` | `TRACE` | `fairlogger.severity.*` |
+| `debug4` | `2` | `TRACE2` | `fairlogger.severity.*` |
+| `debug3` | `2` | `TRACE2` | `fairlogger.severity.*` |
+| `debug2` | `3` | `TRACE3` | `fairlogger.severity.*` |
+| `debug1` | `4` | `TRACE4` | `fairlogger.severity.*` |
+| `debug` | `5` | `DEBUG` | `fairlogger.severity.*` |
+| `detail` | `6` | `DEBUG2` | `fairlogger.severity.*` |
+| `info` | `9` | `INFO` | `fairlogger.severity.*` |
+| `state` | `10` | `INFO2` | `fairlogger.severity.*` |
+| `warn` | `13` | `WARN` | `fairlogger.severity.*` |
+| `important` | `14` | `WARN2` | `fairlogger.severity.*` |
+| `alarm` | `15` | `WARN3` | `fairlogger.severity.*` |
+| `error` | `17` | `ERROR` | `fairlogger.severity.*` |
+| `critical` | `18` | `ERROR2` | `fairlogger.severity.*` |
+| `fatal` | `21` | `FATAL` | `fairlogger.severity.*` |
+
+`warning` is accepted as a `--otel-log-severity` alias for `warn`; FairLogger
+records themselves use the FairLogger level names.
+
+### spdlog Severity Mapping
+
+| spdlog level | OTel SeverityNumber | OTel SeverityText | Original level attribute |
+| ------------ | ------------------- | ----------------- | ------------------------ |
+| `trace` | `1` | `TRACE` | `spdlog.level` |
+| `debug` | `5` | `DEBUG` | `spdlog.level` |
+| `info` | `9` | `INFO` | `spdlog.level` |
+| `warn` | `13` | `WARN` | `spdlog.level` |
+| `err` | `17` | `ERROR` | `spdlog.level` |
+| `critical` | `21` | `FATAL` | `spdlog.level` |
+| `off`, `n_levels` | `0` | invalid / unspecified | `spdlog.level` |
 
 ## Command-Line Options
 
