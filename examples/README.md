@@ -56,4 +56,17 @@ Sink --help
 NullDevice --help
 ```
 
+### Example-Specific Options
+
+The examples also accept FairMQ options, NestDAQ plugin options, and NestDAQ
+telemetry options. Use `--help` on each executable for the complete option set.
+
+| Executable | Option | Default | Description |
+| :-- | :-- | :-- | :-- |
+| `Sampler` | `--out-chan-name` | `data` | Output channel name used by the producer. |
+| `Sampler` | `--text` | `Hello` | Text payload prefix sent in each message. |
+| `Sampler` | `--max-iterations` | `0` | Maximum number of run-loop iterations. `0` means infinite. |
+| `Sink` | `--in-chan-name` | `in` | Input channel name used by the consumer. |
+| `Sink` | `--multipart` | `true` | Handle incoming data as multipart messages. |
+
 For script-based launch examples, see [`scripts/README.md`](../scripts/README.md).

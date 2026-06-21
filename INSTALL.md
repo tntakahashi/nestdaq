@@ -44,7 +44,8 @@ dnf -y install \
 ```
 
 ### Build and install external dependencies
-The following command installs ZeroMQ, Boost, FairLogger, FairMQ, Catch2, hiredis, redis++, and Redis Stack.
+The following command installs ZeroMQ, Boost, FairLogger, FairMQ, Catch2,
+nlohmann/json, hiredis, redis++, and Redis Stack.
 
 ```bash
 # download the source code
@@ -65,14 +66,26 @@ cmake --build ./build-external
   - In this case, the `--parallel` (or `-j`) option passed to cmake --build does not control the inner ExternalProject builds, so please specify the parallel build level during the initial configuration using `-DBUILD_PARALLEL_LEVEL=xxx`.
     - The `nproc` command prints the number of available CPU cores on the system. If this causes excessive memory usage, specify a smaller value manually.
 - The default dependency versions are listed below. To override a version, pass `-Dxxxx_VERSION=yyyy` to CMake.
-- If `-DWITH_REDIS_STACK=OFF` is specified, the external dependency build does not build or install Redis Stack. The default is `WITH_REDIS_STACK=ON`.
-- If `-DWITH_SPDLOG=ON` is specified, the external dependency build also installs spdlog. The default is `WITH_SPDLOG=OFF`.
-- If `-DWITH_OTEL_CPP=ON` is specified, the external dependency build also installs opentelemetry-cpp and its optional transport dependencies, such as gRPC. The default is `WITH_OTEL_CPP=OFF`.
 - If Doxygen is found during the external dependency configure step, `doxygen-awesome-css` is installed as an optional documentation asset under `./install/share/doxygen-awesome-css`.
 - To use Ninja instead of Make, add `-G Ninja` to the CMake options.
 - To use `mold` instead of the system `ld`.
   - GCC 12.1 or later: Add `-DCMAKE_EXE_LINKER_FLAGS="-fuse-ld=mold"` and `-DCMAKE_SHARED_LINKER_FLAGS="-fuse-ld=mold"` to the CMake options
   - GCC 12.0 or earlier: Add `-DCMAKE_EXE_LINKER_FLAGS="-B<path-to-mold>"` and `-DCMAKE_SHARED_LINKER_FLAGS="-B<path-to-mold>"`
+
+#### External dependency build options
+
+| Option | Default | Description |
+| :-- | :-- | :-- |
+| `BUILD_PARALLEL_LEVEL` | unset | Parallel level passed to inner `ExternalProject` builds. Set this at configure time; `cmake --build --parallel` does not control those inner builds. |
+| `WITH_REDIS_STACK` | `ON` | Build and install Redis Stack runtime components. |
+| `WITH_SPDLOG` | `OFF` | Build and install spdlog. Enable this when building the optional NestDAQ spdlog OpenTelemetry sink. |
+| `WITH_OTEL_CPP` | `OFF` | Build and install opentelemetry-cpp and optional transport dependencies such as gRPC. |
+| `<package>_VERSION` | package-specific | Override the dependency version listed below, for example `-DFairMQ_VERSION=...`. |
+
+Redis Stack also exposes low-level cache variables such as Redis build TLS,
+allocator, and temporary Rust toolchain paths. These are intended for dependency
+build maintenance; inspect the CMake cache or `cmake/dependencies/redis-stack.cmake`
+when those knobs are needed.
 
 #### Versions of installed external dependencies
 
@@ -87,7 +100,7 @@ cmake --build ./build-external
 | [spdlog](https://github.com/gabime/spdlog)                                | 1.17.0            | `spdlog_VERSION`                 |
 | [hiredis](https://github.com/redis/hiredis)                              | 1.3.0             | `hiredis_VERSION`                |
 | [redis++](https://github.com/sewenew/redis-plus-plus)                    | 1.3.15            | `redis_plus_plus_VERSION`        |
-| [opentelemetry-cpp](https://github.com/open-telemetry/opentelemetry-cpp) | 1.24.0            | `opentelemetry-cpp_VERSION`      |
+| [opentelemetry-cpp](https://github.com/open-telemetry/opentelemetry-cpp) | 1.26.0            | `opentelemetry-cpp_VERSION`      |
 | [doxygen-awesome-css](https://github.com/jothepro/doxygen-awesome-css)   | 2.4.2             | `doxygen-awesome-css_VERSION`    |
 
 ##### External runtime components
@@ -115,15 +128,18 @@ cmake --install ./build
 
 - In the example above, both the main NestDAQ package and the external dependencies are installed in the same directory (`./install`).
   If the external dependencies are installed in a different location, specify that directory with `-DCMAKE_PREFIX_PATH=xxx`.
-- To run `clang-tidy` during the NestDAQ build, add `-DNESTDAQ_ENABLE_CLANG_TIDY=ON`.
-  This requires the `clang-tidy` command, provided by `clang-tools-extra` on AlmaLinux.
-- To build and install Doxygen documentation, add `-DNestDAQ_BUILD_DOCS=ON`.
-  This requires the `doxygen` command. If Doxygen is not found, documentation generation is skipped. If `dot` from Graphviz is available, Doxygen can use it to generate diagrams.
-- Example devices are built and installed by default. Add `-DNestDAQ_BUILD_EXAMPLES=OFF`
-  to skip `Sampler`, `Sink`, and `NullDevice`.
-- The Doxygen HTML output uses `doxygen-awesome-css` from `CMAKE_PREFIX_PATH/share/doxygen-awesome-css` by default. To use another location, specify `-DNESTDAQ_DOXYGEN_AWESOME_DIR=/path/to/doxygen-awesome-css`.
 - When `doxygen-awesome-css` is available, it is installed with the generated documentation under `./install/share/doc/nestdaq/doxygen-awesome-css`.
 - When `-DNestDAQ_BUILD_DOCS=ON` and Doxygen is available, the HTML documentation is generated under `./build/docs/html` and installed under `./install/share/doc/nestdaq/html`.
+
+#### NestDAQ build options
+
+| Option | Default | Description |
+| :-- | :-- | :-- |
+| `NESTDAQ_ENABLE_CLANG_TIDY` | `OFF` | Run `clang-tidy` during the NestDAQ build. This requires the `clang-tidy` command, provided by `clang-tools-extra` on AlmaLinux. |
+| `NestDAQ_BUILD_DOCS` | `OFF` | Build and install Doxygen documentation. This requires `doxygen`; if Doxygen is not found, documentation generation is skipped. If `dot` from Graphviz is available, Doxygen can use it to generate diagrams. |
+| `NestDAQ_BUILD_EXAMPLES` | `ON` | Build and install `Sampler`, `Sink`, and `NullDevice` with the main NestDAQ build. Set this to `OFF` to skip them. |
+| `NESTDAQ_DOXYGEN_AWESOME_DIR` | discovered from `CMAKE_PREFIX_PATH` or install prefix | Directory containing `doxygen-awesome-css` assets used by generated documentation. |
+| `BUILD_TESTING` | `ON` | Build NestDAQ tests when enabled. |
 
 ### Build and install examples
 

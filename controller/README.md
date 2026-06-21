@@ -52,7 +52,9 @@ OpenTelemetry options.
 available through the shared NestDAQ telemetry option helper for the
 `daq-webctl` component. When `--otel-service-instance-id` is not specified,
 `daq-webctl` records a generated UUID in the OpenTelemetry
-`service.instance.id` resource attribute.
+`service.instance.id` resource attribute. See
+[`nestdaq/telemetry/README.md`](../nestdaq/telemetry/README.md) for the full
+OpenTelemetry option list.
 
 | Option | Default | Description |
 | :-- | :-- | :-- |
@@ -66,7 +68,7 @@ available through the shared NestDAQ telemetry option helper for the
 | `--post-stop` | `echo "post-stop command"` | Script path or command line executed after publishing `STOP`. |
 | `--redis-uri` | `tcp://127.0.0.1:6379` | Redis server URI. A database number can be included as `/N`. |
 | `--separator` | `:` | Separator used when composing Redis key paths. |
-| `--poll-interval` | `1000` | State polling interval in milliseconds. |
+| `--poll-interval` | `500` | State polling interval in milliseconds. |
 | `--log-to-file` | empty | FairLogger output file. If set, console logging is disabled. |
 | `--file-severity` | `info` | FairLogger file severity. |
 | `--severity` | `info` | FairLogger console severity. |

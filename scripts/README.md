@@ -9,6 +9,14 @@ Redis server must be started before executing the scripts.
 ### start_device.sh 
 This example shows how to start FairMQDevice with the custom plugins. 
 The device must be those provided by the present repository or those which contains `fairmq-` in the path. 
+Arguments after the device name are passed through to the device and FairMQ, so
+plugin options such as `--service-name` and device-specific options such as
+`--max-iterations` can be specified on the same command line.
+
+The generated script uses `MY_REDIS_SERVER` for all NestDAQ Redis connections.
+The default is `127.0.0.1:6379`. It maps the DAQ service registry to Redis
+database `0`, metrics to database `1`, and parameter configuration to database
+`2`.
 
 ```bash
   # ./start_device.sh [device-name] [options ...]
@@ -25,7 +33,7 @@ An example of launching a `Sampler` with a different service name (`A-Sampler`) 
 ```
 ## Topology configuration
 
-Default value for endpoint paremeter
+Default value for endpoint parameter
 
 | field                 | default value                              | 
 | --                    | --                                         | 
@@ -33,7 +41,7 @@ Default value for endpoint paremeter
 | type                  |                                            | 
 | method                |                                            | 
 | address               |                                            | 
-| transprot             | zeromq                                     | 
+| transport             | zeromq                                     |
 | sndBufSize            | 1000                                       | 
 | rcvBufSize            | 1000                                       | 
 | sndKernelSize         | 0                                          |
@@ -47,7 +55,7 @@ Default value for endpoint paremeter
 | bound                 | (Do not set by the user)                   |
 | waitForPeerConnection | true                                       | 
 
-The last three paremeters are specific to nestdaq. 
+The last three parameters are specific to nestdaq.
 The rest are defined in FairMQ.
 
 
