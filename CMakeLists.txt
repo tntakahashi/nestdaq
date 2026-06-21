@@ -7,15 +7,11 @@ project(NestDAQ VERSION "${PROJECT_VERSION}" LANGUAGES CXX C)
 message(STATUS "PROJECT_NAME: ${PROJECT_NAME}")
 
 include(cmake/common.cmake)
+include(cmake/NestDAQBuildSettings.cmake)
 include(CMakePackageConfigHelpers)
 include(CTest)
 
-option(NESTDAQ_ENABLE_CLANG_TIDY "Run clang-tidy during NestDAQ builds" OFF)
-if(NESTDAQ_ENABLE_CLANG_TIDY)
-  find_program(CLANG_TIDY_EXE NAMES clang-tidy REQUIRED)
-  set(CMAKE_CXX_CLANG_TIDY "${CLANG_TIDY_EXE}")
-  message(STATUS "clang-tidy enabled: ${CLANG_TIDY_EXE}")
-endif()
+nestdaq_enable_clang_tidy("Run clang-tidy during NestDAQ builds")
 
 option(NestDAQ_BUILD_DOCS "Build and install NestDAQ Doxygen documentation" OFF)
 option(NestDAQ_BUILD_EXAMPLES "Build and install NestDAQ example devices" ON)
@@ -44,14 +40,7 @@ install(FILES
 
 #------------------------------------------------------------------------------
 # RPATH handling
-set(CMAKE_SKIP_BUILD_RPATH FALSE)
-set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
-set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
-if(APPLE)
-    set(CMAKE_INSTALL_RPATH "@loader_path/../${CMAKE_INSTALL_LIBDIR}")
-elseif(UNIX)
-    set(CMAKE_INSTALL_RPATH "$ORIGIN/../${CMAKE_INSTALL_LIBDIR}")
-endif()
+nestdaq_configure_install_rpath()
 
 #------------------------------------------------------------------------------
 find_package(FairMQ)
