@@ -15,7 +15,8 @@ backend directory explicitly:
   Dashboards.
 - `victoria/`: logs, metrics, and traces in VictoriaLogs, VictoriaMetrics, and
   VictoriaTraces, viewed with Grafana.
-- `clickhouse/`: logs, metrics, and traces in ClickHouse, viewed with Grafana.
+- `clickhouse/`: logs, metrics, and traces in ClickStack, viewed with the
+  ClickStack UI.
 
 ## Start
 
@@ -48,7 +49,7 @@ docker compose -f compose-clickhouse.yaml up
 For Podman, use the same files with `podman compose`.
 
 If you run multiple stacks at the same time, override conflicting host ports
-such as `GRAFANA_PORT`, `OTEL_COLLECTOR_GRPC_PORT`, and
+such as `GRAFANA_PORT`, `CLICKSTACK_UI_PORT`, `OTEL_COLLECTOR_GRPC_PORT`, and
 `OTEL_COLLECTOR_HTTP_PORT`.
 
 Each backend directory is self-contained. It can be copied on its own and run

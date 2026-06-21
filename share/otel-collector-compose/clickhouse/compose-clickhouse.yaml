@@ -1,13 +1,17 @@
 services:
-  clickhouse:
-    image: ${CLICKHOUSE_IMAGE:-docker.io/clickhouse/clickhouse-server:26.3.12.3-lts}
-    container_name: clickhouse
+  clickstack:
+    image: ${CLICKSTACK_IMAGE:-docker.io/clickhouse/clickstack-all-in-one:2}
+    container_name: clickstack
+    command: ["clickstack"]
     ports:
+      - "${CLICKSTACK_UI_PORT:-8080}:8080"
       - "${CLICKHOUSE_HTTP_PORT:-8123}:8123"
-      - "${CLICKHOUSE_NATIVE_PORT:-9000}:9000"
+      - "${OTEL_COLLECTOR_GRPC_PORT:-4317}:4317"
+      - "${OTEL_COLLECTOR_HTTP_PORT:-4318}:4318"
     volumes:
-      - ${CLICKHOUSE_DATA_DIR:-./clickhouse-data}:/var/lib/clickhouse:Z
-      - ${CLICKHOUSE_LOG_DIR:-./clickhouse-logs}:/var/log/clickhouse-server:Z
+      - ${CLICKSTACK_DB_DIR:-./clickstack-db}:/data/db:Z
+      - ${CLICKSTACK_CLICKHOUSE_DATA_DIR:-./clickstack-clickhouse-data}:/var/lib/clickhouse:Z
+      - ${CLICKSTACK_CLICKHOUSE_LOG_DIR:-./clickstack-clickhouse-logs}:/var/log/clickhouse-server:Z
     healthcheck:
       test: ["CMD", "clickhouse-client", "--query", "SELECT 1"]
       interval: 10s
@@ -15,40 +19,8 @@ services:
       retries: 30
       start_period: 60s
     networks:
-      - otel-clickhouse-net
-
-  grafana:
-    image: ${GRAFANA_IMAGE:-docker.io/grafana/grafana:12.4.0}
-    container_name: grafana
-    environment:
-      GF_INSTALL_PLUGINS: "grafana-clickhouse-datasource"
-      GF_SECURITY_ADMIN_PASSWORD: "${GRAFANA_ADMIN_PASSWORD:-admin}"
-    ports:
-      - "${GRAFANA_PORT:-3000}:3000"
-    volumes:
-      - ${GRAFANA_DATA_DIR:-./grafana-data}:/var/lib/grafana:Z
-      - ${GRAFANA_PROVISIONING_DIR:-./grafana/provisioning}:/etc/grafana/provisioning:ro,Z
-    depends_on:
-      clickhouse:
-        condition: service_healthy
-    networks:
-      - otel-clickhouse-net
-
-  otel-collector:
-    image: ${OTEL_COLLECTOR_IMAGE:-docker.io/otel/opentelemetry-collector-contrib:0.150.1}
-    container_name: otel-collector
-    command: ["--config=/etc/otel/config.yaml"]
-    volumes:
-      - ${OTEL_COLLECTOR_CONFIG_FILE:-./otel-collector-config-clickhouse.yaml}:/etc/otel/config.yaml:ro,Z
-    ports:
-      - "${OTEL_COLLECTOR_GRPC_PORT:-4317}:4317"
-      - "${OTEL_COLLECTOR_HTTP_PORT:-4318}:4318"
-    depends_on:
-      clickhouse:
-        condition: service_healthy
-    networks:
-      - otel-clickhouse-net
+      - otel-clickstack-net
 
 networks:
-  otel-clickhouse-net:
-    name: otel-clickhouse-net
+  otel-clickstack-net:
+    name: otel-clickstack-net

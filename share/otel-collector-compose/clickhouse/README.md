@@ -1,8 +1,8 @@
-# ClickHouse OTel Backend
+# ClickStack OTel Backend
 
 This local validation stack receives OpenTelemetry logs, metrics, and traces
-with OpenTelemetry Collector, stores them in ClickHouse, and opens them in
-Grafana.
+with the ClickStack OpenTelemetry Collector, stores them in ClickHouse, and
+opens them in the ClickStack UI.
 
 Start from this directory:
 
@@ -18,68 +18,53 @@ podman compose -f compose-clickhouse.yaml up
 
 ## Components
 
-- `otel-collector`: receives OTLP logs, metrics, and traces.
-- `clickhouse`: stores logs, metrics, and traces.
-- `grafana`: provides a ClickHouse datasource using the official Grafana
-  ClickHouse plugin.
+- `clickstack`: runs the ClickStack UI, OpenTelemetry Collector, and
+  ClickHouse in one container.
 
-The collector uses the ClickHouse exporter over the native protocol:
+Open the ClickStack UI at `http://localhost:8080`. On first use, create the UI
+user. ClickStack connects to the local ClickHouse instance and prepares data
+sources for logs, metrics, and traces.
 
-```text
-tcp://clickhouse:9000?dial_timeout=10s
-```
-
-It creates the `otel` database and default OpenTelemetry tables on startup.
-The table names are:
-
-- logs: `otel.otel_logs`
-- traces: `otel.otel_traces`
-- metrics: `otel.otel_metrics_gauge`
-- metrics: `otel.otel_metrics_sum`
-- metrics: `otel.otel_metrics_summary`
-- metrics: `otel.otel_metrics_histogram`
-- metrics: `otel.otel_metrics_exp_histogram`
-
-The OpenTelemetry Collector ClickHouse exporter currently marks logs and traces
-as beta and metrics as alpha. This is suitable for local validation; production
-deployments should manage schema, retention, credentials, and exporter upgrades
-explicitly.
-
-Grafana is provisioned with a `ClickHouse` datasource that connects to
-`clickhouse:9000`, database `otel`, user `default`.
+This stack is intended for local validation. Production deployments should use
+explicit credentials, retention policy, backup policy, and a deployment topology
+managed outside this sample compose file.
 
 ## Ports
 
+- ClickStack UI: `http://localhost:8080`
 - ClickHouse HTTP: `http://localhost:8123`
-- ClickHouse native protocol: `localhost:9000`
-- Grafana: `http://localhost:3000`
 - OTLP gRPC receiver: `localhost:4317`
 - OTLP HTTP receiver: `http://localhost:4318`
+
+## NestDAQ Telemetry Endpoint Examples
+
+Use `localhost:4317` for OTLP/gRPC or `http://localhost:4318` for OTLP/HTTP.
+For example, HTTP endpoints use these paths:
+
+```text
+http://localhost:4318/v1/logs
+http://localhost:4318/v1/metrics
+http://localhost:4318/v1/traces
+```
 
 ## Runtime Options
 
 | Variable | Default | Description |
 | :-- | :-- | :-- |
-| `OTEL_COLLECTOR_IMAGE` | `docker.io/otel/opentelemetry-collector-contrib:0.150.1` | Collector image. |
-| `CLICKHOUSE_IMAGE` | `docker.io/clickhouse/clickhouse-server:26.3.12.3-lts` | ClickHouse image. |
-| `GRAFANA_IMAGE` | `docker.io/grafana/grafana:12.4.0` | Grafana image. |
+| `CLICKSTACK_IMAGE` | `docker.io/clickhouse/clickstack-all-in-one:2` | ClickStack all-in-one image. |
+| `CLICKSTACK_UI_PORT` | `8080` | Host port mapped to the ClickStack UI. |
 | `CLICKHOUSE_HTTP_PORT` | `8123` | Host port mapped to ClickHouse HTTP. |
-| `CLICKHOUSE_NATIVE_PORT` | `9000` | Host port mapped to ClickHouse native protocol. |
-| `GRAFANA_PORT` | `3000` | Host port mapped to Grafana. |
 | `OTEL_COLLECTOR_GRPC_PORT` | `4317` | Host port mapped to OTLP gRPC. |
 | `OTEL_COLLECTOR_HTTP_PORT` | `4318` | Host port mapped to OTLP HTTP. |
-| `CLICKHOUSE_DATA_DIR` | `./clickhouse-data` | Host directory bind-mounted to `/var/lib/clickhouse`. |
-| `CLICKHOUSE_LOG_DIR` | `./clickhouse-logs` | Host directory bind-mounted to `/var/log/clickhouse-server`. |
-| `GRAFANA_DATA_DIR` | `./grafana-data` | Host directory bind-mounted to `/var/lib/grafana`. |
-| `GRAFANA_ADMIN_PASSWORD` | `admin` | Grafana admin password. |
-| `GRAFANA_PROVISIONING_DIR` | `./grafana/provisioning` | Grafana provisioning directory. |
-| `OTEL_COLLECTOR_CONFIG_FILE` | `./otel-collector-config-clickhouse.yaml` | Collector config file. |
+| `CLICKSTACK_DB_DIR` | `./clickstack-db` | Host directory bind-mounted to `/data/db`. |
+| `CLICKSTACK_CLICKHOUSE_DATA_DIR` | `./clickstack-clickhouse-data` | Host directory bind-mounted to `/var/lib/clickhouse`. |
+| `CLICKSTACK_CLICKHOUSE_LOG_DIR` | `./clickstack-clickhouse-logs` | Host directory bind-mounted to `/var/log/clickhouse-server`. |
 
 ## Stop
 
 ```bash
 docker compose -f compose-clickhouse.yaml down
-rm -rf ./clickhouse-data \
-       ./clickhouse-logs \
-       ./grafana-data
+rm -rf ./clickstack-db \
+       ./clickstack-clickhouse-data \
+       ./clickstack-clickhouse-logs
 ```
