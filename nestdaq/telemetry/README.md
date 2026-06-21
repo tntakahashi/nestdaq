@@ -46,6 +46,7 @@ resource attributes when values are available:
 | `service.version` | `NESTDAQ_VERSION`. |
 | `service.namespace` | Configured telemetry service namespace. |
 | `service.instance.id` | Configured telemetry service instance id. |
+| `host.name` | Host name detected at telemetry option parsing time. |
 | `nestdaq.instance.id` | FairMQ device id after it is known. |
 | `nestdaq.instance.id.status` | `unresolved` before the FairMQ device id is known, otherwise `resolved`. |
 | `fairmq.id` | FairMQ device id. |

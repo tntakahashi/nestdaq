@@ -335,6 +335,7 @@ auto MakeResource(const nestdaq_otel_config &config) -> opentelemetry::sdk::reso
     attributes.emplace("service.version", std::string{NESTDAQ_VERSION});
     AddStringAttribute(attributes, "service.namespace", config.service_namespace);
     AddStringAttribute(attributes, "service.instance.id", config.service_instance_id);
+    AddStringAttribute(attributes, "host.name", config.host_name);
     AddStringAttribute(attributes, "nestdaq.instance.id", config.nestdaq_instance_id);
     AddStringAttribute(attributes, "nestdaq.instance.id.status", config.nestdaq_instance_id_status);
     AddStringAttribute(attributes, "fairmq.id", config.fairmq_id);

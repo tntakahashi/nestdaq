@@ -274,6 +274,19 @@ TEST_CASE("telemetry NestDAQ instance id resource starts unresolved", "[telemetr
     CHECK(std::string_view{config.nestdaq_instance_id_status} == "unresolved");
 }
 
+TEST_CASE("telemetry host name resource is detected by default", "[telemetry]")
+{
+    ClearTelemetryEnvironment();
+
+    const auto options = Parse({"test"});
+    const auto config = nestdaq::telemetry::MakeConfig(options);
+
+    CHECK(std::string_view{config.host_name} == options.hostName);
+    if (!nestdaq::telemetry::DetectHostName().empty()) {
+        CHECK_FALSE(options.hostName.empty());
+    }
+}
+
 TEST_CASE("telemetry service instance id follows plugin uuid option", "[telemetry]")
 {
     ClearTelemetryEnvironment();

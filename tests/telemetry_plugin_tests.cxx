@@ -59,6 +59,7 @@ auto BaseConfig() -> nestdaq_otel_config
     config.service_name = "nestdaq-test";
     config.service_namespace = "nestdaq";
     config.service_instance_id = "test-instance";
+    config.host_name = "test-host";
     config.nestdaq_instance_id = "";
     config.nestdaq_instance_id_status = "unresolved";
     config.fairmq_id = "";
@@ -222,6 +223,7 @@ TEST_CASE("FairLogger logs include NestDAQ instance id attributes", "[telemetry]
 
     const auto logs = capture.output.str();
     CHECK(logs.find("nestdaq instance id probe") != std::string::npos);
+    CHECK(logs.find("host.name: test-host") != std::string::npos);
     CHECK(logs.find("nestdaq.instance.id: sampler-0") != std::string::npos);
     CHECK(logs.find("nestdaq.instance.name: sampler") != std::string::npos);
     CHECK(logs.find("nestdaq.instance.index: 0") != std::string::npos);
@@ -241,6 +243,7 @@ TEST_CASE("FairLogger logs use unresolved resource before NestDAQ instance id is
 
     const auto logs = capture.output.str();
     CHECK(logs.find("early unresolved nestdaq instance id probe") != std::string::npos);
+    CHECK(logs.find("host.name: test-host") != std::string::npos);
     CHECK(logs.find("nestdaq.instance.id.status: unresolved") != std::string::npos);
     CHECK(logs.find("nestdaq.instance.id:") == std::string::npos);
 }
@@ -268,6 +271,7 @@ TEST_CASE("FairLogger logs use resolved resource after NestDAQ instance id reini
     const auto logs = capture.output.str();
     CHECK(logs.find("before resolved nestdaq instance id") != std::string::npos);
     CHECK(logs.find("after resolved nestdaq instance id") != std::string::npos);
+    CHECK(logs.find("host.name: test-host") != std::string::npos);
     CHECK(logs.find("nestdaq.instance.id.status: unresolved") != std::string::npos);
     CHECK(logs.find("nestdaq.instance.id.status: resolved") != std::string::npos);
     CHECK(logs.find("nestdaq.instance.id: sampler-0") != std::string::npos);
@@ -454,6 +458,8 @@ TEST_CASE("metrics console initializes and exports resource attributes", "[telem
     CHECK(output.find("service.namespace") != std::string::npos);
     CHECK(output.find("service.instance.id") != std::string::npos);
     CHECK(output.find("test-instance") != std::string::npos);
+    CHECK(output.find("host.name") != std::string::npos);
+    CHECK(output.find("test-host") != std::string::npos);
     CHECK(output.find("nestdaq.instance.id") != std::string::npos);
     CHECK(output.find("sampler-0") != std::string::npos);
     CHECK(output.find("nestdaq.instance.id.status") != std::string::npos);
@@ -515,6 +521,8 @@ TEST_CASE("user telemetry facade exports RAII spans and attributes", "[telemetry
     CHECK(output.find("data") != std::string::npos);
     CHECK(output.find("payload.bytes") != std::string::npos);
     CHECK(output.find("ok") != std::string::npos);
+    CHECK(output.find("host.name") != std::string::npos);
+    CHECK(output.find("test-host") != std::string::npos);
     CHECK(output.find("nestdaq.instance.id") != std::string::npos);
     CHECK(output.find("sampler-0") != std::string::npos);
     CHECK(output.find("nestdaq.instance.id.status") != std::string::npos);

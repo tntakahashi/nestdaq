@@ -56,6 +56,7 @@ struct TelemetryOptions {
     std::string serviceName{"nestdaq"};
     std::string serviceNamespace{kDefaultServiceNamespace};
     std::string serviceInstanceId;
+    std::string hostName;
     std::string nestdaqInstanceId;
     std::string nestdaqInstanceIdStatus{"unresolved"};
     std::string fairmqId;
@@ -98,6 +99,10 @@ auto AssignOption(TelemetryOptions& options,
 auto Basename(std::string_view path) -> std::string_view;
 /** @brief Read an environment variable as a nullable borrowed C string. */
 auto Env(const char* name) -> const char*;
+/** @brief Detect the current host name for the OTel host.name resource attribute. */
+auto DetectHostName() -> std::string;
+/** @brief Detect and store host.name when it has not already been set. */
+auto EnsureHostName(TelemetryOptions& options) -> void;
 /** @brief Generate and store a service instance id when the user did not set one. */
 auto EnsureServiceInstanceId(TelemetryOptions& options) -> void;
 /** @brief Generate a UUID string for the default service instance id. */

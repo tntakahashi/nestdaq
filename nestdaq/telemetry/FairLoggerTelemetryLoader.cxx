@@ -13,12 +13,15 @@
 #include <boost/uuid/uuid_io.hpp>
 
 #include <algorithm>
+#include <array>
 #include <dlfcn.h>
 
 #include <cstdlib>
+#include <unistd.h>
 
 namespace nestdaq::telemetry {
 namespace {
+constexpr auto kHostNameBufferSize = std::size_t{256};
 
 /**
  * @brief Resolve one symbol from the loaded telemetry plugin.
@@ -191,6 +194,26 @@ auto Env(const char* name) -> const char*
     return std::getenv(name); // NOLINT(concurrency-mt-unsafe)
 }
 
+auto DetectHostName() -> std::string
+{
+    auto buffer = std::array<char, kHostNameBufferSize>{};
+    if (gethostname(buffer.data(), buffer.size()) != 0) {
+        return {};
+    }
+    if (buffer.back() != '\0') {
+        return {};
+    }
+    return std::string{buffer.data()};
+}
+
+auto EnsureHostName(TelemetryOptions& options) -> void
+{
+    if (!options.hostName.empty()) {
+        return;
+    }
+    options.hostName = DetectHostName();
+}
+
 auto EnsureServiceInstanceId(TelemetryOptions& options) -> void
 {
     if (!options.serviceInstanceId.empty()) {
@@ -244,6 +267,7 @@ auto MakeConfig(const TelemetryOptions& options) -> nestdaq_otel_config
     config.service_name = options.serviceName.data();
     config.service_namespace = options.serviceNamespace.data();
     config.service_instance_id = options.serviceInstanceId.data();
+    config.host_name = options.hostName.data();
     config.nestdaq_instance_id = options.nestdaqInstanceId.data();
     config.nestdaq_instance_id_status = options.nestdaqInstanceIdStatus.data();
     config.fairmq_id = options.fairmqId.data();
@@ -289,6 +313,7 @@ auto ParseTelemetryOptions(int argc, char* argv[], // NOLINT(cppcoreguidelines-a
     options.serviceName = defaultServiceName;
     if (argv == nullptr) {
         ApplyEnvironment(options);
+        EnsureHostName(options);
         EnsureServiceInstanceId(options);
         return options;
     }
@@ -343,6 +368,7 @@ auto ParseTelemetryOptions(int argc, char* argv[], // NOLINT(cppcoreguidelines-a
     }
 
     NormalizeServiceName(options);
+    EnsureHostName(options);
     EnsureServiceInstanceId(options);
     return options;
 }
@@ -426,6 +452,7 @@ auto ReadTelemetryOptions(const boost::program_options::variables_map& vm,
         options.traceOtlpHttpJson = vm["otel-trace-http-json"].as<bool>() ? 1U : 0U;
     }
     NormalizeServiceName(options);
+    EnsureHostName(options);
     EnsureServiceInstanceId(options);
     return options;
 }
