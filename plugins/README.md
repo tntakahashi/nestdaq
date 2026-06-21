@@ -80,6 +80,25 @@ DAQ commands, and writes topology/channel metadata used by other services.
 | `daq_service{sep}topology{sep}endpoint...` | string/hash keys | Topology endpoint configuration | Read/scanned | External topology configuration used to resolve endpoints. |
 | `daq_service{sep}topology{sep}link...` | string/hash keys | Topology link configuration | Read/scanned | External topology configuration used to resolve links between services/channels. |
 
+#### `autoSubChannel`
+
+`autoSubChannel` controls how `TopologyConfig` expands FairMQ subchannels when
+a topology peer is written without an explicit `[subindex]`.
+
+- `autoSubChannel=false` resolves an unindexed peer to subchannel `0` only.
+  This is useful for 1:1 or otherwise fixed connections.
+- `autoSubChannel=true` scans the peer channel subchannel records already
+  published in Redis and connects to all matching subchannels. This is useful
+  for n:m topologies where the number of peers or sockets is discovered at
+  runtime.
+- When the peer string includes `[subindex]`, only that subchannel is resolved,
+  regardless of `autoSubChannel`.
+
+The plugin normally calculates `numSockets` from the topology. For channels
+with `autoSubChannel=true`, `numSockets` grows with the discovered peer
+instances/subchannels so each FairMQ sub-socket can receive a distinct
+`address:port` and subchannel index.
+
 ### TTL Details
 
 `daq_service` uses `--max-ttl` in seconds. The default is `5` seconds.

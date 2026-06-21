@@ -58,6 +58,13 @@ Default value for endpoint parameter
 The last three parameters are specific to nestdaq.
 The rest are defined in FairMQ.
 
+`autoSubChannel` controls whether a peer written without `[subindex]` means
+only subchannel `0` or all subchannels registered for that peer channel.
+Use `autoSubChannel false` for fixed 1:1-style connections such as
+`topology-1-1.sh`. Use `autoSubChannel true` for n:m-style fan-out or fan-in
+topologies such as `topology-n-n-m.sh` and `topology-2samplers-n-m.sh`, where
+the plugin discovers peer subchannels and updates `numSockets` accordingly.
+When `[subindex]` is written explicitly, only that subchannel is used.
 
 ### topology-1-1.sh
 A simple topology of **Sampler** and **Sink** with the **PUSH-PULL** pattern. 
