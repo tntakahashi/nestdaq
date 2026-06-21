@@ -41,7 +41,8 @@ daq-webctl --http-uri=http://0.0.0.0:8080 --redis-uri=tcp://127.0.0.1:6379
 
 Open `http://localhost:8080/` or `http://localhost:8080/daq-webctl.html` after
 the process starts. The Redis server and DAQ devices must be available for
-control operations to succeed.
+control operations to succeed. Set the run number before entering the Running
+state.
 
 Use `daq-webctl --help` to inspect the available HTTP, Redis, FairLogger, and
 OpenTelemetry options.
