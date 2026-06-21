@@ -1,4 +1,4 @@
-# OpenSearch OTel Backend
+# OpenSearch OpenTelemetry (OTel) Backend
 
 This local validation stack receives OpenTelemetry logs and traces with
 OpenTelemetry Collector, stores them in OpenSearch, and opens them in
@@ -18,9 +18,10 @@ podman compose -f compose-opensearch.yaml up
 
 ## Components
 
-- `otel-collector`: receives OTLP logs and traces over gRPC and HTTP.
+- `otel-collector`: receives OpenTelemetry Protocol (OTLP) logs and traces over
+  Google remote procedure call (gRPC) and Hypertext Transfer Protocol (HTTP).
 - `opensearch`: stores logs and traces exported by the collector.
-- `opensearch-dashboards`: provides the web UI for OpenSearch.
+- `opensearch-dashboards`: provides the web user interface (UI) for OpenSearch.
 - `opensearch-dashboards-setup`: creates initial Data Views for logs and
   traces if they do not already exist.
 
@@ -63,9 +64,10 @@ lowercase index names. NestDAQ telemetry lowercases ASCII uppercase letters in
 
 ## Rootless Podman
 
-OpenSearch runs as container `uid=1000,gid=1000`. With rootless Podman, the
-host directory bind-mounted to `/usr/share/opensearch/data` must be readable
-and writable by that container uid/gid as seen from the Podman user namespace:
+OpenSearch runs as container `uid=1000,gid=1000`. Here `uid/gid` means user
+identifier/group identifier. With rootless Podman, the host directory
+bind-mounted to `/usr/share/opensearch/data` must be readable and writable by
+that container uid/gid as seen from the Podman user namespace:
 
 ```bash
 mkdir -p ./opensearch-data

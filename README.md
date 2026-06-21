@@ -1,5 +1,5 @@
 # NestDAQ
-A streaming DAQ implementation for the particle measurements
+A streaming data acquisition (DAQ) implementation for the particle measurements
 
 ## Quick links
 
@@ -32,7 +32,7 @@ A streaming DAQ implementation for the particle measurements
 
 ## Dependencies to build NestDAQ
 
-| Packages         | Version                              | URL |
+| Packages         | Version                              | Uniform Resource Locator (URL) |
 | ---              | ---                                  | --- |
 | Boost            | 1.72.0 or later                      | |
 | FairLogger       | 1.9.0  or later                      | |

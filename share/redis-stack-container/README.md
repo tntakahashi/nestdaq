@@ -55,7 +55,7 @@ or named volume.
 Set `REDIS_CONTAINER_REPLACE=0` to make the script fail instead when a
 same-name container already exists.
 
-## SELinux
+## Security-Enhanced Linux (SELinux)
 
 SELinux label options are only used with `REDIS_VOLUME_MODE=bind`. Bind mounts
 use the `:Z` label option by default so the container can write to the data
@@ -74,10 +74,10 @@ permission changes.
 
 SELinux labeling and Unix permissions are separate. The `:Z` mount label lets
 the container access the directory on SELinux-enabled hosts, but it does not
-fix uid/gid permission mismatches. Rootful containers may create files owned by
-host root in the bind-mounted directories. If a bind-mounted directory is not
-writable, adjust host-side ownership or permissions explicitly outside these
-helper scripts.
+fix user identifier/group identifier (uid/gid) permission mismatches. Rootful
+containers may create files owned by host root in the bind-mounted directories.
+If a bind-mounted directory is not writable, adjust host-side ownership or
+permissions explicitly outside these helper scripts.
 
 ## Named Volumes
 

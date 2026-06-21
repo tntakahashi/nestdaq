@@ -1,8 +1,8 @@
-# ClickStack OTel Backend
+# ClickStack OpenTelemetry (OTel) Backend
 
 This local validation stack receives OpenTelemetry logs, metrics, and traces
 with the ClickStack OpenTelemetry Collector, stores them in ClickHouse, and
-opens them in the ClickStack UI.
+opens them in the ClickStack user interface (UI).
 
 Start from this directory:
 
@@ -33,8 +33,8 @@ managed outside this sample compose file.
 
 - ClickStack UI: `http://localhost:8080`
 - ClickHouse HTTP: `http://localhost:8123`
-- OTLP gRPC receiver: `localhost:4317`
-- OTLP HTTP receiver: `http://localhost:4318`
+- OpenTelemetry Protocol (OTLP) Google remote procedure call (gRPC) receiver: `localhost:4317`
+- OTLP Hypertext Transfer Protocol (HTTP) receiver: `http://localhost:4318`
 
 ## NestDAQ Telemetry Endpoint Examples
 

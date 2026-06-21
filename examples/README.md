@@ -41,7 +41,8 @@ cmake --install ./build-examples
 
 The examples do not need to be installed into the same prefix as NestDAQ, but
 the runtime linker must be able to find NestDAQ, FairMQ, Boost, and related
-libraries. The example CMake project sets an install rpath relative to the
+libraries. The example CMake project sets an install runtime search path
+(rpath) relative to the
 example install prefix and uses link paths discovered through `NestDAQ::NestDAQ`.
 
 ## Running

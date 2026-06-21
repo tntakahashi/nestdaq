@@ -8,7 +8,7 @@ The plugins are built as shared libraries:
 
 | Plugin name        | Library                               | Purpose |
 |--------------------|----------------------------------------|---------|
-| `daq_service`      | `libFairMQPlugin_daq_service.so`       | Registers the FairMQ device in Redis, publishes health/state data, handles DAQ commands, and publishes topology/channel metadata. |
+| `daq_service`      | `libFairMQPlugin_daq_service.so`       | Registers the FairMQ device in Redis, publishes health/state data, handles data acquisition (DAQ) commands, and publishes topology/channel metadata. |
 | `metrics`          | `libFairMQPlugin_metrics.so`           | Publishes process metrics and FairMQ channel throughput metrics to Redis and RedisTimeSeries. |
 | `parameter_config` | `libFairMQPlugin_parameter_config.so`  | Reads parameters from Redis and mirrors them into FairMQ program properties. |
 
@@ -19,7 +19,7 @@ In the key patterns below, `{sep}` means the configured separator. The default
 separator is `:`. Other placeholders are `{service}`, `{id}`, `{channel}`, and
 `{subindex}`.
 
-## TTL Behavior
+## Time To Live (TTL) Behavior
 
 TTL handling is different for each plugin:
 
@@ -43,16 +43,16 @@ DAQ commands, and writes topology/channel metadata used by other services.
 | Option                           | Default                    | Required | Description |
 |----------------------------------|----------------------------|----------|-------------|
 | `--service-name`                 | none                       | No       | Service name used in Redis key paths. |
-| `--uuid`                         | generated                  | No       | UUID of this service instance. FairMQ device wrappers reuse the telemetry-generated `service.instance.id` when available; otherwise the plugin generates one. |
-| `--host-ip`                      | detected/configured value  | No       | IP address or hostname published as this service address. |
+| `--uuid`                         | generated                  | No       | Universally unique identifier (UUID) of this service instance. FairMQ device wrappers reuse the telemetry-generated `service.instance.id` when available; otherwise the plugin generates one. |
+| `--host-ip`                      | detected/configured value  | No       | Internet Protocol (IP) address or hostname published as this service address. |
 | `--hostname`                     | detected/configured value  | No       | Host name published in health data. |
-| `--registry-uri`                 | `tcp://127.0.0.1:6379/0`   | No       | Redis URI for the DAQ service registry. |
+| `--registry-uri`                 | `tcp://127.0.0.1:6379/0`   | No       | Redis uniform resource identifier (URI) for the DAQ service registry. |
 | `--separator`                    | `:`                        | No       | Separator used when composing Redis keys. |
 | `--max-ttl`                      | `5`                        | No       | TTL in seconds for transient registry keys. |
 | `--ttl-update-interval`          | `3`                        | No       | TTL refresh interval in seconds. |
 | `--startup-state`                | `idle`                     | No       | Startup state sequence target: `idle`, `initializing-device`, `initialized`, `bound`, `device-ready`, `ready`, or `running`. |
-| `--enable-uds`                   | `true`                     | No       | Use Unix domain sockets for local IPC if available. |
-| `--connect-config`               | none                       | No       | JSON string describing temporary MQ channel connection parameters. |
+| `--enable-uds`                   | `true`                     | No       | Use Unix domain sockets (UDS) for local inter-process communication (IPC) if available. |
+| `--connect-config`               | none                       | No       | JavaScript Object Notation (JSON) string describing temporary message queue (MQ) channel connection parameters. |
 | `--max-retry-to-resolve-address` | `10`                       | No       | Maximum retry count for resolving connect addresses. |
 
 ### Redis Keys Written or Read
@@ -65,8 +65,50 @@ DAQ commands, and writes topology/channel metadata used by other services.
 | `daq_service{sep}{service}{sep}{id}{sep}updatedTime` | string | Last update timestamp | Written | Lightweight last-update key with TTL. |
 | `daq_service{sep}{service}{sep}{id}{sep}option` | hash | Selected FairMQ program options such as `severity`, `file-severity`, `verbosity`, `color`, `log-to-file`, `id`, `io-threads`, `transport`, `network-interface`, `init-timeout`, shared-memory options, `rate`, and `session` | Written | Runtime option snapshot for monitoring and debugging. |
 | `daq_service{sep}service-instance-index{sep}{service}` | hash | Field: numeric instance index; value: UUID | Read/write | Allocates and reuses `{service}-{index}` instance IDs when `--id` is not given. |
-| `run_info{sep}run_number` | string | Run number | Read | Source for run number metadata. |
-| `daqctl` | pub/sub channel | DAQ command strings such as `start`, `stop`, `reset`, `quit`, `exit` | Subscribed | Receives controller commands. |
+| `run_info{sep}run_number` | string integer | Current or next run number | Read by plugin; read/write by controller | Source for run number metadata. The web controller may increment it and copy it to `latest_run_number` before `RUN`. |
+| `run_info{sep}latest_run_number` | string integer | Last run number copied when `RUN` was requested | Written by controller | Run number snapshot used for run metadata and display. |
+| `run_info{sep}wait-device-ready` | string boolean | `1`, `true`, or any other string | Read/write by controller | If true, the web controller publishes prerequisite `CONNECT` before later commands that require device readiness. |
+| `run_info{sep}wait-ready` | string boolean | `1`, `true`, or any other string | Read/write by controller | If true, the web controller publishes prerequisite `INIT TASK` before `RUN`. |
+| `daqctl` | pub/sub channel | JSON DAQ command messages | Subscribed by plugin; published by controller/operator | Receives controller commands. |
+| `daqstate` | pub/sub channel | JSON DAQ state messages | Published by plugin; subscribed by controller/operator | Sends DAQ state-transition notifications. |
+
+### DAQ Command Publish/Subscribe (Pub/Sub)
+
+`daq_service` subscribes to `daqctl` and translates matching command messages
+into FairMQ state transitions for the local service instance. Controllers and
+other operators publish command messages to this channel.
+
+Messages published to `daqctl` have this shape:
+
+```json
+{
+  "command": "change_state",
+  "value": "RUN",
+  "services": ["Sampler", "Sink"],
+  "instances": ["Sampler-0", "Sink-0"]
+}
+```
+
+The `services` array selects service names, and the `instances` array selects
+instance ids. A device processes the message only when its service or instance
+matches the selection. The `value` field can be one of the FairMQ or NestDAQ
+command strings handled by the plugin:
+
+```text
+BIND, COMPLETE INIT, CONNECT, END, INIT DEVICE, INIT TASK, RESET DEVICE,
+RESET TASK, RUN, STOP, exit, quit, reset, start
+```
+
+When the web controller requests `RUN`, it copies `run_info{sep}run_number` to
+`run_info{sep}latest_run_number`, optionally publishes prerequisite `CONNECT`
+and `INIT TASK` commands according to `run_info{sep}wait-device-ready` and
+`run_info{sep}wait-ready`, publishes `RUN`, and runs its configured pre/post
+hooks. When it requests `STOP`, it publishes `STOP` and runs its configured
+pre/post hooks.
+
+`daq_service` publishes DAQ state-transition notifications to `daqstate`.
+Consumers such as `daq-webctl` subscribe to this channel and also poll
+`daq_service{sep}*{sep}*{sep}fair-mq-state` for state summaries.
 
 ### Topology and Channel Keys
 
@@ -168,9 +210,10 @@ they stop being refreshed.
 ## metrics
 
 `metrics` publishes process-level metrics and FairMQ channel throughput metrics.
-Process CPU usage is reported in top/htop style: one fully used CPU core is
-approximately `100`, and two fully used CPU cores are approximately `200`.
-Memory usage is current resident memory in MiB.
+Process central processing unit (CPU) usage is reported in top/htop style: one
+fully used CPU core is approximately `100`, and two fully used CPU cores are
+approximately `200`. Memory usage is current resident set size (RSS) in
+mebibytes (MiB).
 
 ### Runtime Options
 

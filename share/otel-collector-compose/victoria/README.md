@@ -1,4 +1,4 @@
-# Victoria OTel Backend
+# Victoria OpenTelemetry (OTel) Backend
 
 This local validation stack receives OpenTelemetry logs, metrics, and traces
 with OpenTelemetry Collector, stores them in Victoria stack services, and opens
@@ -18,7 +18,8 @@ podman compose -f compose-victoria.yaml up
 
 ## Components
 
-- `otel-collector`: receives OTLP logs, metrics, and traces.
+- `otel-collector`: receives OpenTelemetry Protocol (OTLP) logs, metrics, and
+  traces.
 - `victoriametrics`: stores metrics.
 - `victorialogs`: stores logs.
 - `victoriatraces`: stores traces.
@@ -46,8 +47,8 @@ http://victoriatraces:10428/insert/opentelemetry/v1/traces
 - VictoriaLogs: `http://localhost:9428`
 - VictoriaTraces: `http://localhost:10428`
 - Grafana: `http://localhost:3000`
-- OTLP gRPC receiver: `localhost:4317`
-- OTLP HTTP receiver: `http://localhost:4318`
+- OTLP Google remote procedure call (gRPC) receiver: `localhost:4317`
+- OTLP Hypertext Transfer Protocol (HTTP) receiver: `http://localhost:4318`
 
 ## Runtime Options
 

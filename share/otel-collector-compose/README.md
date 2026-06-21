@@ -16,7 +16,7 @@ backend directory explicitly:
 - `victoria/`: logs, metrics, and traces in VictoriaLogs, VictoriaMetrics, and
   VictoriaTraces, viewed with Grafana.
 - `clickhouse/`: logs, metrics, and traces in ClickStack, viewed with the
-  ClickStack UI.
+  ClickStack user interface (UI).
 
 ## Start
 
@@ -50,7 +50,8 @@ For Podman, use the same files with `podman compose`.
 
 If you run multiple stacks at the same time, override conflicting host ports
 such as `GRAFANA_PORT`, `CLICKSTACK_UI_PORT`, `OTEL_COLLECTOR_GRPC_PORT`, and
-`OTEL_COLLECTOR_HTTP_PORT`.
+`OTEL_COLLECTOR_HTTP_PORT`. OTLP means OpenTelemetry Protocol, gRPC means
+Google remote procedure call, and HTTP means Hypertext Transfer Protocol.
 
 Each backend directory is self-contained. It can be copied on its own and run
 from that copied directory.
@@ -66,5 +67,5 @@ See the backend-local README:
 All stacks use pinned image defaults and allow overriding them with environment
 variables documented in the backend README.
 
-On SELinux-enabled systems, the Compose files apply the `:Z` label option to
-bind-mounted paths.
+On Security-Enhanced Linux (SELinux)-enabled systems, the Compose files apply
+the `:Z` label option to bind-mounted paths.

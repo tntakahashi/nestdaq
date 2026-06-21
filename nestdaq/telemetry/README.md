@@ -3,15 +3,16 @@
 NestDAQ telemetry is an optional OpenTelemetry integration for FairMQ-based
 devices and controller processes. The application executable does not link
 OpenTelemetry directly. Instead, NestDAQ loads a single runtime plugin,
-`libnestdaq_otel.so`, with `dlopen()` and resolves a small C ABI.
+`libnestdaq_otel.so`, with `dlopen()` and resolves a small C application binary
+interface (ABI).
 
 The plugin can export three OpenTelemetry signals:
 
 | Signal  | Default            | Source in NestDAQ                                      |
 | ------- | ------------------ | ----------------------------------------------------- |
 | Logs    | `console` exporter | FairLogger custom sink; optional spdlog sink          |
-| Metrics | disabled           | `nestdaq::telemetry::Telemetry` counter/histogram/gauge API |
-| Traces  | disabled           | `nestdaq::telemetry::TelemetrySpan` RAII API          |
+| Metrics | disabled           | `nestdaq::telemetry::Telemetry` counter/histogram/gauge application programming interface (API) |
+| Traces  | disabled           | `nestdaq::telemetry::TelemetrySpan` resource acquisition is initialization (RAII) API |
 
 `libnestdaq_otel.so` is built and installed only when `opentelemetry-cpp` is
 found at CMake configure time.
@@ -31,15 +32,17 @@ and shared runtime helpers. Applications should use `TelemetryLibrary`,
 `GetTelemetry()` instead of depending on those internal implementation files.
 
 Each signal accepts a comma-separated protocol list. Supported protocols are
-`console`, `otlp-http`, and `otlp-grpc`; the aliases `http`, `otlp_http`, `grpc`,
-and `otlp_grpc` are also accepted by the plugin. An empty protocol disables the
-signal.
+`console`, `otlp-http`, and `otlp-grpc`. OTLP means OpenTelemetry Protocol,
+HTTP means Hypertext Transfer Protocol, and gRPC means Google remote procedure
+call. The aliases `http`, `otlp_http`, `grpc`, and `otlp_grpc` are also
+accepted by the plugin. An empty protocol disables the signal.
 
 ## Resource Attributes
 
 Logs, metrics, and traces share one OpenTelemetry resource. NestDAQ sets these
 resource attributes when values are available. The `service.*` and `host.*`
-keys below are OpenTelemetry semantic convention attributes; the `nestdaq.*`
+keys below are OpenTelemetry semantic convention attributes. `OTel` is used
+below as the common abbreviation for OpenTelemetry. The `nestdaq.*`
 and `fairmq.*` keys are NestDAQ-specific attributes.
 
 | Attribute | Origin | Value |
@@ -57,9 +60,9 @@ and `fairmq.*` keys are NestDAQ-specific attributes.
 | `fairmq.transport` | NestDAQ/FairMQ custom | FairMQ transport. |
 
 Detailed NestDAQ and FairMQ build/git metadata is emitted as structured startup
-log bodies, not as resource attributes. The OpenTelemetry SDK may add its own
-SDK resource attributes independently; this table lists attributes explicitly
-set by NestDAQ.
+log bodies, not as resource attributes. The OpenTelemetry software development
+kit (SDK) may add its own SDK resource attributes independently; this table
+lists attributes explicitly set by NestDAQ.
 
 ## FairLogger Log Records
 
@@ -224,12 +227,12 @@ records themselves use the FairLogger level names. The alias has the same
 | `--otel-log-required` | `NESTDAQ_OTEL_LOG_REQUIRED` | `false` | Fail startup if telemetry cannot load or initialize. |
 | `--otel-timeout-ms` | none | `5000` | Force-flush, shutdown, and exporter timeout in milliseconds. |
 | `--otel-metric-export-interval-ms` | none | `1000` | Periodic metric export interval in milliseconds. |
-| `--otel-log-http-json` | none | `true` | Use JSON content type for OTLP HTTP logs. |
+| `--otel-log-http-json` | none | `true` | Use JavaScript Object Notation (JSON) content type for OTLP HTTP logs. |
 | `--otel-metric-http-json` | none | `true` | Use JSON content type for OTLP HTTP metrics. |
 | `--otel-trace-http-json` | none | `true` | Use JSON content type for OTLP HTTP traces. |
 | `--otel-service-name` | none | caller default | `service.name` resource attribute. FairMQ device wrappers default this to `--service-name`, or to the executable basename when `--service-name` is unset. NestDAQ converts ASCII uppercase letters to lowercase because collector pipelines may use this value in OpenSearch index names. |
 | `--otel-service-namespace` | none | `nestdaq` | `service.namespace` resource attribute. |
-| `--otel-service-instance-id` | none | generated UUID | `service.instance.id` resource attribute. FairMQ device wrappers use `--uuid` when this option is unset; otherwise they generate a UUID. |
+| `--otel-service-instance-id` | none | generated universally unique identifier (UUID) | `service.instance.id` resource attribute. FairMQ device wrappers use `--uuid` when this option is unset; otherwise they generate a UUID. |
 | `--otel-fairmq-id` | none | empty | `fairmq.id` resource attribute. |
 | `--otel-fairmq-device` | none | empty | `fairmq.device` resource attribute. |
 | `--otel-fairmq-session` | none | empty | `fairmq.session` resource attribute. |

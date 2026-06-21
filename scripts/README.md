@@ -4,7 +4,7 @@ Set of examples of how to use the plugins.
 The scripts can be copied to your favorite directory. 
 Redis server must be started before executing the scripts. 
 
-## Helper script to launch a DAQ process
+## Helper script to launch a data acquisition (DAQ) process
 
 ### start_device.sh 
 This example shows how to start FairMQDevice with the custom plugins. 
