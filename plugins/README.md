@@ -99,6 +99,55 @@ with `autoSubChannel=true`, `numSockets` grows with the discovered peer
 instances/subchannels so each FairMQ sub-socket can receive a distinct
 `address:port` and subchannel index.
 
+#### Bind/Connect Sequence
+
+`TopologyConfig` synchronizes bind and connect endpoints through Redis during
+FairMQ state transitions.
+
+```mermaid
+sequenceDiagram
+    participant Device
+    participant TopologyConfig
+    participant Redis
+    participant PeerDevices as Peer devices
+    participant FairMQProperties as FairMQ properties
+
+    Device->>TopologyConfig: InitializingDevice
+    TopologyConfig->>Redis: read topology endpoints and links
+    TopologyConfig->>TopologyConfig: classify bind/connect channels
+    TopologyConfig->>Redis: scan peer presence keys
+    TopologyConfig->>TopologyConfig: update numSockets when autoSubChannel=true
+    TopologyConfig->>Redis: write channel metadata and peer lists
+    TopologyConfig->>FairMQProperties: set initial chans.* properties
+
+    Device->>TopologyConfig: Bound
+    alt bind channels exist
+        TopologyConfig->>Redis: write local socket address records
+        TopologyConfig->>Redis: mark bind channels bound=1
+    end
+    alt connect channels exist
+        TopologyConfig->>Redis: wait for peer bind channels bound=1
+        alt explicit connect-config is set
+            TopologyConfig->>Redis: read peer health and socket records
+            TopologyConfig->>FairMQProperties: ConfigConnect() sets connect addresses
+        else topology links are used
+            TopologyConfig->>Redis: read peer lists and socket records
+            TopologyConfig->>FairMQProperties: ResolveConnectAddress() sets connect addresses
+        end
+        TopologyConfig->>Redis: write resolved connect channel addresses
+    end
+    alt waitForPeerConnection=true on bind channels
+        TopologyConfig->>Redis: read peer FairMQ states
+        Redis-->>TopologyConfig: peer states are connection-ready
+    end
+```
+
+Bind channels publish their local addresses first. Connect channels wait for
+the peer bind channel to become `bound=1`, then resolve peer socket addresses
+from Redis and write the resulting FairMQ `chans.*` properties. A bind channel
+with `waitForPeerConnection=false` skips the final peer-ready wait. Reset or
+cancellation interrupts the waiting steps.
+
 ### TTL Details
 
 `daq_service` uses `--max-ttl` in seconds. The default is `5` seconds.
