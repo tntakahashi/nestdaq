@@ -157,6 +157,8 @@ OpenTelemetry stores the normalized log level in the LogRecord
 `SeverityNumber` and `SeverityText` fields. The original logging-library level
 is kept separately as `fairlogger.severity.*` for FairLogger records and
 `spdlog.level` for spdlog records.
+The logging-library enum integers are not OpenTelemetry `SeverityNumber`
+values; use the OpenTelemetry fields for normalized severity queries.
 
 `--otel-log-severity` is a FairLogger sink filter. It controls the minimum
 FairLogger severity exported to OpenTelemetry logs. It does not filter records
@@ -165,39 +167,41 @@ the spdlog logger and sink levels.
 
 ### FairLogger Severity Mapping
 
-| FairLogger level | OTel SeverityNumber | OTel SeverityText | Original level attributes |
-| ---------------- | ------------------- | ----------------- | ------------------------- |
-| `nolog` | `0` | invalid / unspecified | `fairlogger.severity.*` |
-| `trace` | `1` | `TRACE` | `fairlogger.severity.*` |
-| `debug4` | `2` | `TRACE2` | `fairlogger.severity.*` |
-| `debug3` | `2` | `TRACE2` | `fairlogger.severity.*` |
-| `debug2` | `3` | `TRACE3` | `fairlogger.severity.*` |
-| `debug1` | `4` | `TRACE4` | `fairlogger.severity.*` |
-| `debug` | `5` | `DEBUG` | `fairlogger.severity.*` |
-| `detail` | `6` | `DEBUG2` | `fairlogger.severity.*` |
-| `info` | `9` | `INFO` | `fairlogger.severity.*` |
-| `state` | `10` | `INFO2` | `fairlogger.severity.*` |
-| `warn` | `13` | `WARN` | `fairlogger.severity.*` |
-| `important` | `14` | `WARN2` | `fairlogger.severity.*` |
-| `alarm` | `15` | `WARN3` | `fairlogger.severity.*` |
-| `error` | `17` | `ERROR` | `fairlogger.severity.*` |
-| `critical` | `18` | `ERROR2` | `fairlogger.severity.*` |
-| `fatal` | `21` | `FATAL` | `fairlogger.severity.*` |
+| FairLogger level | `fair::Severity` int | OTel SeverityNumber | OTel SeverityText | Original level attributes |
+| ---------------- | -------------------- | ------------------- | ----------------- | ------------------------- |
+| `nolog` | `0` | `0` | invalid / unspecified | `fairlogger.severity.*` |
+| `trace` | `1` | `1` | `TRACE` | `fairlogger.severity.*` |
+| `debug4` | `2` | `2` | `TRACE2` | `fairlogger.severity.*` |
+| `debug3` | `3` | `2` | `TRACE2` | `fairlogger.severity.*` |
+| `debug2` | `4` | `3` | `TRACE3` | `fairlogger.severity.*` |
+| `debug1` | `5` | `4` | `TRACE4` | `fairlogger.severity.*` |
+| `debug` | `6` | `5` | `DEBUG` | `fairlogger.severity.*` |
+| `detail` | `7` | `6` | `DEBUG2` | `fairlogger.severity.*` |
+| `info` | `8` | `9` | `INFO` | `fairlogger.severity.*` |
+| `state` | `9` | `10` | `INFO2` | `fairlogger.severity.*` |
+| `warn` | `10` | `13` | `WARN` | `fairlogger.severity.*` |
+| `important` | `11` | `14` | `WARN2` | `fairlogger.severity.*` |
+| `alarm` | `12` | `15` | `WARN3` | `fairlogger.severity.*` |
+| `error` | `13` | `17` | `ERROR` | `fairlogger.severity.*` |
+| `critical` | `14` | `18` | `ERROR2` | `fairlogger.severity.*` |
+| `fatal` | `15` | `21` | `FATAL` | `fairlogger.severity.*` |
 
 `warning` is accepted as a `--otel-log-severity` alias for `warn`; FairLogger
-records themselves use the FairLogger level names.
+records themselves use the FairLogger level names. The alias has the same
+`fair::Severity` value as `warn`, `10`.
 
 ### spdlog Severity Mapping
 
-| spdlog level | OTel SeverityNumber | OTel SeverityText | Original level attribute |
-| ------------ | ------------------- | ----------------- | ------------------------ |
-| `trace` | `1` | `TRACE` | `spdlog.level` |
-| `debug` | `5` | `DEBUG` | `spdlog.level` |
-| `info` | `9` | `INFO` | `spdlog.level` |
-| `warn` | `13` | `WARN` | `spdlog.level` |
-| `err` | `17` | `ERROR` | `spdlog.level` |
-| `critical` | `21` | `FATAL` | `spdlog.level` |
-| `off`, `n_levels` | `0` | invalid / unspecified | `spdlog.level` |
+| spdlog level | `spdlog::level::level_enum` int | OTel SeverityNumber | OTel SeverityText | Original level attribute |
+| ------------ | -------------------------------- | ------------------- | ----------------- | ------------------------ |
+| `trace` | `0` | `1` | `TRACE` | `spdlog.level` |
+| `debug` | `1` | `5` | `DEBUG` | `spdlog.level` |
+| `info` | `2` | `9` | `INFO` | `spdlog.level` |
+| `warn` | `3` | `13` | `WARN` | `spdlog.level` |
+| `err` | `4` | `17` | `ERROR` | `spdlog.level` |
+| `critical` | `5` | `21` | `FATAL` | `spdlog.level` |
+| `off` | `6` | `0` | invalid / unspecified | `spdlog.level` |
+| `n_levels` | `7` | `0` | invalid / unspecified | `spdlog.level` |
 
 ## Command-Line Options
 
