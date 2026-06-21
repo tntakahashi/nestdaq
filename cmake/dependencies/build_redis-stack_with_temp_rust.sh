@@ -67,28 +67,37 @@ export PATH="${PYTHON_VENV}/bin:${RUST_BIN_DIR}:${PATH}"
 
 # RedisJSON uses bindgen through redismodule-rs, so libclang must be available
 # at build time. Reuse an already downloaded LLVM tree first, then try system
-# libclang paths. If neither exists, download a temporary LLVM/Clang archive for
-# supported Linux architectures. CLANG_PATH is optional: set it only when a real
-# clang executable exists, and otherwise let bindgen use LIBCLANG_PATH plus the
-# resource include path below.
-find_libclang_dir() {
+# libclang paths. Stage a libclang.so link in the temporary tool directory so
+# bindgen does not require links in system directories such as /usr/lib.
+find_libclang_file() {
   for dir in \
     "${LLVM_DIR}/lib" \
     "${LLVM_DIR}/lib64" \
+    /usr/lib/llvm-*/lib \
+    /usr/lib64/llvm-*/lib \
     /usr/lib64 \
     /usr/lib \
     /lib64 \
     /lib
   do
-    if ls "${dir}"/libclang.so* >/dev/null 2>&1 || ls "${dir}"/libclang-*.so* >/dev/null 2>&1; then
-      printf '%s\n' "${dir}"
-      return 0
-    fi
+    for libclang in "${dir}"/libclang.so "${dir}"/libclang.so.* "${dir}"/libclang-*.so "${dir}"/libclang-*.so.*; do
+      if [ -e "${libclang}" ]; then
+        printf '%s\n' "${libclang}"
+        return 0
+      fi
+    done
   done
   return 1
 }
 
-if ! LIBCLANG_DIR="$(find_libclang_dir)"; then
+stage_libclang() {
+  libclang_file="$1"
+  rm -f "${COMPAT_LIB_DIR}/libclang.so"
+  ln -s "${libclang_file}" "${COMPAT_LIB_DIR}/libclang.so"
+  printf '%s\n' "${COMPAT_LIB_DIR}"
+}
+
+if ! LIBCLANG_FILE="$(find_libclang_file)"; then
   case "$(uname -s)-$(uname -m)" in
     Linux-x86_64)
       LLVM_ARCHIVE="clang+llvm-18.1.8-x86_64-linux-gnu-ubuntu-18.04.tar.xz"
@@ -109,9 +118,10 @@ if ! LIBCLANG_DIR="$(find_libclang_dir)"; then
   mkdir -p "${LLVM_DIR}"
   tar -xJf "${LLVM_TARBALL}" -C "${LLVM_DIR}" --strip-components=1
   rm -f "${LLVM_TARBALL}"
-  LIBCLANG_DIR="$(find_libclang_dir)"
+  LIBCLANG_FILE="$(find_libclang_file)"
 fi
 
+LIBCLANG_DIR="$(stage_libclang "${LIBCLANG_FILE}")"
 export LIBCLANG_PATH="${LIBCLANG_DIR}"
 CLANG_PATH_ARG=""
 if [ -x "${LLVM_DIR}/bin/clang" ]; then
