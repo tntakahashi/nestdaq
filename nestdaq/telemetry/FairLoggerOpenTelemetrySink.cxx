@@ -6,7 +6,6 @@
 
 #include <array>
 #include <atomic>
-#include <charconv>
 #include <chrono>
 #include <cstdint>
 #include <functional>
@@ -36,6 +35,7 @@
 #include <opentelemetry/semconv/code_attributes.h>
 #include <opentelemetry/semconv/incubating/thread_attributes.h>
 
+#include "nestdaq/telemetry/Compat.h"
 #include "nestdaq/telemetry/FairMQThroughputLogParser.h"
 #include "nestdaq/telemetry/OpenTelemetryInitializer.h"
 
@@ -73,8 +73,8 @@ auto FairLoggerSeverityName(fair::Severity severity) noexcept -> std::string_vie
 auto InstanceId() -> std::string &;
 auto InstanceIdMutex() -> std::mutex &;
 auto MinSeverity() -> std::atomic<int32_t>&;
-auto ParseInstanceIndex(std::string_view instanceId) noexcept -> std::optional<std::pair<std::string_view, int64_t>>;
-auto ParseLine(std::string_view line) noexcept -> int64_t;
+auto ParseInstanceIndex(std::string_view instanceId) -> std::optional<std::pair<std::string_view, int64_t>>;
+auto ParseLine(std::string_view line) -> int64_t;
 auto ShouldEmit(fair::Severity severity) noexcept -> bool;
 auto SinkRegistered() -> std::atomic<bool>&;
 auto ToStringView(std::string_view value) noexcept -> opentelemetry::nostd::string_view;
@@ -232,7 +232,7 @@ auto MinSeverity() -> std::atomic<int32_t>&
     return value;
 }
 
-auto ParseInstanceIndex(std::string_view instanceId) noexcept -> std::optional<std::pair<std::string_view, int64_t>>
+auto ParseInstanceIndex(std::string_view instanceId) -> std::optional<std::pair<std::string_view, int64_t>>
 {
     const auto separator = instanceId.rfind('-');
     if (separator == std::string_view::npos || separator == 0 || separator + 1 == instanceId.size()) {
@@ -241,22 +241,16 @@ auto ParseInstanceIndex(std::string_view instanceId) noexcept -> std::optional<s
 
     auto index = int64_t{0};
     const auto suffix = instanceId.substr(separator + 1);
-    const auto *first = suffix.data();
-    const auto *last = std::next(suffix.data(), static_cast<std::ptrdiff_t>(suffix.size()));
-    const auto result = std::from_chars(first, last, index);
-    if (result.ec != std::errc{} || result.ptr != last) {
+    if (!telemetry::compat::ParseInteger(suffix, index)) {
         return std::nullopt;
     }
     return std::pair{instanceId.substr(0, separator), index};
 }
 
-auto ParseLine(std::string_view line) noexcept -> int64_t
+auto ParseLine(std::string_view line) -> int64_t
 {
     int64_t value = 0;
-    const auto *first = line.data();
-    const auto *last = std::next(line.data(), static_cast<std::ptrdiff_t>(line.size()));
-    const auto result = std::from_chars(first, last, value);
-    if (result.ec != std::errc{} || result.ptr != last) {
+    if (!telemetry::compat::ParseInteger(line, value)) {
         return 0;
     }
     return value;

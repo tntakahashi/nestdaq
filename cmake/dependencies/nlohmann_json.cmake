@@ -16,7 +16,7 @@ else()
   ExternalProject_Add(
     nlohmann_json
     URL ${nlohmann_json_RELEASE_URL}
-    DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+    ${NESTDAQ_DOWNLOAD_EXTRACT_TIMESTAMP_ARGS}
     UPDATE_COMMAND ""
     CMAKE_ARGS
       -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>

@@ -11,7 +11,7 @@ message(STATUS "Installing doxygen-awesome-css from ${doxygen-awesome-css_RELEAS
 ExternalProject_Add(
   doxygen-awesome-css
   URL ${doxygen-awesome-css_RELEASE_URL}
-  DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+  ${NESTDAQ_DOWNLOAD_EXTRACT_TIMESTAMP_ARGS}
   UPDATE_COMMAND ""
   CONFIGURE_COMMAND ""
   BUILD_COMMAND ""

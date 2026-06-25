@@ -4,13 +4,13 @@
 
 #include "nestdaq/telemetry/FairMQThroughputLogParser.h"
 
-#include <charconv>
+#include "nestdaq/telemetry/Compat.h"
+
 #include <cmath>
 #include <cctype>
 #include <cstdint>
 #include <iterator>
 #include <memory>
-#include <system_error>
 
 namespace nestdaq::telemetry {
 namespace {
@@ -41,7 +41,7 @@ auto ConsumeSpaces(std::string_view &input) noexcept -> void
     }
 }
 
-auto ParseDoubleToken(std::string_view &input, double &value) noexcept -> bool
+auto ParseDoubleToken(std::string_view &input, double &value) -> bool
 {
     ConsumeSpaces(input);
     const auto tokenEnd = input.find_first_of(" )");
@@ -50,10 +50,7 @@ auto ParseDoubleToken(std::string_view &input, double &value) noexcept -> bool
     }
 
     const auto token = input.substr(0, tokenEnd);
-    const auto *first = token.data();
-    const auto *last = std::next(token.data(), static_cast<std::ptrdiff_t>(token.size()));
-    const auto result = std::from_chars(first, last, value);
-    if (result.ec != std::errc{} || result.ptr != last || !std::isfinite(value) || value < 0.0) {
+    if (!compat::ParseDouble(token, value) || value < 0.0) {
         return false;
     }
     input.remove_prefix(tokenEnd);
@@ -97,10 +94,7 @@ auto ParseChannel(std::string_view value, FairMQThroughputSample &sample) -> boo
 
     const auto indexToken = value.substr(openBracket + 1, value.size() - openBracket - 2);
     uint64_t index = 0;
-    const auto *first = indexToken.data();
-    const auto *last = std::next(indexToken.data(), static_cast<std::ptrdiff_t>(indexToken.size()));
-    const auto result = std::from_chars(first, last, index);
-    if (result.ec != std::errc{} || result.ptr != last) {
+    if (!compat::ParseInteger(indexToken, index)) {
         return false;
     }
 

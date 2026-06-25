@@ -19,7 +19,7 @@ else()
   ExternalProject_Add(
       boost
       URL                    ${Boost_RELEASE_URL}
-      DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+      ${NESTDAQ_DOWNLOAD_EXTRACT_TIMESTAMP_ARGS}
       UPDATE_COMMAND "" # skip update command
       CMAKE_ARGS
         -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>

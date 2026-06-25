@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.24)
+cmake_minimum_required(VERSION 3.22)
 
 project(nestdaq_external_dependencies LANGUAGES CXX C)
 
@@ -20,7 +20,14 @@ include("${NESTDAQ_DEPENDENCIES_CMAKE_DIR}/Boost.cmake")
 set(FairLogger_VERSION "2.3.0" CACHE STRING "FairLogger version tag")
 include("${NESTDAQ_DEPENDENCIES_CMAKE_DIR}/FairLogger.cmake")
 
-set(FairMQ_VERSION "1.10.0" CACHE STRING "FairMQ version tag")
+set(NESTDAQ_DEFAULT_FAIRMQ_VERSION "1.10.0")
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU"
+    AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 9.1)
+  set(NESTDAQ_DEFAULT_FAIRMQ_VERSION "1.9.2")
+endif()
+set(FairMQ_VERSION "${NESTDAQ_DEFAULT_FAIRMQ_VERSION}" CACHE STRING "FairMQ version tag")
+message(STATUS "FairMQ_VERSION default for ${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION}: ${NESTDAQ_DEFAULT_FAIRMQ_VERSION}")
+message(STATUS "FairMQ_VERSION selected: ${FairMQ_VERSION}")
 include("${NESTDAQ_DEPENDENCIES_CMAKE_DIR}/FairMQ.cmake")
 
 set(Catch2_VERSION "3.14.0" CACHE STRING "Catch2 version tag")

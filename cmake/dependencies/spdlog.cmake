@@ -36,7 +36,7 @@ else()
   ExternalProject_Add(
     spdlog
     URL ${spdlog_RELEASE_URL}
-    DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+    ${NESTDAQ_DOWNLOAD_EXTRACT_TIMESTAMP_ARGS}
     UPDATE_COMMAND ""
     DEPENDS
       ${spdlog_DEPENDS}

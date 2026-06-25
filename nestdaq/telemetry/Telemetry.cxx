@@ -46,9 +46,15 @@ auto MakeOtelAttributes(const Attribute* attributes, std::size_t attributeCount)
 {
     auto values = std::vector<nestdaq_otel_attribute>{};
     values.reserve(attributeCount);
+#if !defined(__clang__) && defined(__GNUC__) && (__GNUC__ < 9)
+    for (std::size_t index = 0; index < attributeCount; ++index) {
+        values.push_back(attributes[index].ToOtelAttribute());
+    }
+#else
     std::for_each_n(attributes, attributeCount, [&values](const Attribute& attribute) {
         values.push_back(attribute.ToOtelAttribute());
     });
+#endif
     return values;
 }
 

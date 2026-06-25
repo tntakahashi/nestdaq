@@ -24,11 +24,15 @@ A streaming data acquisition (DAQ) implementation for the particle measurements
 | `share/`                                 | Installed runtime/configuration assets. |
 
 ## Tested system
-| System    | Version | Compiler                     | CMake           |
-| ---       | ---     | ---                          | ---             | 
-| AlmaLinux | 9       | GCC 11.5.0                   | 3.26.5 or later |
-| AlmaLinux | 9       | GCC 14.2.1 (gcc-toolset-14)  | 3.26.5 or later |
-| AlmaLinux | 10      | GCC 14.2.1                   | 3.30.5 or later |
+| Distro    | Version | Compiler    | CMake  | FairMQ |
+| ---       | ---     | ---         | ---    | ---    |
+| AlmaLinux | 8       | GCC 8.5.0   | 3.26.5 | 1.9.2  |
+| AlmaLinux | 9       | GCC 11.5.0  | 3.31.8 | 1.10.0 |
+| AlmaLinux | 10      | GCC 14.3.1  | 3.31.8 | 1.10.0 |
+| Debian    | 13      | GCC 14.2.0  | 3.31.6 | 1.10.0 |
+| Ubuntu    | 22.04   | GCC 11.4.0  | 3.22.1 | 1.10.0 |
+| Ubuntu    | 24.04   | GCC 13.3.0  | 3.28.3 | 1.10.0 |
+| Ubuntu    | 26.04   | GCC 15.2.0  | 4.2.3  | 1.10.0 |
 
 ## Dependencies to build NestDAQ
 
@@ -39,3 +43,7 @@ A streaming data acquisition (DAQ) implementation for the particle measurements
 | FairMQ           | 1.4.26 or later                      | |
 | hiredis          | 1.0.0  or later                      | https://github.com/redis/hiredis/ |
 | redis-plus-plus  | 1.2.1 <br> (recipes branch) or later | https://github.com/sewenew/redis-plus-plus|
+
+FairMQ 1.10.0 is used by default with GCC 9.1 or later. For GCC versions older
+than 9.1, the dependency build defaults to FairMQ 1.9.2 because GCC 8.5 does not
+provide the `std::pmr` support required by FairMQ 1.10.0.

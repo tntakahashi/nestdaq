@@ -134,6 +134,10 @@ start Redis Stack separately. Container helper scripts and runtime notes are in
 | `WITH_OTEL_CPP` | `OFF` | Build and install opentelemetry-cpp and optional transport dependencies such as gRPC. |
 | `<package>_VERSION` | package-specific | Override the dependency version listed below, for example `-DFairMQ_VERSION=...`. |
 
+The default `FairMQ_VERSION` depends on the GNU compiler version. GCC 9.1 or
+later uses FairMQ 1.10.0 by default; older GCC releases use FairMQ 1.9.2. Pass
+`-DFairMQ_VERSION=...` to override this selection explicitly.
+
 Redis Stack also exposes low-level cache variables such as Redis build TLS,
 allocator, and temporary Rust toolchain paths. These are intended for dependency
 build maintenance; inspect the CMake cache or `cmake/dependencies/redis-stack.cmake`
@@ -146,7 +150,7 @@ when those knobs are needed.
 | [ZeroMQ(libzmq)](https://github.com/zeromq/libzmq)                       | 4.3.5             | `ZeroMQ_VERSION`                 |
 | [Boost](https://github.com/boostorg/boost)                               | 1.85.0            | `Boost_VERSION`                  | 
 | [FairLogger](https://github.com/FairRootGroup/FairLogger)                | 2.3.0             | `FairLogger_VERSION`             |
-| [FairMQ](https://github.com/FairRootGroup/FairMQ)                        | 1.10.0            | `FairMQ_VERSION`                 |
+| [FairMQ](https://github.com/FairRootGroup/FairMQ)                        | 1.10.0 with GCC 9.1 or later; 1.9.2 with older GCC | `FairMQ_VERSION` |
 | [Catch2](https://github.com/catchorg/Catch2)                             | 3.14.0            | `Catch2_VERSION`                 |
 | [nlohmann/json](https://github.com/nlohmann/json)                        | 3.12.0            | `nlohmann_json_VERSION`          |
 | [spdlog](https://github.com/gabime/spdlog)                                | 1.17.0            | `spdlog_VERSION`                 |

@@ -1,4 +1,4 @@
-#cmake_minimum_required(VERSION 3.24)
+#cmake_minimum_required(VERSION 3.22)
 
 #project(redis_stack LANGUAGES C CXX)
 
