@@ -13,10 +13,31 @@ Arguments after the device name are passed through to the device and FairMQ, so
 plugin options such as `--service-name` and device-specific options such as
 `--max-iterations` can be specified on the same command line.
 
-The generated script uses `MY_REDIS_SERVER` for all NestDAQ Redis connections.
-The default is `127.0.0.1:6379`. It maps the DAQ service registry to Redis
-database `0`, metrics to database `1`, and parameter configuration to database
-`2`.
+The generated script uses `NESTDAQ_REDIS_SERVER` for all NestDAQ Redis
+connections. The default is `127.0.0.1:6379`. It maps the DAQ service registry
+to Redis database `0`, metrics to database `1`, and parameter configuration to
+database `2`.
+
+The generated script sends OpenTelemetry (OTel) logs to a local OpenTelemetry
+Collector with OpenTelemetry Protocol (OTLP) gRPC. The default endpoint is
+`localhost:4317` and can be changed with `NESTDAQ_OTLP_GRPC_ENDPOINT`.
+
+```bash
+NESTDAQ_OTLP_GRPC_ENDPOINT=host.containers.internal:4317 ./start_device.sh Sampler
+```
+
+OTel metrics and traces are disabled by default. Uncomment the metric and trace
+examples in `start_device.sh` to export them by OTLP gRPC or to print them to
+the console exporter for debugging.
+
+FairLogger console output is disabled by default with `--severity nolog`.
+Change `NESTDAQ_FAIRLOGGER_CONSOLE_SEVERITY` to enable it. OTel log export uses
+the separate `NESTDAQ_START_DEVICE_OTEL_LOG_SEVERITY` threshold and still sends
+logs to the collector when FairLogger console output is disabled.
+
+```bash
+NESTDAQ_FAIRLOGGER_CONSOLE_SEVERITY=debug4 NESTDAQ_START_DEVICE_OTEL_LOG_SEVERITY=debug4 ./start_device.sh Sampler
+```
 
 ```bash
   # ./start_device.sh [device-name] [options ...]

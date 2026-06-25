@@ -1,12 +1,15 @@
 #!/bin/bash
 
-#MY_TERM=xterm
+#NESTDAQ_TERM=xterm
 
-MY_REDIS_SERVER=${MY_REDIS_SERVER:-127.0.0.1:6379}
+NESTDAQ_REDIS_SERVER=${NESTDAQ_REDIS_SERVER:-127.0.0.1:6379}
+NESTDAQ_OTLP_GRPC_ENDPOINT=${NESTDAQ_OTLP_GRPC_ENDPOINT:-localhost:4317}
+NESTDAQ_FAIRLOGGER_CONSOLE_SEVERITY=${NESTDAQ_FAIRLOGGER_CONSOLE_SEVERITY:-nolog}
+NESTDAQ_START_DEVICE_OTEL_LOG_SEVERITY=${NESTDAQ_START_DEVICE_OTEL_LOG_SEVERITY:-info}
 
-DAQSERVICE_URI=" --registry-uri tcp://${MY_REDIS_SERVER}/0"
-METRICS_URI=" --metrics-uri tcp://${MY_REDIS_SERVER}/1"
-CONFIG_URI=" --parameter-config-uri tcp://${MY_REDIS_SERVER}/2"
+DAQSERVICE_URI=" --registry-uri tcp://${NESTDAQ_REDIS_SERVER}/0"
+METRICS_URI=" --metrics-uri tcp://${NESTDAQ_REDIS_SERVER}/1"
+CONFIG_URI=" --parameter-config-uri tcp://${NESTDAQ_REDIS_SERVER}/2"
 
 #---------------------------------------------------------
 if [[ $1 =~ fairmq- ]]; then
@@ -28,7 +31,10 @@ echo "PLUGIN_SEARCH_PATH = $PLUGIN_SEARCH_PATH"
 echo "DAQSERVICE_PLUGIN  = $DAQSERVICE_PLUGIN"
 echo "METRICS_PLUGIN     = $METRICS_PLUGIN"
 echo "CONFIG_PLUGIN      = $CONFIG_PLUGIN"
-echo "MY_REDIS_SERVER    = $MY_REDIS_SERVER"
+echo "NESTDAQ_REDIS_SERVER = $NESTDAQ_REDIS_SERVER"
+echo "NESTDAQ_OTLP_GRPC_ENDPOINT = $NESTDAQ_OTLP_GRPC_ENDPOINT"
+echo "NESTDAQ_FAIRLOGGER_CONSOLE_SEVERITY = $NESTDAQ_FAIRLOGGER_CONSOLE_SEVERITY"
+echo "NESTDAQ_START_DEVICE_OTEL_LOG_SEVERITY = $NESTDAQ_START_DEVICE_OTEL_LOG_SEVERITY"
 echo "DAQSERVICE_URI     = $DAQSERVICE_URI"
 echo "METRICS_URI        = $METRICS_URI"
 echo "CONFIG_URI         = $CONFIG_URI"
@@ -43,11 +49,36 @@ function run_device () {
   var+=$DAQSERVICE_URI
   var+=$METRICS_URI
   var+=$CONFIG_URI
-  var+=" --severity debug4"
+  var+=" --severity ${NESTDAQ_FAIRLOGGER_CONSOLE_SEVERITY}"
+  var+=" --otel-log-protocol=otlp-grpc"
+  var+=" --otel-log-endpoint-grpc=${NESTDAQ_OTLP_GRPC_ENDPOINT}"
+  var+=" --otel-log-severity=${NESTDAQ_START_DEVICE_OTEL_LOG_SEVERITY}"
 
-  if [ -n "$MY_TERM" ]; then
+  # FairLogger console output is disabled by default with --severity nolog.
+  # To enable console output, run with, for example:
+  # NESTDAQ_FAIRLOGGER_CONSOLE_SEVERITY=debug4 ./start_device.sh ...
+  # OTel log export uses a separate threshold:
+  # NESTDAQ_START_DEVICE_OTEL_LOG_SEVERITY=debug4 ./start_device.sh ...
+
+  # To print OpenTelemetry logs to the console instead:
+  #var+=" --otel-log-protocol=console"
+  # To print logs both to the console and a local OpenTelemetry Collector:
+  #var+=" --otel-log-protocol=console,otlp-grpc"
+  # To disable OpenTelemetry logs explicitly:
+  #var+=" --otel-log-protocol ''"
+  # Metrics and traces are disabled by default. Uncomment these lines to export
+  # them to the same local OpenTelemetry Collector by OTLP gRPC.
+  #var+=" --otel-metric-protocol=otlp-grpc"
+  #var+=" --otel-metric-endpoint-grpc=${NESTDAQ_OTLP_GRPC_ENDPOINT}"
+  #var+=" --otel-trace-protocol=otlp-grpc"
+  #var+=" --otel-trace-endpoint-grpc=${NESTDAQ_OTLP_GRPC_ENDPOINT}"
+  # For console debugging of metrics and traces:
+  #var+=" --otel-metric-protocol=console"
+  #var+=" --otel-trace-protocol=console"
+
+  if [ -n "$NESTDAQ_TERM" ]; then
     #echo \
-    $MY_TERM -title $1 -e "$BINDIR/$@ $var"
+    $NESTDAQ_TERM -title $1 -e "$BINDIR/$@ $var"
   else
     #echo \
     eval "$BINDIR/$@ $var"

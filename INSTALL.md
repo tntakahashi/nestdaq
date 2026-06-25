@@ -62,6 +62,12 @@ cmake \
 cmake --build ./build-external
 ```
 
+Redis Stack is a runtime service, not a direct library dependency. If you prefer
+to run Redis Stack in a container instead of building and installing it here,
+add `-DWITH_REDIS_STACK=OFF` to the external dependency configure command and
+start Redis Stack separately. Container helper scripts and runtime notes are in
+[`share/redis-stack-container/README.md`](share/redis-stack-container/README.md).
+
 - In the command example above, CMake’s `ExternalProject` is used to perform `git clone`, build, and install.
   - In this case, the `--parallel` (or `-j`) option passed to cmake --build does not control the inner ExternalProject builds, so please specify the parallel build level during the initial configuration using `-DBUILD_PARALLEL_LEVEL=xxx`.
     - The `nproc` command prints the number of available CPU cores on the system. If this causes excessive memory usage, specify a smaller value manually.
@@ -77,7 +83,7 @@ cmake --build ./build-external
 | Option | Default | Description |
 | :-- | :-- | :-- |
 | `BUILD_PARALLEL_LEVEL` | unset | Parallel level passed to inner `ExternalProject` builds. Set this at configure time; `cmake --build --parallel` does not control those inner builds. |
-| `WITH_REDIS_STACK` | `ON` | Build and install Redis Stack runtime components. |
+| `WITH_REDIS_STACK` | `ON` | Build and install Redis Stack runtime components. Set to `OFF` when Redis Stack is provided separately, for example by a container. |
 | `WITH_SPDLOG` | `OFF` | Build and install spdlog. Enable this when building the optional NestDAQ spdlog OpenTelemetry sink. |
 | `WITH_OTEL_CPP` | `OFF` | Build and install opentelemetry-cpp and optional transport dependencies such as gRPC. |
 | `<package>_VERSION` | package-specific | Override the dependency version listed below, for example `-DFairMQ_VERSION=...`. |
@@ -104,7 +110,11 @@ when those knobs are needed.
 | [doxygen-awesome-css](https://github.com/jothepro/doxygen-awesome-css)   | 2.4.2             | `doxygen-awesome-css_VERSION`    |
 
 ##### External runtime components
-Redis Stack (`redis-server`, `redis-cli`, Redis modules, etc.) is included in the external packages and is built and installed together with them. It is required by the NestDAQ application at runtime, but it is not a direct library dependency.
+Redis Stack (`redis-server`, `redis-cli`, Redis modules, etc.) is included in
+the external packages and is built and installed together with them by default.
+It is required by the NestDAQ application at runtime, but it is not a direct
+library dependency. It may also be run in a container instead; see
+[`share/redis-stack-container/README.md`](share/redis-stack-container/README.md).
 
 | Package                                                                  | Version (default) | CMake options to modify versions |
 | :--                                                                      | :--               | :--                              |
@@ -140,6 +150,42 @@ cmake --install ./build
 | `NestDAQ_BUILD_EXAMPLES` | `ON` | Build and install `Sampler`, `Sink`, and `NullDevice` with the main NestDAQ build. Set this to `OFF` to skip them. |
 | `NESTDAQ_DOXYGEN_AWESOME_DIR` | discovered from `CMAKE_PREFIX_PATH` or install prefix | Directory containing `doxygen-awesome-css` assets used by generated documentation. |
 | `BUILD_TESTING` | `ON` | Build NestDAQ tests when enabled. |
+
+### Run local OpenTelemetry Collector and backend containers
+
+NestDAQ can export OpenTelemetry logs, metrics, and traces to an OpenTelemetry
+Collector. The repository provides optional Compose setups for local validation
+under [`share/otel-collector-compose/`](share/otel-collector-compose/README.md).
+They are runtime tools, not build dependencies, and are not intended for
+production deployment as-is.
+
+After installing NestDAQ, copy the installed setup to a working directory and
+start one backend stack:
+
+```bash
+cp -a <install-prefix>/share/otel-collector-compose ./otel-collector-compose
+cd ./otel-collector-compose/opensearch
+docker compose -f compose-opensearch.yaml up
+```
+
+For Podman, use the same Compose files with `podman compose`.
+
+Available local backend setups are:
+
+- [`opensearch/`](share/otel-collector-compose/opensearch/README.md): logs and
+  traces in OpenSearch, viewed with OpenSearch Dashboards.
+- [`victoria/`](share/otel-collector-compose/victoria/README.md): logs,
+  metrics, and traces in VictoriaLogs, VictoriaMetrics, and VictoriaTraces,
+  viewed with Grafana.
+- [`clickhouse/`](share/otel-collector-compose/clickhouse/README.md): logs,
+  metrics, and traces in ClickStack/ClickHouse, viewed with the ClickStack user
+  interface (UI).
+
+By default, the Compose stacks expose OpenTelemetry Protocol (OTLP) gRPC on
+`localhost:4317` and OTLP HTTP on `localhost:4318`. See
+[`share/otel-collector-compose/README.md`](share/otel-collector-compose/README.md)
+and the backend-specific README files for ports, volumes, credentials,
+SELinux, and rootless Podman notes.
 
 ### Build and install examples
 
