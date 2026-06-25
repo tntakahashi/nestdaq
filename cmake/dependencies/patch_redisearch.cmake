@@ -31,14 +31,23 @@ string(REPLACE
   content
   "${content}"
 )
+# DOWNLOAD_EXTRACT_TIMESTAMP was added to ExternalProject_Add in CMake 3.24.
+# RediSearch's Boost FetchContent forwards it to older CMake releases as part
+# of the URL list, which breaks Ubuntu 22.04's CMake 3.22.
+string(REPLACE
+  "            DOWNLOAD_EXTRACT_TIMESTAMP TRUE\n"
+  ""
+  content
+  "${content}"
+)
 file(WRITE "${redisearch_boost_cmake}" "${content}")
 
-# Redis 8's module wrapper expects the newer search-community output path, while
-# standalone RediSearch v2.10.x writes redisearch.so under search/.
+# RediSearch v8.6.x writes the module under search-community, while the Redis
+# module wrapper target still points at search/redisearch.so.
 file(READ "${REDISEARCH_MODULE_MAKEFILE}" content)
 string(REPLACE
-  "search-community/redisearch.so"
-  "search/redisearch.so"
+  "/search/redisearch.so"
+  "/search-community/redisearch.so"
   content
   "${content}"
 )
