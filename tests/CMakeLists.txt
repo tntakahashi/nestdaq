@@ -37,7 +37,7 @@ if(opentelemetry-cpp_FOUND)
     NESTDAQ_OTEL_LIBRARY_PATH="$<TARGET_FILE:nestdaq_otel>"
   )
 
-  if(spdlog_FOUND)
+  if(NestDAQ_HAVE_SPDLOG_TELEMETRY)
     target_compile_definitions(nestdaq_telemetry_plugin_tests PRIVATE
       NESTDAQ_HAVE_SPDLOG=1
     )
@@ -56,7 +56,15 @@ if(opentelemetry-cpp_FOUND)
     ${CMAKE_DL_LIBS}
   )
 
-  if(spdlog_FOUND)
+  if(NestDAQ_HAVE_SPDLOG_TELEMETRY)
+    get_target_property(_nestdaq_spdlog_include_dirs spdlog::spdlog INTERFACE_INCLUDE_DIRECTORIES)
+    if(_nestdaq_spdlog_include_dirs)
+      target_include_directories(nestdaq_telemetry_plugin_tests SYSTEM BEFORE PRIVATE
+        ${_nestdaq_spdlog_include_dirs}
+      )
+    endif()
+    unset(_nestdaq_spdlog_include_dirs)
+
     target_link_libraries(nestdaq_telemetry_plugin_tests PRIVATE
       nestdaq_otel
       spdlog::spdlog

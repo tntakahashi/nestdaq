@@ -17,7 +17,6 @@
 #include <memory>
 #include <mutex>
 #include <optional>
-#include <span>
 #include <string>
 #include <string_view>
 #include <thread>
@@ -360,7 +359,7 @@ auto State() -> RuntimeState &;
 /** @brief Copy framework metric configuration and resource for future reconfiguration. */
 auto StoreFrameworkMetricConfig(RuntimeState &state,
                                 const nestdaq_otel_config &config,
-                                std::span<const Protocol> protocols,
+                                const std::vector<Protocol> &protocols,
                                 opentelemetry::sdk::resource::Resource resource) -> void;
 /** @brief Stop and join the background CPU/RSS sampler if it is running. */
 auto StopProcessMetricsThread() -> void;

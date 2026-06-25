@@ -11,6 +11,7 @@
 #include <cstdint>
 #include <functional>
 #include <iostream>
+#include <iterator>
 #include <memory>
 #include <mutex>
 #include <optional>
@@ -241,7 +242,7 @@ auto ParseInstanceIndex(std::string_view instanceId) noexcept -> std::optional<s
     auto index = int64_t{0};
     const auto suffix = instanceId.substr(separator + 1);
     const auto *first = suffix.data();
-    const auto *last = std::to_address(suffix.end());
+    const auto *last = std::next(suffix.data(), static_cast<std::ptrdiff_t>(suffix.size()));
     const auto result = std::from_chars(first, last, index);
     if (result.ec != std::errc{} || result.ptr != last) {
         return std::nullopt;
@@ -253,7 +254,7 @@ auto ParseLine(std::string_view line) noexcept -> int64_t
 {
     int64_t value = 0;
     const auto *first = line.data();
-    const auto *last = std::to_address(line.end());
+    const auto *last = std::next(line.data(), static_cast<std::ptrdiff_t>(line.size()));
     const auto result = std::from_chars(first, last, value);
     if (result.ec != std::errc{} || result.ptr != last) {
         return 0;

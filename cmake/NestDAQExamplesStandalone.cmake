@@ -6,9 +6,9 @@ if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
 
   set(CMAKE_CXX_STANDARD_REQUIRED ON)
   if(NOT CMAKE_CXX_STANDARD)
-    set(CMAKE_CXX_STANDARD 20)
-  elseif(CMAKE_CXX_STANDARD LESS 20)
-    message(FATAL_ERROR "A minimum CMAKE_CXX_STANDARD of 20 is required for NestDAQ examples.")
+    set(CMAKE_CXX_STANDARD 17)
+  elseif(CMAKE_CXX_STANDARD LESS 17)
+    message(FATAL_ERROR "A minimum CMAKE_CXX_STANDARD of 17 is required for NestDAQ examples.")
   endif()
   set(CMAKE_CXX_EXTENSIONS OFF)
 

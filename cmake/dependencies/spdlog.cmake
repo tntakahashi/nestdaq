@@ -7,6 +7,26 @@ if(spdlog_FOUND)
 else()
   include(ExternalProject)
 
+  set(spdlog_DEPENDS)
+  set(spdlog_FORMAT_ARGS)
+  if(CMAKE_CXX_STANDARD LESS 20)
+    set(fmt_VERSION "12.2.0" CACHE STRING "fmt version tag")
+    include("${NESTDAQ_DEPENDENCIES_CMAKE_DIR}/fmt.cmake")
+    list(APPEND spdlog_DEPENDS
+      ${NESTDAQ_FMT_DEPENDS}
+    )
+    list(APPEND spdlog_FORMAT_ARGS
+      -DSPDLOG_USE_STD_FORMAT=OFF
+      -DSPDLOG_FMT_EXTERNAL=ON
+      ${NESTDAQ_FMT_CMAKE_ARGS}
+    )
+  else()
+    list(APPEND spdlog_FORMAT_ARGS
+      -DSPDLOG_USE_STD_FORMAT=ON
+      -DSPDLOG_FMT_EXTERNAL=OFF
+    )
+  endif()
+
   set(spdlog_RELEASE_TAG "v${spdlog_VERSION}")
   set(spdlog_RELEASE_URL
     "https://github.com/gabime/spdlog/archive/refs/tags/${spdlog_RELEASE_TAG}.tar.gz")
@@ -18,13 +38,14 @@ else()
     URL ${spdlog_RELEASE_URL}
     DOWNLOAD_EXTRACT_TIMESTAMP TRUE
     UPDATE_COMMAND ""
+    DEPENDS
+      ${spdlog_DEPENDS}
     CMAKE_ARGS
       -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
       -DCMAKE_BUILD_TYPE=Release
-      -DCMAKE_CXX_STANDARD=20
+      -DCMAKE_CXX_STANDARD=${CMAKE_CXX_STANDARD}
       -DSPDLOG_BUILD_SHARED=ON
-      -DSPDLOG_USE_STD_FORMAT=ON
-      -DSPDLOG_FMT_EXTERNAL=OFF
+      ${spdlog_FORMAT_ARGS}
       -DSPDLOG_BUILD_TESTS=OFF
       -DSPDLOG_BUILD_TESTS_HO=OFF
       -DSPDLOG_BUILD_EXAMPLE=OFF

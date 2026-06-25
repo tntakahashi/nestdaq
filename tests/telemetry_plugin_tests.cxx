@@ -19,10 +19,11 @@
 #  include <nestdaq/telemetry/SpdlogOpenTelemetrySink.h>
 #endif
 
+#include <array>
 #include <chrono>
+#include <cstdint>
 #include <iostream>
 #include <nlohmann/json.hpp>
-#include <cstdint>
 #include <sstream>
 #include <string>
 #include <string_view>
@@ -479,6 +480,90 @@ TEST_CASE("metrics console initializes and exports resource attributes", "[telem
     CHECK(output.find("slot") != std::string::npos);
     CHECK(output.find("9876.5") != std::string::npos);
 }
+
+TEST_CASE("user telemetry facade accepts low-level attribute arrays", "[telemetry][plugin]")
+{
+    auto capture = CoutCapture{};
+
+    auto library = nestdaq::telemetry::TelemetryLibrary{};
+    REQUIRE(library.Load(NESTDAQ_OTEL_LIBRARY_PATH));
+    REQUIRE(library.InitializeWith(MetricsConsoleConfig()));
+
+    auto telemetry = nestdaq::telemetry::Telemetry{library};
+    auto attributes = std::array{
+        nestdaq_otel_attribute{
+            .key = "channel",
+            .type = NESTDAQ_OTEL_ATTRIBUTE_STRING,
+            .string_value = "data",
+            .int_value = 0,
+            .uint_value = 0,
+            .double_value = 0.0,
+            .bool_value = 0,
+        },
+        nestdaq_otel_attribute{
+            .key = "slot",
+            .type = NESTDAQ_OTEL_ATTRIBUTE_UINT64,
+            .string_value = "",
+            .int_value = 0,
+            .uint_value = 2,
+            .double_value = 0.0,
+            .bool_value = 0,
+        },
+    };
+    CHECK(telemetry.AddCounter(
+        "lowlevel.counter", 1, "1", "low-level counter", attributes.data(), attributes.size()));
+    std::this_thread::sleep_for(std::chrono::milliseconds{250});
+    library.ShutdownTelemetry(nestdaq::telemetry::kDefaultTimeoutMs);
+
+    const auto output = capture.output.str();
+    CHECK(output.find("lowlevel.counter") != std::string::npos);
+    CHECK(output.find("channel") != std::string::npos);
+    CHECK(output.find("data") != std::string::npos);
+    CHECK(output.find("slot") != std::string::npos);
+}
+
+#if __cplusplus >= 202002L
+TEST_CASE("user telemetry facade accepts C++20 span attributes", "[telemetry][plugin]")
+{
+    auto capture = CoutCapture{};
+
+    auto library = nestdaq::telemetry::TelemetryLibrary{};
+    REQUIRE(library.Load(NESTDAQ_OTEL_LIBRARY_PATH));
+    REQUIRE(library.InitializeWith(MetricsConsoleConfig()));
+
+    auto telemetry = nestdaq::telemetry::Telemetry{library};
+    auto attributes = std::array{
+        nestdaq_otel_attribute{
+            .key = "channel",
+            .type = NESTDAQ_OTEL_ATTRIBUTE_STRING,
+            .string_value = "data",
+            .int_value = 0,
+            .uint_value = 0,
+            .double_value = 0.0,
+            .bool_value = 0,
+        },
+        nestdaq_otel_attribute{
+            .key = "slot",
+            .type = NESTDAQ_OTEL_ATTRIBUTE_UINT64,
+            .string_value = "",
+            .int_value = 0,
+            .uint_value = 2,
+            .double_value = 0.0,
+            .bool_value = 0,
+        },
+    };
+    CHECK(telemetry.AddCounter(
+        "span.counter", 1, "1", "span counter", std::span<const nestdaq_otel_attribute>{attributes}));
+    std::this_thread::sleep_for(std::chrono::milliseconds{250});
+    library.ShutdownTelemetry(nestdaq::telemetry::kDefaultTimeoutMs);
+
+    const auto output = capture.output.str();
+    CHECK(output.find("span.counter") != std::string::npos);
+    CHECK(output.find("channel") != std::string::npos);
+    CHECK(output.find("data") != std::string::npos);
+    CHECK(output.find("slot") != std::string::npos);
+}
+#endif
 
 TEST_CASE("user telemetry facade is no-op before a backend is registered", "[telemetry][plugin]")
 {

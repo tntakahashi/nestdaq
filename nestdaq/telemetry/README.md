@@ -309,6 +309,46 @@ span.SetAttribute({
 });
 ```
 
+The recommended application-facing form is the `Attribute` wrapper used by
+`events.Add(...)`, `queueDepth.Record(...)`, and `StartSpan(..., { ... })`. It
+keeps string storage alive while NestDAQ converts attributes to the C ABI form
+and is the form examples should normally use.
+
+Advanced code can pass prebuilt C ABI attributes directly. This avoids the
+temporary `Attribute` wrapper conversion and is useful for hot paths or code
+that already owns a `nestdaq_otel_attribute` buffer:
+
+```cpp
+std::array<nestdaq_otel_attribute, 2> attributes{{
+    {
+        .key = "channel",
+        .type = NESTDAQ_OTEL_ATTRIBUTE_STRING,
+        .string_value = "data",
+        .int_value = 0,
+        .uint_value = 0,
+        .double_value = 0.0,
+        .bool_value = 0,
+    },
+    {
+        .key = "slot",
+        .type = NESTDAQ_OTEL_ATTRIBUTE_UINT64,
+        .string_value = "",
+        .int_value = 0,
+        .uint_value = 2,
+        .double_value = 0.0,
+        .bool_value = 0,
+    },
+}};
+
+telemetry.AddCounter(
+    "events.total", 1, "1", "Total processed events", attributes.data(), attributes.size());
+```
+
+The caller owns the low-level attribute array and its string storage. NestDAQ
+only reads it during the telemetry call. In C++20 builds, equivalent overloads
+also accept `std::span<const nestdaq_otel_attribute>` and forward to the same
+low-level implementation.
+
 ## Collector Compose Setup
 
 For a local OpenTelemetry Collector, OpenSearch, and OpenSearch Dashboards

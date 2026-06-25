@@ -5,7 +5,7 @@ install(FILES
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/nestdaq/telemetry
 )
 
-if(spdlog_FOUND)
+if(NestDAQ_HAVE_SPDLOG_TELEMETRY)
   install(FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/SpdlogOpenTelemetrySink.h
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/nestdaq/telemetry
@@ -78,7 +78,7 @@ if(opentelemetry-cpp_FOUND)
     OpenTelemetryTraces.cxx
   )
 
-  if(spdlog_FOUND)
+  if(NestDAQ_HAVE_SPDLOG_TELEMETRY)
     target_sources(nestdaq_otel PRIVATE
       SpdlogOpenTelemetrySink.cxx
     )
@@ -116,7 +116,15 @@ if(opentelemetry-cpp_FOUND)
     opentelemetry-cpp::otlp_grpc_exporter
   )
 
-  if(spdlog_FOUND)
+  if(NestDAQ_HAVE_SPDLOG_TELEMETRY)
+    get_target_property(_nestdaq_spdlog_include_dirs spdlog::spdlog INTERFACE_INCLUDE_DIRECTORIES)
+    if(_nestdaq_spdlog_include_dirs)
+      target_include_directories(nestdaq_otel SYSTEM BEFORE PRIVATE
+        ${_nestdaq_spdlog_include_dirs}
+      )
+    endif()
+    unset(_nestdaq_spdlog_include_dirs)
+
     target_link_libraries(nestdaq_otel PRIVATE
       spdlog::spdlog
     )

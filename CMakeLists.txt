@@ -8,6 +8,7 @@ message(STATUS "PROJECT_NAME: ${PROJECT_NAME}")
 
 include(cmake/common.cmake)
 include(cmake/NestDAQBuildSettings.cmake)
+include(CheckCXXSourceCompiles)
 include(CMakePackageConfigHelpers)
 include(CTest)
 
@@ -108,11 +109,32 @@ if(opentelemetry-cpp_FOUND)
   find_package(nlohmann_json CONFIG REQUIRED)
   find_package(spdlog CONFIG QUIET)
   if(spdlog_FOUND)
-    message(STATUS "spdlog found: enabling spdlog OpenTelemetry sink")
+    set(_nestdaq_spdlog_check "NestDAQ_SPDLOG_USABLE_CXX${CMAKE_CXX_STANDARD}")
+    unset(${_nestdaq_spdlog_check} CACHE)
+    set(_nestdaq_required_libraries_saved "${CMAKE_REQUIRED_LIBRARIES}")
+    set(CMAKE_REQUIRED_LIBRARIES spdlog::spdlog)
+    check_cxx_source_compiles(
+      "#include <spdlog/spdlog.h>
+       int main() { spdlog::info(\"nestdaq spdlog probe\"); return 0; }"
+      ${_nestdaq_spdlog_check}
+    )
+    set(CMAKE_REQUIRED_LIBRARIES "${_nestdaq_required_libraries_saved}")
+    unset(_nestdaq_required_libraries_saved)
+
+    if(${_nestdaq_spdlog_check})
+      set(NestDAQ_HAVE_SPDLOG_TELEMETRY ON)
+      message(STATUS "spdlog found: enabling spdlog OpenTelemetry sink")
+    else()
+      set(NestDAQ_HAVE_SPDLOG_TELEMETRY OFF)
+      message(STATUS "spdlog found, but it is not usable with C++${CMAKE_CXX_STANDARD}: skipping spdlog OpenTelemetry sink")
+    endif()
+    unset(_nestdaq_spdlog_check)
   else()
+    set(NestDAQ_HAVE_SPDLOG_TELEMETRY OFF)
     message(STATUS "spdlog not found: skipping spdlog OpenTelemetry sink")
   endif()
 else()
+  set(NestDAQ_HAVE_SPDLOG_TELEMETRY OFF)
   message(STATUS "opentelemetry-cpp not found: skipping nestdaq telemetry library")
 endif()
 

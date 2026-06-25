@@ -6,8 +6,6 @@ if(NOT CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD ${MY_CXX_STANDARD})
 elseif(${CMAKE_CXX_STANDARD} LESS ${MY_CXX_STANDARD})
   message(FATAL_ERROR "A minimum CMAKE_CXX_STANDARD of ${MY_CXX_STANDARD} is required.")
-elseif(${CMAKE_CXX_STANDARD} GREATER ${MY_CXX_STANDARD})
-  message(WARNING "A CMAKE_CXX_STANDARD of ${CMAKE_CXX_STANDARD} (greater than ${MY_CXX_STANDARD}) is not tested. Use on your on risk.")
 endif()
 set(CMAKE_CXX_EXTENSIONS OFF)
 

@@ -442,7 +442,7 @@ auto SignalEnabled(const nestdaq_otel_signal_config &config) noexcept -> bool
 
 auto StoreFrameworkMetricConfig(RuntimeState &state,
                                 const nestdaq_otel_config &config,
-                                std::span<const Protocol> protocols,
+                                const std::vector<Protocol> &protocols,
                                 opentelemetry::sdk::resource::Resource resource) -> void
 {
     state.frameworkMetricProtocols.assign(protocols.begin(), protocols.end());

@@ -8,15 +8,26 @@
 #include <cmath>
 #include <cctype>
 #include <cstdint>
+#include <iterator>
 #include <memory>
 #include <system_error>
 
 namespace nestdaq::telemetry {
 namespace {
 
+auto StartsWith(std::string_view input, std::string_view literal) noexcept -> bool
+{
+    return input.size() >= literal.size() && input.substr(0, literal.size()) == literal;
+}
+
+auto EndsWith(std::string_view input, char suffix) noexcept -> bool
+{
+    return !input.empty() && input.back() == suffix;
+}
+
 auto ConsumeLiteral(std::string_view &input, std::string_view literal) noexcept -> bool
 {
-    if (!input.starts_with(literal)) {
+    if (!StartsWith(input, literal)) {
         return false;
     }
     input.remove_prefix(literal.size());
@@ -40,7 +51,7 @@ auto ParseDoubleToken(std::string_view &input, double &value) noexcept -> bool
 
     const auto token = input.substr(0, tokenEnd);
     const auto *first = token.data();
-    const auto *last = std::to_address(token.end());
+    const auto *last = std::next(token.data(), static_cast<std::ptrdiff_t>(token.size()));
     const auto result = std::from_chars(first, last, value);
     if (result.ec != std::errc{} || result.ptr != last || !std::isfinite(value) || value < 0.0) {
         return false;
@@ -69,7 +80,7 @@ auto ParseChannel(std::string_view value, FairMQThroughputSample &sample) -> boo
 
     sample.subChannelName = std::string{value};
 
-    if (!value.ends_with(']')) {
+    if (!EndsWith(value, ']')) {
         sample.channelName = std::string{value};
         return true;
     }
@@ -87,7 +98,7 @@ auto ParseChannel(std::string_view value, FairMQThroughputSample &sample) -> boo
     const auto indexToken = value.substr(openBracket + 1, value.size() - openBracket - 2);
     uint64_t index = 0;
     const auto *first = indexToken.data();
-    const auto *last = std::to_address(indexToken.end());
+    const auto *last = std::next(indexToken.data(), static_cast<std::ptrdiff_t>(indexToken.size()));
     const auto result = std::from_chars(first, last, index);
     if (result.ec != std::errc{} || result.ptr != last) {
         return false;
