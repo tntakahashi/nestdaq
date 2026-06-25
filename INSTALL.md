@@ -130,8 +130,8 @@ start Redis Stack separately. Container helper scripts and runtime notes are in
 | :-- | :-- | :-- |
 | `BUILD_PARALLEL_LEVEL` | unset | Parallel level passed to inner `ExternalProject` builds. Set this at configure time; `cmake --build --parallel` does not control those inner builds. |
 | `WITH_REDIS_STACK` | `ON` | Build and install Redis Stack runtime components. Set to `OFF` when Redis Stack is provided separately, for example by a container. |
-| `WITH_SPDLOG` | `OFF` | Build and install spdlog. Enable this when building the optional NestDAQ spdlog OpenTelemetry sink. |
-| `WITH_OTEL_CPP` | `OFF` | Build and install opentelemetry-cpp and optional transport dependencies such as gRPC. |
+| `WITH_SPDLOG` | `ON` | Build and install spdlog. This supports the optional NestDAQ spdlog OpenTelemetry sink. |
+| `WITH_OTEL_CPP` | `ON` | Build and install opentelemetry-cpp and optional transport dependencies such as gRPC. |
 | `<package>_VERSION` | package-specific | Override the dependency version listed below, for example `-DFairMQ_VERSION=...`. |
 
 The default `FairMQ_VERSION` depends on the GNU compiler version. GCC 9.1 or
@@ -151,12 +151,12 @@ when those knobs are needed.
 | [Boost](https://github.com/boostorg/boost)                               | 1.85.0            | `Boost_VERSION`                  | 
 | [FairLogger](https://github.com/FairRootGroup/FairLogger)                | 2.3.0             | `FairLogger_VERSION`             |
 | [FairMQ](https://github.com/FairRootGroup/FairMQ)                        | 1.10.0 with GCC 9.1 or later; 1.9.2 with older GCC | `FairMQ_VERSION` |
-| [Catch2](https://github.com/catchorg/Catch2)                             | 3.14.0            | `Catch2_VERSION`                 |
+| [Catch2](https://github.com/catchorg/Catch2)                             | 3.15.1            | `Catch2_VERSION`                 |
 | [nlohmann/json](https://github.com/nlohmann/json)                        | 3.12.0            | `nlohmann_json_VERSION`          |
 | [spdlog](https://github.com/gabime/spdlog)                                | 1.17.0            | `spdlog_VERSION`                 |
 | [hiredis](https://github.com/redis/hiredis)                              | 1.3.0             | `hiredis_VERSION`                |
 | [redis++](https://github.com/sewenew/redis-plus-plus)                    | 1.3.15            | `redis_plus_plus_VERSION`        |
-| [opentelemetry-cpp](https://github.com/open-telemetry/opentelemetry-cpp) | 1.26.0            | `opentelemetry-cpp_VERSION`      |
+| [opentelemetry-cpp](https://github.com/open-telemetry/opentelemetry-cpp) | 1.27.0            | `opentelemetry-cpp_VERSION`      |
 | [doxygen-awesome-css](https://github.com/jothepro/doxygen-awesome-css)   | 2.4.2             | `doxygen-awesome-css_VERSION`    |
 
 ##### External runtime components
@@ -168,11 +168,11 @@ library dependency. It may also be run in a container instead; see
 
 | Package                                                                  | Version (default) | CMake options to modify versions |
 | :--                                                                      | :--               | :--                              |
-| [Redis](https://github.com/redis/redis)                                  | 8.6.2             | `Redis_VERSION`                  |
-| [RedisBloom](https://github.com/RedisBloom/RedisBloom)                   | 2.8.17            | `RedisBloom_VERSION`             |
-| [RediSearch](https://github.com/RediSearch/RediSearch)                   | 2.10.25           | `RediSearch_VERSION`             |
-| [RedisJSON](https://github.com/RedisJSON/RedisJSON)                      | 2.8.16            | `RedisJSON_VERSION`              |
-| [RedisTimeSeries](https://github.com/RedisTimeSeries/RedisTimeSeries)    | 1.12.9            | `RedisTimeSeries_VERSION`        |
+| [Redis](https://github.com/redis/redis)                                  | 8.8.0             | `Redis_VERSION`                  |
+| [RedisBloom](https://github.com/RedisBloom/RedisBloom)                   | 2.8.20            | `RedisBloom_VERSION`             |
+| [RediSearch](https://github.com/RediSearch/RediSearch)                   | 2.10.31           | `RediSearch_VERSION`             |
+| [RedisJSON](https://github.com/RedisJSON/RedisJSON)                      | 2.8.19            | `RedisJSON_VERSION`              |
+| [RedisTimeSeries](https://github.com/RedisTimeSeries/RedisTimeSeries)    | 1.12.14           | `RedisTimeSeries_VERSION`        |
 
 
 ### Build and install NestDAQ library

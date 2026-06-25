@@ -54,7 +54,7 @@ services:
       - otel-victoria-net
 
   otel-collector:
-    image: ${OTEL_COLLECTOR_IMAGE:-docker.io/otel/opentelemetry-collector-contrib:0.150.1}
+    image: ${OTEL_COLLECTOR_IMAGE:-docker.io/otel/opentelemetry-collector-contrib:0.155.0}
     container_name: otel-collector
     command: ["--config=/etc/otel/config.yaml"]
     volumes:
