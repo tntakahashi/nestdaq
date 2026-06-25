@@ -34,10 +34,12 @@ dnf -y install \
 
 # Optional tools:
 # - jq: format and inspect JSON output from command-line tools.
-# - clang-tools-extra: provide clang-tidy for static analysis.
+# - clang-tools-extra: provide clang-tidy, clang-format, and related Clang tools.
 # - doxygen: generate API documentation.
 # - graphviz: provide the dot command for Doxygen diagrams.
-# dnf -y install jq clang-tools-extra doxygen graphviz
+# - astyle: format C/C++ source when needed.
+# - tmux: keep long-running local validation sessions attached.
+# dnf -y install jq clang-tools-extra doxygen graphviz astyle tmux
 
 # If needed for AlmaLinux 9
 # dnf -y install gcc-toolset-14
@@ -49,6 +51,42 @@ installing GCC Toolset packages:
 ```bash
 dnf config-manager --set-enabled powertools
 dnf -y install gcc-toolset-14
+```
+
+### Prerequisites for Debian 13 and Ubuntu 26.04
+
+```bash
+apt update && \
+apt install -y \
+    bash-completion \
+    build-essential \
+    ca-certificates \
+    cmake \
+    curl \
+    make \
+    ninja-build \
+    mold \
+    git \
+    autoconf \
+    libtool \
+    libcurl4-openssl-dev \
+    libssl-dev \
+    libgnutls28-dev \
+    zlib1g-dev \
+    libz2-dev \
+    libzstd-dev \
+    python3 \
+    python3-dev
+
+# Optional tools:
+# - jq: format and inspect JSON output from command-line tools.
+# - clang-tools: provide clang-tidy and related LLVM/Clang tools.
+# - clang-format: provide clang-format, packaged separately from clang-tools on Debian and Ubuntu.
+# - doxygen: generate API documentation.
+# - graphviz: provide the dot command for Doxygen diagrams.
+# - astyle: format C/C++ source when needed.
+# - tmux: keep long-running local validation sessions attached.
+# apt install -y jq clang-tools clang-format doxygen graphviz astyle tmux
 ```
 
 ### Build and install external dependencies
