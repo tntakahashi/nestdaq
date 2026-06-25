@@ -165,14 +165,16 @@ the external packages and is built and installed together with them by default.
 It is required by the NestDAQ application at runtime, but it is not a direct
 library dependency. It may also be run in a container instead; see
 [`share/redis-stack-container/README.md`](share/redis-stack-container/README.md).
+RediSearch requires a compiler with C++20 support. Redis Stack builds fail with
+GCC 8.5 because RediSearch uses C++20 features such as `<ranges>`.
 
 | Package                                                                  | Version (default) | CMake options to modify versions |
 | :--                                                                      | :--               | :--                              |
-| [Redis](https://github.com/redis/redis)                                  | 8.8.0             | `Redis_VERSION`                  |
-| [RedisBloom](https://github.com/RedisBloom/RedisBloom)                   | 8.8.0             | `RedisBloom_VERSION`             |
-| [RediSearch](https://github.com/RediSearch/RediSearch)                   | 8.8.0             | `RediSearch_VERSION`             |
-| [RedisJSON](https://github.com/RedisJSON/RedisJSON)                      | 8.8.0             | `RedisJSON_VERSION`              |
-| [RedisTimeSeries](https://github.com/RedisTimeSeries/RedisTimeSeries)    | 8.8.0             | `RedisTimeSeries_VERSION`        |
+| [Redis](https://github.com/redis/redis)                                  | 8.6.4             | `Redis_VERSION`                  |
+| [RedisBloom](https://github.com/RedisBloom/RedisBloom)                   | 8.6.2             | `RedisBloom_VERSION`             |
+| [RediSearch](https://github.com/RediSearch/RediSearch)                   | 8.6.8             | `RediSearch_VERSION`             |
+| [RedisJSON](https://github.com/RedisJSON/RedisJSON)                      | 8.6.0             | `RedisJSON_VERSION`              |
+| [RedisTimeSeries](https://github.com/RedisTimeSeries/RedisTimeSeries)    | 8.6.2             | `RedisTimeSeries_VERSION`        |
 
 
 ### Build and install NestDAQ library
