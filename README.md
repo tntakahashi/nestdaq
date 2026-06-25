@@ -39,6 +39,3 @@ A streaming data acquisition (DAQ) implementation for the particle measurements
 | FairMQ           | 1.4.26 or later                      | |
 | hiredis          | 1.0.0  or later                      | https://github.com/redis/hiredis/ |
 | redis-plus-plus  | 1.2.1 <br> (recipes branch) or later | https://github.com/sewenew/redis-plus-plus|
-
-
-## [Installation](INSTALL.md)

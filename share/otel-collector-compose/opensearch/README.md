@@ -62,6 +62,11 @@ lowercase index names. NestDAQ telemetry lowercases ASCII uppercase letters in
 - OTLP gRPC receiver: `localhost:4317`
 - OTLP HTTP receiver: `http://localhost:4318`
 
+Host processes use the `localhost` endpoints above. A NestDAQ device container
+or `daq-webctl` container in the same compose network should use
+`otel-collector:4317` for OTLP gRPC, or `http://otel-collector:4318` for OTLP
+HTTP.
+
 ## Rootless Podman
 
 OpenSearch runs as container `uid=1000,gid=1000`. Here `uid/gid` means user
@@ -107,14 +112,33 @@ change the OpenSearch image's runtime user, which remains container
 
 ## Stop
 
+Stop and remove the local validation containers and network:
+
 ```bash
 docker compose -f compose-opensearch.yaml down
-rm -rf ./opensearch-data
 ```
 
-For rootless Podman:
+For Podman:
 
 ```bash
 podman compose -f compose-opensearch.yaml down
+```
+
+The OpenSearch data directory is not deleted by `down`. By default it is
+`./opensearch-data`, bind-mounted to `/usr/share/opensearch/data`. If you start
+this compose setup again with the same `OPENSEARCH_DATA_DIR`, OpenSearch reuses
+the previous data.
+
+Delete the OpenSearch data directory only when you want to discard the stored
+logs, traces, indexes, and OpenSearch metadata:
+
+```bash
+rm -rf ./opensearch-data
+```
+
+For rootless Podman, file ownership may require removal through the user
+namespace:
+
+```bash
 podman unshare rm -rf ./opensearch-data
 ```

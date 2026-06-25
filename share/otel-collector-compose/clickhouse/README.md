@@ -38,7 +38,11 @@ managed outside this sample compose file.
 
 ## NestDAQ Telemetry Endpoint Examples
 
-Use `localhost:4317` for OTLP/gRPC or `http://localhost:4318` for OTLP/HTTP.
+Host processes use `localhost:4317` for OTLP/gRPC or
+`http://localhost:4318` for OTLP/HTTP. A NestDAQ device container or
+`daq-webctl` container in the same compose network should use
+`clickstack:4317` for OTLP gRPC, or `http://clickstack:4318` for OTLP HTTP.
+
 For example, HTTP endpoints use these paths:
 
 ```text
@@ -62,9 +66,36 @@ http://localhost:4318/v1/traces
 
 ## Stop
 
+Stop and remove the local validation container and network:
+
 ```bash
 docker compose -f compose-clickhouse.yaml down
+```
+
+For Podman:
+
+```bash
+podman compose -f compose-clickhouse.yaml down
+```
+
+The ClickStack and ClickHouse data/log directories are not deleted by `down`.
+If you start this compose setup again with the same directories, the previous
+backend data is reused.
+
+Delete the data and log directories only when you want to discard the stored
+backend data:
+
+```bash
 rm -rf ./clickstack-db \
        ./clickstack-clickhouse-data \
        ./clickstack-clickhouse-logs
+```
+
+For rootless Podman, file ownership may require removal through the user
+namespace:
+
+```bash
+podman unshare rm -rf ./clickstack-db \
+                       ./clickstack-clickhouse-data \
+                       ./clickstack-clickhouse-logs
 ```

@@ -50,6 +50,11 @@ http://victoriatraces:10428/insert/opentelemetry/v1/traces
 - OTLP Google remote procedure call (gRPC) receiver: `localhost:4317`
 - OTLP Hypertext Transfer Protocol (HTTP) receiver: `http://localhost:4318`
 
+Host processes use the `localhost` endpoints above. A NestDAQ device container
+or `daq-webctl` container in the same compose network should use
+`otel-collector:4317` for OTLP gRPC, or `http://otel-collector:4318` for OTLP
+HTTP.
+
 ## Runtime Options
 
 | Variable | Default | Description |
@@ -75,10 +80,38 @@ http://victoriatraces:10428/insert/opentelemetry/v1/traces
 
 ## Stop
 
+Stop and remove the local validation containers and network:
+
 ```bash
 docker compose -f compose-victoria.yaml down
+```
+
+For Podman:
+
+```bash
+podman compose -f compose-victoria.yaml down
+```
+
+The Victoria and Grafana data directories are not deleted by `down`. If you
+start this compose setup again with the same data directories, the previous
+logs, metrics, traces, and Grafana state are reused.
+
+Delete the data directories only when you want to discard the stored backend
+data:
+
+```bash
 rm -rf ./victoriametrics-data \
        ./victorialogs-data \
        ./victoriatraces-data \
        ./grafana-data
+```
+
+For rootless Podman, file ownership may require removal through the user
+namespace:
+
+```bash
+podman unshare rm -rf ./victoriametrics-data \
+                       ./victorialogs-data \
+                       ./victoriatraces-data \
+                       ./grafana-data
 ```

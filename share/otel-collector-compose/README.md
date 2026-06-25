@@ -56,6 +56,36 @@ Google remote procedure call, and HTTP means Hypertext Transfer Protocol.
 Each backend directory is self-contained. It can be copied on its own and run
 from that copied directory.
 
+## Stop
+
+Stop the selected backend stack from its backend directory:
+
+```bash
+docker compose -f compose-opensearch.yaml down
+```
+
+For Podman, use the same Compose file with `podman compose`.
+
+The `down` command stops and removes the local validation containers and
+network. It does not delete bind-mounted backend data directories. Starting the
+same backend again with the same data directories reuses the previous data.
+Delete those directories only when you want to discard the stored backend data;
+see the backend-local README for the exact directory names.
+
+## Telemetry Endpoints
+
+Choose the telemetry endpoint according to where the NestDAQ process runs.
+The same rule applies to NestDAQ device processes and to `daq-webctl`.
+
+| Sender location | OpenSearch/Victoria endpoint | ClickStack endpoint |
+| :-- | :-- | :-- |
+| Host process using published ports | `localhost:4317` or `http://localhost:4318` | `localhost:4317` or `http://localhost:4318` |
+| Container in the same compose network | `otel-collector:4317` or `http://otel-collector:4318` | `clickstack:4317` or `http://clickstack:4318` |
+| Container outside the compose network using host-published ports | Docker: `host.docker.internal:4317`; Podman: `host.containers.internal:4317` | Docker: `host.docker.internal:4317`; Podman: `host.containers.internal:4317` |
+
+For OTLP HTTP, use the signal-specific paths required by the telemetry client,
+such as `/v1/logs`, `/v1/metrics`, and `/v1/traces`.
+
 ## Backend Details
 
 See the backend-local README:

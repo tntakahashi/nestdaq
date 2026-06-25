@@ -13,6 +13,21 @@ Arguments after the device name are passed through to the device and FairMQ, so
 plugin options such as `--service-name` and device-specific options such as
 `--max-iterations` can be specified on the same command line.
 
+For a typical local validation run, prepare the runtime environment before
+starting devices with `start_device.sh`:
+
+- Start a Redis server.
+- Start an OpenTelemetry Collector backend, for example the Compose setup under
+  `share/otel-collector-compose`.
+- Start `daq-webctl` if you want to control devices from the browser user
+  interface.
+- Register topology settings in Redis with a `topology-*.sh` script.
+- Register parameter settings in Redis with `mq-param.sh` when the examples
+  should read parameters from the `parameter_config` plugin.
+
+See [`examples/README.md`](../examples/README.md) for the full local run
+sequence.
+
 The generated script uses `NESTDAQ_REDIS_SERVER` for all NestDAQ Redis
 connections. The default is `127.0.0.1:6379`. It maps the DAQ service registry
 to Redis database `0`, metrics to database `1`, and parameter configuration to
@@ -21,6 +36,17 @@ database `2`.
 The generated script sends OpenTelemetry (OTel) logs to a local OpenTelemetry
 Collector with OpenTelemetry Protocol (OTLP) gRPC. The default endpoint is
 `localhost:4317` and can be changed with `NESTDAQ_OTLP_GRPC_ENDPOINT`.
+
+Choose the endpoint according to where the process runs:
+
+- Host process to a compose-published collector port: `localhost:4317`.
+- NestDAQ device container or `daq-webctl` container in the same OpenSearch or
+  Victoria compose network: `otel-collector:4317`.
+- NestDAQ device container or `daq-webctl` container in the same ClickStack
+  compose network: `clickstack:4317`.
+- Container outside the compose network to the host-published collector port:
+  Docker commonly uses `host.docker.internal:4317`; Podman commonly uses
+  `host.containers.internal:4317`.
 
 ```bash
 NESTDAQ_OTLP_GRPC_ENDPOINT=host.containers.internal:4317 ./start_device.sh Sampler
