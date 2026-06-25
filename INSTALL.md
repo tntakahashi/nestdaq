@@ -130,6 +130,10 @@ start Redis Stack separately. Container helper scripts and runtime notes are in
 | :-- | :-- | :-- |
 | `BUILD_PARALLEL_LEVEL` | unset | Parallel level passed to inner `ExternalProject` builds. Set this at configure time; `cmake --build --parallel` does not control those inner builds. |
 | `WITH_REDIS_STACK` | `ON` | Build and install Redis Stack runtime components. Set to `OFF` when Redis Stack is provided separately, for example by a container. |
+| `REDIS_BUILD_REDISBLOOM` | `ON` | Build and install the RedisBloom module when `WITH_REDIS_STACK` is `ON`. |
+| `REDIS_BUILD_REDISEARCH` | `ON` | Build and install the RediSearch module when `WITH_REDIS_STACK` is `ON`. Disable this when the compiler cannot build RediSearch. |
+| `REDIS_BUILD_REDISJSON` | `ON` | Build and install the RedisJSON module when `WITH_REDIS_STACK` is `ON`. |
+| `REDIS_BUILD_REDISTIMESERIES` | `ON` | Build and install the RedisTimeSeries module when `WITH_REDIS_STACK` is `ON`. |
 | `WITH_SPDLOG` | `ON` | Build and install spdlog. This supports the optional NestDAQ spdlog OpenTelemetry sink. |
 | `WITH_OTEL_CPP` | `ON` | Build and install opentelemetry-cpp and optional transport dependencies such as gRPC. |
 | `<package>_VERSION` | package-specific | Override the dependency version listed below, for example `-DFairMQ_VERSION=...`. |
@@ -138,10 +142,11 @@ The default `FairMQ_VERSION` depends on the GNU compiler version. GCC 9.1 or
 later uses FairMQ 1.10.0 by default; older GCC releases use FairMQ 1.9.2. Pass
 `-DFairMQ_VERSION=...` to override this selection explicitly.
 
-Redis Stack also exposes low-level cache variables such as Redis build TLS,
-allocator, and temporary Rust toolchain paths. These are intended for dependency
-build maintenance; inspect the CMake cache or `cmake/dependencies/redis-stack.cmake`
-when those knobs are needed.
+When all `REDIS_BUILD_*` module options are set to `OFF`, the dependency build
+installs Redis server tools only. Redis Stack also exposes low-level cache
+variables such as Redis build TLS, allocator, and temporary Rust toolchain
+paths. These are intended for dependency build maintenance; inspect the CMake
+cache or `cmake/dependencies/redis-stack.cmake` when those knobs are needed.
 
 #### Versions of installed external dependencies
 
@@ -162,19 +167,23 @@ when those knobs are needed.
 ##### External runtime components
 Redis Stack (`redis-server`, `redis-cli`, Redis modules, etc.) is included in
 the external packages and is built and installed together with them by default.
-It is required by the NestDAQ application at runtime, but it is not a direct
-library dependency. It may also be run in a container instead; see
+The Redis modules can be disabled individually with `REDIS_BUILD_REDISBLOOM`,
+`REDIS_BUILD_REDISEARCH`, `REDIS_BUILD_REDISJSON`, and
+`REDIS_BUILD_REDISTIMESERIES`. Redis is required by the NestDAQ application at
+runtime, but it is not a direct library dependency. It may also be run in a
+container instead; see
 [`share/redis-stack-container/README.md`](share/redis-stack-container/README.md).
-RediSearch requires a compiler with C++20 support. Redis Stack builds fail with
-GCC 8.5 because RediSearch uses C++20 features such as `<ranges>`.
+RediSearch requires a compiler with C++20 support. Builds with
+`REDIS_BUILD_REDISEARCH=ON` fail with GCC 8.5 because RediSearch uses C++20
+features such as `<ranges>`.
 
-| Package                                                                  | Version (default) | CMake options to modify versions |
-| :--                                                                      | :--               | :--                              |
-| [Redis](https://github.com/redis/redis)                                  | 8.6.4             | `Redis_VERSION`                  |
-| [RedisBloom](https://github.com/RedisBloom/RedisBloom)                   | 8.6.2             | `RedisBloom_VERSION`             |
-| [RediSearch](https://github.com/RediSearch/RediSearch)                   | 8.6.8             | `RediSearch_VERSION`             |
-| [RedisJSON](https://github.com/RedisJSON/RedisJSON)                      | 8.6.0             | `RedisJSON_VERSION`              |
-| [RedisTimeSeries](https://github.com/RedisTimeSeries/RedisTimeSeries)    | 8.6.2             | `RedisTimeSeries_VERSION`        |
+| Package                                                                  | Version (default) | CMake options |
+| :--                                                                      | :--               | :--            |
+| [Redis](https://github.com/redis/redis)                                  | 8.6.4             | `Redis_VERSION` |
+| [RedisBloom](https://github.com/RedisBloom/RedisBloom)                   | 8.6.2             | `RedisBloom_VERSION`, `REDIS_BUILD_REDISBLOOM` |
+| [RediSearch](https://github.com/RediSearch/RediSearch)                   | 8.6.8             | `RediSearch_VERSION`, `REDIS_BUILD_REDISEARCH` |
+| [RedisJSON](https://github.com/RedisJSON/RedisJSON)                      | 8.6.0             | `RedisJSON_VERSION`, `REDIS_BUILD_REDISJSON` |
+| [RedisTimeSeries](https://github.com/RedisTimeSeries/RedisTimeSeries)    | 8.6.2             | `RedisTimeSeries_VERSION`, `REDIS_BUILD_REDISTIMESERIES` |
 
 
 ### Build and install NestDAQ library

@@ -16,6 +16,15 @@ MALLOC="${12}"
 DISABLE_WERRORS="${13}"
 OPENSSL_PREFIX="${14}"
 CLEAN_TEMP_RUST="${15}"
+MODULE_SUBDIRS="${16-redisjson redistimeseries redisbloom redisearch}"
+if [ "${MODULE_SUBDIRS}" = "__none__" ]; then
+  MODULE_SUBDIRS=""
+fi
+if [ -n "${MODULE_SUBDIRS}" ]; then
+  HAS_MODULES=yes
+else
+  HAS_MODULES=no
+fi
 
 RUSTUP_HOME="${TEMP_RUST_DIR}/rustup"
 CARGO_HOME="${TEMP_RUST_DIR}/cargo"
@@ -43,151 +52,166 @@ export CARGO_HOME
 export CC="${CC_BIN}"
 export CXX="${CXX_BIN}"
 
-# Several Redis modules call python3 from their own Makefiles. Use an isolated
-# venv under the temporary tool directory so the build does not depend on user
-# shell activation or write Python state outside the install tree.
-if [ ! -x "${PYTHON_VENV}/bin/python3" ] || ! "${PYTHON_VENV}/bin/python3" -m pip --version >/dev/null 2>&1; then
-  HOST_PYTHON3="$(command -v python3 || true)"
-  if [ -z "${HOST_PYTHON3}" ]; then
-    echo "python3 is required to build Redis modules" >&2
-    exit 1
-  fi
-  rm -rf "${PYTHON_VENV}"
-  "${HOST_PYTHON3}" -m venv "${PYTHON_VENV}"
-fi
-
-PYTHON3_BIN="${PYTHON_VENV}/bin/python3"
-PYTHON_BIN="${PYTHON_VENV}/bin/python"
-
-export VIRTUAL_ENV="${PYTHON_VENV}"
-export PYTHON="${PYTHON_BIN}"
-export PYTHON3="${PYTHON3_BIN}"
-export USER_MYPY="${PYTHON3_BIN}"
-export PATH="${PYTHON_VENV}/bin:${RUST_BIN_DIR}:${PATH}"
-
-# RedisJSON uses bindgen through redismodule-rs, so libclang must be available
-# at build time. Reuse an already downloaded LLVM tree first, then try system
-# libclang paths. Stage a libclang.so link in the temporary tool directory so
-# bindgen does not require links in system directories such as /usr/lib.
-find_libclang_file() {
-  for dir in \
-    "${LLVM_DIR}/lib" \
-    "${LLVM_DIR}/lib64" \
-    /usr/lib/llvm-*/lib \
-    /usr/lib64/llvm-*/lib \
-    /usr/lib64 \
-    /usr/lib \
-    /lib64 \
-    /lib
-  do
-    for libclang in "${dir}"/libclang.so "${dir}"/libclang.so.* "${dir}"/libclang-*.so "${dir}"/libclang-*.so.*; do
-      if [ -e "${libclang}" ]; then
-        printf '%s\n' "${libclang}"
-        return 0
-      fi
-    done
-  done
-  return 1
-}
-
-stage_libclang() {
-  libclang_file="$1"
-  rm -f "${COMPAT_LIB_DIR}/libclang.so"
-  ln -s "${libclang_file}" "${COMPAT_LIB_DIR}/libclang.so"
-  printf '%s\n' "${COMPAT_LIB_DIR}"
-}
-
-if ! LIBCLANG_FILE="$(find_libclang_file)"; then
-  case "$(uname -s)-$(uname -m)" in
-    Linux-x86_64)
-      LLVM_ARCHIVE="clang+llvm-18.1.8-x86_64-linux-gnu-ubuntu-18.04.tar.xz"
-      ;;
-    Linux-aarch64)
-      LLVM_ARCHIVE="clang+llvm-18.1.8-aarch64-linux-gnu.tar.xz"
-      ;;
-    *)
-      echo "libclang is required to build RedisJSON, and automatic LLVM download is not configured for $(uname -s)-$(uname -m)" >&2
-      exit 1
-      ;;
-  esac
-
-  LLVM_URL="https://github.com/llvm/llvm-project/releases/download/llvmorg-18.1.8/${LLVM_ARCHIVE}"
-  LLVM_TARBALL="${TEMP_RUST_DIR}/${LLVM_ARCHIVE}"
-  rm -rf "${LLVM_DIR}"
-  curl -fsSL "${LLVM_URL}" -o "${LLVM_TARBALL}"
-  mkdir -p "${LLVM_DIR}"
-  tar -xJf "${LLVM_TARBALL}" -C "${LLVM_DIR}" --strip-components=1
-  rm -f "${LLVM_TARBALL}"
-  LIBCLANG_FILE="$(find_libclang_file)"
-fi
-
-LIBCLANG_DIR="$(stage_libclang "${LIBCLANG_FILE}")"
-export LIBCLANG_PATH="${LIBCLANG_DIR}"
 CLANG_PATH_ARG=""
-if [ -x "${LLVM_DIR}/bin/clang" ]; then
-  export CLANG_PATH="${LLVM_DIR}/bin/clang"
-  CLANG_PATH_ARG="CLANG_PATH=${CLANG_PATH}"
-  export PATH="${LLVM_DIR}/bin:${PATH}"
-else
-  HOST_CLANG="$(command -v clang || true)"
-  if [ -n "${HOST_CLANG}" ]; then
-    export CLANG_PATH="${HOST_CLANG}"
+LIBCLANG_PATH=""
+PYTHON_BIN=""
+PYTHON3_BIN=""
+USER_MYPY_BIN=""
+
+if [ "${HAS_MODULES}" = "yes" ]; then
+  modules_makefile="${REDIS_SOURCE_DIR}/modules/Makefile"
+  if [ -f "${modules_makefile}" ]; then
+    sed -i "s|^SUBDIRS = .*|SUBDIRS = ${MODULE_SUBDIRS}|" "${modules_makefile}"
+  fi
+
+  # Several Redis modules call python3 from their own Makefiles. Use an isolated
+  # venv under the temporary tool directory so the build does not depend on user
+  # shell activation or write Python state outside the install tree.
+  if [ ! -x "${PYTHON_VENV}/bin/python3" ] || ! "${PYTHON_VENV}/bin/python3" -m pip --version >/dev/null 2>&1; then
+    HOST_PYTHON3="$(command -v python3 || true)"
+    if [ -z "${HOST_PYTHON3}" ]; then
+      echo "python3 is required to build Redis modules" >&2
+      exit 1
+    fi
+    rm -rf "${PYTHON_VENV}"
+    "${HOST_PYTHON3}" -m venv "${PYTHON_VENV}"
+  fi
+
+  PYTHON3_BIN="${PYTHON_VENV}/bin/python3"
+  PYTHON_BIN="${PYTHON_VENV}/bin/python"
+  USER_MYPY_BIN="${PYTHON3_BIN}"
+
+  export VIRTUAL_ENV="${PYTHON_VENV}"
+  export PYTHON="${PYTHON_BIN}"
+  export PYTHON3="${PYTHON3_BIN}"
+  export USER_MYPY="${USER_MYPY_BIN}"
+  export PATH="${PYTHON_VENV}/bin:${RUST_BIN_DIR}:${PATH}"
+
+  # RedisJSON uses bindgen through redismodule-rs, so libclang must be available
+  # at build time. Reuse an already downloaded LLVM tree first, then try system
+  # libclang paths. Stage a libclang.so link in the temporary tool directory so
+  # bindgen does not require links in system directories such as /usr/lib.
+  find_libclang_file() {
+    for dir in \
+      "${LLVM_DIR}/lib" \
+      "${LLVM_DIR}/lib64" \
+      /usr/lib/llvm-*/lib \
+      /usr/lib64/llvm-*/lib \
+      /usr/lib64 \
+      /usr/lib \
+      /lib64 \
+      /lib
+    do
+      for libclang in "${dir}"/libclang.so "${dir}"/libclang.so.* "${dir}"/libclang-*.so "${dir}"/libclang-*.so.*; do
+        if [ -e "${libclang}" ]; then
+          printf '%s\n' "${libclang}"
+          return 0
+        fi
+      done
+    done
+    return 1
+  }
+
+  stage_libclang() {
+    libclang_file="$1"
+    rm -f "${COMPAT_LIB_DIR}/libclang.so"
+    ln -s "${libclang_file}" "${COMPAT_LIB_DIR}/libclang.so"
+    printf '%s\n' "${COMPAT_LIB_DIR}"
+  }
+
+  if ! LIBCLANG_FILE="$(find_libclang_file)"; then
+    case "$(uname -s)-$(uname -m)" in
+      Linux-x86_64)
+        LLVM_ARCHIVE="clang+llvm-18.1.8-x86_64-linux-gnu-ubuntu-18.04.tar.xz"
+        ;;
+      Linux-aarch64)
+        LLVM_ARCHIVE="clang+llvm-18.1.8-aarch64-linux-gnu.tar.xz"
+        ;;
+      *)
+        echo "libclang is required to build RedisJSON, and automatic LLVM download is not configured for $(uname -s)-$(uname -m)" >&2
+        exit 1
+        ;;
+    esac
+
+    LLVM_URL="https://github.com/llvm/llvm-project/releases/download/llvmorg-18.1.8/${LLVM_ARCHIVE}"
+    LLVM_TARBALL="${TEMP_RUST_DIR}/${LLVM_ARCHIVE}"
+    rm -rf "${LLVM_DIR}"
+    curl -fsSL "${LLVM_URL}" -o "${LLVM_TARBALL}"
+    mkdir -p "${LLVM_DIR}"
+    tar -xJf "${LLVM_TARBALL}" -C "${LLVM_DIR}" --strip-components=1
+    rm -f "${LLVM_TARBALL}"
+    LIBCLANG_FILE="$(find_libclang_file)"
+  fi
+
+  LIBCLANG_DIR="$(stage_libclang "${LIBCLANG_FILE}")"
+  export LIBCLANG_PATH="${LIBCLANG_DIR}"
+  if [ -x "${LLVM_DIR}/bin/clang" ]; then
+    export CLANG_PATH="${LLVM_DIR}/bin/clang"
     CLANG_PATH_ARG="CLANG_PATH=${CLANG_PATH}"
+    export PATH="${LLVM_DIR}/bin:${PATH}"
   else
-    unset CLANG_PATH
+    HOST_CLANG="$(command -v clang || true)"
+    if [ -n "${HOST_CLANG}" ]; then
+      export CLANG_PATH="${HOST_CLANG}"
+      CLANG_PATH_ARG="CLANG_PATH=${CLANG_PATH}"
+    else
+      unset CLANG_PATH
+    fi
   fi
-fi
-for clang_resource_dir in "${LLVM_DIR}"/lib/clang/*/include /usr/lib/clang/*/include /usr/lib64/clang/*/include; do
-  if [ -f "${clang_resource_dir}/stddef.h" ]; then
-    export BINDGEN_EXTRA_CLANG_ARGS="${BINDGEN_EXTRA_CLANG_ARGS:-} -isystem ${clang_resource_dir}"
-    break
-  fi
-done
-# Some LLVM/libclang builds can reference libtinfo.so.5. AlmaLinux commonly
-# ships libtinfo.so.6 instead, which is compatible for this build-time use case.
-# Keep the compatibility symlink in the temporary tool directory instead of
-# modifying system library directories such as /usr/lib64.
-if ! ls /usr/lib64/libtinfo.so.5 /usr/lib/libtinfo.so.5 /lib64/libtinfo.so.5 /lib/libtinfo.so.5 >/dev/null 2>&1 \
-  && [ ! -e "${COMPAT_LIB_DIR}/libtinfo.so.5" ]; then
-  for tinfo in /usr/lib64/libtinfo.so.6 /usr/lib/libtinfo.so.6 /lib64/libtinfo.so.6 /lib/libtinfo.so.6; do
-    if [ -e "${tinfo}" ]; then
-      ln -s "${tinfo}" "${COMPAT_LIB_DIR}/libtinfo.so.5"
+  for clang_resource_dir in "${LLVM_DIR}"/lib/clang/*/include /usr/lib/clang/*/include /usr/lib64/clang/*/include; do
+    if [ -f "${clang_resource_dir}/stddef.h" ]; then
+      export BINDGEN_EXTRA_CLANG_ARGS="${BINDGEN_EXTRA_CLANG_ARGS:-} -isystem ${clang_resource_dir}"
       break
     fi
   done
+  # Some LLVM/libclang builds can reference libtinfo.so.5. AlmaLinux commonly
+  # ships libtinfo.so.6 instead, which is compatible for this build-time use case.
+  # Keep the compatibility symlink in the temporary tool directory instead of
+  # modifying system library directories such as /usr/lib64.
+  if ! ls /usr/lib64/libtinfo.so.5 /usr/lib/libtinfo.so.5 /lib64/libtinfo.so.5 /lib/libtinfo.so.5 >/dev/null 2>&1 \
+    && [ ! -e "${COMPAT_LIB_DIR}/libtinfo.so.5" ]; then
+    for tinfo in /usr/lib64/libtinfo.so.6 /usr/lib/libtinfo.so.6 /lib64/libtinfo.so.6 /lib/libtinfo.so.6; do
+      if [ -e "${tinfo}" ]; then
+        ln -s "${tinfo}" "${COMPAT_LIB_DIR}/libtinfo.so.5"
+        break
+      fi
+    done
+  fi
+  export LD_LIBRARY_PATH="${LIBCLANG_DIR}:${COMPAT_LIB_DIR}${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}"
+
+  # Install a pinned Rust toolchain only when the temporary tool directory does
+  # not already contain the requested version. The built Redis/RedisJSON
+  # artifacts do not require cargo or rustc at runtime.
+  if [ ! -x "${RUST_BIN_DIR}/cargo" ] || [ ! -x "${RUST_BIN_DIR}/rustc" ] || ! "${RUST_BIN_DIR}/rustc" --version | grep -q " ${RUST_TOOLCHAIN} "; then
+    case "$(uname -s)-$(uname -m)" in
+      Linux-x86_64)
+        RUSTUP_URL="https://static.rust-lang.org/rustup/dist/x86_64-unknown-linux-gnu/rustup-init"
+        ;;
+      Linux-aarch64)
+        RUSTUP_URL="https://static.rust-lang.org/rustup/dist/aarch64-unknown-linux-gnu/rustup-init"
+        ;;
+      Darwin-x86_64)
+        RUSTUP_URL="https://static.rust-lang.org/rustup/dist/x86_64-apple-darwin/rustup-init"
+        ;;
+      Darwin-arm64)
+        RUSTUP_URL="https://static.rust-lang.org/rustup/dist/aarch64-apple-darwin/rustup-init"
+        ;;
+      *)
+        echo "unsupported platform: $(uname -s)-$(uname -m)" >&2
+        exit 1
+        ;;
+    esac
+
+    curl -fsSL "${RUSTUP_URL}" -o "${RUSTUP_INIT}"
+    chmod +x "${RUSTUP_INIT}"
+    "${RUSTUP_INIT}" -y --profile minimal --no-modify-path --default-toolchain "${RUST_TOOLCHAIN}"
+  fi
+
+  "${RUST_BIN_DIR}/cargo" --version
+  "${RUST_BIN_DIR}/rustc" --version
+else
+  export LD_LIBRARY_PATH="${LD_LIBRARY_PATH:-}"
 fi
-export LD_LIBRARY_PATH="${LIBCLANG_DIR}:${COMPAT_LIB_DIR}${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}"
-
-# Install a pinned Rust toolchain only when the temporary tool directory does not
-# already contain the requested version. The built Redis/RedisJSON artifacts do
-# not require cargo or rustc at runtime.
-if [ ! -x "${RUST_BIN_DIR}/cargo" ] || [ ! -x "${RUST_BIN_DIR}/rustc" ] || ! "${RUST_BIN_DIR}/rustc" --version | grep -q " ${RUST_TOOLCHAIN} "; then
-  case "$(uname -s)-$(uname -m)" in
-    Linux-x86_64)
-      RUSTUP_URL="https://static.rust-lang.org/rustup/dist/x86_64-unknown-linux-gnu/rustup-init"
-      ;;
-    Linux-aarch64)
-      RUSTUP_URL="https://static.rust-lang.org/rustup/dist/aarch64-unknown-linux-gnu/rustup-init"
-      ;;
-    Darwin-x86_64)
-      RUSTUP_URL="https://static.rust-lang.org/rustup/dist/x86_64-apple-darwin/rustup-init"
-      ;;
-    Darwin-arm64)
-      RUSTUP_URL="https://static.rust-lang.org/rustup/dist/aarch64-apple-darwin/rustup-init"
-      ;;
-    *)
-      echo "unsupported platform: $(uname -s)-$(uname -m)" >&2
-      exit 1
-      ;;
-  esac
-
-  curl -fsSL "${RUSTUP_URL}" -o "${RUSTUP_INIT}"
-  chmod +x "${RUSTUP_INIT}"
-  "${RUSTUP_INIT}" -y --profile minimal --no-modify-path --default-toolchain "${RUST_TOOLCHAIN}"
-fi
-
-"${RUST_BIN_DIR}/cargo" --version
-"${RUST_BIN_DIR}/rustc" --version
 
 # Redis vendors a reduced xxHash tree without tests/, but xxHash's clean target
 # still descends into those directories when Redis decides to rebuild deps.
@@ -229,7 +253,7 @@ env \
   USER_MYPY="${PYTHON3_BIN}" \
   IGNORE_MISSING_DEPS=1 \
   VERBOSE=0 \
-  BUILD_WITH_MODULES=yes \
+  BUILD_WITH_MODULES="${HAS_MODULES}" \
   BUILD_TLS="${BUILD_TLS}" \
   USE_SYSTEMD="${USE_SYSTEMD}" \
   MALLOC="${MALLOC}" \
@@ -275,7 +299,7 @@ env \
   USER_MYPY="${PYTHON3_BIN}" \
   IGNORE_MISSING_DEPS=1 \
   VERBOSE=0 \
-  BUILD_WITH_MODULES=yes \
+  BUILD_WITH_MODULES="${HAS_MODULES}" \
   BUILD_TLS="${BUILD_TLS}" \
   USE_SYSTEMD="${USE_SYSTEMD}" \
   MALLOC="${MALLOC}" \
@@ -313,14 +337,31 @@ fi
 
 # Fail fast if module installation silently regresses. RedisJSON installs its
 # module as rejson.so, not redisjson.so.
-if [ ! -f "${INSTALL_LIBDIR}/redis/modules/rejson.so" ]; then
-  echo "RedisJSON module was not installed: ${INSTALL_LIBDIR}/redis/modules/rejson.so" >&2
-  exit 1
-fi
-
-if [ ! -f "${INSTALL_LIBDIR}/redis/modules/redisearch.so" ]; then
-  echo "RediSearch module was not installed: ${INSTALL_LIBDIR}/redis/modules/redisearch.so" >&2
-  exit 1
+if [ "${HAS_MODULES}" = "yes" ]; then
+  for module in ${MODULE_SUBDIRS}; do
+    case "${module}" in
+      redisbloom)
+        module_file="${INSTALL_LIBDIR}/redis/modules/redisbloom.so"
+        ;;
+      redisearch)
+        module_file="${INSTALL_LIBDIR}/redis/modules/redisearch.so"
+        ;;
+      redisjson)
+        module_file="${INSTALL_LIBDIR}/redis/modules/rejson.so"
+        ;;
+      redistimeseries)
+        module_file="${INSTALL_LIBDIR}/redis/modules/redistimeseries.so"
+        ;;
+      *)
+        echo "Unknown Redis module: ${module}" >&2
+        exit 1
+        ;;
+    esac
+    if [ ! -f "${module_file}" ]; then
+      echo "Redis module was not installed: ${module_file}" >&2
+      exit 1
+    fi
+  done
 fi
 
 CONF_DIR="${INSTALL_SYSCONFDIR}/redis"
@@ -335,21 +376,33 @@ if [ -f "${REDIS_SOURCE_DIR}/redis.conf" ]; then
   cp "${REDIS_SOURCE_DIR}/redis.conf" "${BASE_CONF_FILE}"
 fi
 
-if [ -f "${REDIS_SOURCE_DIR}/redis-full.conf" ]; then
-  sed \
-    -e "s|^[[:space:]]*include[[:space:]]\+redis\.conf[[:space:]]*$|include ${BASE_CONF_FILE}|" \
-    -e "s|^[[:space:]]*loadmodule[[:space:]].*redisbloom.*$|loadmodule ${MODULE_INSTALL_DIR}/redisbloom.so|" \
-    -e "s|^[[:space:]]*loadmodule[[:space:]].*redisearch.*$|loadmodule ${MODULE_INSTALL_DIR}/redisearch.so|" \
-    -e "s|^[[:space:]]*loadmodule[[:space:]].*redisjson.*$|loadmodule ${MODULE_INSTALL_DIR}/rejson.so|" \
-    -e "s|^[[:space:]]*loadmodule[[:space:]].*rejson.*$|loadmodule ${MODULE_INSTALL_DIR}/rejson.so|" \
-    -e "s|^[[:space:]]*loadmodule[[:space:]].*redistimeseries.*$|loadmodule ${MODULE_INSTALL_DIR}/redistimeseries.so|" \
-    "${REDIS_SOURCE_DIR}/redis-full.conf" > "${CONF_FILE}"
+if [ "${HAS_MODULES}" != "yes" ]; then
+  if [ -f "${BASE_CONF_FILE}" ]; then
+    cp "${BASE_CONF_FILE}" "${CONF_FILE}"
+  else
+    : > "${CONF_FILE}"
+  fi
 else
   {
-    printf 'loadmodule %s\n' "${MODULE_INSTALL_DIR}/redisbloom.so"
-    printf 'loadmodule %s\n' "${MODULE_INSTALL_DIR}/redisearch.so"
-    printf 'loadmodule %s\n' "${MODULE_INSTALL_DIR}/rejson.so"
-    printf 'loadmodule %s\n' "${MODULE_INSTALL_DIR}/redistimeseries.so"
+    if [ -f "${BASE_CONF_FILE}" ]; then
+      printf 'include %s\n' "${BASE_CONF_FILE}"
+    fi
+    for module in ${MODULE_SUBDIRS}; do
+      case "${module}" in
+        redisbloom)
+          printf 'loadmodule %s\n' "${MODULE_INSTALL_DIR}/redisbloom.so"
+          ;;
+        redisearch)
+          printf 'loadmodule %s\n' "${MODULE_INSTALL_DIR}/redisearch.so"
+          ;;
+        redisjson)
+          printf 'loadmodule %s\n' "${MODULE_INSTALL_DIR}/rejson.so"
+          ;;
+        redistimeseries)
+          printf 'loadmodule %s\n' "${MODULE_INSTALL_DIR}/redistimeseries.so"
+          ;;
+      esac
+    done
   } > "${CONF_FILE}"
 fi
 

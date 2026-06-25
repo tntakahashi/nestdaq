@@ -102,20 +102,20 @@ OpenTelemetry logs to the collector.
      --loadmodule <install-prefix>/lib/redis/modules/redistimeseries.so
    ```
 
-   Load only the modules required by your local setup. For example, omit a
-   `--loadmodule` line if the corresponding Redis Stack module is not used by
-   the plugins or checks you are running.
+   Load only the modules required by your local setup. If a Redis Stack module
+   was disabled at dependency build time, omit the corresponding `--loadmodule`
+   line.
 
    The dependency install also provides Redis configuration examples under
    `<install-prefix>/etc/redis/`. `redis.conf` is the upstream base
-   configuration, and `redis-full.conf` is generated with installed module
-   paths. You can copy one of these files, edit the `loadmodule` lines to keep
-   only the modules you need, adjust persistence settings, and start Redis with
-   the config file:
+   configuration, and `redis-full.conf` is generated with the module paths that
+   were installed by the dependency build. You can copy one of these files,
+   adjust persistence settings or module loading, and start Redis with the
+   config file:
 
    ```sh
    cp <install-prefix>/etc/redis/redis-full.conf ./redis-full.conf
-   # Edit ./redis-full.conf if you want to load only a subset of modules.
+   # Edit ./redis-full.conf if you want to adjust module loading or persistence.
    <install-prefix>/bin/redis-server ./redis-full.conf
    ```
 
