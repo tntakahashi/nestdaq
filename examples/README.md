@@ -100,12 +100,19 @@ The commands below assume that NestDAQ was installed under
    ```sh
    <install-prefix>/bin/daq-webctl \
      --http-uri=http://0.0.0.0:8080 \
-     --redis-uri=tcp://127.0.0.1:6379
+     --redis-uri=tcp://127.0.0.1:6379 \
+     --otel-log-protocol=otlp-grpc \
+     --otel-log-endpoint-grpc=localhost:4317 \
+     --otel-log-severity=info \
+     --otel-service-name=daq-webctl
    ```
 
-   Open `http://localhost:8080/` after the process starts. See
+   Open `http://localhost:8080/` after the process starts. The OpenTelemetry
+   options send controller logs to the local collector started above. See
    [`controller/README.md`](../controller/README.md) for controller options and
-   Redis command behavior.
+   Redis command behavior, and
+   [`nestdaq/telemetry/README.md`](../nestdaq/telemetry/README.md) for the full
+   telemetry option list.
 
 4. Run the example devices with `start_device.sh`.
 
