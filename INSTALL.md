@@ -43,6 +43,14 @@ dnf -y install \
 # dnf -y install gcc-toolset-14
 ```
 
+For AlmaLinux 8, enable the `powertools` repository instead of `crb` before
+installing GCC Toolset packages:
+
+```bash
+dnf config-manager --set-enabled powertools
+dnf -y install gcc-toolset-14
+```
+
 ### Build and install external dependencies
 The following command installs ZeroMQ, Boost, FairLogger, FairMQ, Catch2,
 nlohmann/json, hiredis, redis++, and Redis Stack.

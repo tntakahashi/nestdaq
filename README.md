@@ -4,7 +4,7 @@ A streaming data acquisition (DAQ) implementation for the particle measurements
 ## Quick links
 
 - [Installation](INSTALL.md): prerequisites, external dependencies, NestDAQ build, examples, and optional documentation generation.
-- [Examples](examples/README.md): sample NestDAQ devices built as a separate CMake project.
+- [Examples](examples/README.md): sample NestDAQ devices and a local run sequence for Redis, OpenTelemetry, `daq-webctl`, `NullDevice`, `Sampler`, and `Sink`.
 - [Scripts](scripts/README.md): helper scripts and topology examples for running DAQ processes.
 - [DAQ web controller implementation](controller/README.md): `daq-webctl` server, WebSocket, Redis control, and telemetry setup.
 - [Web controller assets](share/controller/README.md): static files used by `daq-webctl`.
@@ -19,7 +19,7 @@ A streaming data acquisition (DAQ) implementation for the particle measurements
 | [nestdaq/telemetry/](nestdaq/telemetry/README.md) | Optional OpenTelemetry integration. |
 | [plugins/](plugins/README.md)            | FairMQ plugins for DAQ service, metrics, and parameter configuration. |
 | [controller/](controller/README.md)      | `daq-webctl` implementation. |
-| [examples/](examples/README.md)          | Example devices such as `Sampler`, `Sink`, and `NullDevice`. |
+| [examples/](examples/README.md)          | Example devices such as `Sampler`, `Sink`, and `NullDevice`; see its README for detailed run steps. |
 | [scripts/](scripts/README.md)            | Runtime helper scripts and topology examples. |
 | `share/`                                 | Installed runtime/configuration assets. |
 

@@ -48,14 +48,100 @@ example install prefix and uses link paths discovered through `NestDAQ::NestDAQ`
 ## Running
 
 Use the installed helper scripts or invoke the binaries directly with FairMQ
-channel options. A typical local topology starts `Sampler` and `Sink` with
-matching channel configuration.
+channel options. A typical local validation run starts Redis, an OpenTelemetry
+Collector backend, `daq-webctl`, and then the example devices.
 
 ```sh
 Sampler --help
 Sink --help
 NullDevice --help
 ```
+
+### Local Run Sequence
+
+The commands below assume that NestDAQ was installed under
+`<install-prefix>`. Run long-lived processes in separate terminals.
+
+1. Start Redis.
+
+   Redis is required by the NestDAQ DAQ service, metrics, and parameter
+   configuration plugins. One local option is the Redis Stack Server container
+   helper:
+
+   ```sh
+   cp -a <install-prefix>/share/redis-stack-container ./redis-stack-container
+   cd ./redis-stack-container
+   ./run-redis-stack-server.sh
+   ```
+
+   See
+   [`share/redis-stack-container/README.md`](../share/redis-stack-container/README.md)
+   for Docker, Podman, volume, and RedisInsight options.
+
+2. Start an OpenTelemetry Collector backend.
+
+   This example uses the OpenSearch backend. It receives OpenTelemetry Protocol
+   (OTLP) data from the example devices, stores logs and traces in OpenSearch,
+   and makes them available in OpenSearch Dashboards.
+
+   ```sh
+   cp -a <install-prefix>/share/otel-collector-compose ./otel-collector-compose
+   cd ./otel-collector-compose/opensearch
+   docker compose -f compose-opensearch.yaml up
+   ```
+
+   For Podman, use the same file with `podman compose`. See
+   [`share/otel-collector-compose/opensearch/README.md`](../share/otel-collector-compose/opensearch/README.md)
+   for ports, rootless Podman notes, and dashboard setup details. The default
+   OTLP gRPC endpoint is `localhost:4317`.
+
+3. Start `daq-webctl`.
+
+   ```sh
+   <install-prefix>/bin/daq-webctl \
+     --http-uri=http://0.0.0.0:8080 \
+     --redis-uri=tcp://127.0.0.1:6379
+   ```
+
+   Open `http://localhost:8080/` after the process starts. See
+   [`controller/README.md`](../controller/README.md) for controller options and
+   Redis command behavior.
+
+4. Run the example devices with `start_device.sh`.
+
+   The installed script loads the NestDAQ plugins, uses Redis at
+   `127.0.0.1:6379` by default, and exports OpenTelemetry logs to the local
+   collector by OTLP gRPC. Metrics and traces are disabled by default in the
+   script; see [`scripts/README.md`](../scripts/README.md) to enable them or to
+   print telemetry to the console.
+
+   `NullDevice` has no data channel and can be started directly:
+
+   ```sh
+   <install-prefix>/scripts/start_device.sh NullDevice
+   ```
+
+   `Sampler` and `Sink` need matching channel configuration. For the simple
+   one-to-one topology, configure Redis first:
+
+   ```sh
+   cd <install-prefix>/scripts
+   ./topology-1-1.sh
+   ```
+
+   Then start `Sink` and `Sampler` in separate terminals. Starting `Sink` first
+   avoids dropping early messages while the receiver is not yet connected.
+
+   ```sh
+   <install-prefix>/scripts/start_device.sh Sink
+   ```
+
+   ```sh
+   <install-prefix>/scripts/start_device.sh Sampler
+   ```
+
+   The browser controller can then publish DAQ commands such as `INIT`,
+   `BIND`, `CONNECT`, `RUN`, and `STOP` to the running devices.
 
 ### Example-Specific Options
 
