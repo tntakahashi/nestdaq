@@ -169,10 +169,10 @@ library dependency. It may also be run in a container instead; see
 | Package                                                                  | Version (default) | CMake options to modify versions |
 | :--                                                                      | :--               | :--                              |
 | [Redis](https://github.com/redis/redis)                                  | 8.8.0             | `Redis_VERSION`                  |
-| [RedisBloom](https://github.com/RedisBloom/RedisBloom)                   | 2.8.20            | `RedisBloom_VERSION`             |
-| [RediSearch](https://github.com/RediSearch/RediSearch)                   | 2.10.31           | `RediSearch_VERSION`             |
-| [RedisJSON](https://github.com/RedisJSON/RedisJSON)                      | 2.8.19            | `RedisJSON_VERSION`              |
-| [RedisTimeSeries](https://github.com/RedisTimeSeries/RedisTimeSeries)    | 1.12.14           | `RedisTimeSeries_VERSION`        |
+| [RedisBloom](https://github.com/RedisBloom/RedisBloom)                   | 8.8.0             | `RedisBloom_VERSION`             |
+| [RediSearch](https://github.com/RediSearch/RediSearch)                   | 8.8.0             | `RediSearch_VERSION`             |
+| [RedisJSON](https://github.com/RedisJSON/RedisJSON)                      | 8.8.0             | `RedisJSON_VERSION`              |
+| [RedisTimeSeries](https://github.com/RedisTimeSeries/RedisTimeSeries)    | 8.8.0             | `RedisTimeSeries_VERSION`        |
 
 
 ### Build and install NestDAQ library
