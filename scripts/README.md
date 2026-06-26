@@ -180,10 +180,99 @@ The generated project contains `MyDevice.h`, `MyDevice.cxx`,
 `--force` is specified. Use `--dry-run` to inspect the output paths without
 writing files.
 
+The default processing mode is `conditional-run`. `Run()`,
+`ConditionalRun()`, and `OnData()` are mutually exclusive in generated code.
+Use `--processing-mode run`, `--processing-mode conditional-run`, or
+`--processing-mode on-data` to choose the generated processing entry point.
+`Run()` is generated empty. `ConditionalRun()` is generated with simple
+poll/receive/send examples. `OnData()` requires an input channel and registers
+an `OnData()` callback in `InitTask()`.
+
+Channel options passed to the generator are not the final device command-line
+options. They describe how to generate those options in C++:
+
+```bash
+./generate-device-skeleton.py MyProcessor \
+  --input-channel in-chan-name:in \
+  --output-channel out-chan-name:data \
+  --dqm-channel dqm-chan-name:dqm
+```
+
+For example, `--input-channel in-chan-name:in` makes the generated C++ add an
+`in-chan-name` command-line option whose default value is `in`, then read that
+option into `fInputChannelName` in `InitTask()`. The short forms
+`--input-channel :in` and `--input-channel in` both use the default option key
+`in-chan-name`; output and DQM use `out-chan-name` and `dqm-chan-name` in the
+same way. `KEY:` and `:` are rejected because the generated option would have
+no default channel name.
+
+The generated device class is placed in `namespace nestdaq` by default.
+Use `--no-namespace` to generate the class in the global namespace.
+
+Useful variants:
+
+```bash
+./generate-device-skeleton.py MySource \
+  --output-channel out-chan-name:data
+
+./generate-device-skeleton.py MyShortFormProcessor \
+  --input-channel :in \
+  --output-channel data \
+  --dqm-channel dqm
+
+./generate-device-skeleton.py MySingleMessageProcessor \
+  --input-channel :in \
+  --output-channel data \
+  --dqm-channel dqm \
+  --single-output \
+  --single-dqm
+
+./generate-device-skeleton.py MySink \
+  --processing-mode on-data \
+  --input-channel in-chan-name:in
+
+./generate-device-skeleton.py MyMultipartSink \
+  --processing-mode on-data \
+  --input-channel in-chan-name:in \
+  --multipart-input
+
+./generate-device-skeleton.py MyDevice \
+  --input-channel in-chan-name:in \
+  --output-channel out-chan-name:data \
+  --no-poll output,dqm \
+  --no-drain-input
+
+./generate-device-skeleton.py MyGlobalDevice \
+  --no-namespace
+
+./generate-device-skeleton.py --interactive
+```
+
+When input polling is generated, the skeleton uses a FairMQ poller before
+`Receive()`. When output or DQM polling is generated, it uses
+`Poller::CheckOutput()` before `Send()`. Output waits in poll-timeout steps
+until it can send or a state transition is pending. DQM drops the sample if it
+cannot send immediately. Output and DQM examples are generated as multipart
+messages by default. Use generator options `--single-output` or `--single-dqm`
+to generate single-message examples instead; these are not runtime
+command-line options of the generated device. `SendOutputMessage()` and
+`SendDQMMessage()` take the generated `fair::mq::Parts&` or
+`fair::mq::MessagePtr&` payload and only handle channel readiness, `Send()`,
+and success/failure checks. Input drain code is generated in `PostRun()` by
+default when an input channel is present; disable it with `--no-drain-input`.
+The generated C++ custom options are registered as strings. Numeric members are
+assigned in `InitTask()` by converting those strings: `poll-timeout-ms`
+defaults to `100`, `drain-timeout-ms` defaults to `100`, and
+`drain-max-timeout-count` defaults to `20`. A negative `drain-timeout-ms` value
+is treated as `0`. The drain loop stops after `drain-max-timeout-count`
+consecutive receive timeouts since the last drained message; receiving a message
+resets that local timeout count. `drain-max-timeout-count` must be positive.
+
 The generator reads the `*.in` template files from `share/device-skeleton`,
 substitutes the device-specific placeholders, and writes the resulting files to
-the output directory. The main substitutions are `@CLASS_NAME@`,
-`@HEADER_FILE@`, and `@SOURCE_FILE@`.
+the output directory. The main substitutions include `@CLASS_NAME@`,
+`@HEADER_FILE@`, `@SOURCE_FILE@`, and generated C++ blocks for members,
+options, processing methods, send helpers, and drain code.
 
 | Template | Generated file for `MyDevice` |
 | :-- | :-- |
@@ -193,13 +282,20 @@ the output directory. The main substitutions are `@CLASS_NAME@`,
 | `README.md.in` | `README.md` |
 
 Build the generated device as a standalone CMake project. Set
-`CMAKE_PREFIX_PATH` to the NestDAQ install prefix.
+`CMAKE_PREFIX_PATH` to the NestDAQ install prefix, and set
+`CMAKE_INSTALL_PREFIX` to the install prefix for the generated device. These
+prefixes may be the same directory. The generated CMake project uses C++17 by
+default and rejects standards older than C++17.
 
 ```bash
 cmake -S ./MyDevice -B ./build-MyDevice \
-  -DCMAKE_PREFIX_PATH=<nestdaq-install-prefix>
+  -DCMAKE_PREFIX_PATH=<nestdaq-install-prefix> \
+  -DCMAKE_INSTALL_PREFIX=<device-install-prefix>
 cmake --build ./build-MyDevice --parallel
+cmake --install ./build-MyDevice
 ```
+
+The installed executable is placed under `<device-install-prefix>/bin/MyDevice`.
 
 The skeleton is intentionally minimal. Use the `Sampler` and `Sink` examples
 for data-channel handling and telemetry instrumentation examples.

@@ -2,7 +2,7 @@
  *  @brief Implements the @CLASS_NAME@ NestDAQ device skeleton.
  */
 
-#include <memory>
+@SOURCE_INCLUDES@
 
 #include <nestdaq/runDevice.h>
 
@@ -10,75 +10,14 @@
 
 namespace bpo = boost::program_options;
 
-//_____________________________________________________________________________
 auto addCustomOptions(bpo::options_description& options) -> void
 {
-    (void)options;
+@CUSTOM_OPTION_DEFINITIONS@
 }
 
-//_____________________________________________________________________________
 auto getDevice(const fair::mq::ProgOptions& /*config*/) -> std::unique_ptr<fair::mq::Device>
 {
-    return std::make_unique<@CLASS_NAME@>();
+    return std::make_unique<@QUALIFIED_CLASS_NAME@>();
 }
 
-//_____________________________________________________________________________
-auto @CLASS_NAME@::Bind() -> void
-{
-    LOG(info) << __PRETTY_FUNCTION__;
-}
-
-//_____________________________________________________________________________
-auto @CLASS_NAME@::ConditionalRun() -> bool
-{
-    LOG(info) << __PRETTY_FUNCTION__;
-    return true;
-}
-
-//_____________________________________________________________________________
-auto @CLASS_NAME@::Connect() -> void
-{
-    LOG(info) << __PRETTY_FUNCTION__;
-}
-
-//_____________________________________________________________________________
-auto @CLASS_NAME@::Init() -> void
-{
-    LOG(info) << __PRETTY_FUNCTION__;
-}
-
-//_____________________________________________________________________________
-auto @CLASS_NAME@::InitTask() -> void
-{
-    LOG(info) << __PRETTY_FUNCTION__;
-}
-
-//_____________________________________________________________________________
-auto @CLASS_NAME@::PostRun() -> void
-{
-    LOG(info) << __PRETTY_FUNCTION__;
-}
-
-//_____________________________________________________________________________
-auto @CLASS_NAME@::PreRun() -> void
-{
-    LOG(info) << __PRETTY_FUNCTION__;
-}
-
-//_____________________________________________________________________________
-auto @CLASS_NAME@::Reset() -> void
-{
-    LOG(info) << __PRETTY_FUNCTION__;
-}
-
-//_____________________________________________________________________________
-auto @CLASS_NAME@::ResetTask() -> void
-{
-    LOG(info) << __PRETTY_FUNCTION__;
-}
-
-//_____________________________________________________________________________
-auto @CLASS_NAME@::Run() -> void
-{
-    LOG(info) << __PRETTY_FUNCTION__;
-}
+@PROCESSING_DEFINITIONS@
