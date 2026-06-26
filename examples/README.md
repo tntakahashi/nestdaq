@@ -64,8 +64,8 @@ The commands below assume that NestDAQ was installed under
 
 ```mermaid
 flowchart TD
-  Redis[1. Redis server]
-  Otel[2. OTel Collector backend compose]
+  Otel[1. OTel Collector backend compose]
+  Redis[2. Redis server]
   WebCtl[3. daq-webctl on host]
   Browser[4. Open browser<br/>http://localhost:8080/]
   Config[5. Register topology and parameters<br/>topology-*.sh, mq-param.sh]
@@ -73,12 +73,12 @@ flowchart TD
   RunNumber[7. Set run number if missing]
   StartRun[8. Start run<br/>state transition to RUN]
 
-  Redis --> Otel --> WebCtl --> Browser --> Config --> UserDevices --> RunNumber
+  Otel --> Redis --> WebCtl --> Browser --> Config --> UserDevices --> RunNumber
   RunNumber --> StartRun
 ```
 
 The diagram shows a typical local run sequence, not a strict dependency graph.
-Start Redis and the OpenTelemetry Collector backend first, and perform the run
+Start the OpenTelemetry Collector backend and Redis first, and perform the run
 start operation last. Steps 5 and 6 may be reordered as long as they are done
 after step 2 and before step 8. The browser can be opened as soon as
 `daq-webctl` starts; devices may not appear until the topology and parameter
@@ -87,7 +87,26 @@ browser-controller operations. Run-start commands require the target devices to
 be running. `daq-webctl` and the user devices use Redis and export
 OpenTelemetry logs to the collector.
 
-1. Start Redis.
+1. Start an OpenTelemetry Collector backend.
+
+   This example uses the OpenSearch backend. It receives OpenTelemetry Protocol
+   (OTLP) data from the example devices, stores logs and traces in OpenSearch,
+   and makes them available in OpenSearch Dashboards.
+
+   ```sh
+   cp -a <install-prefix>/share/otel-collector-compose ./otel-collector-compose
+   cd ./otel-collector-compose/opensearch
+   docker compose -f compose-opensearch.yaml up
+   ```
+
+   For Podman, use the same file with `podman compose`. See
+   [`share/otel-collector-compose/opensearch/README.md`](../share/otel-collector-compose/opensearch/README.md)
+   for ports, rootless Podman notes, and dashboard setup details. The default
+   OTLP gRPC endpoint is `localhost:4317`. Open OpenSearch Dashboards at
+   `http://localhost:5601/app/discover` to inspect exported logs and traces.
+   The setup service creates the initial logs and traces Data Views.
+
+2. Start Redis.
 
    Redis is required by the NestDAQ DAQ service, metrics, and parameter
    configuration plugins. If Redis Stack was built and installed with the
@@ -131,25 +150,6 @@ OpenTelemetry logs to the collector.
    RedisInsight-enabled Redis Stack helper (`run-redis-stack.sh`), open
    RedisInsight at `http://localhost:8001`. The Redis Stack Server only helper
    (`run-redis-stack-server.sh`) does not include RedisInsight.
-
-2. Start an OpenTelemetry Collector backend.
-
-   This example uses the OpenSearch backend. It receives OpenTelemetry Protocol
-   (OTLP) data from the example devices, stores logs and traces in OpenSearch,
-   and makes them available in OpenSearch Dashboards.
-
-   ```sh
-   cp -a <install-prefix>/share/otel-collector-compose ./otel-collector-compose
-   cd ./otel-collector-compose/opensearch
-   docker compose -f compose-opensearch.yaml up
-   ```
-
-   For Podman, use the same file with `podman compose`. See
-   [`share/otel-collector-compose/opensearch/README.md`](../share/otel-collector-compose/opensearch/README.md)
-   for ports, rootless Podman notes, and dashboard setup details. The default
-   OTLP gRPC endpoint is `localhost:4317`. Open OpenSearch Dashboards at
-   `http://localhost:5601/app/discover` to inspect exported logs and traces.
-   The setup service creates the initial logs and traces Data Views.
 
 3. Start `daq-webctl`.
 
@@ -248,10 +248,10 @@ flowchart TD
   End[1. Web UI: END PROCESS for user devices]
   DeviceFallback[2. If needed: stop device terminals or send kill]
   WebCtl[3. Stop daq-webctl from its terminal]
-  Otel[4. Stop OTel Collector backend compose]
-  Redis[5. Stop Redis server]
+  Redis[4. Stop Redis server]
+  Otel[5. Stop OTel Collector backend compose]
 
-  End --> DeviceFallback --> WebCtl --> Otel --> Redis
+  End --> DeviceFallback --> WebCtl --> Redis --> Otel
 ```
 
 The diagram shows the recommended shutdown order. If the user devices have
@@ -283,7 +283,16 @@ already exited after `END PROCESS`, skip the terminal fallback step.
    `daq-webctl` handles SIGINT and SIGTERM for clean HTTP/WebSocket server
    shutdown.
 
-4. Stop the OpenTelemetry backend compose. For the OpenSearch backend compose
+4. Stop Redis. For a locally installed Redis server:
+
+   ```sh
+   <install-prefix>/bin/redis-cli shutdown
+   ```
+
+   For container-based Redis Stack, use the stop procedure in
+   [`share/redis-stack-container/README.md`](../share/redis-stack-container/README.md).
+
+5. Stop the OpenTelemetry backend compose. For the OpenSearch backend compose
    example:
 
    ```sh
@@ -303,15 +312,6 @@ already exited after `END PROCESS`, skip the terminal fallback step.
    the same backend again with the same data directory, the previous OpenSearch
    data is reused. See the backend README for data directory names and explicit
    discard commands.
-
-5. Stop Redis. For a locally installed Redis server:
-
-   ```sh
-   <install-prefix>/bin/redis-cli shutdown
-   ```
-
-   For container-based Redis Stack, use the stop procedure in
-   [`share/redis-stack-container/README.md`](../share/redis-stack-container/README.md).
 
 ### Example-Specific Options
 
