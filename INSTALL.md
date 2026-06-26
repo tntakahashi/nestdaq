@@ -20,7 +20,10 @@ dnf -y install \
     ninja-build \
     mold \
     git \
+    unzip \
+    rsync \
     autoconf \
+    automake \
     libtool \
     libcurl-devel \
     openssl-devel \
@@ -30,7 +33,9 @@ dnf -y install \
     libzstd-devel \
     libquadmath-devel \
     libstdc++-static \
-    python3-devel
+    python3 \
+    python3-devel \
+    python3-pip
 
 # Optional tools:
 # - jq: format and inspect JSON output from command-line tools.
@@ -45,15 +50,47 @@ dnf -y install \
 # dnf -y install gcc-toolset-14
 ```
 
-For AlmaLinux 8, enable the `powertools` repository instead of `crb` before
-installing GCC Toolset packages:
+### Prerequisites for AlmaLinux 8
 
 ```bash
-dnf config-manager --set-enabled powertools
-dnf -y install gcc-toolset-14
+dnf -y update && \
+dnf -y install \
+    epel-release \
+    dnf-plugins-core && \
+dnf config-manager --set-enabled powertools && \
+dnf -y groupinstall "Development Tools" && \
+dnf -y install \
+    bash-completion \
+    gcc \
+    gcc-c++ \
+    gcc-toolset-14 \
+    cmake \
+    make \
+    ninja-build \
+    mold \
+    git \
+    unzip \
+    rsync \
+    autoconf \
+    automake \
+    libtool \
+    libcurl-devel \
+    openssl-devel \
+    gnutls-devel \
+    zlib-devel \
+    bzip2-devel \
+    libzstd-devel \
+    libquadmath-devel \
+    libstdc++-static \
+    python3.11 \
+    python3.11-devel \
+    python3.11-pip
 ```
 
-### Prerequisites for Debian 13 and Ubuntu 26.04
+AlmaLinux 8 uses `powertools` instead of `crb`. Use the Python 3.11 packages
+shown above instead of `python3`, `python3-devel`, and `python3-pip`.
+
+### Prerequisites for Debian 12/13 and Ubuntu 22.04/24.04/26.04
 
 ```bash
 apt update && \
@@ -67,8 +104,13 @@ apt install -y \
     ninja-build \
     mold \
     git \
+    unzip \
+    rsync \
+    pkg-config \
     autoconf \
+    automake \
     libtool \
+    libc6-dev \
     libcurl4-openssl-dev \
     libssl-dev \
     libgnutls28-dev \
@@ -76,7 +118,9 @@ apt install -y \
     libz2-dev \
     libzstd-dev \
     python3 \
-    python3-dev
+    python3-dev \
+    python3-venv \
+    python3-pip
 
 # Optional tools:
 # - jq: format and inspect JSON output from command-line tools.
@@ -88,6 +132,9 @@ apt install -y \
 # - tmux: keep long-running local validation sessions attached.
 # apt install -y jq clang-tools clang-format doxygen graphviz astyle tmux
 ```
+
+`pkg-config` is included in the common Debian/Ubuntu list because Ubuntu 22.04
+needs it for the dependency build.
 
 ### Build and install external dependencies
 The following command installs ZeroMQ, Boost, FairLogger, FairMQ, Catch2,
