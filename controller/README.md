@@ -47,6 +47,50 @@ state.
 Use `daq-webctl --help` to inspect the available HTTP, Redis, FairLogger, and
 OpenTelemetry options.
 
+## Communication Flow
+
+The browser never connects to Redis or user device processes directly.
+`daq-webctl` has two roles: it is the browser-facing HTTP/WebSocket server, and
+it is the Redis-facing client for command publication, key access, Pub/Sub
+subscription, and state polling. User device processes communicate with Redis
+through the `daq_service` plugin.
+
+```mermaid
+sequenceDiagram
+  participant Browser as Web browser
+  participant WebCtl as daq-webctl<br/>HTTP/WebSocket server<br/>Redis client
+  participant Redis as Redis
+  participant Device as User device process<br/>(daq_service plugin)
+
+  Browser->>WebCtl: HTTP GET / or /daq-webctl.html
+  WebCtl-->>Browser: HTML/JS/CSS
+  Browser->>WebCtl: WebSocket connect
+  WebCtl->>Redis: CONFIG SET notify-keyspace-events AKE
+  WebCtl->>Redis: SUBSCRIBE daqstate and expired key events
+  Device->>Redis: SUBSCRIBE daqctl
+  Device->>Redis: write/refresh presence, health, fair-mq-state
+  Browser->>WebCtl: WebSocket JSON command<br/>redis-get / redis-set / redis-incr / redis-publish
+  alt run number or wait flag operation
+    WebCtl->>Redis: GET / SET / INCR run_info:* keys
+    WebCtl-->>Browser: WebSocket JSON run_info update
+  else DAQ state command
+    WebCtl->>Redis: PUBLISH daqctl change_state
+    Redis-->>Device: deliver daqctl message
+    Device->>Device: apply FairMQ state transition
+    Device->>Redis: update fair-mq-state / updatedTime
+    Device->>Redis: PUBLISH daqstate notification
+    Redis-->>WebCtl: deliver daqstate message
+    WebCtl->>Redis: poll/scan state keys for summary
+    WebCtl-->>Browser: WebSocket JSON state-summary-table
+  end
+  Redis-->>WebCtl: expired presence key event
+  WebCtl-->>Browser: WebSocket JSON state update
+```
+
+The diagram shows the control and status path. FairMQ data-channel traffic
+between user device processes is separate and is not routed through
+`daq-webctl`.
+
 ## Command-Line Options
 
 `daq-webctl` accepts the following options. OpenTelemetry options are also
@@ -76,6 +120,57 @@ OpenTelemetry option list.
 | `--verbosity` | `medium` | FairLogger verbosity. |
 | `--color` | `true` | Enable FairLogger console colors. |
 
+### OpenTelemetry Options
+
+`daq-webctl` uses the shared NestDAQ OpenTelemetry option helper with
+`daq-webctl` as the default `service.name`. The controller does not link
+OpenTelemetry directly; it loads the runtime telemetry library when
+`--otel-library` is non-empty and the library can be found.
+
+Common controller telemetry options are:
+
+| Option | Default | Description |
+| :-- | :-- | :-- |
+| `--otel-library` | `libnestdaq_otel.so` | Telemetry shared library path or soname loaded at runtime. |
+| `--otel-log-protocol` | `console` | Comma-separated log exporters: `console`, `otlp-http`, `otlp-grpc`; empty disables log export. |
+| `--otel-log-endpoint-grpc` | `localhost:4317` | OTLP gRPC log endpoint. |
+| `--otel-log-endpoint-http` | `http://localhost:4318/v1/logs` | OTLP HTTP log endpoint. |
+| `--otel-log-severity` | `info` | Minimum FairLogger severity exported to OpenTelemetry logs. |
+| `--otel-log-required` | `false` | Exit with failure if the telemetry library cannot be loaded or initialized. |
+| `--otel-service-name` | `daq-webctl` | OpenTelemetry `service.name` resource attribute. |
+| `--otel-service-namespace` | `nestdaq` | OpenTelemetry `service.namespace` resource attribute. |
+| `--otel-service-instance-id` | generated UUID | OpenTelemetry `service.instance.id` resource attribute. |
+| `--otel-timeout-ms` | `5000` | Force-flush, shutdown, and exporter timeout in milliseconds. |
+| `--otel-metric-protocol` | empty | Metric exporters; empty disables metrics. Useful for `console` debugging. |
+| `--otel-trace-protocol` | empty | Trace exporters; empty disables traces. Useful for `console` debugging. |
+
+Example for sending `daq-webctl` logs to a local OpenTelemetry Collector by
+OTLP gRPC:
+
+```sh
+daq-webctl \
+  --http-uri=http://0.0.0.0:8080 \
+  --redis-uri=tcp://127.0.0.1:6379 \
+  --otel-log-protocol=otlp-grpc \
+  --otel-log-endpoint-grpc=localhost:4317 \
+  --otel-log-severity=info \
+  --otel-service-name=daq-webctl
+```
+
+Choose the OTLP endpoint according to where `daq-webctl` runs:
+
+- Host process to a compose-published collector port: `localhost:4317`.
+- `daq-webctl` container in the same OpenSearch or Victoria compose network:
+  `otel-collector:4317`.
+- `daq-webctl` container in the same ClickStack compose network:
+  `clickstack:4317`.
+
+Metrics and traces are disabled by default. For local debugging without a
+collector, use console exporters such as `--otel-metric-protocol=console` or
+`--otel-trace-protocol=console`. See
+[`nestdaq/telemetry/README.md`](../nestdaq/telemetry/README.md) for the full
+OpenTelemetry option list and resource attribute details.
+
 ## Redis Command Interface
 
 `daq-webctl` uses the Redis command interface implemented by the `daq_service`
@@ -93,6 +188,9 @@ receive key-event notifications, including expired key events. It also polls
 
 Browser clients send JSON commands to the WebSocket endpoint. The controller
 executes Redis operations or publishes Redis pub/sub messages.
+For `redis-publish`, the Redis Pub/Sub command message shape, accepted command
+values, and `services` / `instances` target selection rules are documented in
+[`plugins/README.md`](../plugins/README.md#daq-command-publishsubscribe-pubsub).
 
 | Client message | Effect |
 | :-- | :-- |

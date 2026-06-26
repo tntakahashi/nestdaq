@@ -90,13 +90,55 @@ Messages published to `daqctl` have this shape:
 ```
 
 The `services` array selects service names, and the `instances` array selects
-instance ids. A device processes the message only when its service or instance
-matches the selection. The `value` field can be one of the FairMQ or NestDAQ
-command strings handled by the plugin:
+instance ids. Both arrays must be present and non-empty. A device processes the
+message only when the target selection matches that local service instance.
+The `value` field can be one of the FairMQ or NestDAQ command strings handled
+by the plugin:
 
 ```text
 BIND, COMPLETE INIT, CONNECT, END, INIT DEVICE, INIT TASK, RESET DEVICE,
 RESET TASK, RUN, STOP, exit, quit, reset, start
+```
+
+Target selection supports the special lowercase string `"all"`:
+
+- `services: ["all"]` targets every device, regardless of `instances`.
+- `services: ["Sampler"]` with `instances: ["all"]` targets every instance of
+  the `Sampler` service.
+- `services: ["Sampler"]` with `instances: ["Sampler-0"]` targets only the
+  `Sampler-0` instance.
+- Other devices ignore the message.
+
+The implementation checks the literal string `"all"` with no case conversion,
+so use lowercase `"all"` rather than `"ALL"` or `"All"`.
+
+Examples:
+
+```json
+{
+  "command": "change_state",
+  "value": "STOP",
+  "services": ["all"],
+  "instances": ["all"]
+}
+```
+
+```json
+{
+  "command": "change_state",
+  "value": "RUN",
+  "services": ["Sampler"],
+  "instances": ["all"]
+}
+```
+
+```json
+{
+  "command": "change_state",
+  "value": "RUN",
+  "services": ["Sampler"],
+  "instances": ["Sampler-0"]
+}
 ```
 
 When the web controller requests `RUN`, it copies `run_info{sep}run_number` to
@@ -105,6 +147,10 @@ and `INIT TASK` commands according to `run_info{sep}wait-device-ready` and
 `run_info{sep}wait-ready`, publishes `RUN`, and runs its configured pre/post
 hooks. When it requests `STOP`, it publishes `STOP` and runs its configured
 pre/post hooks.
+
+The web controller's prerequisite wait logic uses the same target intent:
+`services: ["all"]` waits on all known service/instance state keys, while
+`instances: ["all"]` waits on all instances under the selected services.
 
 `daq_service` publishes DAQ state-transition notifications to `daqstate`.
 Consumers such as `daq-webctl` subscribe to this channel and also poll
