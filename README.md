@@ -26,9 +26,9 @@ A streaming data acquisition (DAQ) implementation for the particle measurements
 ## Tested system
 | Distro    | Version | Compiler    | CMake  | FairMQ |
 | ---       | ---     | ---         | ---    | ---    |
-| AlmaLinux | 8       | GCC 8.5.0   | 3.26.5 | 1.9.2  |
-| AlmaLinux | 9       | GCC 11.5.0  | 3.31.8 | 1.10.0 |
-| AlmaLinux | 10      | GCC 14.3.1  | 3.31.8 | 1.10.0 |
+| AlmaLinux | 8.10    | GCC 8.5.0   | 3.26.5 | 1.9.2  |
+| AlmaLinux | 9.8     | GCC 11.5.0  | 3.31.8 | 1.10.0 |
+| AlmaLinux | 10.2    | GCC 14.3.1  | 3.31.8 | 1.10.0 |
 | Debian    | 12      | GCC 12.2.0  | 3.25.1 | 1.10.0 |
 | Debian    | 13      | GCC 14.2.0  | 3.31.6 | 1.10.0 |
 | Ubuntu    | 22.04   | GCC 11.4.0  | 3.22.1 | 1.10.0 |
@@ -48,3 +48,6 @@ A streaming data acquisition (DAQ) implementation for the particle measurements
 FairMQ 1.10.0 is used by default with GCC 9.1 or later. For GCC versions older
 than 9.1, the dependency build defaults to FairMQ 1.9.2 because GCC 8.5 does not
 provide the `std::pmr` support required by FairMQ 1.10.0.
+
+RediSearch requires C++20 and does not build with AlmaLinux 8 GCC 8.5. The
+AlmaLinux 8 test above was validated with `REDIS_BUILD_REDISEARCH=OFF`.
