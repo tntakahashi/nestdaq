@@ -216,6 +216,79 @@ a topology peer is written without an explicit `[subindex]`.
 - When the peer string includes `[subindex]`, only that subchannel is resolved,
   regardless of `autoSubChannel`.
 
+The following diagram shows how each side's `autoSubChannel` setting changes
+the number of address-bearing channel sockets when a topology connects two
+services with different process counts. It is a socket/subchannel count
+example, not a fixed port-number assignment or message-direction diagram.
+Invisible layout links keep `Sampler` on the left and `Sink` on the right; they
+are not data paths.
+
+```mermaid
+flowchart LR
+    Topology["Topology link: <br/> Sampler:out <-> Sink:in<br/>Sampler has 3 processes; <br/> Sink has 2 processes"]
+
+    subgraph CaseFF["Sampler autoSubChannel=false; Sink autoSubChannel=false"]
+        direction LR
+        subgraph SFF["Sampler"]
+            SFF0["Sampler-1<br/>out[0] address:port"]
+            SFF1["Sampler-2<br/>out[0] address:port"]
+            SFF2["Sampler-0<br/>out[0] address:port"]
+        end
+        subgraph KFF["Sink"]
+            KFF0["Sink-0<br/>in[0] address:port"]
+            KFF1["Sink-1<br/>in[0] address:port"]
+        end
+        SFF2 ~~~ KFF0
+    end
+
+    subgraph CaseTF["Sampler autoSubChannel=true; Sink autoSubChannel=false"]
+        direction LR
+        subgraph STF["Sampler"]
+            STF0["Sampler-1<br/>out[0] address:port<br/>out[1] address:port"]
+            STF1["Sampler-2<br/>out[0] address:port<br/>out[1] address:port"]
+            STF2["Sampler-0<br/>out[0] address:port<br/>out[1] address:port"]
+        end
+        subgraph KTF["Sink"]
+            KTF0["Sink-0<br/>in[0] address:port"]
+            KTF1["Sink-1<br/>in[0] address:port"]
+        end
+        STF2 ~~~ KTF0
+    end
+
+    subgraph CaseFT["Sampler autoSubChannel=false; Sink autoSubChannel=true"]
+        direction LR
+        subgraph SFT["Sampler"]
+            SFT0["Sampler-1<br/>out[0] address:port"]
+            SFT1["Sampler-2<br/>out[0] address:port"]
+            SFT2["Sampler-0<br/>out[0] address:port"]
+        end
+        subgraph KFT["Sink"]
+            KFT0["Sink-0<br/>in[0] address:port<br/>in[1] address:port<br/>in[2] address:port"]
+            KFT1["Sink-1<br/>in[0] address:port<br/>in[1] address:port<br/>in[2] address:port"]
+        end
+        SFT2 ~~~ KFT0
+    end
+
+    subgraph CaseTT["Sampler autoSubChannel=true; Sink autoSubChannel=true"]
+        direction LR
+        subgraph STT["Sampler"]
+            STT0["Sampler-1<br/>out[0] address:port<br/>out[1] address:port"]
+            STT1["Sampler-2<br/>out[0] address:port<br/>out[1] address:port"]
+            STT2["Sampler-0<br/>out[0] address:port<br/>out[1] address:port"]
+        end
+        subgraph KTT["Sink"]
+            KTT0["Sink-0<br/>in[0] address:port<br/>in[1] address:port<br/>in[2] address:port"]
+            KTT1["Sink-1<br/>in[0] address:port<br/>in[1] address:port<br/>in[2] address:port"]
+        end
+        STT2 ~~~ KTT0
+    end
+
+    Topology --- CaseFF
+    Topology --- CaseTF
+    Topology --- CaseFT
+    Topology --- CaseTT
+```
+
 The plugin normally calculates `numSockets` from the topology. For channels
 with `autoSubChannel=true`, `numSockets` grows with the discovered peer
 instances/subchannels so each FairMQ sub-socket can receive a distinct
