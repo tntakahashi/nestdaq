@@ -18,11 +18,142 @@ DEFAULT_CHANNEL_OPTIONS = {
     "output": ("out-chan-name", "data"),
     "dqm": ("dqm-chan-name", "dqm"),
 }
-TEMPLATE_FILES = {
-    "Device.h.in": "{class_name}.h",
-    "Device.cxx.in": "{class_name}.cxx",
-    "CMakeLists.txt.in": "CMakeLists.txt",
-    "README.md.in": "README.md",
+
+
+@dataclass(frozen=True)
+class TemplateSpec:
+    output_pattern: str
+    text: str
+
+
+BUILTIN_TEMPLATES = {
+    "Device.h.in": TemplateSpec(
+        output_pattern="{class_name}.h",
+        text=r"""#pragma once
+
+/**
+ * @file @HEADER_FILE@
+ * @brief Minimal NestDAQ FairMQ device skeleton.
+ */
+
+#include <fairmq/Device.h>
+@HEADER_INCLUDES@
+
+@NAMESPACE_OPEN@
+
+class @CLASS_NAME@ : public fair::mq::Device
+{
+public:
+@OPTION_KEY_DECLARATIONS@
+
+    @CLASS_NAME@() = default;
+    @CLASS_NAME@(const @CLASS_NAME@&) = delete;
+    @CLASS_NAME@& operator=(const @CLASS_NAME@&) = delete;
+    @CLASS_NAME@(@CLASS_NAME@&&) = delete;
+    @CLASS_NAME@& operator=(@CLASS_NAME@&&) = delete;
+    ~@CLASS_NAME@() override = default;
+
+private:
+@MEMBER_DECLARATIONS@
+
+@PROCESSING_DECLARATIONS@
+};
+
+@NAMESPACE_CLOSE@
+""",
+    ),
+    "Device.cxx.in": TemplateSpec(
+        output_pattern="{class_name}.cxx",
+        text=r"""/** @file
+ *  @brief Implements the @CLASS_NAME@ NestDAQ device skeleton.
+ */
+
+@SOURCE_INCLUDES@
+
+#include <nestdaq/runDevice.h>
+
+#include "@HEADER_FILE@"
+
+namespace bpo = boost::program_options;
+
+auto addCustomOptions(bpo::options_description& options) -> void
+{
+@CUSTOM_OPTION_DEFINITIONS@
+}
+
+auto getDevice(const fair::mq::ProgOptions& /*config*/) -> std::unique_ptr<fair::mq::Device>
+{
+    return std::make_unique<@QUALIFIED_CLASS_NAME@>();
+}
+
+@PROCESSING_DEFINITIONS@
+""",
+    ),
+    "CMakeLists.txt.in": TemplateSpec(
+        output_pattern="CMakeLists.txt",
+        text=r"""cmake_minimum_required(VERSION 3.22)
+
+project(@CLASS_NAME@ LANGUAGES CXX)
+
+include(GNUInstallDirs)
+
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+if(NOT CMAKE_CXX_STANDARD)
+  set(CMAKE_CXX_STANDARD 17)
+elseif(CMAKE_CXX_STANDARD LESS 17)
+  message(FATAL_ERROR "A minimum CMAKE_CXX_STANDARD of 17 is required.")
+endif()
+set(CMAKE_CXX_EXTENSIONS OFF)
+
+find_package(NestDAQ REQUIRED CONFIG)
+
+add_executable(@CLASS_NAME@
+  @SOURCE_FILE@
+)
+
+target_link_libraries(@CLASS_NAME@ PUBLIC
+  NestDAQ::NestDAQ
+)
+
+install(TARGETS @CLASS_NAME@
+  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+)
+""",
+    ),
+    "README.md.in": TemplateSpec(
+        output_pattern="README.md",
+        text=r"""# @CLASS_NAME@
+
+This directory was generated from the NestDAQ device skeleton template.
+
+Generation choices:
+
+```text
+@GENERATION_SUMMARY@
+```
+
+## Generated Files
+
+`generate-device-skeleton.py` created this directory from its built-in
+templates, replacing template placeholders and writing concrete device files.
+
+| Template | Generated file |
+| :-- | :-- |
+| `Device.h.in` | `@HEADER_FILE@` |
+| `Device.cxx.in` | `@SOURCE_FILE@` |
+@CMAKE_GENERATED_ROW@| `README.md.in` | `README.md` |
+
+The placeholders `@CLASS_NAME@`, `@HEADER_FILE@`, and `@SOURCE_FILE@` have
+already been replaced for this device. Add device-specific options in
+`addCustomOptions()` and implement the FairMQ lifecycle hooks in
+`@SOURCE_FILE@`.
+
+@CMAKE_BUILD_SECTION@
+
+For examples with data channels and telemetry instrumentation, see the NestDAQ
+`examples/` directory.
+""",
+    ),
 }
 
 
@@ -46,6 +177,7 @@ class GenerationConfig:
     drain_input: bool
     no_poll: frozenset[str]
     namespace_name: str | None
+    generate_cmake: bool
 
 
 def parse_args() -> argparse.Namespace:
@@ -104,6 +236,11 @@ def parse_args() -> argparse.Namespace:
         "--no-namespace",
         action="store_true",
         help="Generate the device class in the global namespace instead of namespace nestdaq.",
+    )
+    parser.add_argument(
+        "--no-cmake",
+        action="store_true",
+        help="Do not generate CMakeLists.txt.",
     )
     parser.add_argument(
         "--interactive",
@@ -244,21 +381,18 @@ def build_config(args: argparse.Namespace) -> GenerationConfig:
         drain_input=input_channel is not None and not args.no_drain_input,
         no_poll=no_poll,
         namespace_name=None if args.no_namespace else "nestdaq",
+        generate_cmake=not args.no_cmake,
     )
 
 
-def find_template_dir(script_path: Path) -> Path:
-    repo_or_prefix = script_path.parent.parent
-    candidates = [
-        repo_or_prefix / "share" / "device-skeleton",
-        repo_or_prefix / "share" / "nestdaq" / "device-skeleton",
-    ]
-    for candidate in candidates:
-        if all((candidate / template).is_file() for template in TEMPLATE_FILES):
-            return candidate
-
-    searched = "\n  ".join(str(candidate) for candidate in candidates)
-    raise FileNotFoundError(f"device skeleton templates were not found under:\n  {searched}")
+def selected_templates(config: GenerationConfig) -> dict[str, TemplateSpec]:
+    if config.generate_cmake:
+        return BUILTIN_TEMPLATES
+    return {
+        template_name: template
+        for template_name, template in BUILTIN_TEMPLATES.items()
+        if template_name != "CMakeLists.txt.in"
+    }
 
 
 def indent(text: str, spaces: int) -> str:
@@ -702,9 +836,60 @@ def config_summary(config: GenerationConfig) -> str:
         + f"multipart-dqm={str(config.multipart_dqm).lower()}; "
         + f"drain-input={str(config.drain_input).lower()}; "
         + f"namespace={config.namespace_name or 'none'}; "
+        + f"cmake={str(config.generate_cmake).lower()}; "
         + "no-poll="
         + (",".join(sorted(config.no_poll)) if config.no_poll else "none")
     )
+
+
+def render_cmake_generated_row(config: GenerationConfig) -> str:
+    if not config.generate_cmake:
+        return ""
+    return "| `CMakeLists.txt.in` | `CMakeLists.txt` |\n"
+
+
+def render_cmake_build_section(config: GenerationConfig) -> str:
+    if not config.generate_cmake:
+        return f"""## Build
+
+`CMakeLists.txt` was not generated. Add `{config.class_name}.h` and `{config.class_name}.cxx` to
+your existing build system and link the resulting executable with NestDAQ.
+
+## Run
+
+Use the NestDAQ helper script from the same install prefix used by your build.
+
+```sh
+<nestdaq-install-prefix>/scripts/start_device.sh <path-to-built-{config.class_name}>
+```"""
+
+    return f"""## Build
+
+Configure this directory as an out-of-source CMake project. Set
+`CMAKE_PREFIX_PATH` to the NestDAQ install prefix, and set
+`CMAKE_INSTALL_PREFIX` to the install prefix for this generated device. These
+prefixes may be the same directory. The generated CMake project uses C++17 by
+default and rejects standards older than C++17.
+
+```sh
+cmake -S . -B ../build-{config.class_name} \\
+  -DCMAKE_PREFIX_PATH=<nestdaq-install-prefix> \\
+  -DCMAKE_INSTALL_PREFIX=<device-install-prefix>
+cmake --build ../build-{config.class_name} --parallel
+cmake --install ../build-{config.class_name}
+```
+
+The installed executable is placed under
+`<device-install-prefix>/bin/{config.class_name}`.
+
+## Run
+
+Use the NestDAQ helper script from the same install prefix used for the build.
+
+```sh
+<nestdaq-install-prefix>/scripts/start_device.sh ./../build-{config.class_name}/{config.class_name}
+<nestdaq-install-prefix>/scripts/start_device.sh <device-install-prefix>/bin/{config.class_name}
+```"""
 
 
 def render_template(template: str, substitutions: dict[str, str]) -> str:
@@ -736,6 +921,8 @@ def render_substitutions(config: GenerationConfig) -> dict[str, str]:
         "CUSTOM_OPTION_DEFINITIONS": render_custom_option_definitions(config),
         "PROCESSING_DEFINITIONS": render_processing_definitions(config),
         "GENERATION_SUMMARY": config_summary(config),
+        "CMAKE_GENERATED_ROW": render_cmake_generated_row(config),
+        "CMAKE_BUILD_SECTION": render_cmake_build_section(config),
     }
 
 
@@ -744,8 +931,8 @@ def main() -> int:
 
     try:
         config = build_config(args)
-        template_dir = find_template_dir(Path(__file__).resolve())
-    except (FileNotFoundError, ValueError) as error:
+        templates = selected_templates(config)
+    except ValueError as error:
         print(f"error: {error}", file=sys.stderr)
         return 2
 
@@ -753,12 +940,12 @@ def main() -> int:
     output_dir = output_dir.expanduser()
 
     planned_files = [
-        output_dir / output_name.format(class_name=config.class_name)
-        for output_name in TEMPLATE_FILES.values()
+        output_dir / template.output_pattern.format(class_name=config.class_name)
+        for template in templates.values()
     ]
 
     if args.dry_run:
-        print(f"Template directory: {template_dir}")
+        print("Template source: built into generate-device-skeleton.py")
         print(f"Output directory: {output_dir}")
         print(f"Generation: {config_summary(config)}")
         for path in planned_files:
@@ -775,10 +962,9 @@ def main() -> int:
 
     output_dir.mkdir(parents=True, exist_ok=True)
     substitutions = render_substitutions(config)
-    for template_name, output_pattern in TEMPLATE_FILES.items():
-        output_path = output_dir / output_pattern.format(class_name=config.class_name)
-        template = (template_dir / template_name).read_text(encoding="utf-8")
-        rendered = render_template(template, substitutions)
+    for template in templates.values():
+        output_path = output_dir / template.output_pattern.format(class_name=config.class_name)
+        rendered = render_template(template.text, substitutions)
         if output_path.suffix in (".cxx", ".h"):
             rendered = compact_cpp_blank_lines(rendered)
         output_path.write_text(rendered, encoding="utf-8")

@@ -49,5 +49,5 @@ FairMQ 1.10.0 is used by default with GCC 9.1 or later. For GCC versions older
 than 9.1, the dependency build defaults to FairMQ 1.9.2 because GCC 8.5 does not
 provide the `std::pmr` support required by FairMQ 1.10.0.
 
-RediSearch requires C++20 and does not build with AlmaLinux 8 GCC 8.5. The
-AlmaLinux 8 test above was validated with `REDIS_BUILD_REDISEARCH=OFF`.
+See [INSTALL.md](INSTALL.md) for external dependency build options and platform
+specific build caveats.

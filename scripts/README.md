@@ -169,7 +169,7 @@ This example shows how to configure parameters via Redis.
 ## Device skeleton generation
 
 `generate-device-skeleton.py` creates a minimal NestDAQ FairMQ device project
-from the templates installed under `share/device-skeleton`.
+from templates built into the script.
 
 ```bash
 ./generate-device-skeleton.py MyDevice --output ./MyDevice
@@ -178,15 +178,36 @@ from the templates installed under `share/device-skeleton`.
 The generated project contains `MyDevice.h`, `MyDevice.cxx`,
 `CMakeLists.txt`, and `README.md`. Existing files are not overwritten unless
 `--force` is specified. Use `--dry-run` to inspect the output paths without
-writing files.
+writing files. Use `--no-cmake` when the device will be added to an existing
+build system and `CMakeLists.txt` should not be generated.
 
-The default processing mode is `conditional-run`. `Run()`,
-`ConditionalRun()`, and `OnData()` are mutually exclusive in generated code.
-Use `--processing-mode run`, `--processing-mode conditional-run`, or
-`--processing-mode on-data` to choose the generated processing entry point.
-`Run()` is generated empty. `ConditionalRun()` is generated with simple
-poll/receive/send examples. `OnData()` requires an input channel and registers
-an `OnData()` callback in `InitTask()`.
+Generator options:
+
+| Option | Default | Description |
+| :-- | :-- | :-- |
+| `--output DIR`, `-o DIR` | `./CLASS_NAME` | Write generated files under `DIR`. |
+| `--force` | off | Overwrite existing generated files. |
+| `--dry-run` | off | Print the files that would be generated without writing them. |
+| `--interactive` | off | Prompt for generation choices instead of specifying all options on the command line. |
+| `--no-cmake` | off | Do not generate `CMakeLists.txt`; use this when integrating the device into an existing build system. |
+| `--no-namespace` | off | Generate the device class in the global namespace instead of `namespace nestdaq`. |
+| `--processing-mode MODE` | `conditional-run` | Select the generated processing entry point: `conditional-run`, `run`, or `on-data`. |
+| `--input-channel SPEC` | none | Generate input-channel code. `SPEC` is `KEY:DEFAULT_NAME`, `:DEFAULT_NAME`, or `DEFAULT_NAME`. |
+| `--output-channel SPEC` | none | Generate output-channel code. `SPEC` uses the same format as `--input-channel`. |
+| `--dqm-channel SPEC` | none | Generate data quality monitor (DQM) channel code. `SPEC` uses the same format as `--input-channel`. |
+| `--multipart-input` | off | Generate multipart receive/`OnData()` examples for the input channel. Requires `--input-channel`. |
+| `--single-output` | off | Generate single-message output examples. Output is multipart by default. |
+| `--single-dqm` | off | Generate single-message DQM examples. DQM is multipart by default. |
+| `--no-drain-input` | off | Do not generate `PostRun()` input drain code. |
+| `--no-poll LIST` | none | Comma-separated channel kinds to exclude from FairMQ polling: `input`, `output`, `dqm`. |
+
+Processing modes:
+
+| Mode | Generated behavior |
+| :-- | :-- |
+| `conditional-run` | Generates `ConditionalRun()` with simple poll/receive/send examples. |
+| `run` | Generates an empty `Run()`. |
+| `on-data` | Generates an `OnData()` callback registration in `InitTask()`; requires `--input-channel`. |
 
 Channel options passed to the generator are not the final device command-line
 options. They describe how to generate those options in C++:
@@ -245,6 +266,9 @@ Useful variants:
 ./generate-device-skeleton.py MyGlobalDevice \
   --no-namespace
 
+./generate-device-skeleton.py MyIntegratedDevice \
+  --no-cmake
+
 ./generate-device-skeleton.py --interactive
 ```
 
@@ -254,23 +278,28 @@ When input polling is generated, the skeleton uses a FairMQ poller before
 until it can send or a state transition is pending. DQM drops the sample if it
 cannot send immediately. Output and DQM examples are generated as multipart
 messages by default. Use generator options `--single-output` or `--single-dqm`
-to generate single-message examples instead; these are not runtime
-command-line options of the generated device. `SendOutputMessage()` and
-`SendDQMMessage()` take the generated `fair::mq::Parts&` or
-`fair::mq::MessagePtr&` payload and only handle channel readiness, `Send()`,
-and success/failure checks. Input drain code is generated in `PostRun()` by
-default when an input channel is present; disable it with `--no-drain-input`.
-The generated C++ custom options are registered as strings. Numeric members are
-assigned in `InitTask()` by converting those strings: `poll-timeout-ms`
-defaults to `100`, `drain-timeout-ms` defaults to `100`, and
-`drain-max-timeout-count` defaults to `20`. A negative `drain-timeout-ms` value
-is treated as `0`. The drain loop stops after `drain-max-timeout-count`
-consecutive receive timeouts since the last drained message; receiving a message
-resets that local timeout count. `drain-max-timeout-count` must be positive.
+to generate single-message examples instead. `SendOutputMessage()` and
+`SendDQMMessage()` take the generated `fair::mq::Parts&` or `fair::mq::MessagePtr&`
+payload and only handle channel readiness, `Send()`, and success/failure
+checks.
 
-The generator reads the `*.in` template files from `share/device-skeleton`,
-substitutes the device-specific placeholders, and writes the resulting files to
-the output directory. The main substitutions include `@CLASS_NAME@`,
+The options in the table above are generator options, not runtime command-line
+options of the generated device. The generated C++ custom options are
+registered as strings. Numeric members are assigned in `InitTask()` by
+converting those strings:
+
+| Generated runtime option | Default | Description |
+| :-- | :-- | :-- |
+| `poll-timeout-ms` | `100` | FairMQ poll timeout in milliseconds. |
+| `drain-timeout-ms` | `100` | Receive timeout used by input drain. Negative values are treated as `0`. |
+| `drain-max-timeout-count` | `20` | Stop input drain after this many consecutive receive timeouts since the last drained message; must be positive. |
+
+Input drain code is generated in `PostRun()` by default when an input channel
+is present; disable it with `--no-drain-input`.
+
+The generator reads built-in templates, substitutes the device-specific
+placeholders, and writes the resulting files to the output directory. The main
+substitutions include `@CLASS_NAME@`,
 `@HEADER_FILE@`, `@SOURCE_FILE@`, and generated C++ blocks for members,
 options, processing methods, send helpers, and drain code.
 
@@ -281,7 +310,10 @@ options, processing methods, send helpers, and drain code.
 | `CMakeLists.txt.in` | `CMakeLists.txt` |
 | `README.md.in` | `README.md` |
 
-Build the generated device as a standalone CMake project. Set
+`CMakeLists.txt` is omitted when `--no-cmake` is specified.
+
+When `CMakeLists.txt` is generated, build the generated device as a standalone
+CMake project. Set
 `CMAKE_PREFIX_PATH` to the NestDAQ install prefix, and set
 `CMAKE_INSTALL_PREFIX` to the install prefix for the generated device. These
 prefixes may be the same directory. The generated CMake project uses C++17 by

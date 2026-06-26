@@ -183,8 +183,10 @@ default is Redis Stack Server without RedisInsight; use the Redis Stack
 container helper or `REDIS_PACKAGE=redis-stack` with the installer script when
 RedisInsight is needed.
 RediSearch requires a compiler with C++20 support. Builds with
-`REDIS_BUILD_REDISEARCH=ON` fail with GCC 8.5 because RediSearch uses C++20
-features such as `<ranges>`.
+`REDIS_BUILD_REDISEARCH=ON` fail with AlmaLinux 8 GCC 8.5 because RediSearch
+uses C++20 features such as `<ranges>`. For AlmaLinux 8 dependency builds with
+GCC 8.5, pass `-DREDIS_BUILD_REDISEARCH=OFF` unless using a newer compiler
+toolchain that supports the required C++20 features.
 
 | Package                                                                  | Version (default) | CMake options |
 | :--                                                                      | :--               | :--            |
