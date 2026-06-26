@@ -64,8 +64,8 @@ The commands below assume that NestDAQ was installed under
 
 ```mermaid
 flowchart TD
-  Otel[1. OTel Collector backend compose]
-  Redis[2. Redis server]
+  Otel[1. OTel Collector backend]
+  Redis[2. Redis server or service]
   WebCtl[3. daq-webctl on host]
   Browser[4. Open browser<br/>http://localhost:8080/]
   Config[5. Register topology and parameters<br/>topology-*.sh, mq-param.sh]
@@ -89,9 +89,14 @@ OpenTelemetry logs to the collector.
 
 1. Start an OpenTelemetry Collector backend.
 
-   This example uses the OpenSearch backend. It receives OpenTelemetry Protocol
-   (OTLP) data from the example devices, stores logs and traces in OpenSearch,
-   and makes them available in OpenSearch Dashboards.
+   The backend can be the local Compose setup, a host-installed
+   `otelcol-contrib` service, or another collector reachable from the NestDAQ
+   processes. It receives OpenTelemetry Protocol (OTLP) data from the example
+   devices and forwards it to the configured log, metric, or trace storage.
+
+   The local validation example below uses the OpenSearch Compose backend. It
+   stores logs and traces in OpenSearch and makes them available in OpenSearch
+   Dashboards.
 
    ```sh
    cp -a <install-prefix>/share/otel-collector-compose ./otel-collector-compose
@@ -106,12 +111,24 @@ OpenTelemetry logs to the collector.
    `http://localhost:5601/app/discover` to inspect exported logs and traces.
    The setup service creates the initial logs and traces Data Views.
 
+   If you install `otelcol-contrib` with the host package manager instead, edit
+   the collector configuration and start the service with `systemd`; see
+   [`share/installers/README.md`](../share/installers/README.md). Use the OTLP
+   endpoint that matches where the collector is running. A host process usually
+   uses `localhost:4317`; a process in the same Compose network usually uses
+   the collector service name, such as `otel-collector:4317` or
+   `clickstack:4317`.
+
 2. Start Redis.
 
    Redis is required by the NestDAQ DAQ service, metrics, and parameter
-   configuration plugins. If Redis Stack was built and installed with the
-   external dependencies, start the installed Redis server with the Redis Stack
-   modules:
+   configuration plugins. Redis can be a locally built server, a host package
+   managed by `systemd`, or a container. Use the Redis endpoint from this step
+   consistently in `daq-webctl`, `start_device.sh`, and the topology/parameter
+   helper scripts.
+
+   If Redis Stack was built and installed with the external dependencies, start
+   the installed Redis server with the Redis Stack modules:
 
    ```sh
    <install-prefix>/bin/redis-server \
@@ -151,6 +168,12 @@ OpenTelemetry logs to the collector.
    RedisInsight at `http://localhost:8001`. The Redis Stack Server only helper
    (`run-redis-stack-server.sh`) does not include RedisInsight.
 
+   If Redis Stack was installed with the host package manager, start the
+   installed service with `systemd`; see
+   [`share/installers/README.md`](../share/installers/README.md). Confirm the
+   Redis unit name first because it can differ between packages and
+   distributions.
+
 3. Start `daq-webctl`.
 
    ```sh
@@ -164,8 +187,10 @@ OpenTelemetry logs to the collector.
    ```
 
    The OpenTelemetry options send controller logs to the local collector
-   started above. See [`controller/README.md`](../controller/README.md) for
-   controller options and Redis command behavior, and
+   started above. Replace `--redis-uri` and `--otel-log-endpoint-grpc` when
+   Redis or the collector are not reachable at the example host endpoints. See
+   [`controller/README.md`](../controller/README.md) for controller options
+   and Redis command behavior, and
    [`nestdaq/telemetry/README.md`](../nestdaq/telemetry/README.md) for the full
    telemetry option list.
 
@@ -196,10 +221,12 @@ OpenTelemetry logs to the collector.
 6. Start the user devices with `start_device.sh`.
 
    The installed script loads the NestDAQ plugins, uses Redis at
-   `127.0.0.1:6379` by default, and exports OpenTelemetry logs to the local
-   collector by OTLP gRPC. Metrics and traces are disabled by default in the
-   script; see [`scripts/README.md`](../scripts/README.md) to enable them or to
-   print telemetry to the console.
+   `127.0.0.1:6379` by default, and exports OpenTelemetry logs to
+   `localhost:4317` by OTLP gRPC by default. Set `NESTDAQ_REDIS_SERVER` and
+   `NESTDAQ_OTLP_GRPC_ENDPOINT` when Redis or the collector use different
+   endpoints. Metrics and traces are disabled by default in the script; see
+   [`scripts/README.md`](../scripts/README.md) to enable them or to print
+   telemetry to the console.
 
    `NullDevice` has no data channel, but it still uses the same script and
    Redis-backed NestDAQ plugins:
@@ -248,8 +275,8 @@ flowchart TD
   End[1. Web UI: END PROCESS for user devices]
   DeviceFallback[2. If needed: stop device terminals or send kill]
   WebCtl[3. Stop daq-webctl from its terminal]
-  Redis[4. Stop Redis server]
-  Otel[5. Stop OTel Collector backend compose]
+  Redis[4. Stop Redis server or service]
+  Otel[5. Stop OTel Collector backend]
 
   End --> DeviceFallback --> WebCtl --> Redis --> Otel
 ```
@@ -283,7 +310,8 @@ already exited after `END PROCESS`, skip the terminal fallback step.
    `daq-webctl` handles SIGINT and SIGTERM for clean HTTP/WebSocket server
    shutdown.
 
-4. Stop Redis. For a locally installed Redis server:
+4. Stop Redis. Use the stop procedure that matches how Redis was started. For
+   a locally installed Redis server:
 
    ```sh
    <install-prefix>/bin/redis-cli shutdown
@@ -292,7 +320,16 @@ already exited after `END PROCESS`, skip the terminal fallback step.
    For container-based Redis Stack, use the stop procedure in
    [`share/redis-stack-container/README.md`](../share/redis-stack-container/README.md).
 
-5. Stop the OpenTelemetry backend compose. For the OpenSearch backend compose
+   For a host package managed by `systemd`, stop the Redis service. Confirm the
+   unit name first because it can differ between packages and distributions.
+
+   ```sh
+   systemctl list-unit-files 'redis*'
+   sudo systemctl stop redis-stack-server
+   ```
+
+5. Stop the OpenTelemetry backend. Use the stop procedure that matches how the
+   collector and backend were started. For the OpenSearch backend Compose
    example:
 
    ```sh
@@ -307,7 +344,14 @@ already exited after `END PROCESS`, skip the terminal fallback step.
    podman compose -f compose-opensearch.yaml down
    ```
 
-   The compose `down` command stops and removes the local validation containers
+   For a host-installed `otelcol-contrib` service, stop the service with
+   `systemd`:
+
+   ```sh
+   sudo systemctl stop otelcol-contrib
+   ```
+
+   The Compose `down` command stops and removes the local validation containers
    and network. It does not delete the OpenSearch data directory. If you start
    the same backend again with the same data directory, the previous OpenSearch
    data is reused. See the backend README for data directory names and explicit

@@ -196,7 +196,7 @@ Build the generated device as a standalone CMake project. Set
 `CMAKE_PREFIX_PATH` to the NestDAQ install prefix.
 
 ```bash
-cmake -S ./MyDevice -B ./build-MyDevice -G Ninja \
+cmake -S ./MyDevice -B ./build-MyDevice \
   -DCMAKE_PREFIX_PATH=<nestdaq-install-prefix>
 cmake --build ./build-MyDevice --parallel
 ```
