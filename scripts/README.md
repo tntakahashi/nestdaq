@@ -33,9 +33,58 @@ connections. The default is `127.0.0.1:6379`. It maps the DAQ service registry
 to Redis database `0`, metrics to database `1`, and parameter configuration to
 database `2`.
 
+The relevant part of the script is:
+
+```bash
+NESTDAQ_REDIS_SERVER=${NESTDAQ_REDIS_SERVER:-127.0.0.1:6379}
+
+DAQSERVICE_URI=" --registry-uri tcp://${NESTDAQ_REDIS_SERVER}/0"
+METRICS_URI=" --metrics-uri tcp://${NESTDAQ_REDIS_SERVER}/1"
+CONFIG_URI=" --parameter-config-uri tcp://${NESTDAQ_REDIS_SERVER}/2"
+```
+
+`daq_service` uses DB 0 for the service registry, DAQ commands, and topology
+metadata. The `metrics` plugin uses DB 1. The `parameter_config` plugin reads
+device option values from DB 2.
+
+The script also sets the plugin search path and the plugin load order:
+
+```bash
+PLUGIN_SEARCH_PATH=" -S '<$PLUGIN_LIBDIR'"
+DAQSERVICE_PLUGIN=" -P daq_service"
+METRICS_PLUGIN=" -P metrics"
+CONFIG_PLUGIN=" -P parameter_config"
+
+var+=$PLUGIN_SEARCH_PATH
+var+=$DAQSERVICE_PLUGIN
+var+=$METRICS_PLUGIN
+var+=$CONFIG_PLUGIN
+```
+
+`-S` adds a directory to the FairMQ plugin search path. In this script,
+`-S '<$PLUGIN_LIBDIR'` prepends the installed NestDAQ plugin directory to that
+search path. It only controls where plugin libraries are searched.
+
+`-P` selects a plugin to load. The plugin load order follows the order of the
+`-P` options on the final command line. The generated `start_device.sh` passes
+them as `daq_service`, then `metrics`, then `parameter_config`. Adding more
+directories after `-S` changes search priority, but it does not change which
+plugins are loaded or their load order; that is controlled by the `-P` entries.
+
 The generated script sends OpenTelemetry (OTel) logs to a local OpenTelemetry
 Collector with OpenTelemetry Protocol (OTLP) gRPC. The default endpoint is
 `localhost:4317` and can be changed with `NESTDAQ_OTLP_GRPC_ENDPOINT`.
+
+The script builds the OTel log options like this:
+
+```bash
+NESTDAQ_OTLP_GRPC_ENDPOINT=${NESTDAQ_OTLP_GRPC_ENDPOINT:-localhost:4317}
+NESTDAQ_START_DEVICE_OTEL_LOG_SEVERITY=${NESTDAQ_START_DEVICE_OTEL_LOG_SEVERITY:-info}
+
+var+=" --otel-log-protocol=otlp-grpc"
+var+=" --otel-log-endpoint-grpc=${NESTDAQ_OTLP_GRPC_ENDPOINT}"
+var+=" --otel-log-severity=${NESTDAQ_START_DEVICE_OTEL_LOG_SEVERITY}"
+```
 
 Choose the endpoint according to where the process runs:
 
@@ -62,6 +111,12 @@ the separate `NESTDAQ_START_DEVICE_OTEL_LOG_SEVERITY` threshold and still sends
 logs to the collector when FairLogger console output is disabled.
 
 ```bash
+NESTDAQ_FAIRLOGGER_CONSOLE_SEVERITY=${NESTDAQ_FAIRLOGGER_CONSOLE_SEVERITY:-nolog}
+
+var+=" --severity ${NESTDAQ_FAIRLOGGER_CONSOLE_SEVERITY}"
+```
+
+```bash
 NESTDAQ_FAIRLOGGER_CONSOLE_SEVERITY=debug4 NESTDAQ_START_DEVICE_OTEL_LOG_SEVERITY=debug4 ./start_device.sh Sampler
 ```
 
@@ -77,6 +132,37 @@ NESTDAQ_FAIRLOGGER_CONSOLE_SEVERITY=debug4 NESTDAQ_START_DEVICE_OTEL_LOG_SEVERIT
 An example of launching a `Sampler` with a different service name (`A-Sampler`) and limiting the execution rate of `ConditionalRun()` to once per second. 
 ```bash
 ./start_device.sh Sampler --service-name A-Sampler --rate 1
+```
+
+`start_device.sh` does not set `--service-name` by itself. Options after the
+device name are passed through to FairMQ and the NestDAQ plugins:
+
+```bash
+./start_device.sh Sampler --service-name A-Sampler
+./start_device.sh Sampler --service-name B-Sampler
+```
+
+This lets the same executable appear as separate service groups. For example,
+the same `Sampler` program can appear as `A-Sampler-*` and `B-Sampler-*` in
+Redis, `daq-webctl`, and telemetry attributes.
+
+```mermaid
+flowchart TB
+  subgraph Program["Same executable: Sampler"]
+    direction LR
+
+    subgraph A["service-name: A-Sampler"]
+      direction TB
+      A0["A-Sampler-0"]
+      A1["A-Sampler-1"]
+    end
+
+    subgraph B["service-name: B-Sampler"]
+      direction TB
+      B0["B-Sampler-0"]
+      B1["B-Sampler-1"]
+    end
+  end
 ```
 
 ## Topology configuration
@@ -114,14 +200,51 @@ topologies such as `topology-n-n-m.sh` and `topology-2samplers-n-m.sh`, where
 the plugin discovers peer subchannels and updates `numSockets` accordingly.
 When `[subindex]` is written explicitly, only that subchannel is used.
 
+Topology scripts write endpoint and link definitions to Redis DB 0. Their
+helper functions have this shape:
+
+```bash
+server=redis://127.0.0.1:6379/0
+
+function endpoint () {
+  redis-cli -u $server hset daq_service:topology:endpoint:$1:$2 ${@:3}
+}
+
+function link () {
+  redis-cli -u $server set daq_service:topology:link:$1:$2,$3:$4 none
+}
+```
+
+`endpoint SERVICE CHANNEL ...` writes a hash at
+`daq_service:topology:endpoint:SERVICE:CHANNEL`. The remaining fields describe
+the FairMQ socket, for example `type push`, `method bind`, and
+`autoSubChannel false`.
+
+`link SERVICE CHANNEL PEER_SERVICE PEER_CHANNEL` writes a logical connection
+between two endpoint definitions. The topology plugin reads these definitions
+when each device starts and turns them into concrete FairMQ channel properties.
+
 ### topology-1-1.sh
 A simple topology of **Sampler** and **Sink** with the **PUSH-PULL** pattern. 
-If _N_ Sasmplers and _N_ Sinks are started, they forms _N_ pairs of Sampler and Sink.  
+If _N_ Samplers and _N_ Sinks are started, they form _N_ pairs of Sampler and Sink.
 Each Sampler sends data to one Sink with the same instance index. 
 
 ```bash
   ./topology-1-1.sh
 ```
+
+The key lines are:
+
+```bash
+endpoint Sampler data type push method bind autoSubChannel false
+endpoint Sink    in   type pull method connect autoSubChannel false
+
+link Sampler data Sink in
+```
+
+`Sampler:data` binds a PUSH socket, `Sink:in` connects a PULL socket, and the
+link pairs devices with matching instance indexes such as `Sampler-0` to
+`Sink-0`.
 
 ```mermaid
 graph LR
@@ -141,6 +264,22 @@ The fairmq-splitter determines the destination by the number of messages sent in
   ./topology-n-n-m.sh
 ```
 
+The splitter topology uses two channels on `fairmq-splitter`:
+
+```bash
+endpoint Sampler          data     type push method bind    autoSubChannel false
+endpoint fairmq-splitter  data-in  type pull method connect autoSubChannel false
+endpoint fairmq-splitter  data-out type push method bind    autoSubChannel true
+endpoint Sink             in       type pull method connect autoSubChannel true
+
+link Sampler         data     fairmq-splitter data-in
+link fairmq-splitter data-out Sink            in
+```
+
+The first link keeps each sampler paired with the splitter instance of the same
+index. The second link uses `autoSubChannel true` so splitter output
+subchannels can fan out to multiple sink instances.
+
 ```mermaid
 graph LR
   Sampler-0 --> fairmq-splitter-0
@@ -151,6 +290,19 @@ graph LR
 
 ### topology-2samplers-n-m.sh
 Two sampler services send data to one sink service. 
+
+This script demonstrates the service-name grouping described above. It expects
+some `Sampler` processes to be started as `A-Sampler` and others as
+`B-Sampler`:
+
+```bash
+endpoint A-Sampler data type push method bind autoSubChannel true
+endpoint B-Sampler data type push method bind autoSubChannel true
+endpoint Sink      in   type pull method connect autoSubChannel true
+
+link A-Sampler data Sink in
+link B-Sampler data Sink in
+```
 
 ```mermaid
 graph LR
@@ -165,6 +317,33 @@ This example shows how to configure parameters via Redis.
 ```bash
   ./mq-param.sh
 ```
+
+`mq-param.sh` writes parameter hashes to Redis DB 2, which is the database used
+by the `parameter_config` plugin:
+
+```bash
+server=redis://127.0.0.1:6379/2
+
+function param () {
+  redis-cli -u $server hset parameters:$1 ${@:2}
+}
+```
+
+The first argument is the instance id. The rest are field/value pairs that
+become FairMQ or device options for that instance:
+
+```bash
+param Sampler-0 text Hello rate 2 max-iterations 0
+param Sampler-1 text world rate 2 max-iterations 0
+
+param Sink-0 multipart true
+param Sink-1 multipart true
+```
+
+For example, `param Sampler-0 text Hello rate 2 max-iterations 0` writes a hash
+named `parameters:Sampler-0` with fields `text`, `rate`, and `max-iterations`.
+When `Sampler-0` starts with the `parameter_config` plugin, those values are
+mirrored into the device program options.
 
 ## Device skeleton generation
 
