@@ -29,6 +29,7 @@ A streaming data acquisition (DAQ) implementation for the particle measurements
 | AlmaLinux | 8       | GCC 8.5.0   | 3.26.5 | 1.9.2  |
 | AlmaLinux | 9       | GCC 11.5.0  | 3.31.8 | 1.10.0 |
 | AlmaLinux | 10      | GCC 14.3.1  | 3.31.8 | 1.10.0 |
+| Debian    | 12      | GCC 12.2.0  | 3.25.1 | 1.10.0 |
 | Debian    | 13      | GCC 14.2.0  | 3.31.6 | 1.10.0 |
 | Ubuntu    | 22.04   | GCC 11.4.0  | 3.22.1 | 1.10.0 |
 | Ubuntu    | 24.04   | GCC 13.3.0  | 3.28.3 | 1.10.0 |
