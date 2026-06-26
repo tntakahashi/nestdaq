@@ -11,13 +11,14 @@ fi
 
 usage() {
   cat <<EOF
-Usage: $0 [install|upgrade|repo-only]
+Usage: $0 [install|upgrade|uninstall|repo-only]
 
 Install or update OpenSearch from the OpenSearch 3.x package repository.
 
 Actions:
   install    Register the repository and install OpenSearch.
   upgrade    Register the repository and upgrade OpenSearch.
+  uninstall  Remove OpenSearch. Repository files, configuration, and data are kept.
   repo-only  Register the OpenSearch repository only.
 
 Environment:
@@ -30,6 +31,7 @@ Environment:
 Examples:
   $0 install
   OPENSEARCH_VERSION=3.7.0 $0 install
+  $0 uninstall
   OPENSEARCH_INSTALL_SECURITY=demo \\
   OPENSEARCH_INITIAL_ADMIN_PASSWORD='change-this-strong-password' \\
   $0 install
@@ -43,7 +45,7 @@ case "${ACTION}" in
     ;;
 esac
 
-if [ "${ACTION}" != "install" ] && [ "${ACTION}" != "upgrade" ] && [ "${ACTION}" != "repo-only" ]; then
+if [ "${ACTION}" != "install" ] && [ "${ACTION}" != "upgrade" ] && [ "${ACTION}" != "uninstall" ] && [ "${ACTION}" != "repo-only" ]; then
   usage >&2
   exit 2
 fi
@@ -103,6 +105,10 @@ run_with_install_env() {
 
 case "${ID:-}" in
   debian|ubuntu)
+    if [ "${ACTION}" = "uninstall" ]; then
+      run ${SUDO} apt-get remove -y opensearch
+      exit 0
+    fi
     install_deb_repo
     if [ "${ACTION}" = "repo-only" ]; then
       exit 0
@@ -118,6 +124,14 @@ case "${ID:-}" in
     fi
     ;;
   almalinux|rocky|rhel|centos|fedora)
+    if [ "${ACTION}" = "uninstall" ]; then
+      pm="dnf"
+      if ! command -v dnf >/dev/null 2>&1; then
+        pm="yum"
+      fi
+      run ${SUDO} "${pm}" remove -y opensearch
+      exit 0
+    fi
     install_rpm_repo
     if [ "${ACTION}" = "repo-only" ]; then
       exit 0

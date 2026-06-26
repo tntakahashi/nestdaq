@@ -1,0 +1,43 @@
+# @CLASS_NAME@
+
+This directory was generated from the NestDAQ device skeleton template.
+
+## Generated Files
+
+`generate-device-skeleton.py` created this directory by reading the installed
+templates from `share/device-skeleton`, replacing template placeholders, and
+writing concrete device files.
+
+| Template | Generated file |
+| :-- | :-- |
+| `Device.h.in` | `@HEADER_FILE@` |
+| `Device.cxx.in` | `@SOURCE_FILE@` |
+| `CMakeLists.txt.in` | `CMakeLists.txt` |
+| `README.md.in` | `README.md` |
+
+The placeholders `@CLASS_NAME@`, `@HEADER_FILE@`, and `@SOURCE_FILE@` have
+already been replaced for this device. Add device-specific options in
+`addCustomOptions()` and implement the FairMQ lifecycle hooks in
+`@SOURCE_FILE@`.
+
+## Build
+
+Configure this directory as an out-of-source CMake project. Set
+`CMAKE_PREFIX_PATH` to the NestDAQ install prefix.
+
+```sh
+cmake -S . -B ../build-@CLASS_NAME@ -G Ninja \
+  -DCMAKE_PREFIX_PATH=<nestdaq-install-prefix>
+cmake --build ../build-@CLASS_NAME@ --parallel
+```
+
+## Run
+
+Use the NestDAQ helper script from the same install prefix used for the build.
+
+```sh
+<nestdaq-install-prefix>/scripts/start_device.sh ./../build-@CLASS_NAME@/@CLASS_NAME@
+```
+
+For examples with data channels and telemetry instrumentation, see the NestDAQ
+`examples/` directory.

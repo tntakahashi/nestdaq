@@ -10,7 +10,7 @@ fi
 
 usage() {
   cat <<EOF
-Usage: $0 [install|upgrade|repo-only]
+Usage: $0 [install|upgrade|uninstall|repo-only]
 
 Install or update Redis Stack Server with the host package manager.
 
@@ -22,6 +22,7 @@ required.
 Actions:
   install    Register the Redis package repository and install the package.
   upgrade    Register the Redis package repository and upgrade the package.
+  uninstall  Remove the package. Repository files, configuration, and data are kept.
   repo-only  Register the Redis package repository only.
 
 Environment:
@@ -35,6 +36,7 @@ Examples:
   $0 install
   REDIS_PACKAGE=redis-stack $0 install
   $0 upgrade
+  $0 uninstall
 EOF
 }
 
@@ -45,7 +47,7 @@ case "${ACTION}" in
     ;;
 esac
 
-if [ "${ACTION}" != "install" ] && [ "${ACTION}" != "upgrade" ] && [ "${ACTION}" != "repo-only" ]; then
+if [ "${ACTION}" != "install" ] && [ "${ACTION}" != "upgrade" ] && [ "${ACTION}" != "uninstall" ] && [ "${ACTION}" != "repo-only" ]; then
   usage >&2
   exit 2
 fi
@@ -119,6 +121,10 @@ install_rpm_repo() {
 
 case "${ID:-}" in
   debian|ubuntu)
+    if [ "${ACTION}" = "uninstall" ]; then
+      run ${SUDO} apt-get remove -y "${REDIS_PACKAGE}"
+      exit 0
+    fi
     install_deb_repo
     if [ "${ACTION}" = "repo-only" ]; then
       exit 0
@@ -130,6 +136,14 @@ case "${ID:-}" in
     fi
     ;;
   almalinux|rocky|rhel|centos|fedora)
+    if [ "${ACTION}" = "uninstall" ]; then
+      pm="dnf"
+      if ! command -v dnf >/dev/null 2>&1; then
+        pm="yum"
+      fi
+      run ${SUDO} "${pm}" remove -y "${REDIS_PACKAGE}"
+      exit 0
+    fi
     install_rpm_repo
     if [ "${ACTION}" = "repo-only" ]; then
       exit 0

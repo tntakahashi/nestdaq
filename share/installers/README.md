@@ -29,11 +29,19 @@ Run a script with one of these actions:
 ```sh
 ./install-redis-stack.sh install
 ./install-redis-stack.sh upgrade
+./install-redis-stack.sh uninstall
 ./install-redis-stack.sh --help
 ```
 
 `install` is the default action. `upgrade` uses the same package source and asks
-the package manager to update the installed package.
+the package manager to update the installed package. `uninstall` removes the
+package with the host package manager.
+
+The uninstall action is intentionally conservative: it does not delete package
+repository files, service configuration, logs, Redis persistence files, or
+OpenSearch data paths. Review those files manually before deleting them. If a
+service is managed by `systemd`, stop and disable it before uninstalling the
+package; see [systemd Management](#systemd-management).
 
 Set `SUDO=` when running as root or when you want to provide your own privilege
 wrapper:
@@ -124,6 +132,7 @@ sudo systemctl status <service>
 sudo systemctl enable --now <service>
 sudo systemctl restart <service>
 sudo systemctl stop <service>
+sudo systemctl disable <service>
 ```
 
 Likely service names:
@@ -154,3 +163,27 @@ If you install the RedisInsight-inclusive `redis-stack` package, check the
 installed unit names before enabling services. The Redis Stack container helper
 `run-redis-stack.sh` also includes RedisInsight, but it is separate from these
 host package installer scripts.
+
+Before uninstalling a package that is managed by `systemd`, stop and disable
+the service explicitly. The installer scripts' `uninstall` action only removes
+the package with the host package manager; it does not run `systemctl`.
+
+```sh
+sudo systemctl stop <service>
+sudo systemctl disable <service>
+./install-xxx.sh uninstall
+sudo systemctl daemon-reload
+systemctl list-unit-files '<service-pattern>'
+```
+
+For Redis, confirm the installed unit name first because it can differ between
+packages and distributions:
+
+```sh
+systemctl list-unit-files 'redis*'
+sudo systemctl stop redis-stack-server
+sudo systemctl disable redis-stack-server
+./install-redis-stack.sh uninstall
+sudo systemctl daemon-reload
+systemctl list-unit-files 'redis*'
+```

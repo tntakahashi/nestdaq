@@ -78,6 +78,45 @@ An example of launching a `Sampler` with a different service name (`A-Sampler`) 
 ```bash
 ./start_device.sh Sampler --service-name A-Sampler --rate 1
 ```
+
+## Device skeleton generation
+
+`generate-device-skeleton.py` creates a minimal NestDAQ FairMQ device project
+from the templates installed under `share/device-skeleton`.
+
+```bash
+./generate-device-skeleton.py MyDevice --output ./MyDevice
+```
+
+The generated project contains `MyDevice.h`, `MyDevice.cxx`,
+`CMakeLists.txt`, and `README.md`. Existing files are not overwritten unless
+`--force` is specified. Use `--dry-run` to inspect the output paths without
+writing files.
+
+The generator reads the `*.in` template files from `share/device-skeleton`,
+substitutes the device-specific placeholders, and writes the resulting files to
+the output directory. The main substitutions are `@CLASS_NAME@`,
+`@HEADER_FILE@`, and `@SOURCE_FILE@`.
+
+| Template | Generated file for `MyDevice` |
+| :-- | :-- |
+| `Device.h.in` | `MyDevice.h` |
+| `Device.cxx.in` | `MyDevice.cxx` |
+| `CMakeLists.txt.in` | `CMakeLists.txt` |
+| `README.md.in` | `README.md` |
+
+Build the generated device as a standalone CMake project. Set
+`CMAKE_PREFIX_PATH` to the NestDAQ install prefix.
+
+```bash
+cmake -S ./MyDevice -B ./build-MyDevice -G Ninja \
+  -DCMAKE_PREFIX_PATH=<nestdaq-install-prefix>
+cmake --build ./build-MyDevice --parallel
+```
+
+The skeleton is intentionally minimal. Use the `Sampler` and `Sink` examples
+for data-channel handling and telemetry instrumentation examples.
+
 ## Topology configuration
 
 Default value for endpoint parameter
