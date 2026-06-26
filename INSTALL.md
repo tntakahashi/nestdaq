@@ -108,11 +108,18 @@ cmake \
 cmake --build ./build-external
 ```
 
-Redis Stack is a runtime service, not a direct library dependency. If you prefer
-to run Redis Stack in a container instead of building and installing it here,
-add `-DWITH_REDIS_STACK=OFF` to the external dependency configure command and
-start Redis Stack separately. Container helper scripts and runtime notes are in
-[`share/redis-stack-container/README.md`](share/redis-stack-container/README.md).
+Redis Stack is a runtime service, not a direct library dependency. There are
+three supported ways to provide it:
+
+- Build and install Redis Stack from source with the external dependency build
+  shown above. This is the default when `WITH_REDIS_STACK=ON`.
+- Run Redis Stack in a container with the helper scripts in
+  [`share/redis-stack-container/README.md`](share/redis-stack-container/README.md).
+- Install Redis Stack Server as a host package with the installer helper scripts
+  in [`share/installers/README.md`](share/installers/README.md).
+
+If Redis Stack is provided by a container or host package, add
+`-DWITH_REDIS_STACK=OFF` to the external dependency configure command.
 
 - In the command example above, CMake’s `ExternalProject` is used to perform `git clone`, build, and install.
   - In this case, the `--parallel` (or `-j`) option passed to cmake --build does not control the inner ExternalProject builds, so please specify the parallel build level during the initial configuration using `-DBUILD_PARALLEL_LEVEL=xxx`.
@@ -166,13 +173,15 @@ cache or `cmake/dependencies/redis-stack.cmake` when those knobs are needed.
 
 ##### External runtime components
 Redis Stack (`redis-server`, `redis-cli`, Redis modules, etc.) is included in
-the external packages and is built and installed together with them by default.
+the external dependency build and is built and installed from source by default.
 The Redis modules can be disabled individually with `REDIS_BUILD_REDISBLOOM`,
 `REDIS_BUILD_REDISEARCH`, `REDIS_BUILD_REDISJSON`, and
 `REDIS_BUILD_REDISTIMESERIES`. Redis is required by the NestDAQ application at
-runtime, but it is not a direct library dependency. It may also be run in a
-container instead; see
-[`share/redis-stack-container/README.md`](share/redis-stack-container/README.md).
+runtime, but it is not a direct library dependency. It may also be provided by
+a container or by the host package installer scripts. The package installer
+default is Redis Stack Server without RedisInsight; use the Redis Stack
+container helper or `REDIS_PACKAGE=redis-stack` with the installer script when
+RedisInsight is needed.
 RediSearch requires a compiler with C++20 support. Builds with
 `REDIS_BUILD_REDISEARCH=ON` fail with GCC 8.5 because RediSearch uses C++20
 features such as `<ranges>`.
@@ -217,8 +226,18 @@ cmake --install ./build
 NestDAQ can export OpenTelemetry logs, metrics, and traces to an OpenTelemetry
 Collector. The repository provides optional Compose setups for local validation
 under [`share/otel-collector-compose/`](share/otel-collector-compose/README.md).
-They are runtime tools, not build dependencies, and are not intended for
-production deployment as-is.
+They run runtime services such as OpenTelemetry Collector Contrib, OpenSearch,
+and OpenSearch Dashboards in containers. They are runtime tools, not build
+dependencies, and are not intended for production deployment as-is.
+
+Runtime services can be provided either by containers or by host packages:
+
+| Runtime service | Source build | Container helper | Host package installer |
+| :-- | :-- | :-- | :-- |
+| Redis Stack | `WITH_REDIS_STACK=ON` in the external dependency build | [`share/redis-stack-container/`](share/redis-stack-container/README.md) | [`share/installers/`](share/installers/README.md) |
+| OpenTelemetry Collector Contrib | not built by NestDAQ | [`share/otel-collector-compose/`](share/otel-collector-compose/README.md) | [`share/installers/`](share/installers/README.md) |
+| OpenSearch | not built by NestDAQ | [`share/otel-collector-compose/opensearch/`](share/otel-collector-compose/opensearch/README.md) | [`share/installers/`](share/installers/README.md) |
+| OpenSearch Dashboards | not built by NestDAQ | [`share/otel-collector-compose/opensearch/`](share/otel-collector-compose/opensearch/README.md) | [`share/installers/`](share/installers/README.md) |
 
 After installing NestDAQ, copy the installed setup to a working directory and
 start one backend stack:
@@ -247,6 +266,11 @@ By default, the Compose stacks expose OpenTelemetry Protocol (OTLP) gRPC on
 [`share/otel-collector-compose/README.md`](share/otel-collector-compose/README.md)
 and the backend-specific README files for ports, volumes, credentials,
 SELinux, and rootless Podman notes.
+
+For host package installation and systemd-managed services, use
+[`share/installers/README.md`](share/installers/README.md). Those scripts use
+`apt-get` on Debian/Ubuntu systems and `dnf` or `yum` on RHEL-family systems,
+and install into system-managed locations such as `/usr` and `/etc`.
 
 ### Build and install examples
 
