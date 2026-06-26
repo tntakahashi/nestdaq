@@ -168,6 +168,10 @@ three supported ways to provide it:
 If Redis Stack is provided by a container or host package, add
 `-DWITH_REDIS_STACK=OFF` to the external dependency configure command.
 
+The Redis Stack CMake files and helper shell scripts under
+`cmake/dependencies/` are intended for Redis 8 or later. They are not a
+compatibility recipe for Redis 7.x or older module versions.
+
 - In the command example above, CMake’s `ExternalProject` is used to perform `git clone`, build, and install.
   - In this case, the `--parallel` (or `-j`) option passed to cmake --build does not control the inner ExternalProject builds, so please specify the parallel build level during the initial configuration using `-DBUILD_PARALLEL_LEVEL=xxx`.
     - The `nproc` command prints the number of available CPU cores on the system. If this causes excessive memory usage, specify a smaller value manually.
