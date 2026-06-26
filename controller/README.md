@@ -66,7 +66,7 @@ sequenceDiagram
   WebCtl-->>Browser: HTML/JS/CSS
   Browser->>WebCtl: WebSocket connect
   WebCtl->>Redis: CONFIG SET notify-keyspace-events AKE
-  WebCtl->>Redis: SUBSCRIBE daqstate and expired key events
+  WebCtl->>Redis: SUBSCRIBE expired key events
   Device->>Redis: SUBSCRIBE daqctl
   Device->>Redis: write/refresh presence, health, fair-mq-state
   Browser->>WebCtl: WebSocket JSON command<br/>redis-get / redis-set / redis-incr / redis-publish
@@ -78,8 +78,6 @@ sequenceDiagram
     Redis-->>Device: deliver daqctl message
     Device->>Device: apply FairMQ state transition
     Device->>Redis: update fair-mq-state / updatedTime
-    Device->>Redis: PUBLISH daqstate notification
-    Redis-->>WebCtl: deliver daqstate message
     WebCtl->>Redis: poll/scan state keys for summary
     WebCtl-->>Browser: WebSocket JSON state-summary-table
   end
@@ -174,9 +172,9 @@ OpenTelemetry option list and resource attribute details.
 ## Redis Command Interface
 
 `daq-webctl` uses the Redis command interface implemented by the `daq_service`
-plugin. DAQ command keys, `daqctl` and `daqstate` Publish/Subscribe (Pub/Sub)
-channels, message shape, accepted command values, and `RUN`/`STOP` sequencing
-are documented in
+plugin. DAQ command keys, the `daqctl` Publish/Subscribe (Pub/Sub) channel,
+message shape, accepted command values, and `RUN`/`STOP` sequencing are
+documented in
 [`plugins/README.md`](../plugins/README.md#daq-command-publishsubscribe-pubsub).
 
 At startup, `daq-webctl` sets Redis `notify-keyspace-events` to `AKE` so it can

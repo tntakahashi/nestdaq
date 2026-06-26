@@ -70,13 +70,18 @@ DAQ commands, and writes topology/channel metadata used by other services.
 | `run_info{sep}wait-device-ready` | string boolean | `1`, `true`, or any other string | Read/write by controller | If true, the web controller publishes prerequisite `CONNECT` before later commands that require device readiness. |
 | `run_info{sep}wait-ready` | string boolean | `1`, `true`, or any other string | Read/write by controller | If true, the web controller publishes prerequisite `INIT TASK` before `RUN`. |
 | `daqctl` | pub/sub channel | JSON DAQ command messages | Subscribed by plugin; published by controller/operator | Receives controller commands. |
-| `daqstate` | pub/sub channel | JSON DAQ state messages | Published by plugin; subscribed by controller/operator | Sends DAQ state-transition notifications. |
 
 ### DAQ Command Publish/Subscribe (Pub/Sub)
 
 `daq_service` subscribes to `daqctl` and translates matching command messages
 into FairMQ state transitions for the local service instance. Controllers and
 other operators publish command messages to this channel.
+
+Redis Pub/Sub delivers each `daqctl` message to every user device process that
+subscribes to the channel. Redis does not filter by service or instance. Each
+subscriber's `daq_service` plugin reads the command message, checks whether the
+local `service-name` and long instance id such as `Sampler-0` are selected, and
+ignores the message when the local process is not a target.
 
 Messages published to `daqctl` have this shape:
 
@@ -90,10 +95,12 @@ Messages published to `daqctl` have this shape:
 ```
 
 The `services` array selects service names, and the `instances` array selects
-instance ids. Both arrays must be present and non-empty. A device processes the
-message only when the target selection matches that local service instance.
-The `value` field can be one of the FairMQ or NestDAQ command strings handled
-by the plugin:
+instance ids. Both arrays must be present and non-empty, and both arrays can
+contain multiple entries. The plugin stores them as sets, so ordering and
+duplicate entries do not change target matching. A device processes the message
+only when the target selection matches that local service instance. The `value`
+field can be one of the FairMQ or NestDAQ command strings handled by the
+plugin:
 
 ```text
 BIND, COMPLETE INIT, CONNECT, END, INIT DEVICE, INIT TASK, RESET DEVICE,
@@ -141,6 +148,32 @@ Examples:
 }
 ```
 
+Target multiple services and every instance under those services:
+
+```json
+{
+  "command": "change_state",
+  "value": "CONNECT",
+  "services": ["Sampler", "Sink"],
+  "instances": ["all"]
+}
+```
+
+Target selected instances across services:
+
+```json
+{
+  "command": "change_state",
+  "value": "RUN",
+  "services": ["Sampler", "Sink"],
+  "instances": ["Sampler-0", "Sampler-1", "Sink-0"]
+}
+```
+
+The last message is still delivered to every `daqctl` subscriber. For example,
+`Sampler-2` and `Sink-1` receive the message but ignore it because their long
+instance ids are not listed in `instances`.
+
 When the web controller requests `RUN`, it copies `run_info{sep}run_number` to
 `run_info{sep}latest_run_number`, optionally publishes prerequisite `CONNECT`
 and `INIT TASK` commands according to `run_info{sep}wait-device-ready` and
@@ -152,9 +185,10 @@ The web controller's prerequisite wait logic uses the same target intent:
 `services: ["all"]` waits on all known service/instance state keys, while
 `instances: ["all"]` waits on all instances under the selected services.
 
-`daq_service` publishes DAQ state-transition notifications to `daqstate`.
-Consumers such as `daq-webctl` subscribe to this channel and also poll
-`daq_service{sep}*{sep}*{sep}fair-mq-state` for state summaries.
+`daq_service` writes the current state to
+`daq_service{sep}{service}{sep}{id}{sep}fair-mq-state` and refreshes related
+presence, health, and timestamp keys. Controllers such as `daq-webctl` can
+poll or scan those keys to build state summaries.
 
 ### Topology and Channel Keys
 
@@ -236,7 +270,7 @@ from Redis and write the resulting FairMQ `chans.*` properties. A bind channel
 with `waitForPeerConnection=false` skips the final peer-ready wait. Reset or
 cancellation interrupts the waiting steps.
 
-### TTL Details
+### TTL Details (daq_service)
 
 `daq_service` uses `--max-ttl` in seconds. The default is `5` seconds.
 `--ttl-update-interval` controls how often the plugin refreshes TTLs. The
@@ -249,9 +283,41 @@ The plugin refreshes Redis keys in two ways:
 - `health`, `option`, topology channel keys, topology socket keys, and peer
   list keys are refreshed with `EXPIRE`.
 
+```mermaid
+sequenceDiagram
+  participant Device as User device process<br/>(daq_service)
+  participant Redis as Redis
+  participant WebCtl as daq-webctl
+
+  Device->>Redis: register service keys
+  Device->>Redis: SETEX presence, fair-mq-state, updatedTime<br/>value + --max-ttl
+  Device->>Redis: EXPIRE health, option, topology keys<br/>--max-ttl
+  WebCtl->>Redis: SUBSCRIBE expired key events
+  loop every --ttl-update-interval
+    Device->>Redis: SETEX liveness keys
+    Device->>Redis: EXPIRE hash/list topology keys
+  end
+  alt normal shutdown
+    Device->>Redis: DEL registered keys
+    WebCtl->>Redis: poll/scan state keys
+    WebCtl-->>WebCtl: remove stopped instance from summary
+  else crash or lost Redis connection
+    Device-xRedis: refresh stops
+    Redis-->>Redis: expire keys after --max-ttl
+    Redis-->>WebCtl: expired presence key event
+    WebCtl-->>WebCtl: mark instance disappeared
+  end
+```
+
 On normal shutdown, registered keys are deleted. If the process crashes or loses
 Redis connectivity, TTL expiration removes the transient registry keys after
 they stop being refreshed.
+
+Redis keyspace notifications are not required for TTL expiration itself, but
+`daq-webctl` needs expired key events to detect disappeared instances without
+waiting for its next polling cycle. `metrics` uses `--metrics-max-ttl` as a
+stale-field cleanup threshold, not as Redis key TTL. `parameter_config` does
+not set TTLs on parameter keys.
 
 ## metrics
 
@@ -302,7 +368,7 @@ data[0]: in: 123 (4.5 MB) out: 67 (8.9 MB)
 
 Only indexed subchannel records are used for channel throughput metrics.
 
-### TTL and Retention Details
+### TTL and Retention Details (metrics)
 
 `--metrics-max-ttl` is not a Redis key TTL. It is a stale-field cleanup threshold
 in milliseconds. The plugin reads `metrics{sep}last-update-ns`, finds instances
@@ -344,7 +410,7 @@ Redis keyspace notifications must be enabled on the Redis server for live
 reloads to work. Initial parameter loading does not require keyspace
 notifications.
 
-### TTL Details
+### TTL Details (parameter_config)
 
 `parameter_config` does not call `EXPIRE`, `SETEX`, or `DEL` for parameter
 keys. It only reads parameter keys and subscribes to keyspace notifications for
