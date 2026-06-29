@@ -355,10 +355,12 @@ from templates built into the script.
 ```
 
 The generated project contains `MyDevice.h`, `MyDevice.cxx`,
-`CMakeLists.txt`, and `README.md`. Existing files are not overwritten unless
-`--force` is specified. Use `--dry-run` to inspect the output paths without
-writing files. Use `--no-cmake` when the device will be added to an existing
-build system and `CMakeLists.txt` should not be generated.
+`CMakeLists.txt`, and `README.md` unless those helper files are omitted by
+options. Existing files are not overwritten unless `--force` is specified. Use
+`--dry-run` to inspect the output paths without writing files. Use
+`--no-cmake` when the device will be added to an existing build system and
+`CMakeLists.txt` should not be generated. Use `--no-readme` when the generated
+device does not need its own `README.md`.
 
 Generator options:
 
@@ -369,6 +371,7 @@ Generator options:
 | `--dry-run` | off | Print the files that would be generated without writing them. |
 | `--interactive` | off | Prompt for generation choices instead of specifying all options on the command line. |
 | `--no-cmake` | off | Do not generate `CMakeLists.txt`; use this when integrating the device into an existing build system. |
+| `--no-readme` | off | Do not generate `README.md`; use this when the generated device will be documented elsewhere. |
 | `--no-namespace` | off | Generate the device class in the global namespace instead of `namespace nestdaq`. |
 | `--processing-mode MODE` | `conditional-run` | Select the generated processing entry point: `conditional-run`, `run`, or `on-data`. |
 | `--input-channel SPEC` | none | Generate input-channel code. `SPEC` is `KEY:DEFAULT_NAME`, `:DEFAULT_NAME`, or `DEFAULT_NAME`. |
@@ -387,6 +390,9 @@ Processing modes:
 | `conditional-run` | Generates `ConditionalRun()` with simple poll/receive/send examples. |
 | `run` | Generates an empty `Run()`. |
 | `on-data` | Generates an `OnData()` callback registration in `InitTask()`; requires `--input-channel`. |
+
+For how to choose between `OnData()`, `ConditionalRun()`, and `Run()`, see
+[`examples/README.md#choosing-ondata-conditionalrun-or-run`](../examples/README.md#choosing-ondata-conditionalrun-or-run).
 
 Channel options passed to the generator are not the final device command-line
 options. They describe how to generate those options in C++:
@@ -448,6 +454,9 @@ Useful variants:
 ./generate-device-skeleton.py MyIntegratedDevice \
   --no-cmake
 
+./generate-device-skeleton.py MyNoReadmeDevice \
+  --no-readme
+
 ./generate-device-skeleton.py --interactive
 ```
 
@@ -489,7 +498,8 @@ options, processing methods, send helpers, and drain code.
 | `CMakeLists.txt.in` | `CMakeLists.txt` |
 | `README.md.in` | `README.md` |
 
-`CMakeLists.txt` is omitted when `--no-cmake` is specified.
+`CMakeLists.txt` is omitted when `--no-cmake` is specified. `README.md` is
+omitted when `--no-readme` is specified.
 
 When `CMakeLists.txt` is generated, build the generated device as a standalone
 CMake project. Set

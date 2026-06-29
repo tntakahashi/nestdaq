@@ -178,6 +178,7 @@ class GenerationConfig:
     no_poll: frozenset[str]
     namespace_name: str | None
     generate_cmake: bool
+    generate_readme: bool
 
 
 def parse_args() -> argparse.Namespace:
@@ -241,6 +242,11 @@ def parse_args() -> argparse.Namespace:
         "--no-cmake",
         action="store_true",
         help="Do not generate CMakeLists.txt.",
+    )
+    parser.add_argument(
+        "--no-readme",
+        action="store_true",
+        help="Do not generate README.md.",
     )
     parser.add_argument(
         "--interactive",
@@ -382,16 +388,16 @@ def build_config(args: argparse.Namespace) -> GenerationConfig:
         no_poll=no_poll,
         namespace_name=None if args.no_namespace else "nestdaq",
         generate_cmake=not args.no_cmake,
+        generate_readme=not args.no_readme,
     )
 
 
 def selected_templates(config: GenerationConfig) -> dict[str, TemplateSpec]:
-    if config.generate_cmake:
-        return BUILTIN_TEMPLATES
     return {
         template_name: template
         for template_name, template in BUILTIN_TEMPLATES.items()
-        if template_name != "CMakeLists.txt.in"
+        if (config.generate_cmake or template_name != "CMakeLists.txt.in")
+        and (config.generate_readme or template_name != "README.md.in")
     }
 
 
@@ -837,6 +843,7 @@ def config_summary(config: GenerationConfig) -> str:
         + f"drain-input={str(config.drain_input).lower()}; "
         + f"namespace={config.namespace_name or 'none'}; "
         + f"cmake={str(config.generate_cmake).lower()}; "
+        + f"readme={str(config.generate_readme).lower()}; "
         + "no-poll="
         + (",".join(sorted(config.no_poll)) if config.no_poll else "none")
     )

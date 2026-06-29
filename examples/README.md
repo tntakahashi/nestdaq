@@ -371,3 +371,387 @@ telemetry options. Use `--help` on each executable for the complete option set.
 | `Sink` | `--multipart` | `true` | Handle incoming data as multipart messages. |
 
 For script-based launch examples, see [`scripts/README.md`](../scripts/README.md).
+
+## Creating Your Own User Device
+
+A NestDAQ user device is the process that actually produces, consumes, or
+transforms data. In C++ it is implemented as a class derived from
+`fair::mq::Device`.
+
+The main pieces are:
+
+- FairMQ provides the device state machine, message channels, and the base
+  `fair::mq::Device` class.
+- FairLogger is the logging system used by FairMQ and by these examples
+  through `LOG(info)`, `LOG(error)`, and similar macros.
+- NestDAQ provides `nestdaq/runDevice.h`, Redis-backed plugins, DAQ command
+  integration, plugin search paths, and optional telemetry setup.
+- Redis stores runtime service information, topology settings, parameter
+  settings, DAQ commands, and metrics used by the NestDAQ plugins.
+
+### Start From the Skeleton Generator
+
+The recommended first step is to generate a small project and then edit it.
+
+```sh
+<install-prefix>/scripts/generate-device-skeleton.py MyDevice \
+  --output ./MyDevice \
+  --input-channel in \
+  --output-channel out
+```
+
+This creates `MyDevice.h`, `MyDevice.cxx`, `CMakeLists.txt`, and `README.md`.
+Existing files are not overwritten unless `--force` is specified.
+
+Useful variants:
+
+```sh
+# A source-like device that only sends data.
+<install-prefix>/scripts/generate-device-skeleton.py MySource \
+  --output ./MySource \
+  --output-channel out
+
+# A sink-like device that handles received data through OnData().
+<install-prefix>/scripts/generate-device-skeleton.py MySink \
+  --output ./MySink \
+  --processing-mode on-data \
+  --input-channel in
+
+# Interactive mode asks for the generation choices.
+<install-prefix>/scripts/generate-device-skeleton.py --interactive
+```
+
+The generator options describe what C++ code to generate. They are not the
+final command-line options of the generated device. For example,
+`--input-channel in-chan-name:in` makes the generated C++ register a runtime
+option named `in-chan-name` with default value `in`.
+
+See [`scripts/README.md#device-skeleton-generation`](../scripts/README.md#device-skeleton-generation)
+for all generator options.
+
+### C++ Device Structure
+
+A minimal NestDAQ device has three C++ entry points around a
+`fair::mq::Device` subclass:
+
+```cpp
+#include <memory>
+#include <string>
+
+#include <nestdaq/runDevice.h>
+
+#include "MyDevice.h"
+
+namespace bpo = boost::program_options;
+
+auto addCustomOptions(bpo::options_description& options) -> void
+{
+    options.add_options()
+        ("in-chan-name", bpo::value<std::string>()->default_value("in"),
+         "Input channel name")
+        ("max-iterations,n", bpo::value<std::string>()->default_value("0"),
+         "Maximum number of processing iterations");
+}
+
+auto getDevice(const fair::mq::ProgOptions& /*config*/) -> std::unique_ptr<fair::mq::Device>
+{
+    return std::make_unique<nestdaq::MyDevice>();
+}
+```
+
+`addCustomOptions()` adds command-line options. `getDevice()` creates the
+actual device object. `nestdaq/runDevice.h` supplies the NestDAQ-aware main
+program wrapper, so the generated source does not need to define `main()`.
+
+`addCustomOptions()` uses Boost.Program_options syntax. `options.add_options()`
+returns an object that accepts option descriptions by chaining calls:
+
+```cpp
+options.add_options()
+    ("option-1", bpo::value<std::string>()->default_value("value1"),
+     "Help text for option 1")
+    ("option-2,o", bpo::value<std::string>()->default_value("value2"),
+     "Help text for option 2")
+    ("option-N", bpo::value<std::string>()->default_value("valueN"),
+     "Help text for option N");
+```
+
+The middle option descriptions are connected by writing the next `(...)`
+immediately after the previous one. The semicolon is written only once, after
+the final option description.
+
+Each option description has three parts:
+
+- The first argument is the option name string. `"option-2,o"` defines the
+  long option `--option-2` and the short option `-o`. Without the comma, for
+  example `"option-1"`, only the long option `--option-1` is defined.
+- The second argument describes the stored value and default. In current
+  NestDAQ examples and skeleton code, use `bpo::value<std::string>()` even for
+  numeric settings, then convert the string inside the device class.
+- The third argument is the help text shown by `--help`.
+
+Your device class derives from `fair::mq::Device`:
+
+```cpp
+namespace nestdaq {
+
+class MyDevice : public fair::mq::Device
+{
+private:
+    auto InitTask() -> void override;
+    auto ConditionalRun() -> bool override;
+    auto PostRun() -> void override;
+
+    std::string fInputChannelName{"in"};
+    std::size_t fMaxIterations{0};
+    std::size_t fIterations{0};
+};
+
+} // namespace nestdaq
+```
+
+Use lifecycle functions for different kinds of work:
+
+| Function | When to use it |
+| :-- | :-- |
+| `InitTask()` | Read command-line options from `fConfig`, convert strings to typed members, register `OnData()` callbacks, and create telemetry instruments. |
+| `PreRun()` | Prepare resources immediately before the device enters RUNNING. |
+| `OnData()` | Register input callbacks in `InitTask()` when processing should be driven by incoming FairMQ messages. FairMQ receives the message and passes it to the callback. |
+| `ConditionalRun()` | Default choice for simple active processing loops. Return `true` to continue and `false` to leave RUNNING. |
+| `Run()` | Use only when the device owns the full run loop. Do not normally combine it with meaningful `ConditionalRun()` work. |
+| `PostRun()` | Flush, drain, or release run-time resources after RUNNING ends. |
+
+### Command-Line Options and Type Conversion
+
+In current NestDAQ examples and skeleton code, custom options are normally
+registered as `std::string`, even when the logical value is numeric. Convert
+them in the device class, usually in `InitTask()`:
+
+```cpp
+auto MyDevice::InitTask() -> void
+{
+    fInputChannelName = fConfig->GetProperty<std::string>("in-chan-name");
+
+    const auto maxIterations = fConfig->GetProperty<std::string>("max-iterations");
+    fMaxIterations = std::stoull(maxIterations);
+}
+```
+
+This keeps command-line, Redis parameter injection, and generated code behavior
+consistent. If a numeric option is invalid, let the conversion fail early or
+catch the exception and log a clear error.
+
+### Choosing OnData(), ConditionalRun(), or Run()
+
+FairMQ calls the user hooks from its state-machine wrappers. The following
+pseudo-code summarizes the relevant part of FairMQ's `Device.cxx`:
+
+```cpp
+auto Device::InitTaskWrapper() -> void
+{
+    InitTask();
+}
+
+auto Device::RunWrapper() -> void
+{
+    PreRun();
+
+    // OnData(...) registration in InitTask() sets fDataCallbacks.
+    // When callbacks are registered, this path has priority over
+    // ConditionalRun() and Run().
+    if (fDataCallbacks) {
+        if (fInputChannelKeys.size() == 1 && GetChannels().at(fInputChannelKeys.at(0)).size() == 1) {
+            HandleSingleChannelInput();
+        } else {
+            HandleMultipleChannelInput();
+        }
+    } else {
+        tools::RateLimiter rateLimiter(fRate);
+
+        // This path runs only when no OnData(...) callbacks were registered.
+        // NewStatePending() becomes true when a state transition command is pending.
+        while (!NewStatePending() && ConditionalRun()) {
+            if (fRate > 0.001) {
+                rateLimiter.maybe_sleep();
+            }
+        }
+
+        // Run() is called after the ConditionalRun() loop exits.
+        Run();
+    }
+
+    if (!NewStatePending()) {
+        ChangeStateOrThrow(Transition::Stop);
+    }
+
+    PostRun();
+}
+```
+
+Use one processing style as the main style for a device:
+
+- Use `OnData()` for a receiver whose work should happen only when input data
+  arrives. Register the callback in `InitTask()`. This is the only style where
+  FairMQ's input-handling path performs `Receive()` for you and passes the
+  received `MessagePtr` or `Parts` to your callback. In the callback, write the
+  operation on the received message; do not call `Receive()` again. If an
+  `OnData()` callback is registered, FairMQ handles the callback path and does
+  not enter the `ConditionalRun()` / `Run()` path.
+- Use `ConditionalRun()` for a source device, a polling receiver, or a simple
+  processor. This is the easiest style to debug. FairMQ calls it from a loop
+  that checks `NewStatePending()` before each iteration, so a pending state
+  transition such as `STOP` or `END` makes the loop exit.
+- Use `Run()` when you need a custom loop that does not fit the
+  `ConditionalRun()` model. If `ConditionalRun()` returns `false` immediately,
+  FairMQ then calls `Run()` from the same RUNNING transition.
+
+Unlike `OnData()`, `ConditionalRun()` and `Run()` do not receive messages
+automatically. If either function should consume input, write the `Receive()`,
+polling, and timeout handling in the device code.
+
+In practice, implement one of `OnData()`, `ConditionalRun()`, or `Run()` as the
+main processing style. You do not need to implement all three for one device.
+Do not write an infinite wait inside an `OnData()` callback, `ConditionalRun()`,
+or `Run()`. If you add a loop, retry, or wait in any of them, check
+`NewStatePending()` so the device can react to state transition commands. The
+FairMQ input-handling path used by `OnData()` and the FairMQ loop around
+`ConditionalRun()` already check `NewStatePending()`, but user code must still
+avoid blocking forever before returning to those loops. Returning to the FairMQ
+loop promptly makes state transitions more responsive.
+
+For a callback-based sink:
+
+```cpp
+auto MySink::InitTask() -> void
+{
+    fInputChannelName = fConfig->GetProperty<std::string>("in-chan-name");
+    OnData(fInputChannelName, &MySink::HandleData);
+}
+
+auto MySink::HandleData(fair::mq::MessagePtr& msg, int index) -> bool
+{
+    LOG(info) << "received " << msg->GetSize() << " bytes on subchannel " << index;
+    return true;
+}
+```
+
+For a loop-based source:
+
+```cpp
+auto MySource::ConditionalRun() -> bool
+{
+    auto msg = NewSimpleMessage("payload");
+    if (Send(msg, fOutputChannelName) < 0) {
+        LOG(error) << "failed to send";
+    }
+
+    ++fIterations;
+    return fMaxIterations == 0 || fIterations < fMaxIterations;
+}
+```
+
+### CMake Project
+
+The generated `CMakeLists.txt` is intentionally small. A standalone device
+project only needs to find NestDAQ and link to `NestDAQ::NestDAQ`:
+
+```cmake
+cmake_minimum_required(VERSION 3.22)
+
+project(MyDevice LANGUAGES CXX)
+
+include(GNUInstallDirs)
+
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
+find_package(NestDAQ REQUIRED CONFIG)
+
+add_executable(MyDevice
+  MyDevice.cxx
+)
+
+target_link_libraries(MyDevice PUBLIC
+  NestDAQ::NestDAQ
+)
+
+install(TARGETS MyDevice
+  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+)
+```
+
+`find_package(NestDAQ REQUIRED CONFIG)` locates the installed NestDAQ CMake
+package. `NestDAQ::NestDAQ` carries the include directories, link libraries,
+and runtime integration needed for NestDAQ, FairMQ, FairLogger, and related
+dependencies.
+
+Build and install the generated project out of source:
+
+```sh
+cmake -S ./MyDevice -B ./build-MyDevice \
+  -DCMAKE_PREFIX_PATH=<nestdaq-install-prefix> \
+  -DCMAKE_INSTALL_PREFIX=<device-install-prefix>
+
+cmake --build ./build-MyDevice --parallel
+cmake --install ./build-MyDevice
+```
+
+`CMAKE_PREFIX_PATH` must point to the NestDAQ install prefix so CMake can find
+`NestDAQConfig.cmake`. `CMAKE_INSTALL_PREFIX` is where the new device
+executable is installed. It may be the same prefix as NestDAQ or a separate
+prefix.
+
+### Running the New Device
+
+Use the same runtime services described in the local run sequence above:
+
+If an existing local validation environment is already running, skip the
+matching steps below. For example, you do not need to start another Redis
+server, OpenTelemetry Collector backend, or `daq-webctl` process when the new
+device should use the same endpoints. The Redis endpoint, OpenTelemetry
+endpoint, and `daq-webctl` endpoint used by `start_device.sh` must still match
+the services that are already running. Topology and parameter settings only
+need to be registered again when the existing Redis settings do not match the
+new device's `--service-name` or channel names.
+
+1. Start the OpenTelemetry Collector backend if telemetry export is needed.
+2. Start Redis.
+3. Start `daq-webctl` if browser control is needed.
+4. Register topology and parameter settings in Redis.
+5. Start the user device process.
+
+Start the installed device with the NestDAQ helper script:
+
+```sh
+<nestdaq-install-prefix>/scripts/start_device.sh <device-install-prefix>/bin/MyDevice \
+  --service-name MyDevice \
+  --in-chan-name in
+```
+
+`start_device.sh` loads the NestDAQ FairMQ plugins and passes options after the
+device name through to the device and plugins. Use `--service-name` to choose
+the service name that appears in Redis and `daq-webctl`.
+
+The service name and channel names must match the topology registered in
+Redis. If your device should replace the example `Sink`, either run it with a
+matching service and input channel, or write a new topology script:
+
+```sh
+<nestdaq-install-prefix>/scripts/start_device.sh <device-install-prefix>/bin/MyDevice \
+  --service-name Sink \
+  --in-chan-name in
+```
+
+For a new service name, copy one of the installed `topology-*.sh` scripts and
+add endpoint/link entries for your service and channels. Topology scripts
+write Redis keys that tell the `daq_service` plugin which FairMQ channels
+exist and how services are connected. See
+[`scripts/README.md#topology-configuration`](../scripts/README.md#topology-configuration)
+and [`plugins/README.md`](../plugins/README.md) for the Redis keys and channel
+behavior.
+
+For telemetry options, see
+[`nestdaq/telemetry/README.md`](../nestdaq/telemetry/README.md). For a full
+working producer/consumer implementation, compare your generated code with
+`Sampler.cxx` and `Sink.cxx` in this directory.
