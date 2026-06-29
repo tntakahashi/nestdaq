@@ -13,7 +13,7 @@ A streaming data acquisition (DAQ) implementation for the particle measurements
 | `nestdaq/` | Public NestDAQ headers and runtime helpers. |
 | [nestdaq/telemetry/](nestdaq/telemetry/README.md) | Optional OpenTelemetry integration. |
 | [plugins/](plugins/README.md) | FairMQ plugins for DAQ service, metrics, and parameter configuration. |
-| `cmake/` | External dependency build project. |
+| [cmake/](cmake/README.md) | CMake helpers, installed package files, and external dependency build project. |
 | [tests/](tests/) | C++ tests and test support files. |
 | `share/` | Runtime/configuration assets installed with NestDAQ. |
 | [share/otel-collector-compose/](share/otel-collector-compose/README.md) | Local OpenTelemetry Collector and backend Compose stacks for OpenSearch, Victoria, and ClickHouse. |
