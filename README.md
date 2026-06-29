@@ -6,7 +6,7 @@ A streaming data acquisition (DAQ) implementation for the particle measurements
 | Path / document | Purpose |
 | :-- | :-- |
 | [INSTALL.md](INSTALL.md) | Prerequisites, external dependency versions and build options, NestDAQ build options, runtime service choices, examples, and optional documentation generation. |
-| [examples/](examples/README.md) | Example devices such as `Sampler`, `Sink`, and `NullDevice`; see its README for detailed local run steps. |
+| [examples/](examples/README.md) | Example devices such as `Sampler`, `Sink`, and `NullDevice`; see its README for detailed local run steps and [custom user device creation](examples/README.md#creating-your-own-user-device). |
 | [scripts/](scripts/README.md) | Runtime start/topology helper scripts and the `generate-device-skeleton.py` device skeleton generator. |
 | [controller/](controller/README.md) | `daq-webctl` HTTP/WebSocket server, Redis control, and telemetry setup. |
 | [share/controller/](share/controller/README.md) | Browser assets served by `daq-webctl`. |
