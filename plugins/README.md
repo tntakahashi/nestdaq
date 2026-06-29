@@ -42,7 +42,7 @@ DAQ commands, and writes topology/channel metadata used by other services.
 
 | Option                           | Default                    | Required | Description |
 |----------------------------------|----------------------------|----------|-------------|
-| `--service-name`                 | none                       | No       | Service name used in Redis key paths. |
+| `--service-name`                 | executable basename when empty | No       | Service name used in Redis key paths. |
 | `--uuid`                         | generated                  | No       | Universally unique identifier (UUID) of this service instance. FairMQ device wrappers reuse the telemetry-generated `service.instance.id` when available; otherwise the plugin generates one. |
 | `--host-ip`                      | detected/configured value  | No       | Internet Protocol (IP) address or hostname published as this service address. |
 | `--hostname`                     | detected/configured value  | No       | Host name published in health data. |
@@ -54,6 +54,19 @@ DAQ commands, and writes topology/channel metadata used by other services.
 | `--enable-uds`                   | `true`                     | No       | Use Unix domain sockets (UDS) for local inter-process communication (IPC) if available. |
 | `--connect-config`               | none                       | No       | JavaScript Object Notation (JSON) string describing temporary message queue (MQ) channel connection parameters. |
 | `--max-retry-to-resolve-address` | `10`                       | No       | Maximum retry count for resolving connect addresses. |
+
+### DAQ Service Identity Defaults
+
+`daq_service` uses `--service-name` as the service name stored in Redis and
+shown by controllers. When `--service-name` is not set or is empty, the plugin
+uses the final path component of the executable name as the service name.
+
+The FairMQ `--id` option is used as the NestDAQ service instance id when it is
+set. When `--id` is not set or is empty, `daq_service` allocates a numeric
+index in `daq_service{sep}service-instance-index{sep}{service}` and sets the
+instance id to `{service-name}-{index}`, such as `Sampler-0`. The `--uuid`
+value is separate from the instance id; it identifies this process for
+presence, health, and index reuse.
 
 ### Redis Keys Written or Read
 

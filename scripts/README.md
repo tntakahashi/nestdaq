@@ -135,7 +135,9 @@ An example of launching a `Sampler` with a different service name (`A-Sampler`) 
 ```
 
 `start_device.sh` does not set `--service-name` by itself. Options after the
-device name are passed through to FairMQ and the NestDAQ plugins:
+device name are passed through to FairMQ and the NestDAQ plugins. See
+[`plugins/README.md#daq-service-identity-defaults`](../plugins/README.md#daq-service-identity-defaults)
+for the `daq_service` defaults used when `--service-name` or `--id` is empty.
 
 ```bash
 ./start_device.sh Sampler --service-name A-Sampler

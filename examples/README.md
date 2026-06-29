@@ -228,6 +228,16 @@ OpenTelemetry logs to the collector.
    [`scripts/README.md`](../scripts/README.md) to enable them or to print
    telemetry to the console.
 
+   Options after the device name override runtime defaults from the device or
+   NestDAQ plugins. Specify options such as `--service-name` or
+   `--in-chan-name` on the command line only when the default values need to
+   match a different topology, parameter set, or service grouping. For repeated
+   runs, it is also fine to put those overrides in a small wrapper shell script.
+   See
+   [`plugins/README.md#daq-service-identity-defaults`](../plugins/README.md#daq-service-identity-defaults)
+   for the `daq_service` defaults used when `--service-name` or `--id` is
+   empty.
+
    `NullDevice` has no data channel, but it still uses the same script and
    Redis-backed NestDAQ plugins:
 
@@ -732,6 +742,13 @@ Start the installed device with the NestDAQ helper script:
 `start_device.sh` loads the NestDAQ FairMQ plugins and passes options after the
 device name through to the device and plugins. Use `--service-name` to choose
 the service name that appears in Redis and `daq-webctl`.
+
+These command-line options override the defaults registered by the device or
+plugins. Keep the defaults when they already match your topology, or override
+them on the command line or in a wrapper shell script when a specific use case
+needs different service or channel names. See
+[`plugins/README.md#daq-service-identity-defaults`](../plugins/README.md#daq-service-identity-defaults)
+for the `daq_service` defaults used when `--service-name` or `--id` is empty.
 
 The service name and channel names must match the topology registered in
 Redis. If your device should replace the example `Sink`, either run it with a
