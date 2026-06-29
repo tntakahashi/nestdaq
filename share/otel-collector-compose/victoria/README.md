@@ -4,6 +4,8 @@ This local validation stack receives OpenTelemetry logs, metrics, and traces
 with OpenTelemetry Collector, stores them in Victoria stack services, and opens
 them in Grafana.
 
+This backend is experimental and not yet fully verified.
+
 Start from this directory:
 
 ```bash

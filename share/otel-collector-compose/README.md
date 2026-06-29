@@ -11,12 +11,14 @@ exposed on a public or shared network.
 No default `compose.yaml` or `docker-compose.yaml` is installed. Choose one
 backend directory explicitly:
 
-- `opensearch/`: logs and traces in OpenSearch, viewed with OpenSearch
-  Dashboards.
-- `victoria/`: logs, metrics, and traces in VictoriaLogs, VictoriaMetrics, and
+- [`opensearch/`](opensearch/README.md): logs and traces in OpenSearch, viewed
+  with OpenSearch Dashboards.
+- [`victoria/`](victoria/README.md): experimental, not yet fully verified;
+  logs, metrics, and traces in VictoriaLogs, VictoriaMetrics, and
   VictoriaTraces, viewed with Grafana.
-- `clickhouse/`: logs, metrics, and traces in ClickStack, viewed with the
-  ClickStack user interface (UI).
+- [`clickhouse/`](clickhouse/README.md): experimental, not yet fully verified;
+  logs, metrics, and traces in ClickStack, viewed with the ClickStack user
+  interface (UI).
 
 ## Start
 

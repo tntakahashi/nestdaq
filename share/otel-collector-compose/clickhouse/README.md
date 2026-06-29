@@ -4,6 +4,8 @@ This local validation stack receives OpenTelemetry logs, metrics, and traces
 with the ClickStack OpenTelemetry Collector, stores them in ClickHouse, and
 opens them in the ClickStack user interface (UI).
 
+This backend is experimental and not yet fully verified.
+
 Start from this directory:
 
 ```bash

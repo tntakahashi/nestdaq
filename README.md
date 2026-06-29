@@ -16,7 +16,7 @@ A streaming data acquisition (DAQ) implementation for the particle measurements
 | [cmake/](cmake/README.md) | CMake helpers, installed package files, and external dependency build project. |
 | [tests/](tests/) | C++ tests and test support files. |
 | `share/` | Runtime/configuration assets installed with NestDAQ. |
-| [share/otel-collector-compose/](share/otel-collector-compose/README.md) | Local OpenTelemetry Collector and backend Compose stacks for OpenSearch, Victoria, and ClickHouse. |
+| [share/otel-collector-compose/](share/otel-collector-compose/README.md) | Local OpenTelemetry Collector and backend Compose stacks for [OpenSearch](share/otel-collector-compose/opensearch/README.md), [Victoria](share/otel-collector-compose/victoria/README.md), and [ClickStack](share/otel-collector-compose/clickhouse/README.md). |
 | [share/redis-stack-container/](share/redis-stack-container/README.md) | Redis Stack container helper scripts. |
 | [share/installers/](share/installers/README.md) | Host package installer helper scripts for runtime services with `apt` or `dnf`. |
 

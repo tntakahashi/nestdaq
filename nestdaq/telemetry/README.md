@@ -103,6 +103,8 @@ startup with `nestdaq.instance.id.status=unresolved`, then reinitialized with
 
 ## spdlog Log Records
 
+The spdlog OpenTelemetry sink is experimental and not yet fully verified.
+
 When NestDAQ is built with both `opentelemetry-cpp` and spdlog available,
 `nestdaq/telemetry/SpdlogOpenTelemetrySink.h` is installed. The spdlog
 instrumentation is independent from FairLogger instrumentation: NestDAQ does not
