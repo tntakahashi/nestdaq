@@ -6,11 +6,16 @@
 
 ### Code
 
-- class names: UpperCamelCase
-- member functions: UpperCamelCase
-- members:  fUpperCamelCase
-- local variables: snake_case
-- constants, definitions: SCREAMING_SNAKE_CASE
+- `PascalCase` and `UpperCamelCase` mean the same naming style.
+- class and type names: `PascalCase` / `UpperCamelCase`
+- namespaces: `snake_case`
+- functions and member functions: prefer lower camel case / `camelCase`; `PascalCase` / `UpperCamelCase` is also allowed.
+- variables: prefer snake case / `snake_case`; lower camel case / `camelCase` is also allowed.
+- data members: `fPascalCase`
+- static variables: start with `g`, for example `gPascalCase`
+- constants: start with `k`, for example `kPascalCase`, or use `SCREAMING_SNAKE_CASE`
+- macro names: `SCREAMING_SNAKE_CASE`
+- enum constants: `kPascalCase`, `PascalCase` / `UpperCamelCase`, or `SCREAMING_SNAKE_CASE`
 - base namespace: nestdaq
 - indent: 4 spaces
 - function declarations and definitions: shoud be preferebly be ordered in lexicographical order.
@@ -19,7 +24,7 @@
 
 ### File naming
 
-- file extensions: cxx, h
+- file extensions: prefer `.cpp` and `.hpp`; `.cxx`, `.h`, `.hh`, and `.hxx` are also allowed.
 - templated classes: end with "T" (classes that inherit from them don't, unless they are also a template)
 - interface classes: start with "I"
 
@@ -46,8 +51,8 @@ private:
 class AnotherClass {
 public:
 
-    static const int MAX_VALUE = 42;
-    static const int MIN_VALUE = 0;
+    static const int kMaxValue = 42;
+    static const int kMinValue = 0;
 
     virtual void method1() = 0;
     virtual void method2() = 0;
