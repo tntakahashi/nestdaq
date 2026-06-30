@@ -23,7 +23,7 @@
 #include "plugins/tools.h"
 #include "controller/WebGui.h"
 
-static constexpr std::string_view MyClass{"WebGui"};
+static constexpr std::string_view kMyClass{"WebGui"};
 constexpr int NStates = static_cast<int>(fair::mq::State::Exiting) + 1;
 
 using namespace std::string_literals;
@@ -35,14 +35,14 @@ static constexpr std::string_view LatestRunNumber{"latest_run_number"};
 static constexpr std::string_view RunNumber{"run_number"};
 static constexpr std::string_view WaitDeviceReady{"wait-device-ready"};
 static constexpr std::string_view WaitReady{"wait-ready"};
-static const std::unordered_set<std::string_view> knownRunInfoList{
+static const std::unordered_set<std::string_view> kKnownRunInfoList{
     RunNumber,
     WaitDeviceReady,
     WaitReady,
 };
 }
 
-static const std::unordered_set<std::string_view> knownCommandList{
+static const std::unordered_set<std::string_view> kKnownCommandList{
     fairmq::command::Bind,
     fairmq::command::CompleteInit,
     fairmq::command::Connect,
@@ -59,13 +59,13 @@ static const std::unordered_set<std::string_view> knownCommandList{
     daq::command::Start,
 };
 
-static const std::vector<std::string> waitDeviceReadyTargets {
+static const std::vector<std::string> kWaitDeviceReadyTargets {
     GetStateName(fair::mq::State::DeviceReady),
     GetStateName(fair::mq::State::Ready),
     GetStateName(fair::mq::State::Running),
 };
 
-static const std::vector<std::string> waitReadyTargets {
+static const std::vector<std::string> kWaitReadyTargets {
     GetStateName(fair::mq::State::Ready),
     GetStateName(fair::mq::State::Running),
 };
@@ -105,7 +105,7 @@ bool WebGui::ConnectToRedis(std::string_view redisUri,
     LOG(info) << "connected to redis";
     fChannelName = commandChannelName.data();
     fSeparator = separator.data();
-    fClient->command("client", "setname", MyClass.data());
+    fClient->command("client", "setname", kMyClass.data());
 
     // E: Enable key-event notification, published with "__keyevent@<db>__" prefix
     // x: Expired events (events generated every time a key expires)
@@ -142,7 +142,7 @@ void WebGui::CopyLatestRunNumber(unsigned int connid)
     boost::property_tree::ptree obj;
     obj.put("type", "set latest_run_number");
     obj.put("value", *ret);
-    const auto &reply = to_string(obj);
+    const auto &reply = toJsonString(obj);
     Send(connid, reply);
 }
 
@@ -158,7 +158,7 @@ void WebGui::IncrementRunNumber(unsigned int connid)
     boost::property_tree::ptree obj;
     obj.put("type", "set run_number");
     obj.put("value", std::to_string(newValue));
-    const auto &reply = to_string(obj);
+    const auto &reply = toJsonString(obj);
     Send(connid, reply);
 }
 
@@ -301,7 +301,7 @@ void WebGui::ProcessData(unsigned int connid,
 {
     std::scoped_lock<std::mutex> lock{fMutex};
     LOG(debug) << __func__ << " websocket connid = " << connid << " : arg =  " << arg;
-    const auto &obj = to_json(arg);
+    const auto &obj = toJson(arg);
     const auto& key = obj.get_optional<std::string>("command");
     if (key) {
         LOG(debug) << __func__ << " key (function) = " << key.get();
@@ -364,7 +364,7 @@ void WebGui::ReadLatestRunNumber(unsigned int connid)
     boost::property_tree::ptree obj;
     obj.put("type", "set latest_run_number");
     obj.put("value", *ret);
-    const auto &reply = to_string(obj);
+    const auto &reply = toJsonString(obj);
     Send(connid, reply);
 }
 
@@ -382,7 +382,7 @@ void WebGui::ReadRunNumber(unsigned int connid)
     boost::property_tree::ptree obj;
     obj.put("type", "set run_number");
     obj.put("value", *ret);
-    const auto &reply = to_string(obj);
+    const auto &reply = toJsonString(obj);
     Send(connid, reply);
 }
 
@@ -430,10 +430,10 @@ void WebGui::RedisPublishDaqCommand(unsigned int connid, const boost::property_t
         cmd.add_child("instances", arg.get_child("instances"));
         //cmd.put("service", "all");
         //cmd.put("instance", "all");
-        return to_string(cmd);
+        return toJsonString(cmd);
     };
 
-    const auto& arg_str = to_string(arg);
+    const auto& arg_str = toJsonString(arg);
     LOG(debug) << __func__ << " arg = " << arg_str;
     const auto &val = arg.get_optional<std::string>("value");
     if (!val) {
@@ -445,7 +445,7 @@ void WebGui::RedisPublishDaqCommand(unsigned int connid, const boost::property_t
     if (v == fairmq::command::Run.data()) {
         CopyLatestRunNumber(connid);
     }
-    if (knownCommandList.count(v)>0) {
+    if (kKnownCommandList.count(v)>0) {
         LOG(debug) << " connid = " << connid;
 
         try {
@@ -465,27 +465,27 @@ void WebGui::RedisPublishDaqCommand(unsigned int connid, const boost::property_t
             if (boost::iequals(v, fairmq::command::Connect)) {
                 fClient->publish(fChannelName, toMessage(fairmq::command::Connect));
                 if (waitDeviceReadyFlag) {
-                    Wait(services, instances, waitDeviceReadyTargets);
+                    Wait(services, instances, kWaitDeviceReadyTargets);
                 }
 
             } else if (boost::iequals(v, fairmq::command::InitTask)) {
                 if (waitDeviceReadyFlag) {
                     fClient->publish(fChannelName, toMessage(fairmq::command::Connect));
-                    Wait(services, instances, waitDeviceReadyTargets);
+                    Wait(services, instances, kWaitDeviceReadyTargets);
                 }
                 fClient->publish(fChannelName, toMessage(fairmq::command::InitTask));
                 if (waitReadyFlag) {
-                    Wait(services, instances, waitReadyTargets);
+                    Wait(services, instances, kWaitReadyTargets);
                 }
 
             } else if (boost::iequals(v, fairmq::command::Run)) {
                 if (waitDeviceReadyFlag) {
                     fClient->publish(fChannelName, toMessage(fairmq::command::Connect));
-                    Wait(services, instances, waitDeviceReadyTargets);
+                    Wait(services, instances, kWaitDeviceReadyTargets);
                 }
                 if (waitReadyFlag) {
                     fClient->publish(fChannelName, toMessage(fairmq::command::InitTask));
-                    Wait(services, instances, waitReadyTargets);
+                    Wait(services, instances, kWaitReadyTargets);
                 }
                 LOG(debug) << " pre-run = " << fPreRunCommand;
                 boost::process::system(fPreRunCommand.data(), boost::process::std_out > stdout, boost::process::std_err > stderr, boost::process::std_in < stdin);
@@ -518,11 +518,11 @@ void WebGui::RedisSet(unsigned int connid, const boost::property_tree::ptree &ar
     LOG(debug) <<  __func__ << " " << connid;
     const auto &name = arg.get_optional<std::string>("name");
     if (name) {
-        if (run_info::knownRunInfoList.count(*name)>0) {
+        if (run_info::kKnownRunInfoList.count(*name)>0) {
 
             auto val = arg.get_optional<std::string>("value");
             if (!val) {
-                LOG(error) << MyClass << " " << __func__ << " parse error ";
+                LOG(error) << kMyClass << " " << __func__ << " parse error ";
                 return;
             }
             std::string key{run_info::Prefix.data() + fSeparator + *name};
@@ -603,7 +603,7 @@ void WebGui::SendStateSummary(const std::map<std::string, ServiceState> & summar
             services.push_back(std::make_pair("", s));
         }
         obj.add_child("services", services);
-        const auto& str = to_string(obj);
+        const auto& str = toJsonString(obj);
         LOG(debug) << __func__ << " obj(state-summary-table) = " << str;
         Send(0, str);
     } catch (const std::exception &e) {
@@ -632,16 +632,16 @@ void WebGui::SubscribeToRedisPubSub()
     auto sub = fClient->subscriber();
 
     sub.on_message([this](auto channel, auto msg) {
-        //std::cout << MyClass << " on_message(MESSAGE): channel = " << channel << ", msg = " << msg << std::endl;
+        //std::cout << kMyClass << " on_message(MESSAGE): channel = " << channel << ", msg = " << msg << std::endl;
         if (daq::service::StateChannelName.data() == channel) {
-            const auto& obj = to_json(msg) ;
+            const auto& obj = toJson(msg) ;
             const auto& cmdValue = obj. template get_optional<std::string>("value");
             if (!cmdValue) {
-                LOG(error) << MyClass << ":" << __LINE__ << " on_message: missing command value";
+                LOG(error) << kMyClass << ":" << __LINE__ << " on_message: missing command value";
                 return;
             }
         } else if (channel == fRedisKeyEventChannelName) {
-            LOG(debug) << MyClass << " on_message(): expired key = " << msg;
+            LOG(debug) << kMyClass << " on_message(): expired key = " << msg;
             std::thread t([this, msg = std::move(msg)]() {
                 ProcessExpiredKey(msg);
             });
@@ -659,17 +659,17 @@ void WebGui::SubscribeToRedisPubSub()
         } catch (const sw::redis::TimeoutError &e) {
             // try again.
         } catch (const sw::redis::Error &e) {
-            LOG(error) << MyClass << "::" << __func__ << ": error in consume(): " << e.what();
+            LOG(error) << kMyClass << "::" << __func__ << ": error in consume(): " << e.what();
             break;
         } catch (const std::exception& e) {
-            LOG(error) << MyClass << "::" << __func__ << ": error in consume(): " << e.what();
+            LOG(error) << kMyClass << "::" << __func__ << ": error in consume(): " << e.what();
             break;
         } catch (...) {
-            LOG(error) << MyClass << "::" << __func__ << ": unknown exception";
+            LOG(error) << kMyClass << "::" << __func__ << ": unknown exception";
             break;
         }
     }
-    LOG(error) << MyClass << "::" << __func__ << " exit";
+    LOG(error) << kMyClass << "::" << __func__ << " exit";
 }
 
 //_____________________________________________________________________________

@@ -19,9 +19,9 @@
 
 using namespace std::literals::string_literals;
 
-static constexpr std::string_view MyClass{"daq::service::ParameterConfigPlugin"};
+static constexpr std::string_view kMyClass{"daq::service::ParameterConfigPlugin"};
 
-static constexpr std::string_view RedisKeySpacePrefix{"__keyspace@"};
+static constexpr std::string_view kRedisKeySpacePrefix{"__keyspace@"};
 
 const std::unordered_set<std::string_view> reservedOptionsString
 {   "id",  //
@@ -76,7 +76,7 @@ auto ParameterConfigPluginProgramOptions() -> fair::mq::Plugin::ProgOptions
 {
     namespace bpo = boost::program_options;
     using opt = ParameterConfigPlugin::OptionKey;
-    auto options = bpo::options_description(MyClass.data());
+    auto options = bpo::options_description(kMyClass.data());
     options.add_options()
            (opt::ServerUri.data(), bpo::value<std::string>(), "Redis server URI (if empty, the same URI of the service registry is used.)");
     return options;
@@ -93,7 +93,7 @@ ParameterConfigPlugin::ParameterConfigPlugin(std::string_view name,
         fair::mq::PluginServices *pluginServices)
     : fair::mq::Plugin(name.data(), version, maintainer.data(), homepage.data(), pluginServices)
 {
-    LOG(debug) << MyClass << " hello";
+    LOG(debug) << kMyClass << " hello";
     using opt = ParameterConfigPlugin::OptionKey;
     std::string serverUri;
     if (PropertyExists(opt::ServerUri.data())) {
@@ -106,7 +106,7 @@ ParameterConfigPlugin::ParameterConfigPlugin(std::string_view name,
     }
 
     SubscribeToDeviceStateChange([this](DeviceState newState) {
-        // LOG(debug) << MyClass << " state change: " << GetStateName(newState);
+        // LOG(debug) << kMyClass << " state change: " << GetStateName(newState);
         try {
             switch (newState) {
             case DeviceState::Error:
@@ -116,9 +116,9 @@ ParameterConfigPlugin::ParameterConfigPlugin(std::string_view name,
                 break;
             }
         } catch (const std::exception &e) {
-            LOG(error) << MyClass << " exception during device state change: " << e.what();
+            LOG(error) << kMyClass << " exception during device state change: " << e.what();
         } catch (...) {
-            LOG(error) << MyClass << " exception during device state change: unknow exception";
+            LOG(error) << kMyClass << " exception during device state change: unknow exception";
         }
     });
 
@@ -129,9 +129,9 @@ ParameterConfigPlugin::ParameterConfigPlugin(std::string_view name,
         try {
             SubscribeToParameterChange();
         } catch (const std::exception &e) {
-            LOG(error) << MyClass << " in CheckThread" << e.what();
+            LOG(error) << kMyClass << " in CheckThread" << e.what();
         } catch (...) {
-            LOG(error) << MyClass << " unknown error in CheckThread";
+            LOG(error) << kMyClass << " unknown error in CheckThread";
         }
     });
     fSubscriberThread.detach();
@@ -141,7 +141,7 @@ ParameterConfigPlugin::ParameterConfigPlugin(std::string_view name,
 ParameterConfigPlugin::~ParameterConfigPlugin()
 {
     UnsubscribeFromDeviceStateChange();
-    LOG(debug) << MyClass << " bye";
+    LOG(debug) << kMyClass << " bye";
 }
 
 //_____________________________________________________________________________
@@ -240,7 +240,7 @@ void ParameterConfigPlugin::ReadList(const std::string& name)
  */
 void ParameterConfigPlugin::ReadParameters()
 {
-    //LOG(debug) << MyClass << " " << __FUNCTION__;
+    //LOG(debug) << kMyClass << " " << __FUNCTION__;
 
     if (fId.empty()) {
         if (PropertyExists("id")>0) {
@@ -311,7 +311,7 @@ void ParameterConfigPlugin::ReadParameters()
         }
     }
 
-    //LOG(debug) << MyClass << " " << __FUNCTION__ << " done";
+    //LOG(debug) << kMyClass << " " << __FUNCTION__ << " done";
 }
 
 //_____________________________________________________________________________
@@ -418,12 +418,12 @@ void ParameterConfigPlugin::SubscribeToParameterChange()
     const auto &serverUri = GetProperty<std::string>(opt::ServerUri.data());
     const auto dbNumber = serverUri.substr(serverUri.find_last_of("/")+1);
     LOG(debug) << " db number = " << dbNumber;
-    const std::string redisKeySpaceNotificationChannel = RedisKeySpacePrefix.data() + dbNumber + "__:"s + fKey;
-    const std::string redisKeySpaceNotificationGroupChannel = RedisKeySpacePrefix.data() + dbNumber + "__:"s + fGroupKey;
+    const std::string redisKeySpaceNotificationChannel = kRedisKeySpacePrefix.data() + dbNumber + "__:"s + fKey;
+    const std::string redisKeySpaceNotificationGroupChannel = kRedisKeySpacePrefix.data() + dbNumber + "__:"s + fGroupKey;
     LOG(debug) << " key-space-notification channel = " << redisKeySpaceNotificationChannel << ", " << redisKeySpaceNotificationGroupChannel;
 
     sub.on_message([this, &redisKeySpaceNotificationChannel, &redisKeySpaceNotificationGroupChannel](auto channel, auto /*msg*/) {
-        //LOG(debug) << MyClass << " on_message(MESSAGE): channel = " << channel << " msg = " << msg;
+        //LOG(debug) << kMyClass << " on_message(MESSAGE): channel = " << channel << " msg = " << msg;
         if (redisKeySpaceNotificationChannel!=channel && redisKeySpaceNotificationGroupChannel!=channel) {
             return;
         }
@@ -438,13 +438,13 @@ void ParameterConfigPlugin::SubscribeToParameterChange()
         } catch (const sw::redis::TimeoutError &e) {
             // try again.
         } catch (const sw::redis::Error &e) {
-            LOG(error) << MyClass << "::" << __func__ << ": error in consume(): " << e.what();
+            LOG(error) << kMyClass << "::" << __func__ << ": error in consume(): " << e.what();
             break;
         } catch (const std::exception& e) {
-            LOG(error) << MyClass << "::" << __func__ << ": error in consume(): " << e.what();
+            LOG(error) << kMyClass << "::" << __func__ << ": error in consume(): " << e.what();
             break;
         } catch (...) {
-            LOG(error) << MyClass << "::" << __func__ << ": unknown exception";
+            LOG(error) << kMyClass << "::" << __func__ << ": unknown exception";
             break;
         }
     }

@@ -28,15 +28,15 @@ HttpWebSocketServer::~HttpWebSocketServer()
 }
 
 //_____________________________________________________________________________
-void HttpWebSocketServer::Run(std::string_view /*scheme*/, std::string_view address, std::string_view port, std::string_view doc_root)
+void HttpWebSocketServer::run(std::string_view /*scheme*/, std::string_view address, std::string_view port, std::string_view doc_root)
 {
     const auto docRoot = std::make_shared<std::string>(doc_root);
     const auto ipAddr = net::ip::make_address(address);
     const auto portNumber = std::stoi(std::string{port});
 
     // Create and launch a listening port
-    fListener = std::make_shared<listener>(fContext, tcp::endpoint(ipAddr, portNumber), docRoot);
-    if (fListener->get_status()!=listener::StatusGood) {
+    fListener = std::make_shared<Listener>(fContext, tcp::endpoint(ipAddr, portNumber), docRoot);
+    if (fListener->getStatus()!=Listener::kStatusGood) {
         return;
     }
     fListener->run();

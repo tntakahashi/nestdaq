@@ -11,7 +11,7 @@
 
 #include "NullDevice.h"
 
-static constexpr std::string_view MyClass{"NullDevice"};
+static constexpr std::string_view kMyClass{"NullDevice"};
 
 namespace bpo = boost::program_options;
 

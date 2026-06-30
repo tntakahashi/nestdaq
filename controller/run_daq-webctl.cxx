@@ -35,12 +35,12 @@ using namespace std::string_literals;
 static constexpr uint64_t kDefaultPollIntervalMs{500};
 static constexpr int kWebSocketRetryIntervalMs{1000};
 
-std::mutex wsMutex; // NOLINT(cppcoreguidelines-avoid-non-const-global-variables)
-std::unordered_map<unsigned int, std::pair<std::shared_ptr<websocket_session>, std::string>> wsSessions; // NOLINT(cppcoreguidelines-avoid-non-const-global-variables)
-std::unique_ptr<WebGui> daqControl; // NOLINT(cppcoreguidelines-avoid-non-const-global-variables)
+std::mutex gWsMutex; // NOLINT(cppcoreguidelines-avoid-non-const-global-variables)
+std::unordered_map<unsigned int, std::pair<std::shared_ptr<WebSocketSession>, std::string>> gWsSessions; // NOLINT(cppcoreguidelines-avoid-non-const-global-variables)
+std::unique_ptr<WebGui> gDaqControl; // NOLINT(cppcoreguidelines-avoid-non-const-global-variables)
 
 //_____________________________________________________________________________
-bpo::options_description MakeOption()
+bpo::options_description makeOption()
 {
     bpo::options_description options("options");
     bpo::options_description wsOptions("websocket handler options");
@@ -98,7 +98,7 @@ bpo::options_description MakeOption()
 }
 
 //_____________________________________________________________________________
-auto ParseHttpUri(const std::string& uri) -> const std::tuple<std::string, std::string, std::string>
+auto parseHttpUri(const std::string& uri) -> const std::tuple<std::string, std::string, std::string>
 {
     // pattern = (scheme)://(address):(port)
     std::regex pattern{R"(^([^:\/?#]+)://([^\/?#]+):(\d+))"};
@@ -135,7 +135,7 @@ int main(int argc, char* argv[]) // NOLINT(bugprone-exception-escape)
     std::ios::sync_with_stdio(false);
 
     bpo::variables_map vm;
-    auto ret = ParseCommandLine(argc, argv, MakeOption(), vm);
+    auto ret = parseCommandLine(argc, argv, makeOption(), vm);
     if (ret!=EXIT_SUCCESS) {
         return ret;
     }
@@ -188,42 +188,42 @@ int main(int argc, char* argv[]) // NOLINT(bugprone-exception-escape)
     LOG(info) << "command-channel   = " << channel;
     LOG(info) << "separator         = " << sep;
 
-    daqControl = std::make_unique<WebGui>();
+    gDaqControl = std::make_unique<WebGui>();
 
-    daqControl->SetPollIntervalMS(vm["poll-interval"].as<uint64_t>());
-    if (!daqControl->ConnectToRedis(redisUri, channel, sep)) {
+    gDaqControl->SetPollIntervalMS(vm["poll-interval"].as<uint64_t>());
+    if (!gDaqControl->ConnectToRedis(redisUri, channel, sep)) {
         return EXIT_FAILURE;
     }
     // ============================================
-    daqControl->SetSendFunction([](auto connid, const auto& arg) {
-        if (wsSessions.empty()) {
+    gDaqControl->SetSendFunction([](auto connid, const auto& arg) {
+        if (gWsSessions.empty()) {
             LOG(debug) << " no websocket clients";
             std::this_thread::sleep_for(std::chrono::milliseconds(kWebSocketRetryIntervalMs));
             return;
         }
         if (connid==0) { // broadcast message to registered clients
-            for (const auto& [i, t] : wsSessions) {
+            for (const auto& [i, t] : gWsSessions) {
                 LOG(debug) << "Send message to websocket client id = " << i << ", msg = " << arg;
-                Write(i, arg);
+                writeWebSocketMessage(i, arg);
             }
         } else {
-            Write(connid, arg);
+            writeWebSocketMessage(connid, arg);
         }
     });
-    daqControl->SetTerminateFunction([]() {
+    gDaqControl->SetTerminateFunction([]() {
         LOG(info) << " Termination is requested.";
     });
 
-    daqControl->SetPreRunCommand(vm["pre-run"].as<std::string>());
-    daqControl->SetPostRunCommand(vm["post-run"].as<std::string>());
-    daqControl->SetPreStopCommand(vm["pre-stop"].as<std::string>());
-    daqControl->SetPostStopCommand(vm["post-stop"].as<std::string>());
+    gDaqControl->SetPreRunCommand(vm["pre-run"].as<std::string>());
+    gDaqControl->SetPostRunCommand(vm["post-run"].as<std::string>());
+    gDaqControl->SetPreStopCommand(vm["pre-stop"].as<std::string>());
+    gDaqControl->SetPostStopCommand(vm["post-stop"].as<std::string>());
 
     // ============================================
     // http server setup
     const auto httpUri = vm["http-uri"].as<std::string>();
     LOG(info) << "http serve URI = " << httpUri;
-    const auto &[httpScheme, httpAddress, httpPort] = ParseHttpUri(httpUri);
+    const auto &[httpScheme, httpAddress, httpPort] = parseHttpUri(httpUri);
     LOG(info) << "http server scheme  = " << httpScheme;
     LOG(info) << "http server address = " << httpAddress;
     LOG(info) << "http server port    = " << httpPort;
@@ -233,7 +233,7 @@ int main(int argc, char* argv[]) // NOLINT(bugprone-exception-escape)
     LOG(info) << "doc-root = " << docRoot;
 
     HttpWebSocketServer server(static_cast<int>(nThreads));
-    server.Run(httpScheme, httpAddress, httpPort, docRoot);
+    server.run(httpScheme, httpAddress, httpPort, docRoot);
     if (telemetryLoaded) {
         telemetry->ShutdownTelemetry(telemetryOptions.timeoutMs);
     }
@@ -243,57 +243,57 @@ int main(int argc, char* argv[]) // NOLINT(bugprone-exception-escape)
 //=============================================================================
 // WebSocketHandle functions
 //_____________________________________________________________________________
-void OnClose(unsigned int id)
+void handleWebSocketClose(unsigned int id)
 {
     std::vector<std::pair<unsigned int, std::string>> v;
     {
-        std::scoped_lock<std::mutex> lock{wsMutex};
-        wsSessions.erase(id);
-        for (const auto& [i, t] : wsSessions) {
+        std::scoped_lock<std::mutex> lock{gWsMutex};
+        gWsSessions.erase(id);
+        for (const auto& [i, t] : gWsSessions) {
             v.emplace_back(i, t.second);
         }
     }
-    daqControl->SendWebSocketIdList(v);
+    gDaqControl->SendWebSocketIdList(v);
     LOG(info) << __func__ << " websocket id = " << id << " done";
 }
 
 //_____________________________________________________________________________
-void OnConnect(const std::shared_ptr<websocket_session> &session)
+void handleWebSocketConnect(const std::shared_ptr<WebSocketSession> &session)
 {
     unsigned int id{0};
     std::string msg{"My WebSocket Connection ID: "};
-    auto d = date();
+    auto d = currentDate();
     std::vector<std::pair<unsigned int, std::string>> v;
     {
-        std::scoped_lock<std::mutex> lock{wsMutex};
+        std::scoped_lock<std::mutex> lock{gWsMutex};
         id = session->id();
         msg += std::to_string(id) + " (Date: " + d + ")";
-        wsSessions.emplace(id, std::make_pair(session, d));
-        for (const auto& [i, t] : wsSessions) {
+        gWsSessions.emplace(id, std::make_pair(session, d));
+        for (const auto& [i, t] : gWsSessions) {
             v.emplace_back(i, t.second);
         }
     }
-    daqControl->Send(id, msg);
-    daqControl->SendWebSocketIdList(v);
+    gDaqControl->Send(id, msg);
+    gDaqControl->SendWebSocketIdList(v);
     LOG(info) << __func__ << " websocket id = " << id << " done";
 }
 
 //_____________________________________________________________________________
-void OnRead(unsigned int id, const std::string& message)
+void handleWebSocketRead(unsigned int id, const std::string& message)
 {
-    daqControl->ProcessData(id, message);
+    gDaqControl->ProcessData(id, message);
     LOG(trace) << __func__ << " websocket id = " << id << " done";
 }
 
 //_____________________________________________________________________________
-void OnRead(unsigned int /*id*/, const std::vector<char>& /*message*/)
+void handleWebSocketRead(unsigned int /*id*/, const std::vector<char>& /*message*/)
 {
 }
 
 //_____________________________________________________________________________
-void Write(unsigned int id, const std::string& message)
+void writeWebSocketMessage(unsigned int id, const std::string& message)
 {
-    auto &[session, d] = wsSessions[id];
+    auto &[session, d] = gWsSessions[id];
     if (session) {
         session->write(message);
     }

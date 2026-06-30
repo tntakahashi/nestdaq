@@ -27,21 +27,21 @@ void fail(beast::error_code ec, char const* what);
  * lambda that receives the concrete response object.
  */
 template<class Body, class Allocator, class Send>
-void handle_request(beast::string_view doc_root, http::request<Body, http::basic_fields<Allocator>>&& req, Send&& send);
+void handleRequest(beast::string_view doc_root, http::request<Body, http::basic_fields<Allocator>>&& req, Send&& send);
 
 //_____________________________________________________________________________
 // Return a reasonable mime type based on the extension of a file.
-beast::string_view mime_type(beast::string_view path);
+beast::string_view mimeType(beast::string_view path);
 
 //_____________________________________________________________________________
 // Append an HTTP rel-path to a local filesystem path.
 // The returned path is normalized for the platform.
-std::string path_cat(beast::string_view base, beast::string_view path);
+std::string pathCat(beast::string_view base, beast::string_view path);
 
 //_____________________________________________________________________________
 template<class Body, class Allocator, class Send>
 // NOLINTNEXTLINE(cppcoreguidelines-rvalue-reference-param-not-moved,cppcoreguidelines-missing-std-forward)
-void handle_request(beast::string_view doc_root, http::request<Body, http::basic_fields<Allocator>>&& req, Send&& send)
+void handleRequest(beast::string_view doc_root, http::request<Body, http::basic_fields<Allocator>>&& req, Send&& send)
 {
     // Returns a bad request response
     auto const bad_request =
@@ -96,7 +96,7 @@ void handle_request(beast::string_view doc_root, http::request<Body, http::basic
     }
 
     // Build the path to the requested file
-    std::string path = path_cat(doc_root, req.target());
+    std::string path = pathCat(doc_root, req.target());
     if(req.target().back() == '/') {
         path.append("index.html");
     }
@@ -123,7 +123,7 @@ void handle_request(beast::string_view doc_root, http::request<Body, http::basic
     if(req.method() == http::verb::head) {
         http::response<http::empty_body> res{http::status::ok, req.version()};
         res.set(http::field::server, BOOST_BEAST_VERSION_STRING);
-        res.set(http::field::content_type, mime_type(path));
+        res.set(http::field::content_type, mimeType(path));
         res.content_length(size);
         res.keep_alive(req.keep_alive());
         return send(std::move(res));
@@ -135,7 +135,7 @@ void handle_request(beast::string_view doc_root, http::request<Body, http::basic
         std::make_tuple(std::move(body)),
         std::make_tuple(http::status::ok, req.version())};
     res.set(http::field::server, BOOST_BEAST_VERSION_STRING);
-    res.set(http::field::content_type, mime_type(path));
+    res.set(http::field::content_type, mimeType(path));
     res.content_length(size);
     res.keep_alive(req.keep_alive());
     return send(std::move(res));

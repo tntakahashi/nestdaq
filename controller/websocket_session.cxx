@@ -11,13 +11,13 @@
 #include "controller/websocket_session.h"
 
 //_____________________________________________________________________________
-websocket_session::websocket_session(tcp::socket&& socket)
-    : ws_(std::move(socket))
+WebSocketSession::WebSocketSession(tcp::socket&& socket)
+    : fWebSocket(std::move(socket))
 {
 }
 
 //_____________________________________________________________________________
-void websocket_session::on_accept(beast::error_code ec)
+void WebSocketSession::onAccept(beast::error_code ec)
 {
     LOG(debug) << " websocket session : new connection\n";
     if(ec) {
@@ -25,77 +25,77 @@ void websocket_session::on_accept(beast::error_code ec)
         return;
     }
 
-    static unsigned int lastId{0};
-    static std::mutex mtx;
+    static unsigned int gLastId{0};
+    static std::mutex gMutex;
     {
-        std::scoped_lock<std::mutex> lock{mtx};
-        id_ = ++lastId;
-        OnConnect(shared_from_this());
+        std::scoped_lock<std::mutex> lock{gMutex};
+        fId = ++gLastId;
+        handleWebSocketConnect(shared_from_this());
     }
 
     // Read a message
-    do_read();
+    doRead();
 }
 
 //_____________________________________________________________________________
-void websocket_session::do_read()
+void WebSocketSession::doRead()
 {
     // Read a message into our buffer
-    ws_.async_read(buffer_,
-                   beast::bind_front_handler(&websocket_session::on_read, shared_from_this())
+    fWebSocket.async_read(fBuffer,
+                   beast::bind_front_handler(&WebSocketSession::onRead, shared_from_this())
                   );
 }
 
 //_____________________________________________________________________________
-void websocket_session::on_read(beast::error_code ec, std::size_t bytes_transferred)
+void WebSocketSession::onRead(beast::error_code ec, std::size_t bytes_transferred)
 {
     boost::ignore_unused(bytes_transferred);
 
-    // This indicates that the websocket_session was closed
+    // This indicates that the WebSocketSession was closed
     if(ec == websocket::error::closed) {
         LOG(warn) << "websocket session : " << ec.what();
-        OnClose(id_);
+        handleWebSocketClose(fId);
         return;
     }
 
     if(ec) {
         LOG(warn) << "websocket session : " << ec.what();
         fail(ec, "websocket read");
-        OnClose(id_);
+        handleWebSocketClose(fId);
         return;
     }
 
-    ws_.text(ws_.got_text());
+    fWebSocket.text(fWebSocket.got_text());
     if (bytes_transferred>0) {
-        if (ws_.got_text()) {
-            const std::string m(beast::buffers_to_string(buffer_.data()));
-//      std::cout << "received message: got_text() ? " << ws_.got_text()
+        if (fWebSocket.got_text()) {
+            const std::string m(beast::buffers_to_string(fBuffer.data()));
+//      std::cout << "received message: got_text() ? " << fWebSocket.got_text()
 //                << " buffer (size = " << m.size() << " bytes): " << m << std::endl;
-            buffer_.consume(buffer_.size());
-            OnRead(id_, m);
+            fBuffer.consume(fBuffer.size());
+            handleWebSocketRead(fId, m);
 
         } else {
-            const auto m = beast::buffers_to_string(buffer_.data());
+            const auto m = beast::buffers_to_string(fBuffer.data());
             std::vector<char> buf(m.begin(), m.end());
-//      std::cout << "received message: got_text() ? " << ws_.got_text() << "\n"
-//                << " buffer (" << buffer_.size() << " bytes, "
+//      std::cout << "received message: got_text() ? " << fWebSocket.got_text() << "\n"
+//                << " buffer (" << fBuffer.size() << " bytes, "
 //                << " transferred: " << bytes_transferred << " bytes)\n";
 //      std::for_each(buf.begin(), buf.end(),
 //                   [](auto x) { std::cout << static_cast<uint16_t>(x) << " "; });
 //      std::cout << std::endl;
-            buffer_.consume(buffer_.size());
-            OnRead(id_, buf);
+            fBuffer.consume(fBuffer.size());
+            handleWebSocketRead(fId, buf);
         }
     } else {
     }
 
     // Do another read
-    do_read();
+    doRead();
 }
 
 //_____________________________________________________________________________
-void websocket_session::write(const std::string &message)
+void WebSocketSession::write(const std::string &message)
 {
     // synchronous write
-    ws_.write(net::buffer(message));
+    fWebSocket.write(net::buffer(message));
 }

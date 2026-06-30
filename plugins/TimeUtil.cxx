@@ -10,7 +10,7 @@
 #include "plugins/TimeUtil.h"
 
 //_____________________________________________________________________________
-const std::string daq::service::to_date(const std::chrono::system_clock::time_point &p)
+const std::string daq::service::toDate(const std::chrono::system_clock::time_point &p)
 {
     std::time_t t = std::chrono::system_clock::to_time_t(p);
     std::tm lt{};
@@ -26,7 +26,7 @@ const std::string daq::service::to_date(const std::chrono::system_clock::time_po
 }
 
 //_____________________________________________________________________________
-auto daq::service::update_date(const std::chrono::system_clock::time_point &s,
+auto daq::service::updateDate(const std::chrono::system_clock::time_point &s,
                                const std::chrono::steady_clock::time_point &t)
 -> const std::pair<std::chrono::nanoseconds, std::chrono::system_clock::time_point>
 {

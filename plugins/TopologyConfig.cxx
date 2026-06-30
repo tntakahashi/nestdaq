@@ -20,7 +20,7 @@
 #include "plugins/tools.h"
 #include "plugins/TopologyConfig.h"
 
-static constexpr std::string_view MyClass{"daq::service::TopologyConfig"};
+static constexpr std::string_view kMyClass{"daq::service::TopologyConfig"};
 
 namespace topology {
 static constexpr std::string_view Prefix{"topology"};
@@ -189,16 +189,16 @@ daq::service::TopologyConfig::TopologyConfig(daq::service::Plugin& plugin)
         fSeparator   = GetProperty<std::string>(Separator.data());
         fMaxTtl      = GetProperty<long long>(MaxTtl.data());
 
-        LOG(debug) << MyClass
+        LOG(debug) << kMyClass
                    << " top prefix = " << fTopPrefix
                    << "\n service = " << fServiceName
                    << "\n id = " << fId
                    << "\n separator = " << fSeparator
                    << "\n max ttl = " << fMaxTtl;
     } catch (const std::exception &e) {
-        LOG(error) << " exception in " << MyClass << ":" << __LINE__ << " e.what() = " << e.what();
+        LOG(error) << " exception in " << kMyClass << ":" << __LINE__ << " e.what() = " << e.what();
     } catch (...) {
-        LOG(error) << " exception in " << MyClass << ":" << __LINE__ << " unknown";
+        LOG(error) << " exception in " << kMyClass << ":" << __LINE__ << " unknown";
     }
 }
 
@@ -289,9 +289,9 @@ void daq::service::TopologyConfig::ConfigConnect()
     };
 
     //LOG(info) << "connect-config = " <<  fConnectConfig;
-    const auto& pt = to_json(fConnectConfig);
+    const auto& pt = toJson(fConnectConfig);
 
-    //LOG(info) << " connect-config (JSON) = " << to_string(pt);
+    //LOG(info) << " connect-config (JSON) = " << toJsonString(pt);
     std::vector<std::string> channelConfigOptions;
     for (const auto& child : pt) {
         // child.first is string
@@ -506,9 +506,9 @@ void daq::service::TopologyConfig::ConfigConnect()
 
         SetProperties(properties);
     } catch (const std::exception& e) {
-        LOG(error) << MyClass << " error on SetProperty(chans.) : id = " << fId << ": " << e.what();
+        LOG(error) << kMyClass << " error on SetProperty(chans.) : id = " << fId << ": " << e.what();
     } catch (...) {
-        LOG(error) << MyClass << " unknown exception on SetProperty(chans.) :";
+        LOG(error) << kMyClass << " unknown exception on SetProperty(chans.) :";
     }
     LOG(debug) << __FUNCTION__ << " done";
     //LOG(debug) << " after update";
@@ -526,7 +526,7 @@ auto daq::service::TopologyConfig::GetPeerState(const MQChannel & channels) -> s
     std::unordered_set<std::string> peerKeys;
     for (const auto &[name, sp] : channels) {
         for (const auto& [lk, lp] : fLinks) {
-            //LOG(debug) << MyClass << " " << __FUNCTION__ << ":" << __LINE__ << " bind endpoint = " << sp.name
+            //LOG(debug) << kMyClass << " " << __FUNCTION__ << ":" << __LINE__ << " bind endpoint = " << sp.name
             //           << ", link property = " << lp.myService << ":" << lp.myChannel
             //           << ", " << lp.peerService << ":" << lp.peerChannel;
             if ((fServiceName == lp.myService) && (sp.name == lp.myChannel)) {
@@ -585,9 +585,9 @@ void daq::service::TopologyConfig::Initialize()
     }
     if (!fConnectConfig.empty()) {
         LOG(info) << "connect-config = " <<  fConnectConfig;
-        const auto& pt = to_json(fConnectConfig);
+        const auto& pt = toJson(fConnectConfig);
 
-        LOG(info) << " connect-config (JSON) = " << to_string(pt);
+        LOG(info) << " connect-config (JSON) = " << toJsonString(pt);
         for (const auto& child : pt) {
             // child.first is string
             //LOG(info) << " channel name = " << child.first;
@@ -641,7 +641,7 @@ void daq::service::TopologyConfig::Initialize()
         channelList.push_back(&v);
     }
 
-    LOG(debug) << MyClass << " " << __FUNCTION__ << " number of channels : bind = " //
+    LOG(debug) << kMyClass << " " << __FUNCTION__ << " number of channels : bind = " //
                << fBindChannels.size() << ", connect = " << fConnectChannels.size();
     std::vector<std::string> channelConfigOptions;
     for (auto p : channelList) {
@@ -660,7 +660,7 @@ void daq::service::TopologyConfig::Initialize()
             const auto &peerChannel = (useL) ? l.myChannel : l.peerChannel;
             // scan keys by a pattern = "daq_servie:service:*:presence"
             const auto &keys = scan(*GetClient(), {fTopPrefix, peerService, "*", PresencePrefix.data()}, fSeparator);
-            LOG(debug) << MyClass << " " << __FUNCTION__ << " scan-service : peer name = " << peerService << ", n peers " << keys.size();
+            LOG(debug) << kMyClass << " " << __FUNCTION__ << " scan-service : peer name = " << peerService << ", n peers " << keys.size();
             for (const auto &a: keys) {
                 auto k = a.substr(0, a.find_last_of(fSeparator));
                 k = join({k, topology::ChannelPrefix.data(), peerChannel}, fSeparator);
@@ -700,12 +700,12 @@ void daq::service::TopologyConfig::Initialize()
         }
         SetProperties(properties);
     } catch (const std::exception& e) {
-        LOG(error) << MyClass << " error on SetProperty(chans.) : " << e.what();
+        LOG(error) << kMyClass << " error on SetProperty(chans.) : " << e.what();
     } catch (...) {
-        LOG(error) << MyClass << " unknown exception on SetProperty(chans.) :";
+        LOG(error) << kMyClass << " unknown exception on SetProperty(chans.) :";
     }
 
-    LOG(debug) << MyClass << " Initialize() done";
+    LOG(debug) << kMyClass << " Initialize() done";
 }
 
 //_____________________________________________________________________________
@@ -739,10 +739,10 @@ void daq::service::TopologyConfig::InitializeDefaultChannelProperties()
             }
         }
         catch (const std::exception& e) {
-            LOG(error) << MyClass << " " << __FUNCTION__ << " : " << e.what();
+            LOG(error) << kMyClass << " " << __FUNCTION__ << " : " << e.what();
         }
         catch (...) {
-            LOG(error) << MyClass << " " << __FUNCTION__ << " : unknown exception";
+            LOG(error) << kMyClass << " " << __FUNCTION__ << " : unknown exception";
         }
     }
     // PrintConfig(fDefaultChannelProperties, "(default) chans.");
@@ -798,9 +798,9 @@ void daq::service::TopologyConfig::OnDeviceStateChange(DeviceState newState)
             break;
         }
     } catch (const std::exception &e) {
-        LOG(error) << MyClass << " exception during device state change: " << e.what();
+        LOG(error) << kMyClass << " exception during device state change: " << e.what();
     } catch (...) {
-        LOG(error) << MyClass << " exception during device state change: unknow exception";
+        LOG(error) << kMyClass << " exception during device state change: unknow exception";
     }
 }
 
@@ -951,14 +951,14 @@ const std::vector<std::string> daq::service::TopologyConfig::ReadPeerAddress(con
     }
 
     auto scanPattern = join({peerInstanceKey.data(), topology::SocketPrefix.data(), "chans."s + peerChannel.data() + ".*"s}, fSeparator);
-    LOG(debug) << MyClass << " " << __FUNCTION__ << " id = " << fId<<  " scanPattern = " << scanPattern;
+    LOG(debug) << kMyClass << " " << __FUNCTION__ << " id = " << fId<<  " scanPattern = " << scanPattern;
     auto subSocketKeys = scan(r, scanPattern);
-    LOG(debug) << MyClass << " " << __FUNCTION__ << " id = " << fId << " subSokectKeys = " << subSocketKeys.size();
+    LOG(debug) << kMyClass << " " << __FUNCTION__ << " id = " << fId << " subSokectKeys = " << subSocketKeys.size();
     std::set<std::string> sorted(subSocketKeys.cbegin(), subSocketKeys.cend());
 
     std::vector<std::string> ret;
     for (const auto &k : sorted) {
-        LOG(debug) << MyClass << " " << __FUNCTION__ << " id = " << fId << " k = " << k;
+        LOG(debug) << kMyClass << " " << __FUNCTION__ << " id = " << fId << " k = " << k;
         std::string address;
         int nRetry = 0;
         while (true) {
@@ -975,7 +975,7 @@ const std::vector<std::string> daq::service::TopologyConfig::ReadPeerAddress(con
             std::this_thread::sleep_for(1000ms);
             ++nRetry;
         }
-        LOG(debug) << MyClass << " " << __FUNCTION__ << ":" << __LINE__ << " id = " << fId << " address = " << address;
+        LOG(debug) << kMyClass << " " << __FUNCTION__ << ":" << __LINE__ << " id = " << fId << " address = " << address;
 
         ret.push_back(address);
     }
@@ -1009,7 +1009,7 @@ const std::string daq::service::TopologyConfig::ReadPeerIP(const std::string& pe
  */
 void daq::service::TopologyConfig::Reset()
 {
-    LOG(debug) << MyClass << " " << __FUNCTION__;
+    LOG(debug) << kMyClass << " " << __FUNCTION__;
     fBindChannels.clear();
     fConnectChannels.clear();
     for (const auto& [k, v] : fCustomChannelProperties) {
@@ -1025,7 +1025,7 @@ void daq::service::TopologyConfig::Reset()
  */
 void daq::service::TopologyConfig::ResetTtl(sw::redis::Pipeline& pipe)
 {
-    //LOG(debug) << MyClass << " " << __FUNCTION__ << " num registered = " << fRegisteredKeys.size();
+    //LOG(debug) << kMyClass << " " << __FUNCTION__ << " num registered = " << fRegisteredKeys.size();
     std::for_each(fRegisteredKeys.cbegin(), fRegisteredKeys.cend(),
     [&pipe, ttl = fMaxTtl](const auto& key) {
         pipe.expire(key, ttl);
@@ -1068,7 +1068,7 @@ void daq::service::TopologyConfig::ResolveConnectAddress()
         if (!sp.address.empty() && sp.address!="unspecified") {
             continue;
         }
-        LOG(debug) << MyClass << " " << __FUNCTION__ << " id = " << fId << " find peer of " << sp.name << " numSockets = " << sp.numSockets;
+        LOG(debug) << kMyClass << " " << __FUNCTION__ << " id = " << fId << " find peer of " << sp.name << " numSockets = " << sp.numSockets;
         const auto &myInstanceKey = join({fTopPrefix, fServiceName, fId}, fSeparator);
         const auto &myChannelKey  = join({myInstanceKey, topology::ChannelPrefix.data(), sp.name}, fSeparator);
 
@@ -1079,14 +1079,14 @@ void daq::service::TopologyConfig::ResolveConnectAddress()
         SocketProperty res(sp);
         bool is1to1{false};
         for (const auto& p : peers) {
-            LOG(debug) << MyClass << " " << __FUNCTION__ << " id = " << fId << " peer of " << name << " : " << p;
+            LOG(debug) << kMyClass << " " << __FUNCTION__ << " id = " << fId << " peer of " << name << " : " << p;
             const auto &k = join({p, topology::PeerPrefix.data()}, fSeparator);
             std::vector<std::string> neighbors;
             r.lrange(k, 0, -1, std::back_inserter(neighbors));
-            LOG(debug) << MyClass << " " << __FUNCTION__ << ":" << __LINE__ << " id = " << fId << " n neighbors " << neighbors.size();
+            LOG(debug) << kMyClass << " " << __FUNCTION__ << ":" << __LINE__ << " id = " << fId << " n neighbors " << neighbors.size();
             int myIndex = 0; // index viewed from the peer
             // for (const auto& n : neighbors) {
-            //   LOG(debug) << MyClass << " " << __FUNCTION__ << ":" << __LINE__ << " id = " << fId << " neighbor: " << n;
+            //   LOG(debug) << kMyClass << " " << __FUNCTION__ << ":" << __LINE__ << " id = " << fId << " neighbor: " << n;
             // }
             for (const auto& n : neighbors) {
                 if (n==myChannelKey) {
@@ -1100,7 +1100,7 @@ void daq::service::TopologyConfig::ResolveConnectAddress()
                     continue;
                 }
             }
-            LOG(debug) << MyClass << " " << __FUNCTION__ << ":" << __LINE__ << " id = " << fId << " myIndex = " << myIndex;
+            LOG(debug) << kMyClass << " " << __FUNCTION__ << ":" << __LINE__ << " id = " << fId << " myIndex = " << myIndex;
             std::unordered_map<std::string, std::string> h;
             r.hgetall(p, std::inserter(h, h.begin()));
             const auto &peerProperty = ToSocketProperty(h);
@@ -1111,8 +1111,8 @@ void daq::service::TopologyConfig::ResolveConnectAddress()
             if ((sp.numSockets<=1) && (peerProperty.numSockets<=1)) {
                 is1to1 = true;
                 // 1:1 or fan-in/fan-out
-                LOG(debug) << MyClass << " " << __FUNCTION__ << ":" << __LINE__ << " id = " << fId << " 1:1 or fan-in/fan-out ";
-                LOG(debug) << MyClass << " " << __FUNCTION__ << ":" << __LINE__  << " id = " << fId
+                LOG(debug) << kMyClass << " " << __FUNCTION__ << ":" << __LINE__ << " id = " << fId << " 1:1 or fan-in/fan-out ";
+                LOG(debug) << kMyClass << " " << __FUNCTION__ << ":" << __LINE__  << " id = " << fId
                            << " peer size = " << peers.size() << " myIndex = " << myIndex << " peerIndex = " << peerIndex
                            << " address.size() = " << address.size();
                 if ((myIndex==peerIndex) || (peers.size()==1)) {
@@ -1121,16 +1121,16 @@ void daq::service::TopologyConfig::ResolveConnectAddress()
                 }
             } else if ((sp.numSockets<=1) && (peerProperty.numSockets>1)) {
                 // 1:m
-                LOG(debug) << MyClass << " " << __FUNCTION__ << ":" << __LINE__ << " id = " << fId << " 1:m ";
+                LOG(debug) << kMyClass << " " << __FUNCTION__ << ":" << __LINE__ << " id = " << fId << " 1:m ";
                 res.address = address[myAddressIndex];
             } else if ((sp.numSockets>1) && (peerProperty.numSockets<=1)) {
                 // n:1
-                LOG(debug) << MyClass << " " << __FUNCTION__ << ":" << __LINE__ << " id = " << fId << " n:1 ";
+                LOG(debug) << kMyClass << " " << __FUNCTION__ << ":" << __LINE__ << " id = " << fId << " n:1 ";
                 assert(address.size()==1);
                 res.address += (res.address.empty()) ? address[0] : ("," + address[0]);
             } else if ((sp.numSockets>1) && (peerProperty.numSockets>1)) {
                 // n:m
-                LOG(debug) << MyClass << " " << __FUNCTION__ << ":" << __LINE__ << " id = " << fId << " n:m ";
+                LOG(debug) << kMyClass << " " << __FUNCTION__ << ":" << __LINE__ << " id = " << fId << " n:m ";
                 assert(address.size()>myAddressIndex);
                 res.address += (res.address.empty()) ? address[myAddressIndex] : ("," + address[myAddressIndex]);
             }
@@ -1160,9 +1160,9 @@ void daq::service::TopologyConfig::ResolveConnectAddress()
             SetProperties(properties);
         }
     } catch (const std::exception& e) {
-        LOG(error) << MyClass << " error on SetProperty(chans.) : id = " << fId << ": " << e.what();
+        LOG(error) << kMyClass << " error on SetProperty(chans.) : id = " << fId << ": " << e.what();
     } catch (...) {
-        LOG(error) << MyClass << " unknown exception on SetProperty(chans.) :";
+        LOG(error) << kMyClass << " unknown exception on SetProperty(chans.) :";
     }
 //  LOG(debug) << " after update";
 //  PrintConfig(GetPropertiesAsStringStartingWith("channel-config"), "channel-config");
@@ -1178,7 +1178,7 @@ void daq::service::TopologyConfig::Unregister()
     if (!fRegisteredKeys.empty()) {
         auto ndeleted = GetClient()->del(fRegisteredKeys.cbegin(), fRegisteredKeys.cend());
         fRegisteredKeys.clear();
-        LOG(debug) << MyClass << " " << __FUNCTION__ << " n deleted = " << ndeleted;
+        LOG(debug) << kMyClass << " " << __FUNCTION__ << " n deleted = " << ndeleted;
     }
 }
 
@@ -1198,12 +1198,12 @@ void daq::service::TopologyConfig::WaitBindAddress()
     std::unordered_set<std::string> channels;
     for (const auto& [name, sp] : fConnectChannels) {
         for (const auto& [lk, lp] : fLinks) {
-            LOG(debug) << MyClass << " " << __FUNCTION__ << ":" << __LINE__ << " connect " << sp.name
+            LOG(debug) << kMyClass << " " << __FUNCTION__ << ":" << __LINE__ << " connect " << sp.name
                        << ", " << lp.myService << ":" << lp.myChannel
                        << ", " << lp.peerService << ":" << lp.peerChannel;
             if ((fServiceName == lp.myService) && (sp.name == lp.myChannel)) {
                 auto k = join({fTopPrefix, lp.peerService, "*", PresencePrefix.data()}, fSeparator);
-                LOG(debug) << MyClass << " " << __FUNCTION__ << ":" << __LINE__ << " : k = " << k;
+                LOG(debug) << kMyClass << " " << __FUNCTION__ << ":" << __LINE__ << " : k = " << k;
                 auto presenceKeys = scan(r, {fTopPrefix, lp.peerService, "*", PresencePrefix.data()}, fSeparator);
                 LOG(debug) << __LINE__ << ": n presence: " << presenceKeys.size();
                 for (auto &a : presenceKeys) {
@@ -1213,7 +1213,7 @@ void daq::service::TopologyConfig::WaitBindAddress()
                 }
             } else if ((fServiceName == lp.peerService) && (sp.name == lp.peerChannel)) {
                 auto k = join({fTopPrefix, lp.myService, "*", PresencePrefix.data()}, fSeparator);
-                LOG(debug) << MyClass << " " << __FUNCTION__ << ":" << __LINE__ << " : k = " << k;
+                LOG(debug) << kMyClass << " " << __FUNCTION__ << ":" << __LINE__ << " : k = " << k;
                 auto presenceKeys = scan(r, {fTopPrefix, lp.myService, "*", PresencePrefix.data()}, fSeparator);
                 LOG(debug) << __LINE__ << ": n presence: " << presenceKeys.size();
                 for (auto &a : presenceKeys) {
@@ -1226,7 +1226,7 @@ void daq::service::TopologyConfig::WaitBindAddress()
 
     for (const auto &c : channels) {
         while (true) {
-            LOG(warn) << MyClass << " " << __FUNCTION__ << " wait channel : " << c;
+            LOG(warn) << kMyClass << " " << __FUNCTION__ << " wait channel : " << c;
             auto v = r.hget(c, "bound");
             if (v) {
                 auto s = boost::to_lower_copy(*v);
@@ -1256,7 +1256,7 @@ void daq::service::TopologyConfig::WaitForPeerConnection()
             continue;
         }
         for (const auto& [lk, lp] : fLinks) {
-            //LOG(debug) << MyClass << " " << __FUNCTION__ << ":" << __LINE__ << " bind endpoint = " << sp.name
+            //LOG(debug) << kMyClass << " " << __FUNCTION__ << ":" << __LINE__ << " bind endpoint = " << sp.name
             //           << ", link property = " << lp.myService << ":" << lp.myChannel
             //           << ", " << lp.peerService << ":" << lp.peerChannel;
             if ((fServiceName == lp.myService) && (sp.name == lp.myChannel)) {
@@ -1344,7 +1344,7 @@ void daq::service::TopologyConfig::WriteAddress(MQChannel &channels, std::functi
                 }
                 const auto &key = join({fTopPrefix, fServiceName, fId, topology::SocketPrefix.data(), localKey}, fSeparator);
                 std::ostringstream ss;
-                ss << MyClass << " " << __FUNCTION__ << ":" << __LINE__ << " key = " << key << " :\n";
+                ss << kMyClass << " " << __FUNCTION__ << ":" << __LINE__ << " key = " << key << " :\n";
                 std::map<std::string, std::string> h;
                 for (const auto &[k, v] : chans) {
                     auto hk = k.substr(k.find_last_of(".")+1);
@@ -1367,9 +1367,9 @@ void daq::service::TopologyConfig::WriteAddress(MQChannel &channels, std::functi
         }
         pipe.exec();
     } catch (const std::exception &e) {
-        LOG(error) << MyClass << " " << __FUNCTION__ << " caught exception : " << e.what();
+        LOG(error) << kMyClass << " " << __FUNCTION__ << " caught exception : " << e.what();
     } catch (...) {
-        LOG(error) << MyClass << " " << __FUNCTION__ << " caught unknown exception";
+        LOG(error) << kMyClass << " " << __FUNCTION__ << " caught unknown exception";
     }
 }
 
@@ -1384,11 +1384,11 @@ void daq::service::TopologyConfig::WriteBindAddress()
         return;
     }
 
-    LOG(debug) << MyClass << " write bind address to the registry. (n =  " << fBindChannels.size() << ")";
+    LOG(debug) << kMyClass << " write bind address to the registry. (n =  " << fBindChannels.size() << ")";
     WriteAddress(fBindChannels, [this](auto &pipe, auto name) {
         auto channel = join({fTopPrefix, fServiceName, fId, topology::ChannelPrefix.data(), name.data()}, fSeparator);
         pipe.hset(channel, "bound", "1");
-        LOG(warn) << MyClass << " " << __FUNCTION__ << " bound channel: " << channel;
+        LOG(warn) << kMyClass << " " << __FUNCTION__ << " bound channel: " << channel;
     });
 
     //LOG(debug) << __PRETTY_FUNCTION__ << " done";
@@ -1406,7 +1406,7 @@ void daq::service::TopologyConfig::WriteChannel(SocketProperty &sp, const std::v
     }
     const auto &key = join({fTopPrefix, fServiceName, fId, topology::ChannelPrefix.data(), sp.name}, fSeparator);
 
-    LOG(debug) << MyClass << " " << __FUNCTION__ << " channel : " << sp.name << " : n peers = " << peers.size();
+    LOG(debug) << kMyClass << " " << __FUNCTION__ << " channel : " << sp.name << " : n peers = " << peers.size();
     fPlugin.SetProperty("n-peers:"s+sp.name, std::to_string(peers.size()));
 
     auto pipe = GetClient()->pipeline();
@@ -1454,7 +1454,7 @@ void daq::service::TopologyConfig::WriteConnectAddress()
         return;
     }
 
-    LOG(debug) << MyClass << " write connect address to the registry. (n =  " << fConnectChannels.size() << ")";
+    LOG(debug) << kMyClass << " write connect address to the registry. (n =  " << fConnectChannels.size() << ")";
     WriteAddress(fConnectChannels);
     //LOG(debug) << __PRETTY_FUNCTION__ << " done";
 }

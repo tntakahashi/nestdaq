@@ -36,7 +36,7 @@
 //extern char *program_invocation_short_name;
 //extern char *__progname; // same as program_invocation_short_name
 
-static constexpr std::string_view MyClass{"daq::service::Plugin"};
+static constexpr std::string_view kMyClass{"daq::service::Plugin"};
 
 static constexpr std::string_view StartupState{"startup-state"};
 
@@ -49,7 +49,7 @@ static constexpr long long kMillisecondsPerSecond{1000};
 static constexpr std::size_t kCwdBufferSize{512};
 static constexpr std::chrono::milliseconds kRedLockRetryInterval{100};
 
-static const std::unordered_set<std::string_view> knownCommandList{
+static const std::unordered_set<std::string_view> kKnownCommandList{
     fairmq::command::Bind,
     fairmq::command::CompleteInit,
     fairmq::command::Connect,
@@ -69,7 +69,7 @@ static const std::unordered_set<std::string_view> knownCommandList{
 using namespace std::string_literals;
 
 //_____________________________________________________________________________
-bool ends_with(const std::string& s, const std::string& suffix)
+bool endsWith(const std::string& s, const std::string& suffix)
 {
     if (s.size() < suffix.size()) return false;
     return std::equal(std::rbegin(suffix), std::rend(suffix), std::rbegin(s));
@@ -82,7 +82,7 @@ auto PluginProgramOptions() -> fair::mq::Plugin::ProgOptions
     namespace bpo = boost::program_options;
 
     LOG(debug) << "daq::service::PluginProgramOptions: add_options";
-    auto pluginOptions = bpo::options_description(std::string{MyClass});
+    auto pluginOptions = bpo::options_description(std::string{kMyClass});
     pluginOptions.add_options() //
                  (std::string{ServiceName}.data(),        bpo::value<std::string>(),  "name of this service")
                  //
@@ -135,7 +135,7 @@ Plugin::Plugin(std::string_view name,
 {
     fUuid = boost::uuids::nil_uuid();
 
-    LOG(debug) << MyClass << "() hello";
+    LOG(debug) << kMyClass << "() hello";
     SetCurrentWorkingDirectory();
     SetProcessName();
 
@@ -146,7 +146,7 @@ Plugin::Plugin(std::string_view name,
         fUuid = boost::uuids::random_generator()();
         SetProperty("uuid", boost::uuids::to_string(fUuid));
     }
-    LOG(debug) << MyClass << " uuid = "  << fUuid;
+    LOG(debug) << kMyClass << " uuid = "  << fUuid;
 
     fSeparator = GetProperty<std::string>(std::string{Separator});
     SetProperty("top-prefix", std::string{TopPrefix});
@@ -215,13 +215,13 @@ Plugin::Plugin(std::string_view name,
 
     try {
         TakeDeviceControl();
-        LOG(info) << MyClass << " succeeded in TakeDeviceControl()";
+        LOG(info) << kMyClass << " succeeded in TakeDeviceControl()";
     } catch (fair::mq::PluginServices::DeviceControlError &e) {
-        LOG(error) << MyClass << "'s constructor : " << e.what();
+        LOG(error) << kMyClass << "'s constructor : " << e.what();
     } catch (const std::exception &e) {
-        LOG(error) << MyClass << "'s constructor : canneo take device control. " << e.what();
+        LOG(error) << kMyClass << "'s constructor : canneo take device control. " << e.what();
     } catch (...) {
-        LOG(error) << MyClass << "'s constructor : unknwo exception";
+        LOG(error) << kMyClass << "'s constructor : unknwo exception";
     }
 
     // register to service registry
@@ -245,11 +245,11 @@ Plugin::Plugin(std::string_view name,
         return fTopology->GetPeerStateOfConnectChannels();
     });
 
-    LOG(warn) << MyClass << " SubscribeToDeviceStateChange()";
+    LOG(warn) << kMyClass << " SubscribeToDeviceStateChange()";
     SubscribeToDeviceStateChange([this](DeviceState newState) {
         try {
             auto stateName = GetStateName(newState);
-            LOG(info) << MyClass << " state : " << stateName;
+            LOG(info) << kMyClass << " state : " << stateName;
             fStateQueue.Push(newState);
 
             {
@@ -280,9 +280,9 @@ Plugin::Plugin(std::string_view name,
                 break;
             }
         } catch (const std::exception &e) {
-            LOG(error) << MyClass << " exception during device state change: " << e.what();
+            LOG(error) << kMyClass << " exception during device state change: " << e.what();
         } catch (...) {
-            LOG(error) << MyClass << " exception during device state change: unknow exception";
+            LOG(error) << kMyClass << " exception during device state change: unknow exception";
         }
     });
 
@@ -292,15 +292,15 @@ Plugin::Plugin(std::string_view name,
             SubscribeToDaqCommand();
             RunShutdownSequence();
         } catch (const fair::mq::PluginServices::DeviceControlError &e) {
-            LOG(error) << MyClass << " " << e.what();
+            LOG(error) << kMyClass << " " << e.what();
         } catch (const fair::mq::DeviceErrorState &e) {
-            LOG(error) << MyClass << " " << e.what();
+            LOG(error) << kMyClass << " " << e.what();
             ReleaseDeviceControl();
         }
     });
     fStateControlThread.detach();
 
-    LOG(debug) << MyClass << "() done";
+    LOG(debug) << kMyClass << "() done";
 
 }
 
@@ -308,11 +308,11 @@ Plugin::Plugin(std::string_view name,
 Plugin::~Plugin()
 {
     UnsubscribeFromDeviceStateChange();
-    LOG(warn) << MyClass << " UnsubscribeFromDeviceStateChange()";
+    LOG(warn) << kMyClass << " UnsubscribeFromDeviceStateChange()";
     auto state = GetCurrentDeviceState();
     if (state==DeviceState::Exiting) {
         ReleaseDeviceControl();
-        LOG(info) << MyClass << " ReleaseDeviceControl() done";
+        LOG(info) << kMyClass << " ReleaseDeviceControl() done";
     }
     fPluginShutdownRequested = true;
 //  std::this_thread::sleep_for(std::chrono::microseconds(1000000));
@@ -333,13 +333,13 @@ Plugin::~Plugin()
         fTopology->Reset();
     }
     Unregister();
-    LOG(debug) << "~" << MyClass << "() bye";
+    LOG(debug) << "~" << kMyClass << "() bye";
 }
 
 //_____________________________________________________________________________
 void Plugin::ChangeDeviceStateByMultiCommand(std::string_view cmd)
 {
-    //LOG(debug) << MyClass << ":" << __func__;
+    //LOG(debug) << kMyClass << ":" << __func__;
     auto state = GetCurrentDeviceState();
     //auto stateName = GetStateName(state);
 
@@ -559,14 +559,14 @@ void Plugin::ChangeDeviceStateByMultiCommand(std::string_view cmd)
     default: // do nothing
         break;
     }
-    //LOG(debug) << MyClass << ":" << __func__ << " done";
+    //LOG(debug) << kMyClass << ":" << __func__ << " done";
 
 }
 
 //_____________________________________________________________________________
 void Plugin::ChangeDeviceStateBySingleCommand(std::string_view cmd)
 {
-    //LOG(debug) << MyClass << ":" << __func__;
+    //LOG(debug) << kMyClass << ":" << __func__;
     auto state = GetCurrentDeviceState();
     //auto stateName = GetStateName(state);
 
@@ -652,7 +652,7 @@ void Plugin::ChangeDeviceStateBySingleCommand(std::string_view cmd)
     default: // do nothing
         break;
     }
-    //LOG(debug) << MyClass << ":" << __func__ << " done";
+    //LOG(debug) << kMyClass << ":" << __func__ << " done";
 
 }
 
@@ -667,16 +667,16 @@ void Plugin::ReadRunNumber()
         LOG(error) << " could not find run-number key in redis = " << key;
         return;
     }
-    LOG(debug) << MyClass << " run number (from redis) = " << *runNumber;
+    LOG(debug) << kMyClass << " run number (from redis) = " << *runNumber;
     std::string myRunNumber;
     if (PropertyExists(std::string{RunNumber})) {
         myRunNumber = GetProperty<std::string>(std::string{RunNumber});
     }
     if (myRunNumber!=*runNumber) {
-        LOG(warn) << MyClass << " update run number " << *runNumber << " (old = " << myRunNumber << ")";
+        LOG(warn) << kMyClass << " update run number " << *runNumber << " (old = " << myRunNumber << ")";
         SetProperty(std::string{RunNumber}, *runNumber);
     } else {
-        // LOG(debug) << MyClass << " same run number " << *runNumber << " (old = " << myRunNumber << ")";
+        // LOG(debug) << kMyClass << " same run number " << *runNumber << " (old = " << myRunNumber << ")";
     }
 }
 
@@ -735,9 +735,9 @@ void Plugin::Register()
 
         //auto uptimeNsec = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - fHealth->createdTime);
         //fHealth->updatedTime = fHealth->createdTimeSystem + std::chrono::duration_cast<std::chrono::seconds>(uptimeNsec);
-        const auto &[uptimeNsec, updatedTime] = update_date(fHealth->createdTimeSystem, fHealth->createdTime);
-        LOG(debug) << MyClass << " hset " << fHealth->key << " " << fHealth->hostName << " " << fHealth->ipAddress;
-        LOG(debug) << MyClass << " hset " << fProgOptionKeyName;
+        const auto &[uptimeNsec, updatedTime] = updateDate(fHealth->createdTimeSystem, fHealth->createdTime);
+        LOG(debug) << kMyClass << " hset " << fHealth->key << " " << fHealth->hostName << " " << fHealth->ipAddress;
+        LOG(debug) << kMyClass << " hset " << fProgOptionKeyName;
 
         {
             // pipeline
@@ -749,9 +749,9 @@ void Plugin::Register()
                 std::make_pair("hostName",    fHealth->hostName),
                 std::make_pair("hostIp",      fHealth->ipAddress),
                 std::make_pair("serviceName", fServiceName),
-                std::make_pair("createdTime", to_date(fHealth->createdTimeSystem)),
-//              std::make_pair("updatedTime", to_date(fHealth->updatedTime)),
-                std::make_pair("updatedTime", to_date(updatedTime)),
+                std::make_pair("createdTime", toDate(fHealth->createdTimeSystem)),
+//              std::make_pair("updatedTime", toDate(fHealth->updatedTime)),
+                std::make_pair("updatedTime", toDate(updatedTime)),
                 std::make_pair("uptime",      std::to_string(std::chrono::duration_cast<std::chrono::milliseconds>(uptimeNsec).count())),
             })
             .expire(fHealth->key, fMaxTtl)
@@ -783,8 +783,8 @@ void Plugin::ResetTtl()
 //  LOG(debug) << " reset presence ttl";
 //  auto uptimeNsec = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - fHealth->createdTime);
 //  fHealth->updatedTime = fHealth->createdTimeSystem + std::chrono::duration_cast<std::chrono::seconds>(uptimeNsec);
-    const auto &[uptimeNsec, updatedTime] = update_date(fHealth->createdTimeSystem, fHealth->createdTime);
-    const auto & lastChecked = to_date(updatedTime);
+    const auto &[uptimeNsec, updatedTime] = updateDate(fHealth->createdTimeSystem, fHealth->createdTime);
+    const auto & lastChecked = toDate(updatedTime);
 
     std::scoped_lock<std::mutex> lock{fMutex};
     auto pipe = fClient->pipeline();
@@ -810,7 +810,7 @@ void Plugin::ResetTtl()
 void Plugin::RunStartupSequence()
 {
     // Idle -> .. -> DeviceReady
-    LOG(debug) << MyClass << " RunStartupSequence()";
+    LOG(debug) << kMyClass << " RunStartupSequence()";
     auto s = boost::to_lower_copy(fStartupState);
     LOG(debug) << " startup state = " << fStartupState << " " << s;
 
@@ -834,7 +834,7 @@ void Plugin::RunStartupSequence()
     ChangeDeviceStateBySingleCommand(fairmq::command::Run);
     if (s=="running") return;
 
-    LOG(debug) << MyClass << " RunStartupSequence() done";
+    LOG(debug) << kMyClass << " RunStartupSequence() done";
 }
 
 //_____________________________________________________________________________
@@ -843,7 +843,7 @@ void Plugin::RunStartupSequence()
  */
 void Plugin::RunShutdownSequence()
 {
-    LOG(debug) << MyClass << " RunShutdownSequence()";
+    LOG(debug) << kMyClass << " RunShutdownSequence()";
     auto nextState = GetCurrentDeviceState();
     if (nextState != DeviceState::Error) {
         fStateQueue.Clear();
@@ -876,7 +876,7 @@ void Plugin::RunShutdownSequence()
         nextState = fStateQueue.WaitForNext();
     }
     ReleaseDeviceControl();
-    LOG(debug) << MyClass << " RunShutdownSequence() done";
+    LOG(debug) << kMyClass << " RunShutdownSequence() done";
 }
 
 //_____________________________________________________________________________
@@ -1016,14 +1016,14 @@ void Plugin::SubscribeToDaqCommand()
     // set callback functions.
     sub.on_message([this](const auto& channel, const auto& msg) {
         // process message of MESSAGE type.
-        LOG(debug) << MyClass << " on_message(MESSAGE): channel = " << channel << " msg = " << msg;
+        LOG(debug) << kMyClass << " on_message(MESSAGE): channel = " << channel << " msg = " << msg;
         if (std::string{CommandChannelName} != channel) {
             return;
         }
-        const auto& obj = to_json(msg);
+        const auto& obj = toJson(msg);
         const auto& cmd = obj. template get_optional<std::string>("command");
         if (!cmd) {
-            LOG(error) << MyClass << " on_message(MESSAGE): missing command";
+            LOG(error) << kMyClass << " on_message(MESSAGE): missing command";
             return;
         }
         if (*cmd == "change_state") {
@@ -1037,15 +1037,15 @@ void Plugin::SubscribeToDaqCommand()
                 instances.emplace(x.second. template get_value<std::string>());
             }
             if (!val) {
-                LOG(error) << MyClass << " on_message() change_state : new state is not specified.";
+                LOG(error) << kMyClass << " on_message() change_state : new state is not specified.";
                 return;
             }
             if (services.empty()) {
-                LOG(error) << MyClass << " on_message() change_state : service is not specified.";
+                LOG(error) << kMyClass << " on_message() change_state : service is not specified.";
                 return;
             }
             if (instances.empty()) {
-                LOG(error) << MyClass << " on_message() change_state : instance is not specified.";
+                LOG(error) << kMyClass << " on_message() change_state : instance is not specified.";
                 return;
             }
             bool isSingleCommand = false; // TO DO
@@ -1075,13 +1075,13 @@ void Plugin::SubscribeToDaqCommand()
         } catch (const sw::redis::TimeoutError &) {
             continue;
         } catch (const sw::redis::Error &e) {
-            LOG(error) << MyClass << "::" << __func__ << ": error in consume(): " << e.what();
+            LOG(error) << kMyClass << "::" << __func__ << ": error in consume(): " << e.what();
             break;
         } catch (const std::exception& e) {
-            LOG(error) << MyClass << "::" << __func__ << ": error in consume(): " << e.what();
+            LOG(error) << kMyClass << "::" << __func__ << ": error in consume(): " << e.what();
             break;
         } catch (...) {
-            LOG(error) << MyClass << "::" << __func__ << ": unknown exception";
+            LOG(error) << kMyClass << "::" << __func__ << ": unknown exception";
             break;
         }
     }
@@ -1094,7 +1094,7 @@ void Plugin::SubscribeToDaqCommand()
  */
 void Plugin::Unregister()
 {
-    LOG(debug) << MyClass << " Unregister";
+    LOG(debug) << kMyClass << " Unregister";
 
     try {
         if (!fRegisteredKeys.empty()) {
@@ -1152,8 +1152,8 @@ void Plugin::WriteProgOptions()
  */
 void Plugin::WriteStartTime()
 {
-    const auto &[uptimeNsec, updatedTime] = update_date(fHealth->createdTimeSystem, fHealth->createdTime);
-    auto t   = to_date(updatedTime);
+    const auto &[uptimeNsec, updatedTime] = updateDate(fHealth->createdTimeSystem, fHealth->createdTime);
+    auto t   = toDate(updatedTime);
     auto tNS = std::to_string(std::chrono::duration_cast<std::chrono::nanoseconds>(uptimeNsec).count());
     fClient->hset(fHealth->key,
     {   std::make_pair(std::string{StartTime}, t),
@@ -1169,8 +1169,8 @@ void Plugin::WriteStartTime()
  */
 void Plugin::WriteStopTime()
 {
-    const auto &[uptimeNsec, updatedTime] = update_date(fHealth->createdTimeSystem, fHealth->createdTime);
-    auto t   = to_date(updatedTime);
+    const auto &[uptimeNsec, updatedTime] = updateDate(fHealth->createdTimeSystem, fHealth->createdTime);
+    auto t   = toDate(updatedTime);
     auto tNS = std::to_string(std::chrono::duration_cast<std::chrono::nanoseconds>(uptimeNsec).count());
     fClient->hset(fHealth->key,
     {   std::make_pair(std::string{StopTime}, t),

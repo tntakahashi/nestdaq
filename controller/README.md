@@ -25,9 +25,9 @@ does not link OpenTelemetry directly.
 | :-- | :-- |
 | `run_daq-webctl.cxx` | Executable entry point, command-line parsing, logging, telemetry, Redis setup, and server startup. |
 | `HttpWebSocketServer` | Owns the Boost.Asio I/O context, signal handling, listener, and worker threads. |
-| `listener` | Accepts Transmission Control Protocol (TCP) connections and starts HTTP sessions. |
-| `http_session` | Handles HTTP requests and upgrades WebSocket requests. |
-| `websocket_session` | Manages one WebSocket client connection. |
+| `Listener` | Accepts Transmission Control Protocol (TCP) connections and starts HTTP sessions. |
+| `HttpSession` | Handles HTTP requests and upgrades WebSocket requests. |
+| `WebSocketSession` | Manages one WebSocket client connection. |
 | `WebSocketHandle` | Dispatches JavaScript Object Notation (JSON) messages received from WebSocket clients. |
 | `WebGui` | Implements Redis-backed DAQ control, state polling, and command publication. |
 | `beast_tools` | Provides shared Boost.Beast HTTP response helpers. |

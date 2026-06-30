@@ -10,7 +10,7 @@
 
 #include "Sink.h"
 
-static constexpr std::string_view MyClass{"Sink"};
+static constexpr std::string_view kMyClass{"Sink"};
 static constexpr int kMaxDrainRetries{10};
 static constexpr std::chrono::milliseconds kDrainRetryInterval{200};
 
@@ -125,7 +125,7 @@ void Sink::InitTask()
     PrintConfig(fConfig, "channel-config", __PRETTY_FUNCTION__);
     PrintConfig(fConfig, "chans.", __PRETTY_FUNCTION__);
 
-    LOG(debug) << MyClass << " InitTask";
+    LOG(debug) << kMyClass << " InitTask";
     using opt = OptionKey;
 
     fInputChannelName = fConfig->GetProperty<std::string>(opt::InputChannelName);

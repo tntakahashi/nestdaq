@@ -28,7 +28,7 @@
 #include "plugins/MetricsPlugin.h"
 #include "nestdaq/telemetry/FairMQThroughputLogParser.h"
 
-static constexpr std::string_view MyClass{"daq::service::MetricsPlugin"};
+static constexpr std::string_view kMyClass{"daq::service::MetricsPlugin"};
 
 using namespace std::string_literals;
 
@@ -114,7 +114,7 @@ auto daq::service::MetricsPluginProgramOptions() -> fair::mq::Plugin::ProgOption
     using opt = daq::service::MetricsPlugin::OptionKey;
     LOG(debug) << "daq::service::MetricsPluginProgramOptions: add_options";
 
-    auto options = bpo::options_description(MyClass.data());
+    auto options = bpo::options_description(kMyClass.data());
     options.add_options()
            (opt::UpdateInterval.data(), bpo::value<long long>()->default_value(1000),     "update interval in milliseconds for CPU and memory usage.")
            (opt::ServerUri.data(),      bpo::value<std::string>(),                        "Redis server URI (if empty, the same URI of the service registry is used.)")
@@ -133,10 +133,10 @@ daq::service::MetricsPlugin::MetricsPlugin(std::string_view name,
     : fair::mq::Plugin(name.data(), version, maintainer.data(), homepage.data(), pluginServices)
 {
     using opt = OptionKey;
-    LOG(debug) << MyClass << "() hello " << GetName();
+    LOG(debug) << kMyClass << "() hello " << GetName();
 
 //  fPid          = getpid();
-//  LOG(debug) << MyClass << " pid = " << fPid;
+//  LOG(debug) << kMyClass << " pid = " << fPid;
     fPageSize     = sysconf(_SC_PAGESIZE);
     fProcessUsage = ReadProcessUsage();
 
@@ -250,17 +250,17 @@ daq::service::MetricsPlugin::MetricsPlugin(std::string_view name,
     }
 
     {
-        //const auto &[uptimeNSec, lastUpdate] = update_date(fCreatedTimeSystem, fCreatedTime);
+        //const auto &[uptimeNSec, lastUpdate] = updateDate(fCreatedTimeSystem, fCreatedTime);
         //auto lastUpdateNS = std::chrono::duration_cast<std::chrono::nanoseconds>(lastUpdate.time_since_epoch());
         std::scoped_lock<std::mutex> lock{fMutex};
-        fPipe->hset(fCreatedTimeKey, fId, to_date(fCreatedTimeSystem))
+        fPipe->hset(fCreatedTimeKey, fId, toDate(fCreatedTimeSystem))
         .hset(fHostNameKey,    fId, GetProperty<std::string>("hostname"))
         .hset(fIpAddressKey,   fId, GetProperty<std::string>("host-ip"))
-        //.hset(fLastUpdateKey, fId, to_date(lastUpdate))
+        //.hset(fLastUpdateKey, fId, toDate(lastUpdate))
         //.hset(fLastUpdateNSKey, fId, std::to_string(lastUpdateNS.count()))
         .exec();
     }
-    fair::Logger::AddCustomSink(MyClass.data(), "info", [this](const std::string &content, const fair::LogMetaData & /*metadata*/) {
+    fair::Logger::AddCustomSink(kMyClass.data(), "info", [this](const std::string &content, const fair::LogMetaData & /*metadata*/) {
         std::scoped_lock<std::mutex> lock{fMutex};
         SendSocketMetrics(content);
     });
@@ -272,7 +272,7 @@ daq::service::MetricsPlugin::MetricsPlugin(std::string_view name,
             (key==StopTime)    ||
             (key==StopTimeNS)  ||
             (key==RunNumber)) {
-            //LOG(debug) << MyClass << " (subscribed callback) key = " << key << ", value = " << value;
+            //LOG(debug) << kMyClass << " (subscribed callback) key = " << key << ", value = " << value;
             std::scoped_lock<std::mutex> lock{fMutex};
             fClient->hset(join({fTopPrefix, key}, fSeparator), fId, value);
 
@@ -282,7 +282,7 @@ daq::service::MetricsPlugin::MetricsPlugin(std::string_view name,
     SubscribeToDeviceStateChange([this](DeviceState newState) {
         auto pipelineUsed{false};
         const auto stateName = GetStateName(newState);
-        LOG(debug) << MyClass << " state change: " << stateName;
+        LOG(debug) << kMyClass << " state change: " << stateName;
         {
             std::scoped_lock<std::mutex> lock{fMutex};
             if (fPipe) {
@@ -330,17 +330,17 @@ daq::service::MetricsPlugin::~MetricsPlugin()
 
     UnsubscribeFromDeviceStateChange();
     UnsubscribeFromPropertyChangeAsString();
-    fair::Logger::RemoveCustomSink(MyClass.data());
-    LOG(debug) << MyClass << "UnsubscribeFromDeviceStateChange()";
+    fair::Logger::RemoveCustomSink(kMyClass.data());
+    LOG(debug) << kMyClass << "UnsubscribeFromDeviceStateChange()";
     //fContext->stop();
     //if (fTimerThread.joinable()) {
     //  fTimerThread.join();
-    //  LOG(debug) << MyClass << " timer thread joined.";
+    //  LOG(debug) << kMyClass << " timer thread joined.";
     //}
     if (fPipe) {
         fPipe.reset();
     }
-    LOG(debug) << "~" << MyClass << "() bye";
+    LOG(debug) << "~" << kMyClass << "() bye";
 }
 
 //_____________________________________________________________________________
@@ -408,7 +408,7 @@ bool daq::service::MetricsPlugin::CreateSocketTS()
         //s += name + "\n";
         //s += " " + tsKey.msgIn  + ", " + tsKey.bytesIn  + ", " + tsKey.msgOut  + ", " + tsKey.bytesOut + "\n";
         //s += " " + sumKey.msgIn + ", " + sumKey.bytesIn + ", " + sumKey.msgOut + ", " + sumKey.bytesOut;
-        //LOG(debug) << MyClass << s;
+        //LOG(debug) << kMyClass << s;
 
         std::unordered_map<std::string, std::string> labels{{"name",     property.name},
             {"socket",    property.type},
@@ -473,7 +473,7 @@ void daq::service::MetricsPlugin::DeleteExpiredFields()
             sw::redis::RedMutex mtx(fClient, "metrics");
             std::unique_lock<sw::redis::RedMutex> redLock(mtx, std::defer_lock);
             if (redLock.try_lock()) {
-                LOG(debug) << "got lock: " << MyClass << " " << fId;
+                LOG(debug) << "got lock: " << kMyClass << " " << fId;
 
                 std::unordered_map<std::string, std::string> hashInstanceToLastUpdateNS;
                 fClient->hgetall(fLastUpdateNSKey, std::inserter(hashInstanceToLastUpdateNS, hashInstanceToLastUpdateNS.begin()));
@@ -508,7 +508,7 @@ void daq::service::MetricsPlugin::DeleteExpiredFields()
                 }
                 fPipe->exec();
                 if (redLock.owns_lock()) {
-                    LOG(debug) << "unlock: " << MyClass << " " << fId;
+                    LOG(debug) << "unlock: " << kMyClass << " " << fId;
                     break;
                 } else {
                     std::this_thread::yield();
@@ -534,7 +534,7 @@ void daq::service::MetricsPlugin::DeleteTSKeys()
     if (!fRegisteredTSKeys.empty()) {
         auto ndeleted = fClient->del(fRegisteredTSKeys.cbegin(), fRegisteredTSKeys.cend());
         fRegisteredTSKeys.clear();
-        LOG(debug) << MyClass << " " << __FUNCTION__ << " n deleted = " << ndeleted;
+        LOG(debug) << kMyClass << " " << __FUNCTION__ << " n deleted = " << ndeleted;
     }
 }
 
@@ -616,7 +616,7 @@ auto daq::service::MetricsPlugin::ReadProcessUsage() const -> ProcessUsageSample
     rusage usage{};
     if (getrusage(RUSAGE_SELF, &usage) != 0) {
         const auto error = std::error_code{errno, std::generic_category()};
-        LOG(error) << MyClass << " " << __FUNCTION__ << " getrusage failed: " << error.message();
+        LOG(error) << kMyClass << " " << __FUNCTION__ << " getrusage failed: " << error.message();
         return {.cpuSeconds = fProcessUsage.cpuSeconds, .timestamp = std::chrono::steady_clock::now()};
     }
 
@@ -636,7 +636,7 @@ auto daq::service::MetricsPlugin::ReadResidentMemoryMiB() const -> double
     uint64_t totalPages = 0;
     uint64_t residentPages = 0;
     if (!(input >> totalPages >> residentPages)) {
-        LOG(error) << MyClass << " " << __FUNCTION__ << " failed to read /proc/self/statm";
+        LOG(error) << kMyClass << " " << __FUNCTION__ << " failed to read /proc/self/statm";
         return 0.0;
     }
 
@@ -650,7 +650,7 @@ auto daq::service::MetricsPlugin::ReadResidentMemoryMiB() const -> double
  */
 void daq::service::MetricsPlugin::SendProcessMetrics()
 {
-    //std::cout << MyClass << " " << __FUNCTION__;
+    //std::cout << kMyClass << " " << __FUNCTION__;
 
     auto nowProcessUsage = ReadProcessUsage();
 
@@ -670,13 +670,13 @@ void daq::service::MetricsPlugin::SendProcessMetrics()
     fProcessUsage = nowProcessUsage;
     auto stateId  = static_cast<int>(GetCurrentDeviceState());
 
-    const auto &[uptimeNSec, lastUpdate] = update_date(fCreatedTimeSystem, fCreatedTime);
+    const auto &[uptimeNSec, lastUpdate] = updateDate(fCreatedTimeSystem, fCreatedTime);
     auto lastUpdateNS = std::chrono::duration_cast<std::chrono::nanoseconds>(lastUpdate.time_since_epoch());
     try {
         if (fPipe) {
             fPipe->hset(fProcKey.cpu, {std::make_pair(fId, cpuUsage)})
             .hset(fProcKey.ram, {std::make_pair(fId, ramUsage)})
-            .hset(fLastUpdateKey, fId, to_date(lastUpdate))
+            .hset(fLastUpdateKey, fId, toDate(lastUpdate))
             .hset(fLastUpdateNSKey, fId, std::to_string(lastUpdateNS.count()))
             .command("ts.add", fTsProcKey.cpu,        "*", std::to_string(cpuUsage))
             .command("ts.add", fTsProcKey.ram,        "*", std::to_string(ramUsage))
@@ -686,11 +686,11 @@ void daq::service::MetricsPlugin::SendProcessMetrics()
             //          << "\n " << fTsProcKey.stateId   << "\t " << stateId << std::endl;
         }
     } catch (const std::exception& e) {
-        LOG(error) << MyClass << " " << __FUNCTION__ << " exception : what() " << e.what();
+        LOG(error) << kMyClass << " " << __FUNCTION__ << " exception : what() " << e.what();
     } catch (...) {
-        LOG(error) << MyClass << " " << __FUNCTION__ << " exception : unknown ";
+        LOG(error) << kMyClass << " " << __FUNCTION__ << " exception : unknown ";
     }
-    //std::cout << MyClass << " " << __FUNCTION__ << " done";
+    //std::cout << kMyClass << " " << __FUNCTION__ << " done";
 }
 
 //_____________________________________________________________________________
@@ -699,14 +699,14 @@ void daq::service::MetricsPlugin::SendProcessMetrics()
  */
 void daq::service::MetricsPlugin::SendSocketMetrics(const std::string &content)
 {
-    //LOG(debug) << MyClass << " " << __FUNCTION__;
+    //LOG(debug) << kMyClass << " " << __FUNCTION__;
     //return;
-    //std::cout << MyClass << " content = \n" << content << "\n length = " << content.size() << std::endl;
+    //std::cout << kMyClass << " content = \n" << content << "\n length = " << content.size() << std::endl;
     const auto sample = nestdaq::telemetry::ParseFairMQThroughputLog(content);
     if (!sample || !sample->subChannelIndex) {
         return;
     }
-    //std::cout << MyClass << " " << __FUNCTION__ << " (passed) content = \n" << content << std::endl;
+    //std::cout << kMyClass << " " << __FUNCTION__ << " (passed) content = \n" << content << std::endl;
 
     const auto &channelName = sample->channelName;
     const auto subChannelIndex = std::to_string(*sample->subChannelIndex);
@@ -812,8 +812,8 @@ void daq::service::MetricsPlugin::SendSocketMetrics(const std::string &content)
         //std::cout << __LINE__ << " no pipeline is created " << std::endl;
         //}
     } catch (const std::exception &e) {
-        LOG(error) << MyClass << " " << __FUNCTION__ << " exception : what() = " << e.what();
+        LOG(error) << kMyClass << " " << __FUNCTION__ << " exception : what() = " << e.what();
     } catch (...) {
-        LOG(error) << MyClass << " " << __FUNCTION__ << " exception : unknown";
+        LOG(error) << kMyClass << " " << __FUNCTION__ << " exception : unknown";
     }
 }
