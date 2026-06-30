@@ -20,7 +20,7 @@ const std::string toDate(const std::chrono::system_clock::time_point &p);
  * system-clock timestamp corresponding to @p t.
  */
 auto updateDate(const std::chrono::system_clock::time_point &s,
-                 const std::chrono::steady_clock::time_point &t)
+                const std::chrono::steady_clock::time_point &t)
 -> const std::pair<std::chrono::nanoseconds, std::chrono::system_clock::time_point>;
 
 } // namespace daq::service

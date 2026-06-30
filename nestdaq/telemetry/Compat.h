@@ -24,7 +24,7 @@ inline auto ParseDouble(std::string_view token, double& value) -> bool
     const auto result = std::from_chars(first, last, value);
     return result.ec == std::errc{} && result.ptr == last && std::isfinite(value);
 #else
-    auto buffer = std::string{token};
+    auto buffer = std::string {token};
     char* end = nullptr;
     errno = 0;
     const auto parsed = std::strtod(buffer.c_str(), &end);
@@ -64,7 +64,7 @@ inline auto ParseInteger(std::string_view token, Integer& value) -> bool
             return false;
         }
         if (parsed < static_cast<long long>(std::numeric_limits<Integer>::min()) ||
-            parsed > static_cast<long long>(std::numeric_limits<Integer>::max())) {
+                parsed > static_cast<long long>(std::numeric_limits<Integer>::max())) {
             return false;
         }
         value = static_cast<Integer>(parsed);

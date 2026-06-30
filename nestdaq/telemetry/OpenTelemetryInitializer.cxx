@@ -85,12 +85,12 @@ auto OpenTelemetryInitializer::Initialize(const nestdaq_otel_config *config) -> 
         return SetLastError("min_severity must be a valid fair::Severity numeric value");
     }
 
-    auto logProtocols = std::vector<Protocol>{};
-    auto metricProtocols = std::vector<Protocol>{};
-    auto traceProtocols = std::vector<Protocol>{};
+    auto logProtocols = std::vector<Protocol> {};
+    auto metricProtocols = std::vector<Protocol> {};
+    auto traceProtocols = std::vector<Protocol> {};
     if ((SignalEnabled(localConfig.logs) && !ParseProtocols(localConfig.logs.protocol, logProtocols)) ||
-        (SignalEnabled(localConfig.metrics) && !ParseProtocols(localConfig.metrics.protocol, metricProtocols)) ||
-        (SignalEnabled(localConfig.traces) && !ParseProtocols(localConfig.traces.protocol, traceProtocols))) {
+            (SignalEnabled(localConfig.metrics) && !ParseProtocols(localConfig.metrics.protocol, metricProtocols)) ||
+            (SignalEnabled(localConfig.traces) && !ParseProtocols(localConfig.traces.protocol, traceProtocols))) {
         return SetLastError("unsupported OpenTelemetry protocol; expected comma-separated console, otlp-http, or otlp-grpc");
     }
 
@@ -101,30 +101,33 @@ auto OpenTelemetryInitializer::Initialize(const nestdaq_otel_config *config) -> 
         std::shared_ptr<opentelemetry::sdk::trace::TracerProvider> tracerProvider;
 
         if (!logProtocols.empty()) {
-            auto processors = std::vector<std::unique_ptr<opentelemetry::sdk::logs::LogRecordProcessor>>{};
+            auto processors = std::vector<std::unique_ptr<opentelemetry::sdk::logs::LogRecordProcessor>> {};
             for (const auto protocol : logProtocols) {
                 processors.emplace_back(CreateLogProcessor(CreateLogExporter(localConfig, protocol), protocol));
             }
-            loggerProvider = std::shared_ptr<opentelemetry::sdk::logs::LoggerProvider>{
-                opentelemetry::sdk::logs::LoggerProviderFactory::Create(std::move(processors), resource)};
+            loggerProvider = std::shared_ptr<opentelemetry::sdk::logs::LoggerProvider> {
+                opentelemetry::sdk::logs::LoggerProviderFactory::Create(std::move(processors), resource)
+            };
         }
 
         if (!metricProtocols.empty()) {
             auto views = opentelemetry::sdk::metrics::ViewRegistryFactory::Create();
-            meterProvider = std::shared_ptr<opentelemetry::sdk::metrics::MeterProvider>{
-                opentelemetry::sdk::metrics::MeterProviderFactory::Create(std::move(views), resource)};
+            meterProvider = std::shared_ptr<opentelemetry::sdk::metrics::MeterProvider> {
+                opentelemetry::sdk::metrics::MeterProviderFactory::Create(std::move(views), resource)
+            };
             for (const auto protocol : metricProtocols) {
                 meterProvider->AddMetricReader(CreateMetricReader(CreateMetricExporter(localConfig, protocol), localConfig));
             }
         }
 
         if (!traceProtocols.empty()) {
-            auto processors = std::vector<std::unique_ptr<opentelemetry::sdk::trace::SpanProcessor>>{};
+            auto processors = std::vector<std::unique_ptr<opentelemetry::sdk::trace::SpanProcessor>> {};
             for (const auto protocol : traceProtocols) {
                 processors.emplace_back(CreateSpanProcessor(CreateSpanExporter(localConfig, protocol), protocol));
             }
-            tracerProvider = std::shared_ptr<opentelemetry::sdk::trace::TracerProvider>{
-                opentelemetry::sdk::trace::TracerProviderFactory::Create(std::move(processors), resource)};
+            tracerProvider = std::shared_ptr<opentelemetry::sdk::trace::TracerProvider> {
+                opentelemetry::sdk::trace::TracerProviderFactory::Create(std::move(processors), resource)
+            };
         }
 
         Shutdown(localConfig.timeout_ms);
@@ -155,8 +158,9 @@ auto OpenTelemetryInitializer::Initialize(const nestdaq_otel_config *config) -> 
 
         if (loggerProvider) {
             opentelemetry::logs::Provider::SetLoggerProvider(
-                opentelemetry::nostd::shared_ptr<opentelemetry::logs::LoggerProvider>{
-                    std::shared_ptr<opentelemetry::logs::LoggerProvider>{loggerProvider}});
+            opentelemetry::nostd::shared_ptr<opentelemetry::logs::LoggerProvider> {
+                std::shared_ptr<opentelemetry::logs::LoggerProvider>{loggerProvider}
+            });
             FairLoggerOpenTelemetrySink::SetMinSeverity(localConfig.min_severity);
             FairLoggerOpenTelemetrySink::Initialize();
             LOG(info) << NestDAQMetadataLogBody();
@@ -164,13 +168,15 @@ auto OpenTelemetryInitializer::Initialize(const nestdaq_otel_config *config) -> 
         }
         if (meterProvider) {
             opentelemetry::metrics::Provider::SetMeterProvider(
-                opentelemetry::nostd::shared_ptr<opentelemetry::metrics::MeterProvider>{
-                    std::shared_ptr<opentelemetry::metrics::MeterProvider>{meterProvider}});
+            opentelemetry::nostd::shared_ptr<opentelemetry::metrics::MeterProvider> {
+                std::shared_ptr<opentelemetry::metrics::MeterProvider>{meterProvider}
+            });
         }
         if (tracerProvider) {
             opentelemetry::trace::Provider::SetTracerProvider(
-                opentelemetry::nostd::shared_ptr<opentelemetry::trace::TracerProvider>{
-                    std::shared_ptr<opentelemetry::trace::TracerProvider>{tracerProvider}});
+            opentelemetry::nostd::shared_ptr<opentelemetry::trace::TracerProvider> {
+                std::shared_ptr<opentelemetry::trace::TracerProvider>{tracerProvider}
+            });
         }
         return NESTDAQ_OTEL_OK;
     } catch (const std::exception &ex) {
@@ -286,7 +292,7 @@ extern "C" {
     }
 
     NESTDAQ_OTEL_EXPORT void nestdaq_otel_framework_record_fairmq_state(int64_t state_id,
-                                                                        const char *state_name)
+            const char *state_name)
     {
         nestdaq::OpenTelemetryInitializer::RecordFrameworkFairMQState(state_id, state_name);
     }
@@ -302,36 +308,36 @@ extern "C" {
     }
 
     NESTDAQ_OTEL_EXPORT int nestdaq_otel_metric_add_double_counter(const char *name,
-                                                                   double value,
-                                                                   const char *unit,
-                                                                   const char *description,
-                                                                   const nestdaq_otel_attribute *attributes,
-                                                                   uint64_t attribute_count)
+            double value,
+            const char *unit,
+            const char *description,
+            const nestdaq_otel_attribute *attributes,
+            uint64_t attribute_count)
     {
         return nestdaq::OpenTelemetryInitializer::MetricAddDoubleCounter(
-            name, value, unit, description, attributes, attribute_count);
+                   name, value, unit, description, attributes, attribute_count);
     }
 
     NESTDAQ_OTEL_EXPORT int nestdaq_otel_metric_record_double_histogram(const char *name,
-                                                                        double value,
-                                                                        const char *unit,
-                                                                        const char *description,
-                                                                        const nestdaq_otel_attribute *attributes,
-                                                                        uint64_t attribute_count)
+            double value,
+            const char *unit,
+            const char *description,
+            const nestdaq_otel_attribute *attributes,
+            uint64_t attribute_count)
     {
         return nestdaq::OpenTelemetryInitializer::MetricRecordDoubleHistogram(
-            name, value, unit, description, attributes, attribute_count);
+                   name, value, unit, description, attributes, attribute_count);
     }
 
     NESTDAQ_OTEL_EXPORT int nestdaq_otel_metric_record_double_gauge(const char *name,
-                                                                    double value,
-                                                                    const char *unit,
-                                                                    const char *description,
-                                                                    const nestdaq_otel_attribute *attributes,
-                                                                    uint64_t attribute_count)
+            double value,
+            const char *unit,
+            const char *description,
+            const nestdaq_otel_attribute *attributes,
+            uint64_t attribute_count)
     {
         return nestdaq::OpenTelemetryInitializer::MetricRecordDoubleGauge(
-            name, value, unit, description, attributes, attribute_count);
+                   name, value, unit, description, attributes, attribute_count);
     }
 
     NESTDAQ_OTEL_EXPORT int nestdaq_otel_set_min_severity(int32_t severity)
@@ -355,14 +361,14 @@ extern "C" {
     }
 
     NESTDAQ_OTEL_EXPORT int nestdaq_otel_span_set_attribute(uint64_t span_handle,
-                                                           const nestdaq_otel_attribute *attribute)
+            const nestdaq_otel_attribute *attribute)
     {
         return nestdaq::OpenTelemetryInitializer::SpanSetAttribute(span_handle, attribute);
     }
 
     NESTDAQ_OTEL_EXPORT uint64_t nestdaq_otel_span_start(const char *name,
-                                                        const nestdaq_otel_attribute *attributes,
-                                                        uint64_t attribute_count)
+            const nestdaq_otel_attribute *attributes,
+            uint64_t attribute_count)
     {
         return nestdaq::OpenTelemetryInitializer::SpanStart(name, attributes, attribute_count);
     }

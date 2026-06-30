@@ -55,22 +55,25 @@ void PrintConfig(const fair::mq::ProgOptions* config, std::string_view name, std
 bool Sink::HandleData(fair::mq::MessagePtr &msg, int index)
 {
     auto span = nestdaq::telemetry::GetTelemetry().StartSpan("sink.receive",
-        {{"fairmq.channel.name", fInputChannelName},
-         {"fairmq.channel.index", index},
-         {"message.size", msg->GetSize()},
-         {"message.multipart", false}});
+    {   {"fairmq.channel.name", fInputChannelName},
+        {"fairmq.channel.index", index},
+        {"message.size", msg->GetSize()},
+        {"message.multipart", false}
+    });
     static_cast<void>(span);
     const auto ptr = static_cast<char*>(msg->GetData());
     std::string s(ptr, msg->GetSize());
     LOG(debug) << __FUNCTION__ << " received = " << s << " [" << index << "] " << fNumMessages;
     fMessagesReceived.Add(1, {{"fairmq.channel.name", fInputChannelName},
-                              {"fairmq.channel.index", index},
-                              {"message.multipart", false}});
+        {"fairmq.channel.index", index},
+        {"message.multipart", false}
+    });
     // These receiver metrics demonstrate counting accepted messages, observing
     // payload sizes, and tracking the current total for a single-part stream.
     fMessageSize.Record(msg->GetSize(), {{"fairmq.channel.name", fInputChannelName},
-                                         {"fairmq.channel.index", index},
-                                         {"message.multipart", false}});
+        {"fairmq.channel.index", index},
+        {"message.multipart", false}
+    });
     ++fNumMessages;
     fMessagesTotal.Record(fNumMessages, {{"fairmq.channel.name", fInputChannelName}});
     return true;
@@ -80,30 +83,34 @@ bool Sink::HandleData(fair::mq::MessagePtr &msg, int index)
 bool Sink::HandleMultipartData(fair::mq::Parts &msgParts, int index)
 {
     auto multipartSpan = nestdaq::telemetry::GetTelemetry().StartSpan("sink.receive.multipart",
-        {{"fairmq.channel.name", fInputChannelName},
-         {"fairmq.channel.index", index},
-         {"message.multipart", true},
-         {"message.parts", msgParts.Size()}});
+    {   {"fairmq.channel.name", fInputChannelName},
+        {"fairmq.channel.index", index},
+        {"message.multipart", true},
+        {"message.parts", msgParts.Size()}
+    });
     static_cast<void>(multipartSpan);
     for (const auto& msg : msgParts) {
         auto partSpan = nestdaq::telemetry::GetTelemetry().StartSpan("sink.receive.part",
-            {{"fairmq.channel.name", fInputChannelName},
-             {"fairmq.channel.index", index},
-             {"message.size", msg->GetSize()},
-             {"message.multipart", true}});
+        {   {"fairmq.channel.name", fInputChannelName},
+            {"fairmq.channel.index", index},
+            {"message.size", msg->GetSize()},
+            {"message.multipart", true}
+        });
         static_cast<void>(partSpan);
         const auto ptr = static_cast<char*>(msg->GetData());
         std::string s(ptr, msg->GetSize());
         LOG(debug) << __FUNCTION__ << " received = " << s << " [" << index << "] " << fNumMessages;
         LOG(debug) << s;
         fMessagesReceived.Add(1, {{"fairmq.channel.name", fInputChannelName},
-                                  {"fairmq.channel.index", index},
-                                  {"message.multipart", true}});
+            {"fairmq.channel.index", index},
+            {"message.multipart", true}
+        });
         // The multipart path uses the same metric names with attributes that
         // distinguish multipart traffic from single-part traffic.
         fMessageSize.Record(msg->GetSize(), {{"fairmq.channel.name", fInputChannelName},
-                                             {"fairmq.channel.index", index},
-                                             {"message.multipart", true}});
+            {"fairmq.channel.index", index},
+            {"message.multipart", true}
+        });
         ++fNumMessages;
         fMessagesTotal.Record(fNumMessages, {{"fairmq.channel.name", fInputChannelName}});
     }

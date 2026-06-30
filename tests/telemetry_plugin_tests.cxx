@@ -52,11 +52,11 @@ auto BaseConfig() -> nestdaq_otel_config
     auto config = nestdaq_otel_config{};
     config.size = sizeof(config);
     config.logs = nestdaq::telemetry::MakeSignalConfig(
-        "", nestdaq::telemetry::kDefaultLogHttpEndpoint, nestdaq::telemetry::kDefaultGrpcEndpoint, "", 1U);
+                      "", nestdaq::telemetry::kDefaultLogHttpEndpoint, nestdaq::telemetry::kDefaultGrpcEndpoint, "", 1U);
     config.metrics = nestdaq::telemetry::MakeSignalConfig(
-        "", nestdaq::telemetry::kDefaultMetricHttpEndpoint, nestdaq::telemetry::kDefaultGrpcEndpoint, "", 1U);
+                         "", nestdaq::telemetry::kDefaultMetricHttpEndpoint, nestdaq::telemetry::kDefaultGrpcEndpoint, "", 1U);
     config.traces = nestdaq::telemetry::MakeSignalConfig(
-        "", nestdaq::telemetry::kDefaultTraceHttpEndpoint, nestdaq::telemetry::kDefaultGrpcEndpoint, "", 1U);
+                        "", nestdaq::telemetry::kDefaultTraceHttpEndpoint, nestdaq::telemetry::kDefaultGrpcEndpoint, "", 1U);
     config.service_name = "nestdaq-test";
     config.service_namespace = "nestdaq";
     config.service_instance_id = "test-instance";
@@ -440,13 +440,13 @@ TEST_CASE("metrics console initializes and exports resource attributes", "[telem
     CHECK(userTelemetry.RecordHistogram("user.inferred.histogram", uint64_t{4096}, "By", "inferred histogram"));
     CHECK(userTelemetry.RecordGauge("user.inferred.gauge", 12.5F, "1", "inferred gauge"));
     CHECK(userTelemetry.Counter("user.messages.total", "1", "user messages")
-              .Add(3, {{"channel", "data"}, {"running", true}, {"partition", uint64_t{2}}}));
+    .Add(3, {{"channel", "data"}, {"running", true}, {"partition", uint64_t{2}}}));
     CHECK(userTelemetry.Histogram("user.decode.duration", "ms", "user decode duration")
-              .Record(4.5F, {{"channel", "data"}, {"attempt", int64_t{1}}, {"ratio", 0.5}}));
+    .Record(4.5F, {{"channel", "data"}, {"attempt", int64_t{1}}, {"ratio", 0.5}}));
     CHECK(userTelemetry.Gauge("user.queue.depth", "1", "user queue depth")
-              .Record(uint64_t{1234}, {{"channel", "data"}, {"slot", uint64_t{2}}}));
+    .Record(uint64_t{1234}, {{"channel", "data"}, {"slot", uint64_t{2}}}));
     CHECK(userTelemetry.Gauge("user.queue.depth", "1", "user queue depth")
-              .Record(9876.5, {{"channel", "data"}, {"slot", uint64_t{2}}}));
+    .Record(9876.5, {{"channel", "data"}, {"slot", uint64_t{2}}}));
 
     std::this_thread::sleep_for(std::chrono::milliseconds{250});
     nestdaq::telemetry::SetActiveTelemetryLibrary(nullptr);
@@ -511,7 +511,7 @@ TEST_CASE("user telemetry facade accepts low-level attribute arrays", "[telemetr
         },
     };
     CHECK(telemetry.AddCounter(
-        "lowlevel.counter", 1, "1", "low-level counter", attributes.data(), attributes.size()));
+              "lowlevel.counter", 1, "1", "low-level counter", attributes.data(), attributes.size()));
     std::this_thread::sleep_for(std::chrono::milliseconds{250});
     library.ShutdownTelemetry(nestdaq::telemetry::kDefaultTimeoutMs);
 
@@ -553,7 +553,7 @@ TEST_CASE("user telemetry facade accepts C++20 span attributes", "[telemetry][pl
         },
     };
     CHECK(telemetry.AddCounter(
-        "span.counter", 1, "1", "span counter", std::span<const nestdaq_otel_attribute>{attributes}));
+              "span.counter", 1, "1", "span counter", std::span<const nestdaq_otel_attribute> {attributes}));
     std::this_thread::sleep_for(std::chrono::milliseconds{250});
     library.ShutdownTelemetry(nestdaq::telemetry::kDefaultTimeoutMs);
 

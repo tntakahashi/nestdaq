@@ -32,8 +32,8 @@ public:
 
         // Accept the websocket handshake
         fWebSocket.async_accept(std::move(req),
-                         beast::bind_front_handler(&WebSocketSession::onAccept, shared_from_this())
-                        );
+                                beast::bind_front_handler(&WebSocketSession::onAccept, shared_from_this())
+                               );
     }
 
     unsigned int id() const {

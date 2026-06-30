@@ -47,7 +47,7 @@ auto ClearTelemetryEnvironment() -> void
 
 auto Parse(std::vector<std::string> arguments) -> nestdaq::telemetry::TelemetryOptions
 {
-    auto argv = std::vector<char*>{};
+    auto argv = std::vector<char*> {};
     argv.reserve(arguments.size());
     for (auto& argument : arguments) {
         argv.emplace_back(argument.data());
@@ -69,7 +69,7 @@ auto ReadWithBoostOptions(std::vector<std::string> arguments,
                           std::string_view defaultServiceName) -> nestdaq::telemetry::TelemetryOptions
 {
     namespace bpo = boost::program_options;
-    auto argv = std::vector<char*>{};
+    auto argv = std::vector<char*> {};
     argv.reserve(arguments.size());
     for (auto& argument : arguments) {
         argv.emplace_back(argument.data());

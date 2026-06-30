@@ -115,8 +115,8 @@ auto OpenTelemetryInitializer::SpanSetAttribute(uint64_t span_handle, const nest
 }
 
 auto OpenTelemetryInitializer::SpanStart(const char *name,
-                                         const nestdaq_otel_attribute *attributes,
-                                         uint64_t attribute_count) -> uint64_t
+        const nestdaq_otel_attribute *attributes,
+        uint64_t attribute_count) -> uint64_t
 {
     if (otel_detail::IsEmpty(name)) {
         otel_detail::SetLastError("OpenTelemetry span name is empty");

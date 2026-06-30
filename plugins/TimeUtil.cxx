@@ -27,7 +27,7 @@ const std::string daq::service::toDate(const std::chrono::system_clock::time_poi
 
 //_____________________________________________________________________________
 auto daq::service::updateDate(const std::chrono::system_clock::time_point &s,
-                               const std::chrono::steady_clock::time_point &t)
+                              const std::chrono::steady_clock::time_point &t)
 -> const std::pair<std::chrono::nanoseconds, std::chrono::system_clock::time_point>
 {
     auto uptimeNsec = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - t);

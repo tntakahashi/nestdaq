@@ -128,7 +128,7 @@ NESTDAQ_OTEL_EXPORT int nestdaq_otel_force_flush(uint64_t timeout_ms);
  * disabled or no framework meter has been configured.
  */
 NESTDAQ_OTEL_EXPORT void nestdaq_otel_framework_record_fairmq_state(int64_t state_id,
-                                                                    const char *state_name);
+        const char *state_name);
 /**
  * @brief Initialize process-wide OpenTelemetry providers and the FairLogger sink.
  *
@@ -152,11 +152,11 @@ NESTDAQ_OTEL_EXPORT const char *nestdaq_otel_last_error(void);
  * when metrics are enabled. Instrument identity is `(name, unit, description)`.
  */
 NESTDAQ_OTEL_EXPORT int nestdaq_otel_metric_add_double_counter(const char *name,
-                                                               double value,
-                                                               const char *unit,
-                                                               const char *description,
-                                                               const nestdaq_otel_attribute *attributes,
-                                                               uint64_t attribute_count);
+        double value,
+        const char *unit,
+        const char *description,
+        const nestdaq_otel_attribute *attributes,
+        uint64_t attribute_count);
 /**
  * @brief Record a value in a double histogram instrument.
  *
@@ -164,11 +164,11 @@ NESTDAQ_OTEL_EXPORT int nestdaq_otel_metric_add_double_counter(const char *name,
  * when metrics are enabled. Instrument identity is `(name, unit, description)`.
  */
 NESTDAQ_OTEL_EXPORT int nestdaq_otel_metric_record_double_histogram(const char *name,
-                                                                    double value,
-                                                                    const char *unit,
-                                                                    const char *description,
-                                                                    const nestdaq_otel_attribute *attributes,
-                                                                    uint64_t attribute_count);
+        double value,
+        const char *unit,
+        const char *description,
+        const nestdaq_otel_attribute *attributes,
+        uint64_t attribute_count);
 /**
  * @brief Record the latest value for a double observable gauge instrument.
  *
@@ -176,11 +176,11 @@ NESTDAQ_OTEL_EXPORT int nestdaq_otel_metric_record_double_histogram(const char *
  * when metrics are enabled. Instrument identity is `(name, unit, description)`.
  */
 NESTDAQ_OTEL_EXPORT int nestdaq_otel_metric_record_double_gauge(const char *name,
-                                                                double value,
-                                                                const char *unit,
-                                                                const char *description,
-                                                                const nestdaq_otel_attribute *attributes,
-                                                                uint64_t attribute_count);
+        double value,
+        const char *unit,
+        const char *description,
+        const nestdaq_otel_attribute *attributes,
+        uint64_t attribute_count);
 /**
  * @brief Update the FairLogger severity threshold exported to OpenTelemetry logs.
  */
@@ -201,7 +201,7 @@ NESTDAQ_OTEL_EXPORT int nestdaq_otel_span_end(uint64_t span_handle);
  * @brief Set an attribute on an active span handle.
  */
 NESTDAQ_OTEL_EXPORT int nestdaq_otel_span_set_attribute(uint64_t span_handle,
-                                                        const nestdaq_otel_attribute *attribute);
+        const nestdaq_otel_attribute *attribute);
 /**
  * @brief Start a span and return an opaque handle.
  *
@@ -209,8 +209,8 @@ NESTDAQ_OTEL_EXPORT int nestdaq_otel_span_set_attribute(uint64_t span_handle,
  * must be ended exactly once with @ref nestdaq_otel_span_end.
  */
 NESTDAQ_OTEL_EXPORT uint64_t nestdaq_otel_span_start(const char *name,
-                                                     const nestdaq_otel_attribute *attributes,
-                                                     uint64_t attribute_count);
+        const nestdaq_otel_attribute *attributes,
+        uint64_t attribute_count);
 
 #ifdef __cplusplus
 }

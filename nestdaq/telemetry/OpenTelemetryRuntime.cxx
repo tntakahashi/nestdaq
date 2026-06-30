@@ -139,7 +139,7 @@ auto BuildAttributes(const nestdaq_otel_attribute *attributes, uint64_t attribut
 
 auto BuildGaugeAttributes(const nestdaq_otel_attribute *attributes, uint64_t attributeCount) -> std::vector<GaugeAttribute>
 {
-    auto values = std::vector<GaugeAttribute>{};
+    auto values = std::vector<GaugeAttribute> {};
     values.reserve(attributeCount);
     if (attributes == nullptr) {
         return values;
@@ -194,8 +194,8 @@ auto FlushFrameworkMetricsIfDirty(uint64_t timeoutMs) -> int
         auto &state = State();
         std::scoped_lock lock{state.mutex};
         if (state.pendingFairMQThroughputMeasurements.empty() &&
-            state.pendingProcessUsageMeasurements.empty() &&
-            state.pendingFairMQStateMeasurements.empty()) {
+                state.pendingProcessUsageMeasurements.empty() &&
+                state.pendingFairMQStateMeasurements.empty()) {
             state.lastError.clear();
             return NESTDAQ_OTEL_OK;
         }
@@ -228,15 +228,15 @@ auto FlushFrameworkMetricsIfDirty(uint64_t timeoutMs) -> int
             state.pendingFairMQThroughputMeasurements.erase(
                 state.pendingFairMQThroughputMeasurements.begin(),
                 state.pendingFairMQThroughputMeasurements.begin() +
-                    std::min(throughputCount, state.pendingFairMQThroughputMeasurements.size()));
+                std::min(throughputCount, state.pendingFairMQThroughputMeasurements.size()));
             state.pendingProcessUsageMeasurements.erase(
                 state.pendingProcessUsageMeasurements.begin(),
                 state.pendingProcessUsageMeasurements.begin() +
-                    std::min(processCount, state.pendingProcessUsageMeasurements.size()));
+                std::min(processCount, state.pendingProcessUsageMeasurements.size()));
             state.pendingFairMQStateMeasurements.erase(
                 state.pendingFairMQStateMeasurements.begin(),
                 state.pendingFairMQStateMeasurements.begin() +
-                    std::min(stateCount, state.pendingFairMQStateMeasurements.size()));
+                std::min(stateCount, state.pendingFairMQStateMeasurements.size()));
             if (state.frameworkMeterProvider == frameworkMeterProvider) {
                 state.frameworkMeterProvider.reset();
                 state.frameworkMeter = {};
@@ -289,23 +289,27 @@ auto DefaultConfig() -> nestdaq_otel_config
 auto FairMQMetadataLogBody(const nestdaq_otel_config &config) -> std::string
 {
     const auto body = nlohmann::json{
-        {"fairmq", {
-            {"version", {
-                {"string", MetadataValue(FAIRMQ_VERSION)},
-                {"major", FAIRMQ_VERSION_MAJOR},
-                {"minor", FAIRMQ_VERSION_MINOR},
-                {"patch", FAIRMQ_VERSION_PATCH},
-                {"git", MetadataValue(config.fairmq_git_version)},
-            }},
-            {"build", {
-                {"type", MetadataValue(config.fairmq_build_type)},
-            }},
-            {"source", {
-                {"repo_url", MetadataValue(config.fairmq_repo_url)},
-            }},
-            {"license", MetadataValue(config.fairmq_license)},
-            {"copyright", MetadataValue(config.fairmq_copyright)},
-        }},
+        {   "fairmq", {
+                {   "version", {
+                        {"string", MetadataValue(FAIRMQ_VERSION)},
+                        {"major", FAIRMQ_VERSION_MAJOR},
+                        {"minor", FAIRMQ_VERSION_MINOR},
+                        {"patch", FAIRMQ_VERSION_PATCH},
+                        {"git", MetadataValue(config.fairmq_git_version)},
+                    }
+                },
+                {   "build", {
+                        {"type", MetadataValue(config.fairmq_build_type)},
+                    }
+                },
+                {   "source", {
+                        {"repo_url", MetadataValue(config.fairmq_repo_url)},
+                    }
+                },
+                {"license", MetadataValue(config.fairmq_license)},
+                {"copyright", MetadataValue(config.fairmq_copyright)},
+            }
+        },
     };
     return body.dump();
 }
@@ -313,14 +317,17 @@ auto FairMQMetadataLogBody(const nestdaq_otel_config &config) -> std::string
 auto InstallNoopProviders() -> void
 {
     opentelemetry::logs::Provider::SetLoggerProvider(
-        opentelemetry::nostd::shared_ptr<opentelemetry::logs::LoggerProvider> {
-            new opentelemetry::logs::NoopLoggerProvider});
+    opentelemetry::nostd::shared_ptr<opentelemetry::logs::LoggerProvider> {
+        new opentelemetry::logs::NoopLoggerProvider
+    });
     opentelemetry::metrics::Provider::SetMeterProvider(
-        opentelemetry::nostd::shared_ptr<opentelemetry::metrics::MeterProvider> {
-            new opentelemetry::metrics::NoopMeterProvider});
+    opentelemetry::nostd::shared_ptr<opentelemetry::metrics::MeterProvider> {
+        new opentelemetry::metrics::NoopMeterProvider
+    });
     opentelemetry::trace::Provider::SetTracerProvider(
-        opentelemetry::nostd::shared_ptr<opentelemetry::trace::TracerProvider> {
-            new opentelemetry::trace::NoopTracerProvider});
+    opentelemetry::nostd::shared_ptr<opentelemetry::trace::TracerProvider> {
+        new opentelemetry::trace::NoopTracerProvider
+    });
 }
 
 auto IsEmpty(const char *value) noexcept -> bool
@@ -347,36 +354,42 @@ auto MakeResource(const nestdaq_otel_config &config) -> opentelemetry::sdk::reso
 
 auto MetadataValue(const char *value) -> std::string
 {
-    return IsEmpty(value) ? std::string{"unknown"} : std::string{value};
+    return IsEmpty(value) ? std::string{"unknown"} :
+           std::string{value};
 }
 
 auto MetadataValue(std::string_view value) -> std::string
 {
-    return value.empty() ? std::string{"unknown"} : std::string{value};
+    return value.empty() ? std::string{"unknown"} :
+           std::string{value};
 }
 
 auto NestDAQMetadataLogBody() -> std::string
 {
     const auto body = nlohmann::json{
-        {"nestdaq", {
-            {"version", {
-                {"string", MetadataValue(NESTDAQ_VERSION)},
-                {"major", NESTDAQ_VERSION_MAJOR},
-                {"minor", NESTDAQ_VERSION_MINOR},
-                {"patch", NESTDAQ_VERSION_PATCH},
-                {"prerelease", std::string{NESTDAQ_VERSION_PRERELEASE}},
-            }},
-            {"build", {
-                {"type", MetadataValue(NESTDAQ_BUILD_TYPE)},
-            }},
-            {"git", {
-                {"commit_count", NESTDAQ_GIT_COMMIT_COUNT},
-                {"commit_hash", MetadataValue(NESTDAQ_GIT_COMMIT_HASH_STRING)},
-                {"branch", MetadataValue(NESTDAQ_GIT_BRANCH)},
-                {"remote_url", MetadataValue(NESTDAQ_GIT_REMOTE_URL)},
-                {"commit_date", MetadataValue(NESTDAQ_GIT_COMMIT_DATE)},
-            }},
-        }},
+        {   "nestdaq", {
+                {   "version", {
+                        {"string", MetadataValue(NESTDAQ_VERSION)},
+                        {"major", NESTDAQ_VERSION_MAJOR},
+                        {"minor", NESTDAQ_VERSION_MINOR},
+                        {"patch", NESTDAQ_VERSION_PATCH},
+                        {"prerelease", std::string{NESTDAQ_VERSION_PRERELEASE}},
+                    }
+                },
+                {   "build", {
+                        {"type", MetadataValue(NESTDAQ_BUILD_TYPE)},
+                    }
+                },
+                {   "git", {
+                        {"commit_count", NESTDAQ_GIT_COMMIT_COUNT},
+                        {"commit_hash", MetadataValue(NESTDAQ_GIT_COMMIT_HASH_STRING)},
+                        {"branch", MetadataValue(NESTDAQ_GIT_BRANCH)},
+                        {"remote_url", MetadataValue(NESTDAQ_GIT_REMOTE_URL)},
+                        {"commit_date", MetadataValue(NESTDAQ_GIT_COMMIT_DATE)},
+                    }
+                },
+            }
+        },
     };
     return body.dump();
 }
@@ -391,7 +404,8 @@ auto ParseHeaders(const char *headers) -> opentelemetry::exporter::otlp::OtlpHea
     while (!input.empty()) {
         const auto comma = input.find(',');
         auto item = input.substr(0, comma);
-        input = comma == std::string_view::npos ? std::string_view{} : input.substr(comma + 1);
+        input = comma == std::string_view::npos ? std::string_view{} :
+                input.substr(comma + 1);
         const auto equals = item.find('=');
         if (equals == std::string_view::npos || equals == 0) {
             continue;
@@ -414,7 +428,8 @@ auto ParseProtocols(const char *protocols, std::vector<Protocol> &out) -> bool
     while (!input.empty()) {
         const auto comma = input.find(',');
         auto token = Trim(input.substr(0, comma));
-        input = comma == std::string_view::npos ? std::string_view{} : input.substr(comma + 1);
+        input = comma == std::string_view::npos ? std::string_view{} :
+                input.substr(comma + 1);
         if (token.empty()) {
             continue;
         }

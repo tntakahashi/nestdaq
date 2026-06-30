@@ -196,7 +196,7 @@ auto Env(const char* name) -> const char*
 
 auto DetectHostName() -> std::string
 {
-    auto buffer = std::array<char, kHostNameBufferSize>{};
+    auto buffer = std::array<char, kHostNameBufferSize> {};
     if (gethostname(buffer.data(), buffer.size()) != 0) {
         return {};
     }
@@ -376,7 +376,7 @@ auto ParseTelemetryOptions(int argc, char* argv[], // NOLINT(cppcoreguidelines-a
 auto ParseFairLoggerSeverity(std::string_view severity) -> SeverityParseResult
 {
     if (const auto it = fair::Logger::fSeverityMap.find(severity);
-        it != fair::Logger::fSeverityMap.end()) {
+            it != fair::Logger::fSeverityMap.end()) {
         return SeverityParseResult{
             .value = static_cast<int32_t>(it->second),
             .usedFallback = false,
@@ -535,11 +535,11 @@ auto TelemetryLibrary::RecordFrameworkFairMQState(int64_t stateId, std::string_v
 }
 
 auto TelemetryLibrary::MetricAddDoubleCounter(std::string_view name,
-                                              double value,
-                                              std::string_view unit,
-                                              std::string_view description,
-                                              const nestdaq_otel_attribute* attributes,
-                                              uint64_t attributeCount) -> bool
+        double value,
+        std::string_view unit,
+        std::string_view description,
+        const nestdaq_otel_attribute* attributes,
+        uint64_t attributeCount) -> bool
 {
     if (!fMetricAddDoubleCounter) {
         return false;
@@ -548,11 +548,11 @@ auto TelemetryLibrary::MetricAddDoubleCounter(std::string_view name,
 }
 
 auto TelemetryLibrary::MetricRecordDoubleHistogram(std::string_view name,
-                                                   double value,
-                                                   std::string_view unit,
-                                                   std::string_view description,
-                                                   const nestdaq_otel_attribute* attributes,
-                                                   uint64_t attributeCount) -> bool
+        double value,
+        std::string_view unit,
+        std::string_view description,
+        const nestdaq_otel_attribute* attributes,
+        uint64_t attributeCount) -> bool
 {
     if (!fMetricRecordDoubleHistogram) {
         return false;
@@ -561,11 +561,11 @@ auto TelemetryLibrary::MetricRecordDoubleHistogram(std::string_view name,
 }
 
 auto TelemetryLibrary::MetricRecordDoubleGauge(std::string_view name,
-                                               double value,
-                                               std::string_view unit,
-                                               std::string_view description,
-                                               const nestdaq_otel_attribute* attributes,
-                                               uint64_t attributeCount) -> bool
+        double value,
+        std::string_view unit,
+        std::string_view description,
+        const nestdaq_otel_attribute* attributes,
+        uint64_t attributeCount) -> bool
 {
     if (!fMetricRecordDoubleGauge) {
         return false;
@@ -592,15 +592,15 @@ auto TelemetryLibrary::Load(const std::string& library) -> bool
     fShutdown = ResolveSymbol<int(uint64_t)>(fHandle, "nestdaq_otel_shutdown");
     fLastErrorFunction = ResolveSymbol<const char*()>(fHandle, "nestdaq_otel_last_error");
     fRecordFrameworkFairMQState = ResolveSymbol<void(int64_t, const char*)>(
-        fHandle, "nestdaq_otel_framework_record_fairmq_state");
+                                      fHandle, "nestdaq_otel_framework_record_fairmq_state");
     fSetMinSeverity = ResolveSymbol<int(int32_t)>(fHandle, "nestdaq_otel_set_min_severity");
     fSetNestdaqInstanceId = ResolveSymbol<int(const char*)>(fHandle, "nestdaq_otel_set_nestdaq_instance_id");
     fMetricAddDoubleCounter = ResolveSymbol<int(const char*, double, const char*, const char*, const nestdaq_otel_attribute*, uint64_t)>(
-        fHandle, "nestdaq_otel_metric_add_double_counter");
+                                  fHandle, "nestdaq_otel_metric_add_double_counter");
     fMetricRecordDoubleHistogram = ResolveSymbol<int(const char*, double, const char*, const char*, const nestdaq_otel_attribute*, uint64_t)>(
-        fHandle, "nestdaq_otel_metric_record_double_histogram");
+                                       fHandle, "nestdaq_otel_metric_record_double_histogram");
     fMetricRecordDoubleGauge = ResolveSymbol<int(const char*, double, const char*, const char*, const nestdaq_otel_attribute*, uint64_t)>(
-        fHandle, "nestdaq_otel_metric_record_double_gauge");
+                                   fHandle, "nestdaq_otel_metric_record_double_gauge");
     fSpanEnd = ResolveSymbol<int(uint64_t)>(fHandle, "nestdaq_otel_span_end");
     fSpanSetAttribute = ResolveSymbol<int(uint64_t, const nestdaq_otel_attribute*)>(fHandle, "nestdaq_otel_span_set_attribute");
     fSpanStart = ResolveSymbol<uint64_t(const char*, const nestdaq_otel_attribute*, uint64_t)>(fHandle, "nestdaq_otel_span_start");
@@ -724,19 +724,19 @@ auto SubscribeTelemetryOptionChanges(const fair::mq::ProgOptions& config,
                                      TelemetryLibrary& telemetry) -> void
 {
     config.SubscribeAsString(std::string{kTelemetryConfigSubscriber},
-                             [&telemetry](const fair::mq::PropertyChange::KeyType& key, std::string value) {
-                                 if (key == "id") {
-                                     if (!telemetry.SetNestdaqInstanceId(value)) {
-                                         LOG(error) << "Failed to update OTel NestDAQ instance id: "
-                                                    << telemetry.GetLastError();
-                                     }
-                                     return;
-                                 }
-                                 if (key == "otel-log-severity" && !telemetry.SetMinSeverity(value)) {
-                                     LOG(error) << "Failed to update OTel log severity: "
-                                                << telemetry.GetLastError();
-                                 }
-                             });
+    [&telemetry](const fair::mq::PropertyChange::KeyType& key, std::string value) {
+        if (key == "id") {
+            if (!telemetry.SetNestdaqInstanceId(value)) {
+                LOG(error) << "Failed to update OTel NestDAQ instance id: "
+                           << telemetry.GetLastError();
+            }
+            return;
+        }
+        if (key == "otel-log-severity" && !telemetry.SetMinSeverity(value)) {
+            LOG(error) << "Failed to update OTel log severity: "
+                       << telemetry.GetLastError();
+        }
+    });
 }
 
 auto UnsubscribeTelemetryOptionChanges(const fair::mq::ProgOptions& config) -> void

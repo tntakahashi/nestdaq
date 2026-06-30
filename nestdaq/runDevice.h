@@ -146,7 +146,7 @@ int main(int argc, char* argv[])
         runner.AddHook<InstantiateDevice>([&telemetryOptions,
                                            &telemetryResolved,
                                            telemetryInitialized,
-                                           telemetry = telemetry.get()](DeviceRunner& r) {
+        telemetry = telemetry.get()](DeviceRunner& r) {
             nestdaq::telemetry::SetGeneratedUuidProperty(r.fConfig, telemetryOptions);
             r.fDevice = getDevice(r.fConfig);
             if (telemetryInitialized && r.fConfig.Count("id") != 0) {
@@ -169,11 +169,11 @@ int main(int argc, char* argv[])
             if (telemetryInitialized && telemetryResolved && r.fDevice) {
                 r.fDevice->SubscribeToStateChange(
                     std::string{nestdaq::run_device_detail::kTelemetryStateSubscriber},
-                    [telemetry](const fair::mq::State newState) {
-                        telemetry->RecordFrameworkFairMQState(
-                            static_cast<int64_t>(newState),
-                            fair::mq::GetStateName(newState));
-                    });
+                [telemetry](const fair::mq::State newState) {
+                    telemetry->RecordFrameworkFairMQState(
+                        static_cast<int64_t>(newState),
+                        fair::mq::GetStateName(newState));
+                });
             }
         });
 

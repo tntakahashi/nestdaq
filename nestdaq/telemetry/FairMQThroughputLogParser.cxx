@@ -120,12 +120,12 @@ auto ParseFairMQThroughputLog(std::string_view line) -> std::optional<FairMQThro
     }
 
     if (!ConsumeLiteral(input, "in:") ||
-        !ParseDoubleToken(input, sample.messagesPerSecondIn)) {
+            !ParseDoubleToken(input, sample.messagesPerSecondIn)) {
         return std::nullopt;
     }
     ConsumeSpaces(input);
     if (!ConsumeLiteral(input, "(") ||
-        !ParseDoubleToken(input, sample.megabytesPerSecondIn)) {
+            !ParseDoubleToken(input, sample.megabytesPerSecondIn)) {
         return std::nullopt;
     }
     ConsumeSpaces(input);
@@ -134,12 +134,12 @@ auto ParseFairMQThroughputLog(std::string_view line) -> std::optional<FairMQThro
     }
     ConsumeSpaces(input);
     if (!ConsumeLiteral(input, "out:") ||
-        !ParseDoubleToken(input, sample.messagesPerSecondOut)) {
+            !ParseDoubleToken(input, sample.messagesPerSecondOut)) {
         return std::nullopt;
     }
     ConsumeSpaces(input);
     if (!ConsumeLiteral(input, "(") ||
-        !ParseDoubleToken(input, sample.megabytesPerSecondOut)) {
+            !ParseDoubleToken(input, sample.megabytesPerSecondOut)) {
         return std::nullopt;
     }
     ConsumeSpaces(input);

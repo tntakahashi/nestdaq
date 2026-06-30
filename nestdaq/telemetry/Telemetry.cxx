@@ -44,7 +44,7 @@ auto Attribute::ToOtelAttribute() const noexcept -> nestdaq_otel_attribute
 
 auto MakeOtelAttributes(const Attribute* attributes, std::size_t attributeCount) -> std::vector<nestdaq_otel_attribute>
 {
-    auto values = std::vector<nestdaq_otel_attribute>{};
+    auto values = std::vector<nestdaq_otel_attribute> {};
     values.reserve(attributeCount);
 #if !defined(__clang__) && defined(__GNUC__) && (__GNUC__ < 9)
     for (std::size_t index = 0; index < attributeCount; ++index) {
@@ -71,14 +71,18 @@ auto MakeOtelAttributes(std::span<const Attribute> attributes) -> std::vector<ne
 #endif
 
 TelemetrySpan::TelemetrySpan(TelemetryLibrary& telemetry, uint64_t handle) noexcept
-    : fTelemetry{&telemetry}
-    , fHandle{handle}
+    : fTelemetry {
+    &telemetry
+}
+, fHandle{handle}
 {
 }
 
 TelemetrySpan::TelemetrySpan(TelemetrySpan&& other) noexcept
-    : fTelemetry{other.fTelemetry}
-    , fHandle{other.fHandle}
+    : fTelemetry {
+    other.fTelemetry
+}
+, fHandle{other.fHandle}
 {
     other.fTelemetry = nullptr;
     other.fHandle = 0;
@@ -172,12 +176,16 @@ auto Gauge::Record(double value, std::initializer_list<Attribute> attributes) co
 }
 
 Telemetry::Telemetry(TelemetryLibrary& library) noexcept
-    : fLibrary{&library}
+    : fLibrary {
+    &library
+}
 {
 }
 
 Telemetry::Telemetry(TelemetryLibrary* library) noexcept
-    : fLibrary{library}
+    : fLibrary {
+    library
+}
 {
 }
 
@@ -270,7 +278,7 @@ namespace {
  */
 auto ActiveTelemetryLibrary() noexcept -> std::atomic<TelemetryLibrary*>&
 {
-    static auto value = std::atomic<TelemetryLibrary*>{nullptr};
+    static auto value = std::atomic<TelemetryLibrary*> {nullptr};
     return value;
 }
 } // namespace

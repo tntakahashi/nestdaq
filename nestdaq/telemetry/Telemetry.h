@@ -24,7 +24,7 @@ using RemoveCvref = std::remove_cv_t<std::remove_reference_t<T>>;
 
 template<typename T>
 struct IsMetricValue : std::bool_constant<std::is_arithmetic_v<RemoveCvref<T>> &&
-                                          !std::is_same_v<RemoveCvref<T>, bool>> {
+    !std::is_same_v<RemoveCvref<T>, bool>> {
 };
 
 template<typename T>
@@ -62,7 +62,7 @@ public:
     /** @brief Create a signed integer attribute. */
     template<typename T,
              std::enable_if_t<std::is_integral_v<T> && std::is_signed_v<T> &&
-                                  !std::is_same_v<std::remove_cv_t<T>, bool>,
+                              !std::is_same_v<std::remove_cv_t<T>, bool>,
                               int> = 0>
     Attribute(std::string_view key, T value)
         : fKey{key}
@@ -74,7 +74,7 @@ public:
     /** @brief Create an unsigned integer attribute. */
     template<typename T,
              std::enable_if_t<std::is_integral_v<T> && std::is_unsigned_v<T> &&
-                                  !std::is_same_v<std::remove_cv_t<T>, bool>,
+                              !std::is_same_v<std::remove_cv_t<T>, bool>,
                               int> = 0>
     Attribute(std::string_view key, T value)
         : fKey{key}

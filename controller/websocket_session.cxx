@@ -42,8 +42,8 @@ void WebSocketSession::doRead()
 {
     // Read a message into our buffer
     fWebSocket.async_read(fBuffer,
-                   beast::bind_front_handler(&WebSocketSession::onRead, shared_from_this())
-                  );
+                          beast::bind_front_handler(&WebSocketSession::onRead, shared_from_this())
+                         );
 }
 
 //_____________________________________________________________________________

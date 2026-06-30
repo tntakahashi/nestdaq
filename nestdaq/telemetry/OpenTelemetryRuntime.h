@@ -93,13 +93,13 @@ struct MetricKey {
     auto operator<(const MetricKey &other) const -> bool
     {
         return std::tie(kind, name, unit, description) <
-               std::tie(other.kind, other.name, other.unit, other.description);
+        std::tie(other.kind, other.name, other.unit, other.description);
     }
 
     auto operator==(const MetricKey &other) const -> bool
     {
         return std::tie(kind, name, unit, description) ==
-               std::tie(other.kind, other.name, other.unit, other.description);
+        std::tie(other.kind, other.name, other.unit, other.description);
     }
 };
 
@@ -121,25 +121,25 @@ struct GaugeAttribute {
     auto operator<(const GaugeAttribute &other) const -> bool
     {
         return std::tie(key, type, stringValue, intValue, uintValue, doubleValue, boolValue) <
-               std::tie(other.key,
-                        other.type,
-                        other.stringValue,
-                        other.intValue,
-                        other.uintValue,
-                        other.doubleValue,
-                        other.boolValue);
+        std::tie(other.key,
+                 other.type,
+                 other.stringValue,
+                 other.intValue,
+                 other.uintValue,
+                 other.doubleValue,
+                 other.boolValue);
     }
 
     auto operator==(const GaugeAttribute &other) const -> bool
     {
         return std::tie(key, type, stringValue, intValue, uintValue, doubleValue, boolValue) ==
-               std::tie(other.key,
-                        other.type,
-                        other.stringValue,
-                        other.intValue,
-                        other.uintValue,
-                        other.doubleValue,
-                        other.boolValue);
+        std::tie(other.key,
+                 other.type,
+                 other.stringValue,
+                 other.intValue,
+                 other.uintValue,
+                 other.doubleValue,
+                 other.boolValue);
     }
 };
 
@@ -301,20 +301,20 @@ auto BuildGaugeAttributes(const nestdaq_otel_attribute *attributes, uint64_t att
 auto ClearLastError() -> void;
 /** @brief Create the log exporter selected by @p protocol. */
 auto CreateLogExporter(const nestdaq_otel_config &config, Protocol protocol)
-    -> std::unique_ptr<opentelemetry::sdk::logs::LogRecordExporter>;
+-> std::unique_ptr<opentelemetry::sdk::logs::LogRecordExporter>;
 /** @brief Wrap a log exporter in the processor appropriate for @p protocol. */
 auto CreateLogProcessor(std::unique_ptr<opentelemetry::sdk::logs::LogRecordExporter> exporter,
                         Protocol protocol) -> std::unique_ptr<opentelemetry::sdk::logs::LogRecordProcessor>;
 /** @brief Create the metric exporter selected by @p protocol. */
 auto CreateMetricExporter(const nestdaq_otel_config &config, Protocol protocol)
-    -> std::unique_ptr<opentelemetry::sdk::metrics::PushMetricExporter>;
+-> std::unique_ptr<opentelemetry::sdk::metrics::PushMetricExporter>;
 /** @brief Create a periodic metric reader for one metric exporter. */
 auto CreateMetricReader(std::unique_ptr<opentelemetry::sdk::metrics::PushMetricExporter> exporter,
                         const nestdaq_otel_config &config)
-    -> std::unique_ptr<opentelemetry::sdk::metrics::MetricReader>;
+-> std::unique_ptr<opentelemetry::sdk::metrics::MetricReader>;
 /** @brief Create the span exporter selected by @p protocol. */
 auto CreateSpanExporter(const nestdaq_otel_config &config, Protocol protocol)
-    -> std::unique_ptr<opentelemetry::sdk::trace::SpanExporter>;
+-> std::unique_ptr<opentelemetry::sdk::trace::SpanExporter>;
 /** @brief Wrap a span exporter in the processor appropriate for @p protocol. */
 auto CreateSpanProcessor(std::unique_ptr<opentelemetry::sdk::trace::SpanExporter> exporter,
                          Protocol protocol) -> std::unique_ptr<opentelemetry::sdk::trace::SpanProcessor>;

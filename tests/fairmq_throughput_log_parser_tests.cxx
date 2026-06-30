@@ -11,7 +11,7 @@
 TEST_CASE("FairMQ throughput parser accepts the Device rate log format", "[telemetry][fairmq]")
 {
     const auto sample = nestdaq::telemetry::ParseFairMQThroughputLog(
-        "data: in: 1234.5 (6.75 MB) out: 8.25 (0.5 MB)");
+                            "data: in: 1234.5 (6.75 MB) out: 8.25 (0.5 MB)");
 
     REQUIRE(sample.has_value());
     CHECK(sample->channelName == "data");
@@ -26,7 +26,7 @@ TEST_CASE("FairMQ throughput parser accepts the Device rate log format", "[telem
 TEST_CASE("FairMQ throughput parser trims padded channel names", "[telemetry][fairmq]")
 {
     const auto sample = nestdaq::telemetry::ParseFairMQThroughputLog(
-        "       pull: in: 1 (2 MB) out: 3 (4 MB)");
+                            "       pull: in: 1 (2 MB) out: 3 (4 MB)");
 
     REQUIRE(sample.has_value());
     CHECK(sample->channelName == "pull");
@@ -37,7 +37,7 @@ TEST_CASE("FairMQ throughput parser trims padded channel names", "[telemetry][fa
 TEST_CASE("FairMQ throughput parser splits indexed subchannels", "[telemetry][fairmq]")
 {
     const auto sample = nestdaq::telemetry::ParseFairMQThroughputLog(
-        "       data[12]: in: 1 (2 MB) out: 3 (4 MB)");
+                            "       data[12]: in: 1 (2 MB) out: 3 (4 MB)");
 
     REQUIRE(sample.has_value());
     CHECK(sample->channelName == "data");
@@ -49,7 +49,7 @@ TEST_CASE("FairMQ throughput parser splits indexed subchannels", "[telemetry][fa
 TEST_CASE("FairMQ throughput parser accepts exponent notation", "[telemetry][fairmq]")
 {
     const auto sample = nestdaq::telemetry::ParseFairMQThroughputLog(
-        "push: in: 1.5e+03 (2.5e-01 MB) out: 0 (0 MB)");
+                            "push: in: 1.5e+03 (2.5e-01 MB) out: 0 (0 MB)");
 
     REQUIRE(sample.has_value());
     CHECK(sample->messagesPerSecondIn == Catch::Approx{1500.0});

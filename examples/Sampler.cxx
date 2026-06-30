@@ -113,25 +113,29 @@ bool Sampler::ConditionalRun()
         LOG(info) << "Sending \"" << txt << "\"";
 
         auto span = nestdaq::telemetry::GetTelemetry().StartSpan("sampler.send",
-            {{"fairmq.channel.name", fOutputChannelName},
-             {"fairmq.channel.index", iSubChannel},
-             {"message.size", text->length()}});
+        {   {"fairmq.channel.name", fOutputChannelName},
+            {"fairmq.channel.index", iSubChannel},
+            {"message.size", text->length()}
+        });
 
         if (Send(msg, fOutputChannelName, iSubChannel) < 0) {
             LOG(warn) << "failed to send. event:  " << fNumIterations << ", sub channel = " << iSubChannel;
             // Record failures with channel attributes so send-side drops can be
             // separated by FairMQ channel and subchannel.
             fMessagesFailed.Add(1, {{"fairmq.channel.name", fOutputChannelName},
-                                    {"fairmq.channel.index", iSubChannel}});
+                {"fairmq.channel.index", iSubChannel}
+            });
             span.SetAttribute({"send.ok", false});
             return false;
         }
         // Record normal send metrics close to the send result to demonstrate
         // how user code attaches operational context to each measurement.
         fMessagesSent.Add(1, {{"fairmq.channel.name", fOutputChannelName},
-                              {"fairmq.channel.index", iSubChannel}});
+            {"fairmq.channel.index", iSubChannel}
+        });
         fMessageSize.Record(text->length(), {{"fairmq.channel.name", fOutputChannelName},
-                                             {"fairmq.channel.index", iSubChannel}});
+            {"fairmq.channel.index", iSubChannel}
+        });
         span.SetAttribute({"send.ok", true});
     }
 
