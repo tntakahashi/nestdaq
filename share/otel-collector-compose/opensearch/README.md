@@ -99,8 +99,8 @@ change the OpenSearch image's runtime user, which remains container
 | Variable | Default | Description |
 | :-- | :-- | :-- |
 | `OTEL_COLLECTOR_IMAGE` | `docker.io/otel/opentelemetry-collector-contrib:0.155.0` | Collector image. |
-| `OPENSEARCH_IMAGE` | `docker.io/opensearchproject/opensearch:3.7.0` | OpenSearch image. |
-| `OPENSEARCH_DASHBOARDS_IMAGE` | `docker.io/opensearchproject/opensearch-dashboards:3.7.0` | OpenSearch Dashboards image. |
+| `OPENSEARCH_IMAGE` | `docker.io/opensearchproject/opensearch:2.19.5` | OpenSearch image. |
+| `OPENSEARCH_DASHBOARDS_IMAGE` | `docker.io/opensearchproject/opensearch-dashboards:2.19.5` | OpenSearch Dashboards image. |
 | `OPENSEARCH_PORT` | `9200` | Host port mapped to OpenSearch. |
 | `OPENSEARCH_DASHBOARDS_PORT` | `5601` | Host port mapped to OpenSearch Dashboards. |
 | `OTEL_COLLECTOR_GRPC_PORT` | `4317` | Host port mapped to OTLP gRPC. |

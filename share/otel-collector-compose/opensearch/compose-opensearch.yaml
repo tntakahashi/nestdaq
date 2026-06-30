@@ -1,6 +1,6 @@
 services:
   opensearch:
-    image: ${OPENSEARCH_IMAGE:-docker.io/opensearchproject/opensearch:3.7.0}
+    image: ${OPENSEARCH_IMAGE:-docker.io/opensearchproject/opensearch:2.19.5}
     container_name: opensearch
     environment:
       discovery.type: single-node
@@ -21,7 +21,7 @@ services:
       - otel-opensearch-net
 
   opensearch-dashboards:
-    image: ${OPENSEARCH_DASHBOARDS_IMAGE:-docker.io/opensearchproject/opensearch-dashboards:3.7.0}
+    image: ${OPENSEARCH_DASHBOARDS_IMAGE:-docker.io/opensearchproject/opensearch-dashboards:2.19.5}
     container_name: dashboards
     environment:
       OPENSEARCH_HOSTS: '["http://opensearch:9200"]'
@@ -37,7 +37,7 @@ services:
       - otel-opensearch-net
 
   opensearch-dashboards-setup:
-    image: ${OPENSEARCH_DASHBOARDS_IMAGE:-docker.io/opensearchproject/opensearch-dashboards:3.7.0}
+    image: ${OPENSEARCH_DASHBOARDS_IMAGE:-docker.io/opensearchproject/opensearch-dashboards:2.19.5}
     container_name: dashboards-setup
     environment:
       OPENSEARCH_DASHBOARDS_URL: "http://opensearch-dashboards:5601"
