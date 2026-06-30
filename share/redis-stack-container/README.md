@@ -6,10 +6,69 @@ Redis authentication by default, so do not expose them on a public or shared
 network. Use the RedisInsight-enabled Redis Stack image for development and
 local inspection. Prefer Redis Stack Server for production deployments.
 
-The scripts use pinned Redis Stack image tags instead of `latest`:
+The scripts use pinned image tags instead of `latest`:
 
 - `redis/redis-stack:7.4.0-v8` for development Redis Stack with RedisInsight.
 - `redis/redis-stack-server:7.4.0-v8` for production-oriented Redis Stack Server only.
+- `redis:8.2.7` for the official Redis 8.2.7 image.
+- `redis/redis-stack:7.2.0-v20` for Redis Stack 7.2 with RedisInsight.
+- `redis/redis-stack-server:7.2.0-v20` for Redis Stack 7.2 Server only.
+
+## Choose an Image
+
+| Script | Image | RedisInsight | Notes |
+| :-- | :-- | :-- | :-- |
+| `run-redis-8.2.7.sh` | `redis:8.2.7` | no | Official Redis image. The Redis 8 package is expected to include Redis Stack modules; verify with `MODULE LIST` after startup. |
+| `run-redis-7.2-stack.sh` | `redis/redis-stack:7.2.0-v20` | yes | Redis Stack 7.2 image line for development and local inspection. |
+| `run-redis-7.2-stack-server.sh` | `redis/redis-stack-server:7.2.0-v20` | no | Redis Stack 7.2 server-only image line. |
+| `run-redis-stack.sh` | `redis/redis-stack:7.4.0-v8` | yes | Default Redis Stack development helper. |
+| `run-redis-stack-server.sh` | `redis/redis-stack-server:7.4.0-v8` | no | Default Redis Stack server-only helper. |
+
+Check the running Redis version and loaded modules with:
+
+```sh
+redis-cli -p 6379 INFO server
+redis-cli -p 6379 MODULE LIST
+```
+
+The Redis Stack 7.2 image tags are Stack release tags, not exact Redis server
+patch-version tags. Use the commands above after startup when the precise Redis
+server patch version matters.
+
+## Start Redis 8.2.7
+
+Run:
+
+```sh
+./run-redis-8.2.7.sh
+```
+
+Default endpoint:
+
+- Redis: `localhost:6379`
+
+Data is bind-mounted from `redis-8.2.7-data` next to the script to `/data` in
+the container. This helper uses the official Redis image, so extra Redis server
+arguments in `REDIS_ARGS` are passed as container command arguments.
+
+## Start Redis Stack 7.2
+
+Run Redis Stack with RedisInsight:
+
+```sh
+./run-redis-7.2-stack.sh
+```
+
+Run Redis Stack Server only:
+
+```sh
+./run-redis-7.2-stack-server.sh
+```
+
+Default endpoints:
+
+- Redis: `localhost:6379`
+- RedisInsight: `http://localhost:8001` when using `run-redis-7.2-stack.sh`
 
 ## Start Redis Stack with RedisInsight
 
@@ -61,8 +120,8 @@ SELinux label options are only used with `REDIS_VOLUME_MODE=bind`. Bind mounts
 use the `:Z` label option by default so the container can write to the data
 directory on SELinux-enabled hosts. Set `REDIS_VOLUME_LABEL=z` when the same
 data directory must be shared by multiple containers. Set `REDIS_VOLUME_LABEL=`
-to omit the label option entirely. In `run-redis-stack.sh`, the same label
-option is applied to both Redis and RedisInsight bind mounts.
+to omit the label option entirely. In RedisInsight-enabled helpers, the same
+label option is applied to both Redis and RedisInsight bind mounts.
 
 ## Directory Permissions
 
@@ -96,6 +155,9 @@ Remove named volumes when you want to discard local Redis data:
 ```sh
 docker volume rm nestdaq-redis-stack-data nestdaq-redis-stack-redisinsight
 docker volume rm nestdaq-redis-stack-server-data
+docker volume rm nestdaq-redis-8.2.7-data
+docker volume rm nestdaq-redis-7.2-stack-data nestdaq-redis-7.2-stack-redisinsight
+docker volume rm nestdaq-redis-7.2-stack-server-data
 ```
 
 or:
@@ -103,6 +165,9 @@ or:
 ```sh
 podman volume rm nestdaq-redis-stack-data nestdaq-redis-stack-redisinsight
 podman volume rm nestdaq-redis-stack-server-data
+podman volume rm nestdaq-redis-8.2.7-data
+podman volume rm nestdaq-redis-7.2-stack-data nestdaq-redis-7.2-stack-redisinsight
+podman volume rm nestdaq-redis-7.2-stack-server-data
 ```
 
 Use named volumes when you do not want Redis data directories next to the
@@ -121,18 +186,19 @@ scripts keep bind-mounted data next to the copied scripts.
 | Variable | Default | Description |
 | -------- | ------- | ----------- |
 | `CONTAINER_RUNTIME` | `docker` | Container runtime command. Set to `podman` to use Podman. |
-| `REDIS_CONTAINER_NAME` | `nestdaq-redis-stack` or `nestdaq-redis-stack-server` | Container name. |
+| `REDIS_CONTAINER_NAME` | Script-specific name | Container name. |
 | `REDIS_CONTAINER_REPLACE` | `1` | Remove an existing same-name container before starting. Set to `0` to fail instead. |
-| `REDIS_IMAGE` | `redis/redis-stack:7.4.0-v8` or `redis/redis-stack-server:7.4.0-v8` | Container image. |
+| `REDIS_IMAGE` | Script-specific pinned image | Container image. |
 | `REDIS_PORT` | `6379` | Host port mapped to Redis port `6379`. |
-| `REDIS_INSIGHT_PORT` | `8001` | Host port mapped to RedisInsight port `8001`; used only by `run-redis-stack.sh`. |
+| `REDIS_INSIGHT_PORT` | `8001` | Host port mapped to RedisInsight port `8001`; used only by RedisInsight-enabled helpers. |
 | `REDIS_VOLUME_MODE` | `bind` | Storage mode. Use `bind` for host bind mounts or `volume` for named volumes. |
 | `REDIS_DATA_VOLUME` | Container-name-based volume | Named volume mounted to `/data`; used only in `volume` mode. |
-| `REDIS_INSIGHT_VOLUME` | Container-name-based volume | Named volume mounted to `/redisinsight`; used only by `run-redis-stack.sh` in `volume` mode. |
+| `REDIS_INSIGHT_VOLUME` | Container-name-based volume | Named volume mounted to `/redisinsight`; used only by RedisInsight-enabled helpers in `volume` mode. |
 | `REDIS_DATA_DIR` | Data directory next to the script | Host directory bind-mounted to `/data`; used only in `bind` mode. |
-| `REDIS_INSIGHT_DATA_DIR` | `redisinsight-data` next to the script | Host directory bind-mounted to `/redisinsight`; used only by `run-redis-stack.sh` in `bind` mode. |
+| `REDIS_INSIGHT_DATA_DIR` | Script-specific RedisInsight data directory | Host directory bind-mounted to `/redisinsight`; used only by RedisInsight-enabled helpers in `bind` mode. |
 | `REDIS_VOLUME_LABEL` | `Z` | SELinux bind-mount label option; used only in `bind` mode. Use `z` for shared labeling or an empty value to disable. |
-| `REDIS_ARGS` | empty | Extra Redis server arguments passed through the image `REDIS_ARGS` environment variable. |
+| `REDIS_ARGS` | empty | Extra Redis server arguments. Redis Stack images receive this through the image `REDIS_ARGS` environment variable; the official Redis 8.2.7 helper passes it as command arguments. |
+| `REDIS_ARGS_MODE` | `env` or `argv` | Argument passing mode used by `run-redis-stack-server.sh`. Use `env` for Redis Stack images and `argv` for official Redis images. |
 
 Example:
 

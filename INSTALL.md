@@ -160,17 +160,20 @@ three supported ways to provide it:
 
 - Build and install Redis Stack from source with the external dependency build
   shown above. This is the default when `WITH_REDIS_STACK=ON`.
+- Build and install Redis 7.x server plus standalone RedisTimeSeries from
+  source with `-DWITH_REDIS_STACK=OFF -DWITH_REDIS_SERVER_7=ON`.
 - Run Redis Stack in a container with the helper scripts in
   [`share/redis-stack-container/README.md`](share/redis-stack-container/README.md).
-- Install Redis Stack Server as a host package with the installer helper scripts
+- Install Redis and Redis Stack modules as a host package with the installer helper scripts
   in [`share/installers/README.md`](share/installers/README.md).
 
 If Redis Stack is provided by a container or host package, add
 `-DWITH_REDIS_STACK=OFF` to the external dependency configure command.
 
 The Redis Stack CMake files and helper shell scripts under
-`cmake/dependencies/` are intended for Redis 8 or later. They are not a
-compatibility recipe for Redis 7.x or older module versions.
+`cmake/dependencies/` are intended for Redis 8 or later. Redis 7.x uses a
+separate CMake path because RedisTimeSeries 1.x is built as a standalone module
+rather than through the Redis 8 `redis/modules` tree.
 
 - In the command example above, CMake’s `ExternalProject` is used to perform `git clone`, build, and install.
   - In this case, the `--parallel` (or `-j`) option passed to cmake --build does not control the inner ExternalProject builds, so please specify the parallel build level during the initial configuration using `-DBUILD_PARALLEL_LEVEL=xxx`.
@@ -188,6 +191,8 @@ compatibility recipe for Redis 7.x or older module versions.
 | :-- | :-- | :-- |
 | `BUILD_PARALLEL_LEVEL` | unset | Parallel level passed to inner `ExternalProject` builds. Set this at configure time; `cmake --build --parallel` does not control those inner builds. |
 | `WITH_REDIS_STACK` | `ON` | Build and install Redis Stack runtime components. Set to `OFF` when Redis Stack is provided separately, for example by a container. |
+| `WITH_REDIS_SERVER_7` | `OFF` | Build and install Redis 7.x server with standalone RedisTimeSeries. This option is mutually exclusive with `WITH_REDIS_STACK`. |
+| `REDIS_SERVER_7_SERIES` | `7.4` | Redis 7.x series used when `WITH_REDIS_SERVER_7=ON`: `7.4` selects Redis 7.4.9 and RedisTimeSeries 1.12.14; `7.2` selects Redis 7.2.14 and RedisTimeSeries 1.10.24. |
 | `REDIS_BUILD_REDISBLOOM` | `ON` | Build and install the RedisBloom module when `WITH_REDIS_STACK` is `ON`. |
 | `REDIS_BUILD_REDISEARCH` | `ON` | Build and install the RediSearch module when `WITH_REDIS_STACK` is `ON`. Disable this when the compiler cannot build RediSearch. |
 | `REDIS_BUILD_REDISJSON` | `ON` | Build and install the RedisJSON module when `WITH_REDIS_STACK` is `ON`. |
@@ -195,6 +200,8 @@ compatibility recipe for Redis 7.x or older module versions.
 | `WITH_SPDLOG` | `ON` | Build and install spdlog. This supports the optional NestDAQ spdlog OpenTelemetry sink. |
 | `WITH_OTEL_CPP` | `ON` | Build and install opentelemetry-cpp and optional transport dependencies such as gRPC. |
 | `<package>_VERSION` | package-specific | Override the dependency version listed below, for example `-DFairMQ_VERSION=...`. |
+| `Redis7_VERSION` | series-specific | Override the Redis 7.x version selected by `REDIS_SERVER_7_SERIES`. |
+| `RedisTimeSeries7_VERSION` | series-specific | Override the RedisTimeSeries standalone version selected by `REDIS_SERVER_7_SERIES`. |
 
 The default `FairMQ_VERSION` depends on the GNU compiler version. GCC 9.1 or
 later uses FairMQ 1.10.0 by default; older GCC releases use FairMQ 1.9.2. Pass
@@ -205,6 +212,8 @@ installs Redis server tools only. Redis Stack also exposes low-level cache
 variables such as Redis build TLS, allocator, and temporary Rust toolchain
 paths. These are intended for dependency build maintenance; inspect the CMake
 cache or `cmake/dependencies/redis-stack.cmake` when those knobs are needed.
+For Redis 7.x maintenance knobs, inspect
+`cmake/dependencies/redis-server-7.cmake`.
 
 #### Versions of installed external dependencies
 
@@ -230,22 +239,27 @@ The Redis modules can be disabled individually with `REDIS_BUILD_REDISBLOOM`,
 `REDIS_BUILD_REDISTIMESERIES`. Redis is required by the NestDAQ application at
 runtime, but it is not a direct library dependency. It may also be provided by
 a container or by the host package installer scripts. The package installer
-default is Redis Stack Server without RedisInsight; use the Redis Stack
-container helper or `REDIS_PACKAGE=redis-stack` with the installer script when
-RedisInsight is needed.
+default is Redis 8.2.7 with Redis Stack modules, without RedisInsight; use the
+Redis Stack container helper or `REDIS_PACKAGE=redis-stack` with
+`REDIS_VERSION=latest` when RedisInsight is needed and the repository provides
+that package.
 RediSearch requires a compiler with C++20 support. Builds with
 `REDIS_BUILD_REDISEARCH=ON` fail with AlmaLinux 8 GCC 8.5 because RediSearch
 uses C++20 features such as `<ranges>`. For AlmaLinux 8 dependency builds with
 GCC 8.5, pass `-DREDIS_BUILD_REDISEARCH=OFF` unless using a newer compiler
 toolchain that supports the required C++20 features.
+The default Redis module versions follow the module release tags selected by
+the Redis 8.2.7 source tree.
 
 | Package                                                                  | Version (default) | CMake options |
 | :--                                                                      | :--               | :--            |
-| [Redis](https://github.com/redis/redis)                                  | 8.6.4             | `Redis_VERSION` |
-| [RedisBloom](https://github.com/RedisBloom/RedisBloom)                   | 8.6.2             | `RedisBloom_VERSION`, `REDIS_BUILD_REDISBLOOM` |
-| [RediSearch](https://github.com/RediSearch/RediSearch)                   | 8.6.8             | `RediSearch_VERSION`, `REDIS_BUILD_REDISEARCH` |
-| [RedisJSON](https://github.com/RedisJSON/RedisJSON)                      | 8.6.0             | `RedisJSON_VERSION`, `REDIS_BUILD_REDISJSON` |
-| [RedisTimeSeries](https://github.com/RedisTimeSeries/RedisTimeSeries)    | 8.6.2             | `RedisTimeSeries_VERSION`, `REDIS_BUILD_REDISTIMESERIES` |
+| [Redis](https://github.com/redis/redis)                                  | 8.2.7             | `Redis_VERSION` |
+| [RedisBloom](https://github.com/RedisBloom/RedisBloom)                   | 8.2.12            | `RedisBloom_VERSION`, `REDIS_BUILD_REDISBLOOM` |
+| [RediSearch](https://github.com/RediSearch/RediSearch)                   | 8.2.13            | `RediSearch_VERSION`, `REDIS_BUILD_REDISEARCH` |
+| [RedisJSON](https://github.com/RedisJSON/RedisJSON)                      | 8.2.9             | `RedisJSON_VERSION`, `REDIS_BUILD_REDISJSON` |
+| [RedisTimeSeries](https://github.com/RedisTimeSeries/RedisTimeSeries)    | 8.2.10            | `RedisTimeSeries_VERSION`, `REDIS_BUILD_REDISTIMESERIES` |
+| [Redis 7.x](https://github.com/redis/redis)                              | 7.4.9 for `REDIS_SERVER_7_SERIES=7.4`; 7.2.14 for `7.2` | `Redis7_VERSION`, `REDIS_SERVER_7_SERIES` |
+| [RedisTimeSeries standalone](https://github.com/RedisTimeSeries/RedisTimeSeries) | 1.12.14 for Redis 7.4; 1.10.24 for Redis 7.2 | `RedisTimeSeries7_VERSION`, `REDIS_SERVER_7_SERIES` |
 
 
 ### Build and install NestDAQ library

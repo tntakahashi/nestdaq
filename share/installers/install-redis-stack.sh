@@ -2,7 +2,8 @@
 set -eu
 
 ACTION="${1:-install}"
-REDIS_PACKAGE="${REDIS_PACKAGE:-redis-stack-server}"
+REDIS_PACKAGE="${REDIS_PACKAGE:-redis}"
+REDIS_VERSION="${REDIS_VERSION:-8.2.7}"
 SUDO="${SUDO:-sudo}"
 if [ "$(id -u)" -eq 0 ]; then
   SUDO=""
@@ -12,7 +13,7 @@ usage() {
   cat <<EOF
 Usage: $0 [install|upgrade|uninstall|repo-only]
 
-Install or update Redis Stack Server with the host package manager.
+Install or update Redis with Redis Stack modules with the host package manager.
 
 Debian/Ubuntu systems use apt-get. RHEL-family systems use dnf, or yum when
 dnf is not available. The script writes package repositories and packages into
@@ -27,13 +28,16 @@ Actions:
 
 Environment:
   REDIS_PACKAGE  Package name to install. Default: ${REDIS_PACKAGE}
-                 redis-stack-server installs Redis server and Redis Stack
-                 modules, but not RedisInsight. Use redis-stack only when your
-                 repository provides it and you want RedisInsight included.
+                 The Redis 8 redis package includes Redis server and Redis
+                 Stack modules, but not RedisInsight. Use redis-stack only when
+                 your repository provides it and you want RedisInsight included.
+  REDIS_VERSION  Redis version to install. Default: ${REDIS_VERSION}
+                 Set to latest to install or upgrade to the repository default.
   SUDO           Privilege wrapper. Default: sudo, or empty when run as root.
 
 Examples:
   $0 install
+  REDIS_VERSION=latest $0 install
   REDIS_PACKAGE=redis-stack $0 install
   $0 upgrade
   $0 uninstall
@@ -62,6 +66,22 @@ fi
 run() {
   echo "+ $*"
   "$@"
+}
+
+is_latest_version() {
+  [ "${REDIS_VERSION}" = "latest" ]
+}
+
+require_redis_package_for_pinned_version() {
+  if ! is_latest_version && [ "${REDIS_PACKAGE}" != "redis" ]; then
+    echo "REDIS_VERSION=${REDIS_VERSION} pinning is supported only with REDIS_PACKAGE=redis." >&2
+    echo "Set REDIS_VERSION=latest when using REDIS_PACKAGE=${REDIS_PACKAGE}." >&2
+    exit 1
+  fi
+}
+
+apt_redis_version() {
+  printf '6:%s-1rl1~%s1' "${REDIS_VERSION}" "${codename}"
 }
 
 install_deb_repo() {
@@ -125,14 +145,30 @@ case "${ID:-}" in
       run ${SUDO} apt-get remove -y "${REDIS_PACKAGE}"
       exit 0
     fi
+    require_redis_package_for_pinned_version
     install_deb_repo
     if [ "${ACTION}" = "repo-only" ]; then
       exit 0
     fi
-    if [ "${ACTION}" = "upgrade" ]; then
-      run ${SUDO} apt-get install --only-upgrade -y "${REDIS_PACKAGE}"
+    if is_latest_version; then
+      if [ "${ACTION}" = "upgrade" ]; then
+        run ${SUDO} apt-get install --only-upgrade -y "${REDIS_PACKAGE}"
+      else
+        run ${SUDO} apt-get install -y "${REDIS_PACKAGE}"
+      fi
     else
-      run ${SUDO} apt-get install -y "${REDIS_PACKAGE}"
+      redis_version="$(apt_redis_version)"
+      if [ "${ACTION}" = "upgrade" ]; then
+        run ${SUDO} apt-get install --only-upgrade -y \
+          "redis=${redis_version}" \
+          "redis-server=${redis_version}" \
+          "redis-tools=${redis_version}"
+      else
+        run ${SUDO} apt-get install -y \
+          "redis=${redis_version}" \
+          "redis-server=${redis_version}" \
+          "redis-tools=${redis_version}"
+      fi
     fi
     ;;
   almalinux|rocky|rhel|centos|fedora)
@@ -144,6 +180,7 @@ case "${ID:-}" in
       run ${SUDO} "${pm}" remove -y "${REDIS_PACKAGE}"
       exit 0
     fi
+    require_redis_package_for_pinned_version
     install_rpm_repo
     if [ "${ACTION}" = "repo-only" ]; then
       exit 0
@@ -152,10 +189,23 @@ case "${ID:-}" in
     if ! command -v dnf >/dev/null 2>&1; then
       pm="yum"
     fi
-    if [ "${ACTION}" = "upgrade" ]; then
-      run ${SUDO} "${pm}" upgrade -y "${REDIS_PACKAGE}"
+    if is_latest_version; then
+      if [ "${ACTION}" = "upgrade" ]; then
+        run ${SUDO} "${pm}" upgrade -y "${REDIS_PACKAGE}"
+      else
+        run ${SUDO} "${pm}" install -y "${REDIS_PACKAGE}"
+      fi
     else
-      run ${SUDO} "${pm}" install -y "${REDIS_PACKAGE}"
+      if ! "${pm}" --showduplicates list "${REDIS_PACKAGE}" 2>/dev/null | awk '{ print $2 }' | grep -qx "${REDIS_VERSION}-1"; then
+        echo "Redis package ${REDIS_PACKAGE}-${REDIS_VERSION}-1 is not available from the configured Redis repository for ${ID:-unknown} ${VERSION_ID:-unknown}." >&2
+        echo "Use REDIS_VERSION=latest or choose an OS/repository that publishes Redis ${REDIS_VERSION}." >&2
+        exit 1
+      fi
+      if [ "${ACTION}" = "upgrade" ]; then
+        run ${SUDO} "${pm}" upgrade -y "${REDIS_PACKAGE}-${REDIS_VERSION}-1"
+      else
+        run ${SUDO} "${pm}" install -y "${REDIS_PACKAGE}-${REDIS_VERSION}-1"
+      fi
     fi
     ;;
   *)

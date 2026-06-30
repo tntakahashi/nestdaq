@@ -142,6 +142,15 @@ OpenTelemetry logs to the collector.
    was disabled at dependency build time, omit the corresponding `--loadmodule`
    line.
 
+   If Redis 7.x server was built with standalone RedisTimeSeries by configuring
+   external dependencies with `-DWITH_REDIS_STACK=OFF
+   -DWITH_REDIS_SERVER_7=ON`, load only the installed RedisTimeSeries module:
+
+   ```sh
+   <install-prefix>/bin/redis-server \
+     --loadmodule <install-prefix>/lib/redis/modules/redistimeseries.so
+   ```
+
    The dependency install also provides Redis configuration examples under
    `<install-prefix>/etc/redis/`. `redis.conf` is the upstream base
    configuration, and `redis-full.conf` is generated with the module paths that

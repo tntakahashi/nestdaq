@@ -14,6 +14,7 @@ REDIS_DATA_VOLUME=${REDIS_DATA_VOLUME:-"${REDIS_CONTAINER_NAME}-data"}
 REDIS_DATA_DIR=${REDIS_DATA_DIR:-"${THIS_SCRIPT_DIR}/redis-stack-server-data"}
 REDIS_VOLUME_LABEL=${REDIS_VOLUME_LABEL:-Z}
 REDIS_ARGS=${REDIS_ARGS:-}
+REDIS_ARGS_MODE=${REDIS_ARGS_MODE:-env}
 
 if ! command -v "${CONTAINER_RUNTIME}" >/dev/null 2>&1; then
     echo "Container runtime not found: ${CONTAINER_RUNTIME}" >&2
@@ -48,6 +49,29 @@ case "${REDIS_VOLUME_MODE}" in
         exit 1
         ;;
 esac
+
+case "${REDIS_ARGS_MODE}" in
+    env|argv)
+        ;;
+    *)
+        echo "Unsupported REDIS_ARGS_MODE: ${REDIS_ARGS_MODE}" >&2
+        echo "Use 'env' for Redis Stack images or 'argv' for official Redis images." >&2
+        exit 1
+        ;;
+esac
+
+if [ "${REDIS_ARGS_MODE}" = "argv" ]; then
+    # The official Redis image accepts redis-server options as command
+    # arguments. Redis Stack images use the REDIS_ARGS environment variable.
+    # shellcheck disable=SC2086
+    set -- ${REDIS_ARGS}
+
+    exec "${CONTAINER_RUNTIME}" run --rm -it \
+        --name "${REDIS_CONTAINER_NAME}" \
+        -p "${REDIS_PORT}:6379" \
+        -v "${REDIS_VOLUME_SPEC}" \
+        "${REDIS_IMAGE}" "$@"
+fi
 
 exec "${CONTAINER_RUNTIME}" run --rm -it \
     --name "${REDIS_CONTAINER_NAME}" \

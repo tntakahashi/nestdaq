@@ -17,7 +17,7 @@ prefer `dnf` and fall back to `yum` when `dnf` is not available.
 
 | Script | Installs or updates |
 | :-- | :-- |
-| `install-redis-stack.sh` | Redis Stack Server from the Redis package repository. |
+| `install-redis-stack.sh` | Redis server and Redis Stack modules from the Redis package repository. |
 | `install-otelcol-contrib.sh` | OpenTelemetry Collector Contrib from the upstream release package. |
 | `install-opensearch.sh` | OpenSearch from the OpenSearch 3.x package repository. |
 | `install-opensearch-dashboards.sh` | OpenSearch Dashboards from the OpenSearch 3.x package repository. |
@@ -50,12 +50,26 @@ wrapper:
 SUDO=doas ./install-opensearch.sh install
 ```
 
-## Redis Stack
+## Redis
 
-The Redis script registers `packages.redis.io` and installs
-`redis-stack-server` by default. This package is the server-oriented Redis
-Stack package: it includes Redis server and Redis Stack modules, but it does
-not include RedisInsight.
+The Redis script registers `packages.redis.io` and installs Redis `8.2.7` by
+default. For Redis 8 packages, the default package name is `redis`. It installs
+Redis server and Redis Stack modules, but it does not include RedisInsight.
+The Redis 8.2.7 package includes modules such as:
+
+```text
+/usr/lib/redis/modules/redisbloom.so
+/usr/lib/redis/modules/redisearch.so
+/usr/lib/redis/modules/redistimeseries.so
+/usr/lib/redis/modules/rejson.so
+```
+
+Use `REDIS_VERSION=latest` when you want the package manager to install or
+upgrade to the latest version currently published by the Redis repository:
+
+```sh
+REDIS_VERSION=latest ./install-redis-stack.sh install
+```
 
 Use `REDIS_PACKAGE=redis-stack` only when the Redis repository for your
 distribution provides that package and you want the RedisInsight-inclusive
@@ -65,8 +79,21 @@ Redis Stack package:
 REDIS_PACKAGE=redis-stack ./install-redis-stack.sh install
 ```
 
-Do not replace the default with plain `redis` or `redis-server` unless you
-intentionally want Redis Open Source without Redis Stack modules.
+Version pinning with `REDIS_VERSION=8.2.7` is supported for the default
+`REDIS_PACKAGE=redis` package. Set `REDIS_VERSION=latest` when using a legacy
+package name such as `redis-stack-server` or `redis-stack`.
+
+RedisInsight is not installed by the default `redis` package. Use a separate
+RedisInsight package or the Redis Stack container helper in
+[`../redis-stack-container/`](../redis-stack-container/README.md) when
+RedisInsight is needed.
+
+At the time this documentation was written, Redis `8.2.7` packages were
+available from the Redis package repository for Debian/Ubuntu and
+RHEL-family 8/9 repositories. The RHEL-family 10 repository may only publish a
+newer Redis package such as `8.8.0`; in that case use `REDIS_VERSION=latest`,
+use an OS repository that publishes Redis `8.2.7`, or build Redis from source
+with the dependency CMake files.
 
 Official install instructions:
 
@@ -139,7 +166,7 @@ Likely service names:
 
 | Service | Unit name |
 | :-- | :-- |
-| Redis Stack Server | `redis-stack-server`; some distributions may use `redis-server` or `redis`. |
+| Redis | commonly `redis-server`; legacy Redis Stack packages may use `redis-stack-server`. |
 | OpenTelemetry Collector Contrib | `otelcol-contrib`. |
 | OpenSearch | `opensearch`. |
 | OpenSearch Dashboards | `opensearch-dashboards`. |
@@ -156,7 +183,7 @@ For Redis, check the unit name installed by your package first:
 
 ```sh
 systemctl list-unit-files 'redis*'
-sudo systemctl enable --now redis-stack-server
+sudo systemctl enable --now redis-server
 ```
 
 If you install the RedisInsight-inclusive `redis-stack` package, check the
@@ -181,8 +208,8 @@ packages and distributions:
 
 ```sh
 systemctl list-unit-files 'redis*'
-sudo systemctl stop redis-stack-server
-sudo systemctl disable redis-stack-server
+sudo systemctl stop redis-server
+sudo systemctl disable redis-server
 ./install-redis-stack.sh uninstall
 sudo systemctl daemon-reload
 systemctl list-unit-files 'redis*'
