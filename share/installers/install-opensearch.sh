@@ -2,7 +2,7 @@
 set -eu
 
 ACTION="${1:-install}"
-OPENSEARCH_VERSION="${OPENSEARCH_VERSION:-}"
+OPENSEARCH_VERSION="${OPENSEARCH_VERSION:-2.19.5}"
 OPENSEARCH_INSTALL_SECURITY="${OPENSEARCH_INSTALL_SECURITY:-disabled}"
 SUDO="${SUDO:-sudo}"
 if [ "$(id -u)" -eq 0 ]; then
@@ -13,7 +13,7 @@ usage() {
   cat <<EOF
 Usage: $0 [install|upgrade|uninstall|repo-only]
 
-Install or update OpenSearch from the OpenSearch 3.x package repository.
+Install or update OpenSearch from the OpenSearch 2.x package repository.
 
 Actions:
   install    Register the repository and install OpenSearch.
@@ -22,15 +22,16 @@ Actions:
   repo-only  Register the OpenSearch repository only.
 
 Environment:
-  OPENSEARCH_VERSION                 Version to install, for example 3.7.0.
-                                     Default: latest available from the repository.
+  OPENSEARCH_VERSION                 Version to install, for example 2.19.5.
+                                     Default: ${OPENSEARCH_VERSION}. Set to latest for the repository default.
   OPENSEARCH_INSTALL_SECURITY        disabled or demo. Default: ${OPENSEARCH_INSTALL_SECURITY}
   OPENSEARCH_INITIAL_ADMIN_PASSWORD  Required when OPENSEARCH_INSTALL_SECURITY=demo.
   SUDO                               Privilege wrapper. Default: sudo, or empty when run as root.
 
 Examples:
   $0 install
-  OPENSEARCH_VERSION=3.7.0 $0 install
+  OPENSEARCH_VERSION=2.19.5 $0 install
+  OPENSEARCH_VERSION=latest $0 install
   $0 uninstall
   OPENSEARCH_INSTALL_SECURITY=demo \\
   OPENSEARCH_INITIAL_ADMIN_PASSWORD='change-this-strong-password' \\
@@ -62,19 +63,23 @@ run() {
   "$@"
 }
 
+is_latest_version() {
+  [ "${OPENSEARCH_VERSION}" = "latest" ]
+}
+
 install_deb_repo() {
   run ${SUDO} apt-get update
   run ${SUDO} apt-get install -y lsb-release ca-certificates curl gnupg2
   run ${SUDO} mkdir -p /etc/apt/keyrings
   curl -o- https://artifacts.opensearch.org/publickeys/opensearch-release.pgp |
     run ${SUDO} gpg --dearmor --batch --yes -o /etc/apt/keyrings/opensearch-release-keyring
-  echo "deb [signed-by=/etc/apt/keyrings/opensearch-release-keyring] https://artifacts.opensearch.org/releases/bundle/opensearch/3.x/apt stable main" |
-    run ${SUDO} tee /etc/apt/sources.list.d/opensearch-3.x.list >/dev/null
+  echo "deb [signed-by=/etc/apt/keyrings/opensearch-release-keyring] https://artifacts.opensearch.org/releases/bundle/opensearch/2.x/apt stable main" |
+    run ${SUDO} tee /etc/apt/sources.list.d/opensearch-2.x.list >/dev/null
   run ${SUDO} apt-get update
 }
 
 install_rpm_repo() {
-  run ${SUDO} curl -SL https://artifacts.opensearch.org/releases/bundle/opensearch/3.x/opensearch-3.x.repo -o /etc/yum.repos.d/opensearch-3.x.repo
+  run ${SUDO} curl -SL https://artifacts.opensearch.org/releases/bundle/opensearch/2.x/opensearch-2.x.repo -o /etc/yum.repos.d/opensearch-2.x.repo
   if command -v dnf >/dev/null 2>&1; then
     run ${SUDO} dnf clean all
   else
@@ -114,7 +119,7 @@ case "${ID:-}" in
       exit 0
     fi
     package="opensearch"
-    if [ -n "${OPENSEARCH_VERSION}" ]; then
+    if ! is_latest_version; then
       package="opensearch=${OPENSEARCH_VERSION}"
     fi
     if [ "${ACTION}" = "upgrade" ]; then
@@ -137,7 +142,7 @@ case "${ID:-}" in
       exit 0
     fi
     package="opensearch"
-    if [ -n "${OPENSEARCH_VERSION}" ]; then
+    if ! is_latest_version; then
       package="opensearch-${OPENSEARCH_VERSION}"
     fi
     pm="dnf"

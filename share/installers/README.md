@@ -19,8 +19,8 @@ prefer `dnf` and fall back to `yum` when `dnf` is not available.
 | :-- | :-- |
 | `install-redis-stack.sh` | Redis server and Redis Stack modules from the Redis package repository. |
 | `install-otelcol-contrib.sh` | OpenTelemetry Collector Contrib from the upstream release package. |
-| `install-opensearch.sh` | OpenSearch from the OpenSearch 3.x package repository. |
-| `install-opensearch-dashboards.sh` | OpenSearch Dashboards from the OpenSearch 3.x package repository. |
+| `install-opensearch.sh` | OpenSearch from the OpenSearch 2.x package repository. |
+| `install-opensearch-dashboards.sh` | OpenSearch Dashboards from the OpenSearch 2.x package repository. |
 
 ## Usage
 
@@ -123,14 +123,23 @@ Official install and release instructions:
 
 ## OpenSearch
 
-The OpenSearch scripts register the OpenSearch 3.x package repositories. By
-default, `install-opensearch.sh` passes `DISABLE_INSTALL_DEMO_CONFIG=true` and
-`DISABLE_SECURITY_PLUGIN=true` during installation so the package can be
-installed without a demo admin password. Set `OPENSEARCH_INSTALL_SECURITY=demo`
-and provide `OPENSEARCH_INITIAL_ADMIN_PASSWORD` if you want the package
-installer to set up the demo security configuration.
+The OpenSearch scripts register the OpenSearch 2.x package repositories and
+install OpenSearch `2.19.5` and OpenSearch Dashboards `2.19.5` by default. Use
+`OPENSEARCH_VERSION=latest` or `OPENSEARCH_DASHBOARDS_VERSION=latest` when you
+want the package manager to install or upgrade to the latest version currently
+published by the repository.
+
+By default, `install-opensearch.sh` passes
+`DISABLE_INSTALL_DEMO_CONFIG=true` and `DISABLE_SECURITY_PLUGIN=true` during
+installation so the package can be installed without a demo admin password. Set
+`OPENSEARCH_INSTALL_SECURITY=demo` and provide
+`OPENSEARCH_INITIAL_ADMIN_PASSWORD` if you want the package installer to set up
+the demo security configuration.
 
 ```sh
+OPENSEARCH_VERSION=2.19.5 ./install-opensearch.sh install
+OPENSEARCH_DASHBOARDS_VERSION=2.19.5 ./install-opensearch-dashboards.sh install
+
 OPENSEARCH_INSTALL_SECURITY=demo \
 OPENSEARCH_INITIAL_ADMIN_PASSWORD='change-this-strong-password' \
 ./install-opensearch.sh install

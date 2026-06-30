@@ -2,7 +2,7 @@
 set -eu
 
 ACTION="${1:-install}"
-OPENSEARCH_DASHBOARDS_VERSION="${OPENSEARCH_DASHBOARDS_VERSION:-}"
+OPENSEARCH_DASHBOARDS_VERSION="${OPENSEARCH_DASHBOARDS_VERSION:-2.19.5}"
 OPENSEARCH_DASHBOARDS_INSTALL_SECURITY="${OPENSEARCH_DASHBOARDS_INSTALL_SECURITY:-disabled}"
 SUDO="${SUDO:-sudo}"
 if [ "$(id -u)" -eq 0 ]; then
@@ -13,7 +13,7 @@ usage() {
   cat <<EOF
 Usage: $0 [install|upgrade|uninstall|repo-only]
 
-Install or update OpenSearch Dashboards from the OpenSearch Dashboards 3.x
+Install or update OpenSearch Dashboards from the OpenSearch Dashboards 2.x
 package repository.
 
 Actions:
@@ -23,14 +23,15 @@ Actions:
   repo-only  Register the OpenSearch Dashboards repository only.
 
 Environment:
-  OPENSEARCH_DASHBOARDS_VERSION           Version to install, for example 3.7.0.
-                                          Default: latest available from the repository.
+  OPENSEARCH_DASHBOARDS_VERSION           Version to install, for example 2.19.5.
+                                          Default: ${OPENSEARCH_DASHBOARDS_VERSION}. Set to latest for the repository default.
   OPENSEARCH_DASHBOARDS_INSTALL_SECURITY  disabled or enabled. Default: ${OPENSEARCH_DASHBOARDS_INSTALL_SECURITY}
   SUDO                                    Privilege wrapper. Default: sudo, or empty when run as root.
 
 Examples:
   $0 install
-  OPENSEARCH_DASHBOARDS_VERSION=3.7.0 $0 install
+  OPENSEARCH_DASHBOARDS_VERSION=2.19.5 $0 install
+  OPENSEARCH_DASHBOARDS_VERSION=latest $0 install
   $0 uninstall
   OPENSEARCH_DASHBOARDS_INSTALL_SECURITY=enabled $0 install
 EOF
@@ -60,19 +61,23 @@ run() {
   "$@"
 }
 
+is_latest_version() {
+  [ "${OPENSEARCH_DASHBOARDS_VERSION}" = "latest" ]
+}
+
 install_deb_repo() {
   run ${SUDO} apt-get update
   run ${SUDO} apt-get install -y lsb-release ca-certificates curl gnupg2
   run ${SUDO} mkdir -p /etc/apt/keyrings
   curl -o- https://artifacts.opensearch.org/publickeys/opensearch-release.pgp |
     run ${SUDO} gpg --dearmor --batch --yes -o /etc/apt/keyrings/opensearch-release-keyring
-  echo "deb [signed-by=/etc/apt/keyrings/opensearch-release-keyring] https://artifacts.opensearch.org/releases/bundle/opensearch-dashboards/3.x/apt stable main" |
-    run ${SUDO} tee /etc/apt/sources.list.d/opensearch-dashboards-3.x.list >/dev/null
+  echo "deb [signed-by=/etc/apt/keyrings/opensearch-release-keyring] https://artifacts.opensearch.org/releases/bundle/opensearch-dashboards/2.x/apt stable main" |
+    run ${SUDO} tee /etc/apt/sources.list.d/opensearch-dashboards-2.x.list >/dev/null
   run ${SUDO} apt-get update
 }
 
 install_rpm_repo() {
-  run ${SUDO} curl -SL https://artifacts.opensearch.org/releases/bundle/opensearch-dashboards/3.x/opensearch-dashboards-3.x.repo -o /etc/yum.repos.d/opensearch-dashboards-3.x.repo
+  run ${SUDO} curl -SL https://artifacts.opensearch.org/releases/bundle/opensearch-dashboards/2.x/opensearch-dashboards-2.x.repo -o /etc/yum.repos.d/opensearch-dashboards-2.x.repo
   if command -v dnf >/dev/null 2>&1; then
     run ${SUDO} dnf clean all
   else
@@ -105,7 +110,7 @@ case "${ID:-}" in
       exit 0
     fi
     package="opensearch-dashboards"
-    if [ -n "${OPENSEARCH_DASHBOARDS_VERSION}" ]; then
+    if ! is_latest_version; then
       package="opensearch-dashboards=${OPENSEARCH_DASHBOARDS_VERSION}"
     fi
     if [ "${ACTION}" = "upgrade" ]; then
@@ -128,7 +133,7 @@ case "${ID:-}" in
       exit 0
     fi
     package="opensearch-dashboards"
-    if [ -n "${OPENSEARCH_DASHBOARDS_VERSION}" ]; then
+    if ! is_latest_version; then
       package="opensearch-dashboards-${OPENSEARCH_DASHBOARDS_VERSION}"
     fi
     pm="dnf"
