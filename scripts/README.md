@@ -224,6 +224,8 @@ function link () {
 the FairMQ socket, for example `type push`, `method bind`, and
 `autoSubChannel false`.
 
+### Bind and connect endpoints
+
 In topology endpoint settings, `method bind` and `method connect` describe
 which side owns the socket address. Here, an address means the endpoint
 connection information needed by FairMQ: an IP address or hostname plus a port
