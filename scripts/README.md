@@ -201,6 +201,8 @@ Use `autoSubChannel false` for fixed 1:1-style connections such as
 topologies such as `topology-n-n-m.sh` and `topology-2samplers-n-m.sh`, where
 the plugin discovers peer subchannels and updates `numSockets` accordingly.
 When `[subindex]` is written explicitly, only that subchannel is used.
+See [`plugins/README.md#autosubchannel`](../plugins/README.md#autosubchannel)
+for the detailed topology plugin behavior.
 
 Topology scripts write endpoint and link definitions to Redis DB 0. Their
 helper functions have this shape:
@@ -221,6 +223,15 @@ function link () {
 `daq_service:topology:endpoint:SERVICE:CHANNEL`. The remaining fields describe
 the FairMQ socket, for example `type push`, `method bind`, and
 `autoSubChannel false`.
+
+In topology endpoint settings, `method bind` and `method connect` describe
+which side owns the socket address. Here, an address means the endpoint
+connection information needed by FairMQ: an IP address or hostname plus a port
+number. A bind-side socket opens its local endpoint and can communicate with
+connect-side sockets that connect to it without knowing each peer address. A
+connect-side socket must know the bind-side address before it can connect. That
+address can be resolved from NestDAQ service discovery and topology metadata in
+Redis, or it can be set directly through parameters for a fixed setup.
 
 `link SERVICE CHANNEL PEER_SERVICE PEER_CHANNEL` writes a logical connection
 between two endpoint definitions. The topology plugin reads these definitions
