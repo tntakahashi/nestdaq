@@ -12,6 +12,7 @@
 - functions and member functions: prefer lower camel case / `camelCase`; `PascalCase` / `UpperCamelCase` is also allowed.
 - variables: prefer snake case / `snake_case`; lower camel case / `camelCase` is also allowed.
 - data members: `fPascalCase`
+- static data members: start with `fg`, for example `fgPascalCase`
 - static variables: start with `g`, for example `gPascalCase`
 - constants: start with `k`, for example `kPascalCase`, or use `SCREAMING_SNAKE_CASE`
 - macro names: `SCREAMING_SNAKE_CASE`
