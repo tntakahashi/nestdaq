@@ -9,9 +9,10 @@
 
 #include <nestdaq/runDevice.h>
 
-#if __has_include(<spdlog/spdlog.h>)
+#if defined(NESTDAQ_EXAMPLES_HAVE_SPDLOG_OTEL) && __has_include(<nestdaq/telemetry/SpdlogOpenTelemetrySink.h>) && __has_include(<spdlog/spdlog.h>)
+#include <nestdaq/telemetry/SpdlogOpenTelemetrySink.h>
 #include <spdlog/spdlog.h>
-#define NESTDAQ_EXAMPLES_USE_SPDLOG
+#define NESTDAQ_EXAMPLES_USE_SPDLOG_OTEL
 #endif
 
 #include "NullDevice.h"
@@ -53,15 +54,20 @@ void NullDevice::Connect()
 //_____________________________________________________________________________
 void NullDevice::Init()
 {
+#ifdef NESTDAQ_EXAMPLES_USE_SPDLOG_OTEL
+    if (!fLogger) {
+        fLogger = std::make_shared<spdlog::logger>(
+                      "NullDevice",
+                      spdlog::sinks_init_list{nestdaq::telemetry::CreateSpdlogOpenTelemetrySink()});
+    }
+    fLogger->info("NullDevice example spdlog OTel log");
+#endif
     LOG(info) << __PRETTY_FUNCTION__;
 }
 
 //_____________________________________________________________________________
 void NullDevice::InitTask()
 {
-#ifdef NESTDAQ_EXAMPLES_USE_SPDLOG
-    spdlog::info("NullDevice example spdlog log");
-#endif
     LOG(info) << __PRETTY_FUNCTION__;
 }
 

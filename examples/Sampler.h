@@ -6,10 +6,15 @@
  */
 
 #include <cstdint>
+#include <memory>
 #include <string>
 
 #include <fairmq/Device.h>
 #include <nestdaq/telemetry/Telemetry.h>
+
+namespace spdlog {
+class logger;
+} // namespace spdlog
 
 class Sampler : public fair::mq::Device
 {
@@ -31,6 +36,7 @@ private:
     nestdaq::telemetry::Counter fMessagesFailed;
     nestdaq::telemetry::Histogram fMessageSize;
     nestdaq::telemetry::Gauge fIteration;
+    std::shared_ptr<spdlog::logger> fLogger;
     uint64_t fMaxIterations{0};
     uint64_t fNumIterations{0};
     int fNumSubChannels{0};

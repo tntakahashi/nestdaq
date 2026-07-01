@@ -8,9 +8,10 @@
 
 #include <nestdaq/runDevice.h>
 
-#if __has_include(<spdlog/spdlog.h>)
+#if defined(NESTDAQ_EXAMPLES_HAVE_SPDLOG_OTEL) && __has_include(<nestdaq/telemetry/SpdlogOpenTelemetrySink.h>) && __has_include(<spdlog/spdlog.h>)
+#include <nestdaq/telemetry/SpdlogOpenTelemetrySink.h>
 #include <spdlog/spdlog.h>
-#define NESTDAQ_EXAMPLES_USE_SPDLOG
+#define NESTDAQ_EXAMPLES_USE_SPDLOG_OTEL
 #endif
 
 #include "Sink.h"
@@ -125,6 +126,14 @@ bool Sink::HandleMultipartData(fair::mq::Parts &msgParts, int index)
 //_____________________________________________________________________________
 void Sink::Init()
 {
+#ifdef NESTDAQ_EXAMPLES_USE_SPDLOG_OTEL
+    if (!fLogger) {
+        fLogger = std::make_shared<spdlog::logger>(
+                      "Sink",
+                      spdlog::sinks_init_list{nestdaq::telemetry::CreateSpdlogOpenTelemetrySink()});
+    }
+    fLogger->info("Sink example spdlog OTel log");
+#endif
     PrintConfig(fConfig, "channel-config", __PRETTY_FUNCTION__);
     PrintConfig(fConfig, "chans.", __PRETTY_FUNCTION__);
 
@@ -134,9 +143,6 @@ void Sink::Init()
 //_____________________________________________________________________________
 void Sink::InitTask()
 {
-#ifdef NESTDAQ_EXAMPLES_USE_SPDLOG
-    spdlog::info("Sink example spdlog log");
-#endif
     PrintConfig(fConfig, "channel-config", __PRETTY_FUNCTION__);
     PrintConfig(fConfig, "chans.", __PRETTY_FUNCTION__);
 

@@ -8,9 +8,10 @@
 
 #include <nestdaq/runDevice.h>
 
-#if __has_include(<spdlog/spdlog.h>)
+#if defined(NESTDAQ_EXAMPLES_HAVE_SPDLOG_OTEL) && __has_include(<nestdaq/telemetry/SpdlogOpenTelemetrySink.h>) && __has_include(<spdlog/spdlog.h>)
+#include <nestdaq/telemetry/SpdlogOpenTelemetrySink.h>
 #include <spdlog/spdlog.h>
-#define NESTDAQ_EXAMPLES_USE_SPDLOG
+#define NESTDAQ_EXAMPLES_USE_SPDLOG_OTEL
 #endif
 
 #include "Sampler.h"
@@ -64,6 +65,14 @@ Sampler::Sampler()
 //_____________________________________________________________________________
 void Sampler::Init()
 {
+#ifdef NESTDAQ_EXAMPLES_USE_SPDLOG_OTEL
+    if (!fLogger) {
+        fLogger = std::make_shared<spdlog::logger>(
+                      "Sampler",
+                      spdlog::sinks_init_list{nestdaq::telemetry::CreateSpdlogOpenTelemetrySink()});
+    }
+    fLogger->info("Sampler example spdlog OTel log");
+#endif
     // subscribe to property change
 //  fConfig->SubscribeAsString("Sampler", [](const std::string& key, std::string value){
 //    LOG(debug) << "Sampler (subscribe) : key = " << key << ", value = " << value;
@@ -75,9 +84,6 @@ void Sampler::Init()
 //_____________________________________________________________________________
 void Sampler::InitTask()
 {
-#ifdef NESTDAQ_EXAMPLES_USE_SPDLOG
-    spdlog::info("Sampler example spdlog log");
-#endif
     PrintConfig(fConfig, "channel-config", __PRETTY_FUNCTION__);
     PrintConfig(fConfig, "chans.", __PRETTY_FUNCTION__);
 

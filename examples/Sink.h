@@ -13,6 +13,10 @@
 #include <fairmq/Device.h>
 #include <nestdaq/telemetry/Telemetry.h>
 
+namespace spdlog {
+class logger;
+} // namespace spdlog
+
 class Sink : public fair::mq::Device {
 public:
 
@@ -42,6 +46,7 @@ private:
     nestdaq::telemetry::Counter fMessagesReceived;
     nestdaq::telemetry::Histogram fMessageSize;
     nestdaq::telemetry::Gauge fMessagesTotal;
+    std::shared_ptr<spdlog::logger> fLogger;
     uint64_t fNumMessages{0};
 
 };

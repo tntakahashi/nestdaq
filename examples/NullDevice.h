@@ -5,7 +5,13 @@
  * @brief Example FairMQ device with lifecycle hooks and no data processing.
  */
 
+#include <memory>
+
 #include <fairmq/Device.h>
+
+namespace spdlog {
+class logger;
+} // namespace spdlog
 
 class NullDevice : public fair::mq::Device
 {
@@ -29,4 +35,6 @@ protected:
     void ResetTask() override;
     void Run() override;
 
+private:
+    std::shared_ptr<spdlog::logger> fLogger;
 };
