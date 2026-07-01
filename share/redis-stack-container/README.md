@@ -8,21 +8,21 @@ local inspection. Prefer Redis Stack Server for production deployments.
 
 The scripts use pinned image tags instead of `latest`:
 
-- `redis/redis-stack:7.4.0-v8` for development Redis Stack with RedisInsight.
-- `redis/redis-stack-server:7.4.0-v8` for production-oriented Redis Stack Server only.
-- `redis:8.2.7` for the official Redis 8.2.7 image.
-- `redis/redis-stack:7.2.0-v20` for Redis Stack 7.2 with RedisInsight.
-- `redis/redis-stack-server:7.2.0-v20` for Redis Stack 7.2 Server only.
+- `docker.io/redis/redis-stack:7.4.0-v8` for development Redis Stack with RedisInsight.
+- `docker.io/redis/redis-stack-server:7.4.0-v8` for production-oriented Redis Stack Server only.
+- `docker.io/library/redis:8.2.7` for the official Redis 8.2.7 image.
+- `docker.io/redis/redis-stack:7.2.0-v20` for Redis Stack 7.2 with RedisInsight.
+- `docker.io/redis/redis-stack-server:7.2.0-v20` for Redis Stack 7.2 Server only.
 
 ## Choose an Image
 
 | Script | Image | RedisInsight | Notes |
 | :-- | :-- | :-- | :-- |
-| `run-redis-8.2.7.sh` | `redis:8.2.7` | no | Official Redis image. The Redis 8 package is expected to include Redis Stack modules; verify with `MODULE LIST` after startup. |
-| `run-redis-7.2-stack.sh` | `redis/redis-stack:7.2.0-v20` | yes | Redis Stack 7.2 image line for development and local inspection. |
-| `run-redis-7.2-stack-server.sh` | `redis/redis-stack-server:7.2.0-v20` | no | Redis Stack 7.2 server-only image line. |
-| `run-redis-stack.sh` | `redis/redis-stack:7.4.0-v8` | yes | Default Redis Stack development helper. |
-| `run-redis-stack-server.sh` | `redis/redis-stack-server:7.4.0-v8` | no | Default Redis Stack server-only helper. |
+| `run-redis-8.2.7.sh` | `docker.io/library/redis:8.2.7` | no | Official Redis image. The Redis 8 package is expected to include Redis Stack modules; verify with `MODULE LIST` after startup. |
+| `run-redis-7.2-stack.sh` | `docker.io/redis/redis-stack:7.2.0-v20` | yes | Redis Stack 7.2 image line for development and local inspection. |
+| `run-redis-7.2-stack-server.sh` | `docker.io/redis/redis-stack-server:7.2.0-v20` | no | Redis Stack 7.2 server-only image line. |
+| `run-redis-stack.sh` | `docker.io/redis/redis-stack:7.4.0-v8` | yes | Default Redis Stack development helper. |
+| `run-redis-stack-server.sh` | `docker.io/redis/redis-stack-server:7.4.0-v8` | no | Default Redis Stack server-only helper. |
 
 Check the running Redis version and loaded modules with:
 
@@ -191,6 +191,7 @@ scripts keep bind-mounted data next to the copied scripts.
 | `REDIS_IMAGE` | Script-specific pinned image | Container image. |
 | `REDIS_PORT` | `6379` | Host port mapped to Redis port `6379`. |
 | `REDIS_INSIGHT_PORT` | `8001` | Host port mapped to RedisInsight port `8001`; used only by RedisInsight-enabled helpers. |
+| `REDIS_CONTAINER_RUN_FLAGS` | `--rm -it` | Flags passed to `docker run` or `podman run`. Use `-d --rm` for non-interactive validation. |
 | `REDIS_VOLUME_MODE` | `bind` | Storage mode. Use `bind` for host bind mounts or `volume` for named volumes. |
 | `REDIS_DATA_VOLUME` | Container-name-based volume | Named volume mounted to `/data`; used only in `volume` mode. |
 | `REDIS_INSIGHT_VOLUME` | Container-name-based volume | Named volume mounted to `/redisinsight`; used only by RedisInsight-enabled helpers in `volume` mode. |

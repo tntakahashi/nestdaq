@@ -84,7 +84,39 @@ apt_redis_version() {
   printf '6:%s-1rl1~%s1' "${REDIS_VERSION}" "${codename}"
 }
 
+apt_pinned_packages() {
+  # The official APT instructions pin these packages together when installing
+  # an earlier Redis version so the server, sentinel, and tools stay in sync.
+  printf '%s\n' redis redis-server redis-sentinel redis-tools
+}
+
+apt_version_is_available() {
+  package="$1"
+  version="$2"
+  apt-cache madison "${package}" | awk '{ print $3 }' | grep -qx "${version}"
+}
+
+require_apt_pinned_version() {
+  version="$1"
+  missing=""
+  for package in $(apt_pinned_packages); do
+    if ! apt_version_is_available "${package}" "${version}"; then
+      missing="${missing} ${package}"
+    fi
+  done
+  if [ -n "${missing}" ]; then
+    echo "Redis package version ${version} is not available for:${missing}" >&2
+    echo "The Redis APT repository publishes versions per distribution codename (${codename})." >&2
+    echo "Available redis package versions include:" >&2
+    apt-cache madison redis | awk '{ print "  " $3 }' | head -n 20 >&2
+    exit 1
+  fi
+}
+
 install_deb_repo() {
+  # Follow the official APT flow: install repository tooling, import the Redis
+  # signing key into /usr/share/keyrings, add the packages.redis.io source list
+  # for the distribution codename, then refresh the package index.
   run ${SUDO} apt-get update
   run ${SUDO} apt-get install -y lsb-release curl gpg ca-certificates
   run ${SUDO} mkdir -p /usr/share/keyrings
@@ -98,6 +130,7 @@ install_deb_repo() {
     echo "Could not determine Debian/Ubuntu codename" >&2
     exit 1
   fi
+  codename="$(printf '%s' "${codename}" | tr '[:upper:]' '[:lower:]')"
   echo "deb [signed-by=/usr/share/keyrings/redis-archive-keyring.gpg] https://packages.redis.io/deb ${codename} main" |
     run ${SUDO} tee /etc/apt/sources.list.d/redis.list >/dev/null
   run ${SUDO} apt-get update
@@ -113,6 +146,8 @@ install_rpm_repo() {
       exit 1
       ;;
   esac
+  # The official RPM instructions publish repository files per compatible
+  # platform. AlmaLinux uses the matching Rocky Linux major-version repository.
   case "${major}" in
     8|9|10)
       repo_platform="rockylinux${major}"
@@ -123,8 +158,12 @@ install_rpm_repo() {
       ;;
   esac
   tmp_key="${TMPDIR:-/tmp}/redis.key"
+  # The official RPM flow imports the Redis signing key before installing
+  # packages from the Redis repository.
   curl -fsSL https://packages.redis.io/gpg -o "${tmp_key}"
   run ${SUDO} rpm --import "${tmp_key}"
+  # Create /etc/yum.repos.d/redis.repo with the same fields shown in the
+  # official Redis RPM installation instructions.
   {
     echo "[Redis]"
     echo "name=Redis"
@@ -133,6 +172,9 @@ install_rpm_repo() {
     echo "gpgcheck=1"
   } | run ${SUDO} tee /etc/yum.repos.d/redis.repo >/dev/null
   if command -v dnf >/dev/null 2>&1; then
+    # Some RHEL-family images expose a distribution Redis module. Disable it so
+    # the subsequent install resolves to packages.redis.io, not AppStream.
+    run ${SUDO} dnf -y module disable redis || true
     run ${SUDO} dnf clean all
   else
     run ${SUDO} yum clean all
@@ -142,7 +184,11 @@ install_rpm_repo() {
 case "${ID:-}" in
   debian|ubuntu)
     if [ "${ACTION}" = "uninstall" ]; then
-      run ${SUDO} apt-get remove -y "${REDIS_PACKAGE}"
+      if [ "${REDIS_PACKAGE}" = "redis" ]; then
+        run ${SUDO} apt-get remove -y redis redis-server redis-sentinel redis-tools
+      else
+        run ${SUDO} apt-get remove -y "${REDIS_PACKAGE}"
+      fi
       exit 0
     fi
     require_redis_package_for_pinned_version
@@ -154,19 +200,26 @@ case "${ID:-}" in
       if [ "${ACTION}" = "upgrade" ]; then
         run ${SUDO} apt-get install --only-upgrade -y "${REDIS_PACKAGE}"
       else
+        # Official APT default path: install the repository's current Redis
+        # package, which also installs redis-tools.
         run ${SUDO} apt-get install -y "${REDIS_PACKAGE}"
       fi
     else
       redis_version="$(apt_redis_version)"
+      require_apt_pinned_version "${redis_version}"
+      # Official APT earlier-version path: install all Redis packages with the
+      # exact codename-qualified package version.
       if [ "${ACTION}" = "upgrade" ]; then
         run ${SUDO} apt-get install --only-upgrade -y \
           "redis=${redis_version}" \
           "redis-server=${redis_version}" \
+          "redis-sentinel=${redis_version}" \
           "redis-tools=${redis_version}"
       else
         run ${SUDO} apt-get install -y \
           "redis=${redis_version}" \
           "redis-server=${redis_version}" \
+          "redis-sentinel=${redis_version}" \
           "redis-tools=${redis_version}"
       fi
     fi
@@ -193,6 +246,8 @@ case "${ID:-}" in
       if [ "${ACTION}" = "upgrade" ]; then
         run ${SUDO} "${pm}" upgrade -y "${REDIS_PACKAGE}"
       else
+        # Official RPM default path: install redis from the configured Redis
+        # repository after redis.repo and the GPG key are in place.
         run ${SUDO} "${pm}" install -y "${REDIS_PACKAGE}"
       fi
     else

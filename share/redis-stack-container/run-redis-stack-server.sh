@@ -7,8 +7,9 @@ THIS_SCRIPT_DIR=$(CDPATH= cd "$(dirname "$0")" && pwd -P)
 CONTAINER_RUNTIME=${CONTAINER_RUNTIME:-docker}
 REDIS_CONTAINER_NAME=${REDIS_CONTAINER_NAME:-nestdaq-redis-stack-server}
 REDIS_CONTAINER_REPLACE=${REDIS_CONTAINER_REPLACE:-1}
-REDIS_IMAGE=${REDIS_IMAGE:-redis/redis-stack-server:7.4.0-v8}
+REDIS_IMAGE=${REDIS_IMAGE:-docker.io/redis/redis-stack-server:7.4.0-v8}
 REDIS_PORT=${REDIS_PORT:-6379}
+REDIS_CONTAINER_RUN_FLAGS=${REDIS_CONTAINER_RUN_FLAGS:---rm -it}
 REDIS_VOLUME_MODE=${REDIS_VOLUME_MODE:-bind}
 REDIS_DATA_VOLUME=${REDIS_DATA_VOLUME:-"${REDIS_CONTAINER_NAME}-data"}
 REDIS_DATA_DIR=${REDIS_DATA_DIR:-"${THIS_SCRIPT_DIR}/redis-stack-server-data"}
@@ -66,14 +67,16 @@ if [ "${REDIS_ARGS_MODE}" = "argv" ]; then
     # shellcheck disable=SC2086
     set -- ${REDIS_ARGS}
 
-    exec "${CONTAINER_RUNTIME}" run --rm -it \
+    # shellcheck disable=SC2086
+    exec "${CONTAINER_RUNTIME}" run ${REDIS_CONTAINER_RUN_FLAGS} \
         --name "${REDIS_CONTAINER_NAME}" \
         -p "${REDIS_PORT}:6379" \
         -v "${REDIS_VOLUME_SPEC}" \
         "${REDIS_IMAGE}" "$@"
 fi
 
-exec "${CONTAINER_RUNTIME}" run --rm -it \
+# shellcheck disable=SC2086
+exec "${CONTAINER_RUNTIME}" run ${REDIS_CONTAINER_RUN_FLAGS} \
     --name "${REDIS_CONTAINER_NAME}" \
     -p "${REDIS_PORT}:6379" \
     -v "${REDIS_VOLUME_SPEC}" \

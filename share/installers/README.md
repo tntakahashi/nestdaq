@@ -80,24 +80,57 @@ REDIS_PACKAGE=redis-stack ./install-redis-stack.sh install
 ```
 
 Version pinning with `REDIS_VERSION=8.2.7` is supported for the default
-`REDIS_PACKAGE=redis` package. Set `REDIS_VERSION=latest` when using a legacy
-package name such as `redis-stack-server` or `redis-stack`.
+`REDIS_PACKAGE=redis` package. On Debian and Ubuntu, pinned installs follow the
+official Redis APT package set and install `redis`, `redis-server`,
+`redis-sentinel`, and `redis-tools` with the same package version. Set
+`REDIS_VERSION=latest` when using a legacy package name such as
+`redis-stack-server` or `redis-stack`.
 
 RedisInsight is not installed by the default `redis` package. Use a separate
 RedisInsight package or the Redis Stack container helper in
 [`../redis-stack-container/`](../redis-stack-container/README.md) when
 RedisInsight is needed.
 
-At the time this documentation was written, Redis `8.2.7` packages were
-available from the Redis package repository for Debian/Ubuntu and
-RHEL-family 8/9 repositories. The RHEL-family 10 repository may only publish a
-newer Redis package such as `8.8.0`; in that case use `REDIS_VERSION=latest`,
-use an OS repository that publishes Redis `8.2.7`, or build Redis from source
-with the dependency CMake files.
+Redis publishes packages per distribution codename or RPM repository. If the
+configured Redis repository does not publish `REDIS_VERSION`, the installer
+fails before installing a different Redis version.
+
+For Debian and Ubuntu systems, the Redis official APT repository publishes
+packages per distribution codename. Debian 12 (`bookworm`), Debian 13
+(`trixie`), Ubuntu 22.04 (`jammy`), and Ubuntu 24.04 (`noble`) can install
+Redis `7.2.14`, `7.4.9`, and `8.2.7` with the pinned package set. Ubuntu 26.04
+(`resolute`) currently does not provide those versions; only newer Redis
+packages such as `8.8.0` are available, so pinned installs for `7.2.14`,
+`7.4.9`, and `8.2.7` fail there.
+
+For AlmaLinux/RHEL-family systems, the installer uses the Redis official RPM
+repository for the matching Rocky Linux major version. The Redis official
+Rocky Linux repositories do not provide Redis 7.x packages. AlmaLinux 9
+standard AppStream provides Redis `7.2.14` through the `redis:7` module, but
+that package is not used by this installer because the installer targets the
+Redis official repository. AlmaLinux 8 and 9 can install Redis `8.2.7` from the
+Redis official RPM repository. AlmaLinux 10 currently does not provide Redis
+`8.2.7` there; only newer Redis packages such as `8.8.0` are available, so the
+default `REDIS_VERSION=8.2.7` install fails on AlmaLinux 10.
+
+Verified Redis package availability:
+
+| Distribution | Repository key | Redis 7.2.14 | Redis 7.4.9 | Redis 8.2.7 |
+| --- | --- | --- | --- | --- |
+| AlmaLinux 8 | `rockylinux8` RPM repo | No | No | Yes |
+| AlmaLinux 9 | `rockylinux9` RPM repo | No | No | Yes |
+| AlmaLinux 9 | AppStream `redis:7` module | Yes | No | No |
+| AlmaLinux 10 | `rockylinux10` RPM repo | No | No | No (`8.8.0` available) |
+| Debian 12 | `bookworm` APT repo | Yes | Yes | Yes |
+| Debian 13 | `trixie` APT repo | Yes | Yes | Yes |
+| Ubuntu 22.04 | `jammy` APT repo | Yes | Yes | Yes |
+| Ubuntu 24.04 | `noble` APT repo | Yes | Yes | Yes |
+| Ubuntu 26.04 | `resolute` APT repo | No | No | No (`8.8.0` available) |
 
 Official install instructions:
 
-- https://redis.io/docs/latest/operate/oss_and_stack/install/install-stack/
+- https://redis.io/docs/latest/operate/oss_and_stack/install/install-stack/apt/
+- https://redis.io/docs/latest/operate/oss_and_stack/install/install-stack/rpm/
 
 ## OpenTelemetry Collector Contrib
 
