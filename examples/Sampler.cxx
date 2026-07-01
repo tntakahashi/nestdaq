@@ -8,6 +8,11 @@
 
 #include <nestdaq/runDevice.h>
 
+#if __has_include(<spdlog/spdlog.h>)
+#include <spdlog/spdlog.h>
+#define NESTDAQ_EXAMPLES_USE_SPDLOG
+#endif
+
 #include "Sampler.h"
 
 namespace bpo = boost::program_options;
@@ -70,6 +75,9 @@ void Sampler::Init()
 //_____________________________________________________________________________
 void Sampler::InitTask()
 {
+#ifdef NESTDAQ_EXAMPLES_USE_SPDLOG
+    spdlog::info("Sampler example spdlog log");
+#endif
     PrintConfig(fConfig, "channel-config", __PRETTY_FUNCTION__);
     PrintConfig(fConfig, "chans.", __PRETTY_FUNCTION__);
 

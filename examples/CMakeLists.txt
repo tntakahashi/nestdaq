@@ -10,6 +10,8 @@ if(NOT TARGET NestDAQ::NestDAQ)
   find_package(NestDAQ REQUIRED CONFIG)
 endif()
 
+find_package(spdlog CONFIG QUIET)
+
 foreach(exec IN ITEMS Sampler Sink NullDevice)
   add_executable(${exec}
     ${exec}.cxx
@@ -18,6 +20,12 @@ foreach(exec IN ITEMS Sampler Sink NullDevice)
   target_link_libraries(${exec} PUBLIC
     NestDAQ::NestDAQ
   )
+
+  if(TARGET spdlog::spdlog)
+    target_link_libraries(${exec} PRIVATE
+      spdlog::spdlog
+    )
+  endif()
 
   install(TARGETS ${exec}
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}

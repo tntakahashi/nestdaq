@@ -9,6 +9,11 @@
 
 #include <nestdaq/runDevice.h>
 
+#if __has_include(<spdlog/spdlog.h>)
+#include <spdlog/spdlog.h>
+#define NESTDAQ_EXAMPLES_USE_SPDLOG
+#endif
+
 #include "NullDevice.h"
 
 static constexpr std::string_view kMyClass{"NullDevice"};
@@ -54,6 +59,9 @@ void NullDevice::Init()
 //_____________________________________________________________________________
 void NullDevice::InitTask()
 {
+#ifdef NESTDAQ_EXAMPLES_USE_SPDLOG
+    spdlog::info("NullDevice example spdlog log");
+#endif
     LOG(info) << __PRETTY_FUNCTION__;
 }
 
