@@ -113,13 +113,18 @@ Redis official RPM repository. AlmaLinux 10 currently does not provide Redis
 `8.2.7` there; only newer Redis packages such as `8.8.0` are available, so the
 default `REDIS_VERSION=8.2.7` install fails on AlmaLinux 10.
 
+This installer does not install Redis from AlmaLinux AppStream modules. On
+RHEL-family systems it always configures the Redis official RPM repository and
+disables the distribution Redis module so package resolution uses
+`packages.redis.io`. The AppStream row below is informational only.
+
 Verified Redis package availability:
 
 | Distribution | Repository key | Redis 7.2.14 | Redis 7.4.9 | Redis 8.2.7 |
 | --- | --- | --- | --- | --- |
 | AlmaLinux 8 | `rockylinux8` RPM repo | No | No | Yes |
 | AlmaLinux 9 | `rockylinux9` RPM repo | No | No | Yes |
-| AlmaLinux 9 | AppStream `redis:7` module | Yes | No | No |
+| AlmaLinux 9 | AppStream `redis:7` module (not used by this installer) | Yes | No | No |
 | AlmaLinux 10 | `rockylinux10` RPM repo | No | No | No (`8.8.0` available) |
 | Debian 12 | `bookworm` APT repo | Yes | Yes | Yes |
 | Debian 13 | `trixie` APT repo | Yes | Yes | Yes |
