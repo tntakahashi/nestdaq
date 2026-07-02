@@ -76,13 +76,17 @@ void Sampler::Init()
     fLogger->info("Sampler example spdlog log");
 #elif __has_include(<spdlog/spdlog.h>)
     if (!fLogger) {
-        auto consoleSink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
-        consoleSink->set_pattern(nestdaq::telemetry::GetSpdlogConsolePattern());
-        fLogger = std::make_shared<spdlog::logger>(
-                      "Sampler",
-                      spdlog::sinks_init_list{std::move(consoleSink)});
+        if (nestdaq::telemetry::GetSpdlogNativeConsoleEnabled()) {
+            auto consoleSink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
+            consoleSink->set_pattern(nestdaq::telemetry::GetSpdlogConsolePattern());
+            fLogger = std::make_shared<spdlog::logger>(
+                          "Sampler",
+                          spdlog::sinks_init_list{std::move(consoleSink)});
+        }
     }
-    fLogger->info("Sampler example spdlog log");
+    if (fLogger) {
+        fLogger->info("Sampler example spdlog log");
+    }
 #endif
     // subscribe to property change
 //  fConfig->SubscribeAsString("Sampler", [](const std::string& key, std::string value){

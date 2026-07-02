@@ -137,6 +137,10 @@ auto MakeOtelAttributes(std::span<const Attribute> attributes) -> std::vector<ne
 auto SetSpdlogConsolePattern(std::string_view pattern) -> void;
 /** @brief Return the process-wide pattern used by native spdlog console fallback sinks. */
 auto GetSpdlogConsolePattern() -> std::string;
+/** @brief Enable or disable the process-wide native spdlog console sink. */
+auto SetSpdlogNativeConsoleEnabled(bool enabled) -> void;
+/** @brief Return whether helper loggers attach the native spdlog console sink. */
+auto GetSpdlogNativeConsoleEnabled() -> bool;
 
 /**
  * @brief Movable RAII wrapper for a span handle owned by the telemetry plugin.

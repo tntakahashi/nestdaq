@@ -83,6 +83,12 @@ auto SpdlogConsolePatternStorage() -> std::string&
     static auto value = std::string{kDefaultSpdlogConsolePattern};
     return value;
 }
+
+auto SpdlogNativeConsoleEnabledStorage() -> bool&
+{
+    static auto value = true;
+    return value;
+}
 } // namespace
 
 auto SetSpdlogConsolePattern(std::string_view pattern) -> void
@@ -95,6 +101,18 @@ auto GetSpdlogConsolePattern() -> std::string
 {
     const auto lock = std::scoped_lock{SpdlogConsolePatternMutex()};
     return SpdlogConsolePatternStorage();
+}
+
+auto SetSpdlogNativeConsoleEnabled(bool enabled) -> void
+{
+    const auto lock = std::scoped_lock{SpdlogConsolePatternMutex()};
+    SpdlogNativeConsoleEnabledStorage() = enabled;
+}
+
+auto GetSpdlogNativeConsoleEnabled() -> bool
+{
+    const auto lock = std::scoped_lock{SpdlogConsolePatternMutex()};
+    return SpdlogNativeConsoleEnabledStorage();
 }
 
 TelemetrySpan::TelemetrySpan(TelemetryLibrary& telemetry, uint64_t handle) noexcept

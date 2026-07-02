@@ -39,6 +39,7 @@ auto ClearTelemetryEnvironment() -> void
         "NESTDAQ_OTEL_LOG_SEVERITY",
         "NESTDAQ_OTEL_LOG_REQUIRED",
         "NESTDAQ_SPDLOG_CONSOLE_PATTERN",
+        "NESTDAQ_SPDLOG_NATIVE_CONSOLE",
     };
 
     for (const auto* name : names) {
@@ -98,9 +99,27 @@ TEST_CASE("telemetry options keep unified otel library default", "[telemetry]")
     CHECK(options.traceProtocol.empty());
     CHECK(options.metricExportIntervalMs == 1000);
     CHECK(options.spdlogConsolePattern == nestdaq::telemetry::kDefaultSpdlogConsolePattern);
+    CHECK(options.spdlogNativeConsole);
 
     const auto config = nestdaq::telemetry::MakeConfig(options);
     CHECK(config.metric_export_interval_ms == 1000);
+}
+
+TEST_CASE("spdlog native console option follows command line and environment", "[telemetry]")
+{
+    ClearTelemetryEnvironment();
+
+    const auto cliOptions = Parse({"test", "--spdlog-native-console=false"});
+    CHECK_FALSE(cliOptions.spdlogNativeConsole);
+
+    setenv("NESTDAQ_SPDLOG_NATIVE_CONSOLE", "off", 1); // NOLINT(concurrency-mt-unsafe)
+    const auto envOptions = Parse({"test"});
+    CHECK_FALSE(envOptions.spdlogNativeConsole);
+
+    const auto overrideOptions = Parse({"test", "--spdlog-native-console", "true"});
+    CHECK(overrideOptions.spdlogNativeConsole);
+
+    ClearTelemetryEnvironment();
 }
 
 TEST_CASE("spdlog console pattern follows command line and environment", "[telemetry]")
@@ -127,6 +146,15 @@ TEST_CASE("spdlog console pattern facade stores process setting", "[telemetry]")
 
     nestdaq::telemetry::SetSpdlogConsolePattern(nestdaq::telemetry::kDefaultSpdlogConsolePattern);
     CHECK(nestdaq::telemetry::GetSpdlogConsolePattern() == nestdaq::telemetry::kDefaultSpdlogConsolePattern);
+}
+
+TEST_CASE("spdlog native console facade stores process setting", "[telemetry]")
+{
+    nestdaq::telemetry::SetSpdlogNativeConsoleEnabled(false);
+    CHECK_FALSE(nestdaq::telemetry::GetSpdlogNativeConsoleEnabled());
+
+    nestdaq::telemetry::SetSpdlogNativeConsoleEnabled(true);
+    CHECK(nestdaq::telemetry::GetSpdlogNativeConsoleEnabled());
 }
 
 TEST_CASE("telemetry command line options populate multi-signal config", "[telemetry]")

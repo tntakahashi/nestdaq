@@ -359,6 +359,7 @@ TEST_CASE("spdlog logger helper exports through active telemetry plugin", "[tele
     REQUIRE(library.Load(NESTDAQ_OTEL_LIBRARY_PATH));
     REQUIRE(library.InitializeWith(LogOnlyConfig()));
     nestdaq::telemetry::SetActiveTelemetryLibrary(&library);
+    nestdaq::telemetry::SetSpdlogNativeConsoleEnabled(false);
 
     auto logger = nestdaq::telemetry::CreateSpdlogLogger("helper-spdlog-test");
     logger->set_level(spdlog::level::trace);
@@ -371,6 +372,38 @@ TEST_CASE("spdlog logger helper exports through active telemetry plugin", "[tele
     CHECK(logs.find("spdlog helper probe") != std::string::npos);
     CHECK(logs.find("spdlog.logger.name: helper-spdlog-test") != std::string::npos);
     CHECK(logs.find("spdlog.level: info") != std::string::npos);
+    nestdaq::telemetry::SetSpdlogNativeConsoleEnabled(true);
+}
+
+TEST_CASE("spdlog logger helper can attach native console and active telemetry sinks", "[telemetry][plugin][spdlog]")
+{
+    auto library = nestdaq::telemetry::TelemetryLibrary{};
+    REQUIRE(library.Load(NESTDAQ_OTEL_LIBRARY_PATH));
+    REQUIRE(library.InitializeWith(LogOnlyConfig()));
+    nestdaq::telemetry::SetActiveTelemetryLibrary(&library);
+    nestdaq::telemetry::SetSpdlogNativeConsoleEnabled(true);
+
+    auto logger = nestdaq::telemetry::CreateSpdlogLogger("helper-spdlog-multi-sink-test");
+
+    nestdaq::telemetry::SetActiveTelemetryLibrary(nullptr);
+    library.ShutdownTelemetry(nestdaq::telemetry::kDefaultTimeoutMs);
+
+    CHECK(logger->sinks().size() == 2);
+}
+
+TEST_CASE("spdlog logger helper respects native console flag without active telemetry", "[telemetry][plugin][spdlog]")
+{
+    nestdaq::telemetry::SetActiveTelemetryLibrary(nullptr);
+
+    nestdaq::telemetry::SetSpdlogNativeConsoleEnabled(true);
+    auto consoleLogger = nestdaq::telemetry::CreateSpdlogLogger("helper-spdlog-console-only-test");
+    CHECK(consoleLogger->sinks().size() == 1);
+
+    nestdaq::telemetry::SetSpdlogNativeConsoleEnabled(false);
+    auto disabledLogger = nestdaq::telemetry::CreateSpdlogLogger("helper-spdlog-disabled-test");
+    CHECK(disabledLogger->sinks().empty());
+
+    nestdaq::telemetry::SetSpdlogNativeConsoleEnabled(true);
 }
 
 TEST_CASE("spdlog sink records source location attributes", "[telemetry][plugin][spdlog]")

@@ -59,6 +59,7 @@ struct TelemetryOptions {
     std::string metricHeaders;
     std::string traceHeaders;
     std::string spdlogConsolePattern{kDefaultSpdlogConsolePattern};
+    bool spdlogNativeConsole{true};
     std::string severity{"info"};
     std::string serviceName{"nestdaq"};
     std::string serviceNamespace{kDefaultServiceNamespace};

@@ -70,7 +70,8 @@ auto AddTelemetryOptions(boost::program_options::options_description& options,
            ("otel-fairmq-device", bpo::value<std::string>(), "FairMQ device resource attribute")
            ("otel-fairmq-session", bpo::value<std::string>(), "FairMQ session resource attribute")
            ("otel-fairmq-transport", bpo::value<std::string>(), "FairMQ transport resource attribute")
-           ("spdlog-console-pattern", bpo::value<std::string>()->default_value(std::string{kDefaultSpdlogConsolePattern}), "spdlog native console sink pattern used when OTel log export is disabled");
+           ("spdlog-console-pattern", bpo::value<std::string>()->default_value(std::string{kDefaultSpdlogConsolePattern}), "spdlog native console sink pattern")
+           ("spdlog-native-console", bpo::value<bool>()->default_value(true), "Enable spdlog native console sink independently from OTel spdlog sink");
 }
 
 auto ApplyEnvironment(TelemetryOptions& options) -> void
@@ -122,6 +123,9 @@ auto ApplyEnvironment(TelemetryOptions& options) -> void
     }
     if (const auto* value = Env("NESTDAQ_SPDLOG_CONSOLE_PATTERN")) {
         options.spdlogConsolePattern = value;
+    }
+    if (const auto* value = Env("NESTDAQ_SPDLOG_NATIVE_CONSOLE")) {
+        options.spdlogNativeConsole = ParseBool(value);
     }
 }
 
@@ -183,6 +187,8 @@ auto AssignOption(TelemetryOptions& options, std::string_view key, std::string_v
         options.fairmqTransport = value;
     } else if (key == "spdlog-console-pattern") {
         options.spdlogConsolePattern = value;
+    } else if (key == "spdlog-native-console") {
+        options.spdlogNativeConsole = ParseBool(value);
     }
 }
 
@@ -440,6 +446,9 @@ auto ReadTelemetryOptions(const boost::program_options::variables_map& vm,
     readString("otel-fairmq-transport");
     readString("spdlog-console-pattern");
 
+    if (vm.count("spdlog-native-console") != 0) {
+        options.spdlogNativeConsole = vm["spdlog-native-console"].as<bool>();
+    }
     if (vm.count("otel-log-required") != 0) {
         options.required = vm["otel-log-required"].as<bool>();
     }

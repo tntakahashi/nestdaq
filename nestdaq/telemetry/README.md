@@ -228,7 +228,8 @@ records themselves use the FairLogger level names. The alias has the same
 | `--otel-log-severity` | `NESTDAQ_OTEL_LOG_SEVERITY` | `info` | Minimum FairLogger severity exported. |
 | `--otel-log-required` | `NESTDAQ_OTEL_LOG_REQUIRED` | `false` | Fail startup if telemetry cannot load or initialize. |
 | `--otel-timeout-ms` | none | `5000` | Force-flush, shutdown, and exporter timeout in milliseconds. |
-| `--spdlog-console-pattern` | `NESTDAQ_SPDLOG_CONSOLE_PATTERN` | `[%Y-%m-%d %H:%M:%S.%e] [%n] [%l] %v` | spdlog native console sink pattern used when OTel log export is disabled. |
+| `--spdlog-console-pattern` | `NESTDAQ_SPDLOG_CONSOLE_PATTERN` | `[%Y-%m-%d %H:%M:%S.%e] [%n] [%l] %v` | spdlog native console sink pattern. |
+| `--spdlog-native-console` | `NESTDAQ_SPDLOG_NATIVE_CONSOLE` | `true` | Enable spdlog native console output independently from the OTel spdlog sink. |
 | `--otel-metric-export-interval-ms` | none | `1000` | Periodic metric export interval in milliseconds. |
 | `--otel-log-http-json` | none | `true` | Use JavaScript Object Notation (JSON) content type for OTLP HTTP logs. |
 | `--otel-metric-http-json` | none | `true` | Use JSON content type for OTLP HTTP metrics. |
@@ -272,13 +273,23 @@ Disable logs explicitly by passing the protocol option without a value:
 my-device --otel-log-protocol
 ```
 
-Use spdlog's native console sink with a custom pattern by disabling OTel log
-export and setting the spdlog pattern:
+Use spdlog's native console sink with a custom pattern by setting the spdlog
+pattern. The native console sink is enabled by default and can run alongside
+the OTel spdlog sink:
 
 ```sh
 my-device \
-  --otel-log-protocol '' \
+  --otel-log-protocol=otlp-grpc \
   --spdlog-console-pattern '[%n] [%l] %v'
+```
+
+Disable only the native spdlog console output while keeping OTel spdlog export
+enabled:
+
+```sh
+my-device \
+  --otel-log-protocol=otlp-grpc \
+  --spdlog-native-console=false
 ```
 
 Use the C++ thin API from an application that manages telemetry explicitly:
