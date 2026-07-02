@@ -1,5 +1,7 @@
 #pragma once
 
+#include <nestdaq/telemetry/OpenTelemetryInitializer.h>
+
 #include <memory>
 
 namespace spdlog::sinks {
@@ -18,3 +20,7 @@ namespace nestdaq::telemetry {
 auto CreateSpdlogOpenTelemetrySink() -> std::shared_ptr<spdlog::sinks::sink>;
 
 } // namespace nestdaq::telemetry
+
+extern "C" {
+NESTDAQ_OTEL_EXPORT auto nestdaq_otel_create_spdlog_sink() -> std::shared_ptr<spdlog::sinks::sink>;
+}

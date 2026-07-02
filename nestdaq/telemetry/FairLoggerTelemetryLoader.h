@@ -4,6 +4,7 @@
 
 #include <cstdint>
 #include <functional>
+#include <memory>
 #include <string>
 #include <string_view>
 
@@ -15,6 +16,10 @@ class variables_map;
 namespace fair::mq {
 class ProgOptions;
 } // namespace fair::mq
+
+namespace spdlog::sinks {
+class sink;
+} // namespace spdlog::sinks
 
 namespace nestdaq::telemetry {
 
@@ -186,6 +191,13 @@ public:
     auto InitializeWith(const nestdaq_otel_config& config) -> bool;
     /** @brief Force-flush initialized telemetry providers. */
     auto ForceFlush(uint64_t timeoutMs) -> bool;
+    /**
+     * @brief Create the optional spdlog OpenTelemetry sink from the loaded plugin.
+     *
+     * Returns null when the plugin does not provide spdlog instrumentation or
+     * when OTel log export is disabled.
+     */
+    auto CreateSpdlogSink() const -> std::shared_ptr<spdlog::sinks::sink>;
     /** @brief Record a FairMQ state transition as a framework metric sample. */
     auto RecordFrameworkFairMQState(int64_t stateId, std::string_view stateName) -> void;
     /** @brief Add to a user double counter through the plugin C ABI. */
@@ -239,6 +251,7 @@ private:
     void* fHandle{nullptr};
     std::function<int(const nestdaq_otel_config*)> fInitialize;
     std::function<int(uint64_t)> fForceFlush;
+    std::function<std::shared_ptr<spdlog::sinks::sink>()> fCreateSpdlogSink;
     std::function<int(uint64_t)> fShutdown;
     std::function<const char*()> fLastErrorFunction;
     std::function<void(int64_t, const char*)> fRecordFrameworkFairMQState;
@@ -251,6 +264,7 @@ private:
     std::function<int(uint64_t, const nestdaq_otel_attribute*)> fSpanSetAttribute;
     std::function<uint64_t(const char*, const nestdaq_otel_attribute*, uint64_t)> fSpanStart;
     mutable bool fShutdownCalled{false};
+    mutable bool fLogExportEnabled{false};
     std::string fLastError;
 };
 

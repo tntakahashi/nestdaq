@@ -8,13 +8,16 @@
 
 #include <nestdaq/runDevice.h>
 
-#if defined(NESTDAQ_EXAMPLES_HAVE_SPDLOG_OTEL) && __has_include(<nestdaq/telemetry/SpdlogOpenTelemetrySink.h>) && __has_include(<spdlog/spdlog.h>)
-#include <nestdaq/telemetry/SpdlogOpenTelemetrySink.h>
-#include <spdlog/spdlog.h>
-#define NESTDAQ_EXAMPLES_USE_SPDLOG_OTEL
-#endif
-
 #include "Sampler.h"
+
+#if __has_include(<spdlog/spdlog.h>)
+#include <spdlog/spdlog.h>
+#endif
+#if __has_include(<spdlog/spdlog.h>) && __has_include(<nestdaq/telemetry/SpdlogLogger.h>)
+#include <nestdaq/telemetry/SpdlogLogger.h>
+#elif __has_include(<spdlog/spdlog.h>)
+#include <spdlog/sinks/stdout_color_sinks.h>
+#endif
 
 namespace bpo = boost::program_options;
 
@@ -65,13 +68,18 @@ Sampler::Sampler()
 //_____________________________________________________________________________
 void Sampler::Init()
 {
-#ifdef NESTDAQ_EXAMPLES_USE_SPDLOG_OTEL
+#if __has_include(<spdlog/spdlog.h>) && __has_include(<nestdaq/telemetry/SpdlogLogger.h>)
+    if (!fLogger) {
+        fLogger = nestdaq::telemetry::CreateSpdlogLogger("Sampler");
+    }
+    fLogger->info("Sampler example spdlog log");
+#elif __has_include(<spdlog/spdlog.h>)
     if (!fLogger) {
         fLogger = std::make_shared<spdlog::logger>(
                       "Sampler",
-                      spdlog::sinks_init_list{nestdaq::telemetry::CreateSpdlogOpenTelemetrySink()});
+                      spdlog::sinks_init_list{std::make_shared<spdlog::sinks::stdout_color_sink_mt>()});
     }
-    fLogger->info("Sampler example spdlog OTel log");
+    fLogger->info("Sampler example spdlog log");
 #endif
     // subscribe to property change
 //  fConfig->SubscribeAsString("Sampler", [](const std::string& key, std::string value){

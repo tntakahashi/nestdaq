@@ -12,9 +12,11 @@
 #include <fairmq/Device.h>
 #include <nestdaq/telemetry/Telemetry.h>
 
+#if __has_include(<spdlog/spdlog.h>)
 namespace spdlog {
 class logger;
 } // namespace spdlog
+#endif
 
 class Sampler : public fair::mq::Device
 {
@@ -36,7 +38,9 @@ private:
     nestdaq::telemetry::Counter fMessagesFailed;
     nestdaq::telemetry::Histogram fMessageSize;
     nestdaq::telemetry::Gauge fIteration;
+#if __has_include(<spdlog/spdlog.h>)
     std::shared_ptr<spdlog::logger> fLogger;
+#endif
     uint64_t fMaxIterations{0};
     uint64_t fNumIterations{0};
     int fNumSubChannels{0};

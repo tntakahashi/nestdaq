@@ -5,6 +5,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <initializer_list>
+#include <memory>
 #include <string>
 #include <string_view>
 #include <type_traits>
@@ -13,6 +14,10 @@
 #if __cplusplus >= 202002L
 #  include <span>
 #endif
+
+namespace spdlog::sinks {
+class sink;
+} // namespace spdlog::sinks
 
 namespace nestdaq::telemetry {
 
@@ -455,6 +460,13 @@ private:
  * library object and must unregister it before destroying the object.
  */
 auto SetActiveTelemetryLibrary(TelemetryLibrary* library) noexcept -> void;
+/**
+ * @brief Create an OTel spdlog sink from the active runtime plugin.
+ *
+ * Returns null when OTel logging is disabled, the telemetry plugin is not
+ * active, or the plugin was built without spdlog support.
+ */
+auto CreateActiveSpdlogSink() -> std::shared_ptr<spdlog::sinks::sink>;
 /**
  * @brief Return a lightweight facade bound to the currently active backend.
  *

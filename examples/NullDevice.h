@@ -9,9 +9,11 @@
 
 #include <fairmq/Device.h>
 
+#if __has_include(<spdlog/spdlog.h>)
 namespace spdlog {
 class logger;
 } // namespace spdlog
+#endif
 
 class NullDevice : public fair::mq::Device
 {
@@ -36,5 +38,7 @@ protected:
     void Run() override;
 
 private:
+#if __has_include(<spdlog/spdlog.h>)
     std::shared_ptr<spdlog::logger> fLogger;
+#endif
 };

@@ -5,6 +5,13 @@ install(FILES
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/nestdaq/telemetry
 )
 
+if(NestDAQ_HAVE_SPDLOG)
+  install(FILES
+    ${CMAKE_CURRENT_SOURCE_DIR}/SpdlogLogger.h
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/nestdaq/telemetry
+  )
+endif()
+
 if(NestDAQ_HAVE_SPDLOG_TELEMETRY)
   install(FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/SpdlogOpenTelemetrySink.h
@@ -55,6 +62,36 @@ install(TARGETS nestdaq_telemetry
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
   ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
 )
+
+if(NestDAQ_HAVE_SPDLOG)
+  add_library(nestdaq_spdlog SHARED
+    SpdlogLogger.cxx
+  )
+
+  target_include_directories(nestdaq_spdlog PUBLIC
+    "$<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}>"
+    "$<BUILD_INTERFACE:${CMAKE_BINARY_DIR}>"
+    "$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>"
+  )
+
+  target_link_libraries(nestdaq_spdlog PUBLIC
+    nestdaq_telemetry
+    spdlog::spdlog
+  )
+
+  get_target_property(_nestdaq_spdlog_compile_definitions spdlog::spdlog INTERFACE_COMPILE_DEFINITIONS)
+  if(_nestdaq_spdlog_compile_definitions
+      AND ";${_nestdaq_spdlog_compile_definitions};" MATCHES ";SPDLOG_USE_STD_FORMAT;")
+    target_compile_features(nestdaq_spdlog PUBLIC cxx_std_20)
+  endif()
+  unset(_nestdaq_spdlog_compile_definitions)
+
+  install(TARGETS nestdaq_spdlog
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  )
+endif()
 
 add_library(nestdaq_fairmq_throughput_parser STATIC
   FairMQThroughputLogParser.cxx

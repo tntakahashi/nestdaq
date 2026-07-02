@@ -9,13 +9,16 @@
 
 #include <nestdaq/runDevice.h>
 
-#if defined(NESTDAQ_EXAMPLES_HAVE_SPDLOG_OTEL) && __has_include(<nestdaq/telemetry/SpdlogOpenTelemetrySink.h>) && __has_include(<spdlog/spdlog.h>)
-#include <nestdaq/telemetry/SpdlogOpenTelemetrySink.h>
-#include <spdlog/spdlog.h>
-#define NESTDAQ_EXAMPLES_USE_SPDLOG_OTEL
-#endif
-
 #include "NullDevice.h"
+
+#if __has_include(<spdlog/spdlog.h>)
+#include <spdlog/spdlog.h>
+#endif
+#if __has_include(<spdlog/spdlog.h>) && __has_include(<nestdaq/telemetry/SpdlogLogger.h>)
+#include <nestdaq/telemetry/SpdlogLogger.h>
+#elif __has_include(<spdlog/spdlog.h>)
+#include <spdlog/sinks/stdout_color_sinks.h>
+#endif
 
 static constexpr std::string_view kMyClass{"NullDevice"};
 
@@ -54,13 +57,18 @@ void NullDevice::Connect()
 //_____________________________________________________________________________
 void NullDevice::Init()
 {
-#ifdef NESTDAQ_EXAMPLES_USE_SPDLOG_OTEL
+#if __has_include(<spdlog/spdlog.h>) && __has_include(<nestdaq/telemetry/SpdlogLogger.h>)
+    if (!fLogger) {
+        fLogger = nestdaq::telemetry::CreateSpdlogLogger("NullDevice");
+    }
+    fLogger->info("NullDevice example spdlog log");
+#elif __has_include(<spdlog/spdlog.h>)
     if (!fLogger) {
         fLogger = std::make_shared<spdlog::logger>(
                       "NullDevice",
-                      spdlog::sinks_init_list{nestdaq::telemetry::CreateSpdlogOpenTelemetrySink()});
+                      spdlog::sinks_init_list{std::make_shared<spdlog::sinks::stdout_color_sink_mt>()});
     }
-    fLogger->info("NullDevice example spdlog OTel log");
+    fLogger->info("NullDevice example spdlog log");
 #endif
     LOG(info) << __PRETTY_FUNCTION__;
 }

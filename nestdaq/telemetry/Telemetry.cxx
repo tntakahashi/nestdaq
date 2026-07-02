@@ -288,6 +288,15 @@ auto SetActiveTelemetryLibrary(TelemetryLibrary* library) noexcept -> void
     ActiveTelemetryLibrary().store(library, std::memory_order_release);
 }
 
+auto CreateActiveSpdlogSink() -> std::shared_ptr<spdlog::sinks::sink>
+{
+    auto* library = ActiveTelemetryLibrary().load(std::memory_order_acquire);
+    if (library == nullptr) {
+        return {};
+    }
+    return library->CreateSpdlogSink();
+}
+
 auto GetTelemetry() noexcept -> Telemetry
 {
     return Telemetry{ActiveTelemetryLibrary().load(std::memory_order_acquire)};

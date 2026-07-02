@@ -17,6 +17,7 @@
 
 #if NESTDAQ_HAVE_SPDLOG
 #  include <nestdaq/telemetry/SpdlogOpenTelemetrySink.h>
+#  include <nestdaq/telemetry/SpdlogLogger.h>
 #endif
 
 #include <array>
@@ -348,6 +349,28 @@ TEST_CASE("spdlog sink exports logs independently from FairLogger instrumentatio
     CHECK(logs.find("severity_text      : WARN") != std::string::npos);
     CHECK(logs.find("spdlog.logger.name: otel-spdlog-test") != std::string::npos);
     CHECK(logs.find("spdlog.level: warn") != std::string::npos);
+}
+
+TEST_CASE("spdlog logger helper exports through active telemetry plugin", "[telemetry][plugin][spdlog]")
+{
+    auto capture = CoutCapture{};
+
+    auto library = nestdaq::telemetry::TelemetryLibrary{};
+    REQUIRE(library.Load(NESTDAQ_OTEL_LIBRARY_PATH));
+    REQUIRE(library.InitializeWith(LogOnlyConfig()));
+    nestdaq::telemetry::SetActiveTelemetryLibrary(&library);
+
+    auto logger = nestdaq::telemetry::CreateSpdlogLogger("helper-spdlog-test");
+    logger->set_level(spdlog::level::trace);
+    logger->info("spdlog helper probe");
+
+    nestdaq::telemetry::SetActiveTelemetryLibrary(nullptr);
+    library.ShutdownTelemetry(nestdaq::telemetry::kDefaultTimeoutMs);
+
+    const auto logs = capture.output.str();
+    CHECK(logs.find("spdlog helper probe") != std::string::npos);
+    CHECK(logs.find("spdlog.logger.name: helper-spdlog-test") != std::string::npos);
+    CHECK(logs.find("spdlog.level: info") != std::string::npos);
 }
 
 TEST_CASE("spdlog sink records source location attributes", "[telemetry][plugin][spdlog]")

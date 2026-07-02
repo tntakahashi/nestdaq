@@ -130,3 +130,10 @@ auto CreateSpdlogOpenTelemetrySink() -> std::shared_ptr<spdlog::sinks::sink>
 }
 
 } // namespace nestdaq::telemetry
+
+extern "C" {
+NESTDAQ_OTEL_EXPORT auto nestdaq_otel_create_spdlog_sink() -> std::shared_ptr<spdlog::sinks::sink>
+{
+    return nestdaq::telemetry::CreateSpdlogOpenTelemetrySink();
+}
+}

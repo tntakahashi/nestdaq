@@ -66,6 +66,7 @@ if(opentelemetry-cpp_FOUND)
     unset(_nestdaq_spdlog_include_dirs)
 
     target_link_libraries(nestdaq_telemetry_plugin_tests PRIVATE
+      nestdaq_spdlog
       nestdaq_otel
       spdlog::spdlog
     )

@@ -513,6 +513,7 @@ auto TelemetryLibrary::InitializeWith(const nestdaq_otel_config& config) -> bool
         return false;
     }
     fShutdownCalled = false;
+    fLogExportEnabled = config.logs.protocol != nullptr && !std::string_view{config.logs.protocol}.empty();
     fLastError.clear();
     return true;
 }
@@ -523,6 +524,14 @@ auto TelemetryLibrary::ForceFlush(uint64_t timeoutMs) -> bool
         return false;
     }
     return StoreResult(fForceFlush(timeoutMs));
+}
+
+auto TelemetryLibrary::CreateSpdlogSink() const -> std::shared_ptr<spdlog::sinks::sink>
+{
+    if (!fLogExportEnabled || !fCreateSpdlogSink) {
+        return {};
+    }
+    return fCreateSpdlogSink();
 }
 
 auto TelemetryLibrary::RecordFrameworkFairMQState(int64_t stateId, std::string_view stateName) -> void
@@ -589,6 +598,7 @@ auto TelemetryLibrary::Load(const std::string& library) -> bool
 
     fInitialize = ResolveSymbol<int(const nestdaq_otel_config*)>(fHandle, "nestdaq_otel_init");
     fForceFlush = ResolveSymbol<int(uint64_t)>(fHandle, "nestdaq_otel_force_flush");
+    fCreateSpdlogSink = ResolveSymbol<std::shared_ptr<spdlog::sinks::sink>()>(fHandle, "nestdaq_otel_create_spdlog_sink");
     fShutdown = ResolveSymbol<int(uint64_t)>(fHandle, "nestdaq_otel_shutdown");
     fLastErrorFunction = ResolveSymbol<const char*()>(fHandle, "nestdaq_otel_last_error");
     fRecordFrameworkFairMQState = ResolveSymbol<void(int64_t, const char*)>(
@@ -611,6 +621,7 @@ auto TelemetryLibrary::Load(const std::string& library) -> bool
         fHandle = nullptr;
         fInitialize = nullptr;
         fForceFlush = nullptr;
+        fCreateSpdlogSink = nullptr;
         fShutdown = nullptr;
         fLastErrorFunction = nullptr;
         fRecordFrameworkFairMQState = nullptr;
@@ -700,6 +711,7 @@ auto TelemetryLibrary::SetMinSeverity(int32_t severity) -> bool
 
 auto TelemetryLibrary::ShutdownTelemetry(uint64_t timeoutMs) const -> void
 {
+    fLogExportEnabled = false;
     if (fShutdown && !fShutdownCalled) {
         fShutdownCalled = true;
         fShutdown(timeoutMs);
