@@ -25,20 +25,17 @@ struct ThreadPoolEntry {
     std::shared_ptr<spdlog::details::thread_pool> pool;
 };
 
-auto ThreadPoolMutex() -> std::mutex&
-{
+auto ThreadPoolMutex() -> std::mutex& {
     static auto value = std::mutex{};
     return value;
 }
 
-auto ThreadPools() -> std::vector<ThreadPoolEntry>&
-{
-    static auto value = std::vector<ThreadPoolEntry>{};
+auto ThreadPools() -> std::vector<ThreadPoolEntry>& {
+    static auto value = std::vector<ThreadPoolEntry> {};
     return value;
 }
 
-auto MakeOverflowPolicy(std::string_view value) -> spdlog::async_overflow_policy
-{
+auto MakeOverflowPolicy(std::string_view value) -> spdlog::async_overflow_policy {
     if (value == "overrun_oldest") {
         return spdlog::async_overflow_policy::overrun_oldest;
     }
@@ -48,8 +45,7 @@ auto MakeOverflowPolicy(std::string_view value) -> spdlog::async_overflow_policy
     return spdlog::async_overflow_policy::block;
 }
 
-auto GetOrCreateThreadPool(const SpdlogAsyncOptions& options) -> std::shared_ptr<spdlog::details::thread_pool>
-{
+auto GetOrCreateThreadPool(const SpdlogAsyncOptions& options) -> std::shared_ptr<spdlog::details::thread_pool> {
     const auto lock = std::scoped_lock{ThreadPoolMutex()};
     for (const auto& entry : ThreadPools()) {
         if (entry.queueSize == options.queueSize && entry.threadCount == options.threadCount) {
@@ -67,9 +63,8 @@ auto GetOrCreateThreadPool(const SpdlogAsyncOptions& options) -> std::shared_ptr
 }
 } // namespace
 
-auto CreateSpdlogLogger(std::string_view name) -> std::shared_ptr<spdlog::logger>
-{
-    auto sinks = std::vector<spdlog::sink_ptr>{};
+auto CreateSpdlogLogger(std::string_view name) -> std::shared_ptr<spdlog::logger> {
+    auto sinks = std::vector<spdlog::sink_ptr> {};
     if (GetSpdlogNativeConsoleEnabled()) {
         auto consoleSink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
         consoleSink->set_pattern(GetSpdlogConsolePattern());

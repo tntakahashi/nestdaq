@@ -14,24 +14,20 @@ namespace nestdaq::telemetry {
 
 Attribute::Attribute(std::string_view key, std::string_view value)
     : fKey{key}
-    , fStringValue{value}
-{
+    , fStringValue{value} {
 }
 
 Attribute::Attribute(std::string_view key, const char* value)
-    : Attribute{key, value == nullptr ? std::string_view{} : std::string_view{value}}
-{
+    : Attribute{key, value == nullptr ? std::string_view{} : std::string_view{value}} {
 }
 
 Attribute::Attribute(std::string_view key, bool value)
     : fKey{key}
     , fType{NESTDAQ_OTEL_ATTRIBUTE_BOOL}
-    , fBoolValue{value ? 1U : 0U}
-{
+    , fBoolValue{value ? 1U : 0U} {
 }
 
-auto Attribute::ToOtelAttribute() const noexcept -> nestdaq_otel_attribute
-{
+auto Attribute::ToOtelAttribute() const noexcept -> nestdaq_otel_attribute {
     return nestdaq_otel_attribute{
         .key = fKey.data(),
         .type = fType,
@@ -43,8 +39,7 @@ auto Attribute::ToOtelAttribute() const noexcept -> nestdaq_otel_attribute
     };
 }
 
-auto MakeOtelAttributes(const Attribute* attributes, std::size_t attributeCount) -> std::vector<nestdaq_otel_attribute>
-{
+auto MakeOtelAttributes(const Attribute* attributes, std::size_t attributeCount) -> std::vector<nestdaq_otel_attribute> {
     auto values = std::vector<nestdaq_otel_attribute> {};
     values.reserve(attributeCount);
 #if !defined(__clang__) && defined(__GNUC__) && (__GNUC__ < 9)
@@ -59,44 +54,37 @@ auto MakeOtelAttributes(const Attribute* attributes, std::size_t attributeCount)
     return values;
 }
 
-auto MakeOtelAttributes(std::initializer_list<Attribute> attributes) -> std::vector<nestdaq_otel_attribute>
-{
+auto MakeOtelAttributes(std::initializer_list<Attribute> attributes) -> std::vector<nestdaq_otel_attribute> {
     return MakeOtelAttributes(attributes.begin(), attributes.size());
 }
 
 #if __cplusplus >= 202002L
-auto MakeOtelAttributes(std::span<const Attribute> attributes) -> std::vector<nestdaq_otel_attribute>
-{
+auto MakeOtelAttributes(std::span<const Attribute> attributes) -> std::vector<nestdaq_otel_attribute> {
     return MakeOtelAttributes(attributes.data(), attributes.size());
 }
 #endif
 
 namespace {
-auto SpdlogConsolePatternMutex() -> std::mutex&
-{
+auto SpdlogConsolePatternMutex() -> std::mutex& {
     static auto value = std::mutex{};
     return value;
 }
 
-auto SpdlogConsolePatternStorage() -> std::string&
-{
+auto SpdlogConsolePatternStorage() -> std::string& {
     static auto value = std::string{kDefaultSpdlogConsolePattern};
     return value;
 }
 
-auto SpdlogNativeConsoleEnabledStorage() -> bool&
-{
+auto SpdlogNativeConsoleEnabledStorage() -> bool& {
     static auto value = true;
     return value;
 }
 
-auto IsValidSpdlogAsyncOverflowPolicy(std::string_view value) -> bool
-{
+auto IsValidSpdlogAsyncOverflowPolicy(std::string_view value) -> bool {
     return value == "block" || value == "overrun_oldest" || value == "discard_new";
 }
 
-auto NormalizeSpdlogAsyncOptions(SpdlogAsyncOptions options) -> SpdlogAsyncOptions
-{
+auto NormalizeSpdlogAsyncOptions(SpdlogAsyncOptions options) -> SpdlogAsyncOptions {
     if (options.queueSize == 0) {
         options.queueSize = kDefaultSpdlogAsyncQueueSize;
     }
@@ -109,45 +97,38 @@ auto NormalizeSpdlogAsyncOptions(SpdlogAsyncOptions options) -> SpdlogAsyncOptio
     return options;
 }
 
-auto SpdlogAsyncOptionsStorage() -> SpdlogAsyncOptions&
-{
+auto SpdlogAsyncOptionsStorage() -> SpdlogAsyncOptions& {
     static auto value = SpdlogAsyncOptions{};
     return value;
 }
 } // namespace
 
-auto SetSpdlogConsolePattern(std::string_view pattern) -> void
-{
+auto SetSpdlogConsolePattern(std::string_view pattern) -> void {
     const auto lock = std::scoped_lock{SpdlogConsolePatternMutex()};
     SpdlogConsolePatternStorage() = pattern;
 }
 
-auto GetSpdlogConsolePattern() -> std::string
-{
+auto GetSpdlogConsolePattern() -> std::string {
     const auto lock = std::scoped_lock{SpdlogConsolePatternMutex()};
     return SpdlogConsolePatternStorage();
 }
 
-auto SetSpdlogNativeConsoleEnabled(bool enabled) -> void
-{
+auto SetSpdlogNativeConsoleEnabled(bool enabled) -> void {
     const auto lock = std::scoped_lock{SpdlogConsolePatternMutex()};
     SpdlogNativeConsoleEnabledStorage() = enabled;
 }
 
-auto GetSpdlogNativeConsoleEnabled() -> bool
-{
+auto GetSpdlogNativeConsoleEnabled() -> bool {
     const auto lock = std::scoped_lock{SpdlogConsolePatternMutex()};
     return SpdlogNativeConsoleEnabledStorage();
 }
 
-auto SetSpdlogAsyncOptions(const SpdlogAsyncOptions& options) -> void
-{
+auto SetSpdlogAsyncOptions(const SpdlogAsyncOptions& options) -> void {
     const auto lock = std::scoped_lock{SpdlogConsolePatternMutex()};
     SpdlogAsyncOptionsStorage() = NormalizeSpdlogAsyncOptions(options);
 }
 
-auto GetSpdlogAsyncOptions() -> SpdlogAsyncOptions
-{
+auto GetSpdlogAsyncOptions() -> SpdlogAsyncOptions {
     const auto lock = std::scoped_lock{SpdlogConsolePatternMutex()};
     return SpdlogAsyncOptionsStorage();
 }
@@ -156,22 +137,19 @@ TelemetrySpan::TelemetrySpan(TelemetryLibrary& telemetry, uint64_t handle) noexc
     : fTelemetry {
     &telemetry
 }
-, fHandle{handle}
-{
+, fHandle{handle} {
 }
 
 TelemetrySpan::TelemetrySpan(TelemetrySpan&& other) noexcept
     : fTelemetry {
     other.fTelemetry
 }
-, fHandle{other.fHandle}
-{
+, fHandle{other.fHandle} {
     other.fTelemetry = nullptr;
     other.fHandle = 0;
 }
 
-auto TelemetrySpan::operator=(TelemetrySpan&& other) noexcept -> TelemetrySpan&
-{
+auto TelemetrySpan::operator=(TelemetrySpan&& other) noexcept -> TelemetrySpan& {
     if (this != &other) {
         End();
         fTelemetry = other.fTelemetry;
@@ -182,26 +160,22 @@ auto TelemetrySpan::operator=(TelemetrySpan&& other) noexcept -> TelemetrySpan&
     return *this;
 }
 
-TelemetrySpan::~TelemetrySpan()
-{
+TelemetrySpan::~TelemetrySpan() {
     End();
 }
 
-auto TelemetrySpan::End() noexcept -> void
-{
+auto TelemetrySpan::End() noexcept -> void {
     if (fTelemetry != nullptr && fHandle != 0) {
         fTelemetry->SpanEnd(fHandle);
         fHandle = 0;
     }
 }
 
-auto TelemetrySpan::SetAttribute(const nestdaq_otel_attribute& attribute) -> bool
-{
+auto TelemetrySpan::SetAttribute(const nestdaq_otel_attribute& attribute) -> bool {
     return fTelemetry != nullptr && fHandle != 0 && fTelemetry->SpanSetAttribute(fHandle, attribute);
 }
 
-auto TelemetrySpan::SetAttribute(const Attribute& attribute) -> bool
-{
+auto TelemetrySpan::SetAttribute(const Attribute& attribute) -> bool {
     const auto otelAttribute = attribute.ToOtelAttribute();
     return SetAttribute(otelAttribute);
 }
@@ -210,12 +184,10 @@ Counter::Counter(TelemetryLibrary* library, std::string_view name, std::string_v
     : fLibrary{library}
     , fName{name}
     , fUnit{unit}
-    , fDescription{description}
-{
+    , fDescription{description} {
 }
 
-auto Counter::Add(double value, std::initializer_list<Attribute> attributes) const -> bool
-{
+auto Counter::Add(double value, std::initializer_list<Attribute> attributes) const -> bool {
     if (fLibrary == nullptr) {
         return true;
     }
@@ -227,12 +199,10 @@ Histogram::Histogram(TelemetryLibrary* library, std::string_view name, std::stri
     : fLibrary{library}
     , fName{name}
     , fUnit{unit}
-    , fDescription{description}
-{
+    , fDescription{description} {
 }
 
-auto Histogram::Record(double value, std::initializer_list<Attribute> attributes) const -> bool
-{
+auto Histogram::Record(double value, std::initializer_list<Attribute> attributes) const -> bool {
     if (fLibrary == nullptr) {
         return true;
     }
@@ -244,12 +214,10 @@ Gauge::Gauge(TelemetryLibrary* library, std::string_view name, std::string_view 
     : fLibrary{library}
     , fName{name}
     , fUnit{unit}
-    , fDescription{description}
-{
+    , fDescription{description} {
 }
 
-auto Gauge::Record(double value, std::initializer_list<Attribute> attributes) const -> bool
-{
+auto Gauge::Record(double value, std::initializer_list<Attribute> attributes) const -> bool {
     if (fLibrary == nullptr) {
         return true;
     }
@@ -276,8 +244,7 @@ auto Telemetry::AddDoubleCounter(std::string_view name,
                                  std::string_view unit,
                                  std::string_view description,
                                  const nestdaq_otel_attribute* attributes,
-                                 std::size_t attributeCount) -> bool
-{
+                                 std::size_t attributeCount) -> bool {
     if (fLibrary == nullptr) {
         return true;
     }
@@ -289,8 +256,7 @@ auto Telemetry::RecordDoubleHistogram(std::string_view name,
                                       std::string_view unit,
                                       std::string_view description,
                                       const nestdaq_otel_attribute* attributes,
-                                      std::size_t attributeCount) -> bool
-{
+                                      std::size_t attributeCount) -> bool {
     if (fLibrary == nullptr) {
         return true;
     }
@@ -302,8 +268,7 @@ auto Telemetry::RecordDoubleGauge(std::string_view name,
                                   std::string_view unit,
                                   std::string_view description,
                                   const nestdaq_otel_attribute* attributes,
-                                  std::size_t attributeCount) -> bool
-{
+                                  std::size_t attributeCount) -> bool {
     if (fLibrary == nullptr) {
         return true;
     }
@@ -312,8 +277,7 @@ auto Telemetry::RecordDoubleGauge(std::string_view name,
 
 auto Telemetry::StartSpan(std::string_view name,
                           const nestdaq_otel_attribute* attributes,
-                          std::size_t attributeCount) -> TelemetrySpan
-{
+                          std::size_t attributeCount) -> TelemetrySpan {
     if (fLibrary == nullptr) {
         return {};
     }
@@ -322,27 +286,23 @@ auto Telemetry::StartSpan(std::string_view name,
 
 auto Telemetry::Counter(std::string_view name,
                         std::string_view unit,
-                        std::string_view description) const -> nestdaq::telemetry::Counter
-{
+                        std::string_view description) const -> nestdaq::telemetry::Counter {
     return {fLibrary, name, unit, description};
 }
 
 auto Telemetry::Histogram(std::string_view name,
                           std::string_view unit,
-                          std::string_view description) const -> nestdaq::telemetry::Histogram
-{
+                          std::string_view description) const -> nestdaq::telemetry::Histogram {
     return {fLibrary, name, unit, description};
 }
 
 auto Telemetry::Gauge(std::string_view name,
                       std::string_view unit,
-                      std::string_view description) const -> nestdaq::telemetry::Gauge
-{
+                      std::string_view description) const -> nestdaq::telemetry::Gauge {
     return {fLibrary, name, unit, description};
 }
 
-auto Telemetry::StartSpan(std::string_view name, std::initializer_list<Attribute> attributes) -> TelemetrySpan
-{
+auto Telemetry::StartSpan(std::string_view name, std::initializer_list<Attribute> attributes) -> TelemetrySpan {
     if (fLibrary == nullptr) {
         return {};
     }
@@ -358,20 +318,17 @@ namespace {
  * access lets FairMQ callbacks and user code read the active backend without
  * taking locks.
  */
-auto ActiveTelemetryLibrary() noexcept -> std::atomic<TelemetryLibrary*>&
-{
+auto ActiveTelemetryLibrary() noexcept -> std::atomic<TelemetryLibrary*>& {
     static auto value = std::atomic<TelemetryLibrary*> {nullptr};
     return value;
 }
 } // namespace
 
-auto SetActiveTelemetryLibrary(TelemetryLibrary* library) noexcept -> void
-{
+auto SetActiveTelemetryLibrary(TelemetryLibrary* library) noexcept -> void {
     ActiveTelemetryLibrary().store(library, std::memory_order_release);
 }
 
-auto CreateActiveSpdlogSink() -> std::shared_ptr<spdlog::sinks::sink>
-{
+auto CreateActiveSpdlogSink() -> std::shared_ptr<spdlog::sinks::sink> {
     auto* library = ActiveTelemetryLibrary().load(std::memory_order_acquire);
     if (library == nullptr) {
         return {};
@@ -379,8 +336,7 @@ auto CreateActiveSpdlogSink() -> std::shared_ptr<spdlog::sinks::sink>
     return library->CreateSpdlogSink();
 }
 
-auto GetTelemetry() noexcept -> Telemetry
-{
+auto GetTelemetry() noexcept -> Telemetry {
     return Telemetry{ActiveTelemetryLibrary().load(std::memory_order_acquire)};
 }
 

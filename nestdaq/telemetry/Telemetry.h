@@ -87,8 +87,7 @@ public:
     Attribute(std::string_view key, T value)
         : fKey{key}
         , fType{NESTDAQ_OTEL_ATTRIBUTE_INT64}
-        , fIntValue{static_cast<int64_t>(value)}
-    {
+        , fIntValue{static_cast<int64_t>(value)} {
     }
 
     /** @brief Create an unsigned integer attribute. */
@@ -99,8 +98,7 @@ public:
     Attribute(std::string_view key, T value)
         : fKey{key}
         , fType{NESTDAQ_OTEL_ATTRIBUTE_UINT64}
-        , fUIntValue{static_cast<uint64_t>(value)}
-    {
+        , fUIntValue{static_cast<uint64_t>(value)} {
     }
 
     /** @brief Create a floating-point attribute. */
@@ -108,8 +106,7 @@ public:
     Attribute(std::string_view key, T value)
         : fKey{key}
         , fType{NESTDAQ_OTEL_ATTRIBUTE_DOUBLE}
-        , fDoubleValue{static_cast<double>(value)}
-    {
+        , fDoubleValue{static_cast<double>(value)} {
     }
 
     /**
@@ -207,8 +204,7 @@ public:
 
     /** @brief Add an arithmetic value after converting it to double. */
     template<typename T, std::enable_if_t<detail::IsMetricValueV<T>, int> = 0>
-    auto Add(T value, std::initializer_list<Attribute> attributes = {}) const -> bool
-    {
+    auto Add(T value, std::initializer_list<Attribute> attributes = {}) const -> bool {
         return Add(static_cast<double>(value), attributes);
     }
 
@@ -233,8 +229,7 @@ public:
 
     /** @brief Record an arithmetic value after converting it to double. */
     template<typename T, std::enable_if_t<detail::IsMetricValueV<T>, int> = 0>
-    auto Record(T value, std::initializer_list<Attribute> attributes = {}) const -> bool
-    {
+    auto Record(T value, std::initializer_list<Attribute> attributes = {}) const -> bool {
         return Record(static_cast<double>(value), attributes);
     }
 
@@ -263,8 +258,7 @@ public:
 
     /** @brief Record an arithmetic value after converting it to double. */
     template<typename T, std::enable_if_t<detail::IsMetricValueV<T>, int> = 0>
-    auto Record(T value, std::initializer_list<Attribute> attributes = {}) const -> bool
-    {
+    auto Record(T value, std::initializer_list<Attribute> attributes = {}) const -> bool {
         return Record(static_cast<double>(value), attributes);
     }
 
@@ -313,8 +307,7 @@ public:
                           double value,
                           std::string_view unit,
                           std::string_view description,
-                          std::span<const nestdaq_otel_attribute> attributes) -> bool
-    {
+                          std::span<const nestdaq_otel_attribute> attributes) -> bool {
         return AddDoubleCounter(name, value, unit, description, attributes.data(), attributes.size());
     }
 #endif
@@ -326,8 +319,7 @@ public:
                     std::string_view unit = "",
                     std::string_view description = "",
                     const nestdaq_otel_attribute* attributes = nullptr,
-                    std::size_t attributeCount = 0) -> bool
-    {
+                    std::size_t attributeCount = 0) -> bool {
         return AddDoubleCounter(name, static_cast<double>(value), unit, description, attributes, attributeCount);
     }
 
@@ -338,8 +330,7 @@ public:
                     T value,
                     std::string_view unit,
                     std::string_view description,
-                    std::span<const nestdaq_otel_attribute> attributes) -> bool
-    {
+                    std::span<const nestdaq_otel_attribute> attributes) -> bool {
         return AddDoubleCounter(name, static_cast<double>(value), unit, description, attributes);
     }
 #endif
@@ -362,8 +353,7 @@ public:
                                double value,
                                std::string_view unit,
                                std::string_view description,
-                               std::span<const nestdaq_otel_attribute> attributes) -> bool
-    {
+                               std::span<const nestdaq_otel_attribute> attributes) -> bool {
         return RecordDoubleHistogram(name, value, unit, description, attributes.data(), attributes.size());
     }
 #endif
@@ -375,8 +365,7 @@ public:
                          std::string_view unit = "",
                          std::string_view description = "",
                          const nestdaq_otel_attribute* attributes = nullptr,
-                         std::size_t attributeCount = 0) -> bool
-    {
+                         std::size_t attributeCount = 0) -> bool {
         return RecordDoubleHistogram(name, static_cast<double>(value), unit, description, attributes, attributeCount);
     }
 
@@ -387,8 +376,7 @@ public:
                          T value,
                          std::string_view unit,
                          std::string_view description,
-                         std::span<const nestdaq_otel_attribute> attributes) -> bool
-    {
+                         std::span<const nestdaq_otel_attribute> attributes) -> bool {
         return RecordDoubleHistogram(name, static_cast<double>(value), unit, description, attributes);
     }
 #endif
@@ -411,8 +399,7 @@ public:
                            double value,
                            std::string_view unit,
                            std::string_view description,
-                           std::span<const nestdaq_otel_attribute> attributes) -> bool
-    {
+                           std::span<const nestdaq_otel_attribute> attributes) -> bool {
         return RecordDoubleGauge(name, value, unit, description, attributes.data(), attributes.size());
     }
 #endif
@@ -424,8 +411,7 @@ public:
                      std::string_view unit = "",
                      std::string_view description = "",
                      const nestdaq_otel_attribute* attributes = nullptr,
-                     std::size_t attributeCount = 0) -> bool
-    {
+                     std::size_t attributeCount = 0) -> bool {
         return RecordDoubleGauge(name, static_cast<double>(value), unit, description, attributes, attributeCount);
     }
 
@@ -436,8 +422,7 @@ public:
                      T value,
                      std::string_view unit,
                      std::string_view description,
-                     std::span<const nestdaq_otel_attribute> attributes) -> bool
-    {
+                     std::span<const nestdaq_otel_attribute> attributes) -> bool {
         return RecordDoubleGauge(name, static_cast<double>(value), unit, description, attributes);
     }
 #endif
@@ -454,8 +439,7 @@ public:
 #if __cplusplus >= 202002L
     /** @brief Start a span through the active backend with C++20 span attributes. */
     auto StartSpan(std::string_view name,
-                   std::span<const nestdaq_otel_attribute> attributes) -> TelemetrySpan
-    {
+                   std::span<const nestdaq_otel_attribute> attributes) -> TelemetrySpan {
         return StartSpan(name, attributes.data(), attributes.size());
     }
 #endif

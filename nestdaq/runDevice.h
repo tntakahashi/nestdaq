@@ -51,14 +51,12 @@ struct ProgramArguments {
     std::vector<std::string> storage;
     std::vector<char*> argv;
 
-    auto argc() const -> int
-    {
+    auto argc() const -> int {
         return static_cast<int>(argv.size());
     }
 };
 
-auto NormalizeArguments(int argc, char* argv[]) -> ProgramArguments // NOLINT(cppcoreguidelines-avoid-c-arrays)
-{
+auto NormalizeArguments(int argc, char* argv[]) -> ProgramArguments { // NOLINT(cppcoreguidelines-avoid-c-arrays)
     auto arguments = ProgramArguments{};
     arguments.storage.reserve(static_cast<std::size_t>(argc));
     arguments.argv.reserve(static_cast<std::size_t>(argc));
@@ -85,8 +83,7 @@ auto NormalizeArguments(int argc, char* argv[]) -> ProgramArguments // NOLINT(cp
 
 } // namespace nestdaq::run_device_detail
 
-int main(int argc, char* argv[])
-{
+int main(int argc, char* argv[]) {
     using namespace fair::mq;
     using namespace fair::mq::hooks;
 

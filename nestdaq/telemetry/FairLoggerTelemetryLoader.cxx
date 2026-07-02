@@ -30,19 +30,16 @@ constexpr auto kHostNameBufferSize = std::size_t{256};
  * entries uniformly and test whether a symbol was present before calling it.
  */
 template<typename T>
-auto ResolveSymbol(void* handle, const char* symbol) -> std::function<T>
-{
+auto ResolveSymbol(void* handle, const char* symbol) -> std::function<T> {
     dlerror(); // NOLINT(concurrency-mt-unsafe)
     return reinterpret_cast<T*>(dlsym(handle, symbol)); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
 }
 
-auto IsValidSpdlogAsyncOverflowPolicy(std::string_view value) -> bool
-{
+auto IsValidSpdlogAsyncOverflowPolicy(std::string_view value) -> bool {
     return value == "block" || value == "overrun_oldest" || value == "discard_new";
 }
 
-auto NormalizeSpdlogAsyncOptions(TelemetryOptions& options) -> void
-{
+auto NormalizeSpdlogAsyncOptions(TelemetryOptions& options) -> void {
     if (options.spdlogAsyncQueueSize == 0) {
         options.spdlogAsyncQueueSize = kDefaultSpdlogAsyncQueueSize;
     }
@@ -57,8 +54,7 @@ auto NormalizeSpdlogAsyncOptions(TelemetryOptions& options) -> void
 } // namespace
 
 auto AddTelemetryOptions(boost::program_options::options_description& options,
-                         std::string_view defaultServiceName) -> void
-{
+                         std::string_view defaultServiceName) -> void {
     namespace bpo = boost::program_options;
     options.add_options()
            ("otel-library", bpo::value<std::string>()->default_value(std::string{kDefaultTelemetryLibrary}), "Telemetry shared library path or soname to dlopen")
@@ -96,8 +92,7 @@ auto AddTelemetryOptions(boost::program_options::options_description& options,
            ("spdlog-async-overflow-policy", bpo::value<std::string>()->default_value(std::string{kDefaultSpdlogAsyncOverflowPolicy}), "spdlog async overflow policy: block, overrun_oldest, discard_new");
 }
 
-auto ApplyEnvironment(TelemetryOptions& options) -> void
-{
+auto ApplyEnvironment(TelemetryOptions& options) -> void {
     if (const auto* value = Env("NESTDAQ_OTEL_LIBRARY")) {
         options.library = value;
     }
@@ -163,8 +158,7 @@ auto ApplyEnvironment(TelemetryOptions& options) -> void
     }
 }
 
-auto AssignOption(TelemetryOptions& options, std::string_view key, std::string_view value) -> void
-{
+auto AssignOption(TelemetryOptions& options, std::string_view key, std::string_view value) -> void {
     if (key == "otel-library") {
         options.library = value;
     } else if (key == "otel-log-protocol") {
@@ -234,8 +228,7 @@ auto AssignOption(TelemetryOptions& options, std::string_view key, std::string_v
     }
 }
 
-auto Basename(std::string_view path) -> std::string_view
-{
+auto Basename(std::string_view path) -> std::string_view {
     const auto slash = path.find_last_of("/\\");
     if (slash == std::string_view::npos) {
         return path;
@@ -243,13 +236,11 @@ auto Basename(std::string_view path) -> std::string_view
     return path.substr(slash + 1);
 }
 
-auto Env(const char* name) -> const char*
-{
+auto Env(const char* name) -> const char* {
     return std::getenv(name); // NOLINT(concurrency-mt-unsafe)
 }
 
-auto DetectHostName() -> std::string
-{
+auto DetectHostName() -> std::string {
     auto buffer = std::array<char, kHostNameBufferSize> {};
     if (gethostname(buffer.data(), buffer.size()) != 0) {
         return {};
@@ -260,16 +251,14 @@ auto DetectHostName() -> std::string
     return std::string{buffer.data()};
 }
 
-auto EnsureHostName(TelemetryOptions& options) -> void
-{
+auto EnsureHostName(TelemetryOptions& options) -> void {
     if (!options.hostName.empty()) {
         return;
     }
     options.hostName = DetectHostName();
 }
 
-auto EnsureServiceInstanceId(TelemetryOptions& options) -> void
-{
+auto EnsureServiceInstanceId(TelemetryOptions& options) -> void {
     if (!options.serviceInstanceId.empty()) {
         return;
     }
@@ -277,13 +266,11 @@ auto EnsureServiceInstanceId(TelemetryOptions& options) -> void
     options.generatedServiceInstanceId = true;
 }
 
-auto GenerateUuidString() -> std::string
-{
+auto GenerateUuidString() -> std::string {
     return boost::uuids::to_string(boost::uuids::random_generator{}());
 }
 
-auto ToLowerAscii(std::string_view value) -> std::string
-{
+auto ToLowerAscii(std::string_view value) -> std::string {
     auto lowered = std::string{value};
     std::transform(lowered.begin(), lowered.end(), lowered.begin(), [](unsigned char ch) {
         if (ch >= 'A' && ch <= 'Z') {
@@ -294,13 +281,11 @@ auto ToLowerAscii(std::string_view value) -> std::string
     return lowered;
 }
 
-auto NormalizeServiceName(TelemetryOptions& options) -> void
-{
+auto NormalizeServiceName(TelemetryOptions& options) -> void {
     options.serviceName = ToLowerAscii(options.serviceName);
 }
 
-auto MakeConfig(const TelemetryOptions& options) -> nestdaq_otel_config
-{
+auto MakeConfig(const TelemetryOptions& options) -> nestdaq_otel_config {
     nestdaq_otel_config config{};
     config.size = sizeof(config);
     config.logs = MakeSignalConfig(options.logProtocol,
@@ -343,8 +328,7 @@ auto MakeSignalConfig(std::string_view protocol,
                       std::string_view endpointHttp,
                       std::string_view endpointGrpc,
                       std::string_view headers,
-                      uint32_t otlpHttpJson) -> nestdaq_otel_signal_config
-{
+                      uint32_t otlpHttpJson) -> nestdaq_otel_signal_config {
     auto config = nestdaq_otel_signal_config{};
     config.protocol = protocol.data();
     config.endpoint_http = endpointHttp.data();
@@ -354,15 +338,13 @@ auto MakeSignalConfig(std::string_view protocol,
     return config;
 }
 
-auto ParseBool(std::string_view value) -> bool
-{
+auto ParseBool(std::string_view value) -> bool {
     return value == "1" || value == "true" || value == "TRUE" ||
            value == "on" || value == "ON" || value == "yes" || value == "YES";
 }
 
 auto ParseTelemetryOptions(int argc, char* argv[], // NOLINT(cppcoreguidelines-avoid-c-arrays)
-                           std::string_view defaultServiceName) -> TelemetryOptions
-{
+                           std::string_view defaultServiceName) -> TelemetryOptions {
     auto options = TelemetryOptions{};
     options.serviceName = defaultServiceName;
     if (argv == nullptr) {
@@ -429,8 +411,7 @@ auto ParseTelemetryOptions(int argc, char* argv[], // NOLINT(cppcoreguidelines-a
     return options;
 }
 
-auto ParseFairLoggerSeverity(std::string_view severity) -> SeverityParseResult
-{
+auto ParseFairLoggerSeverity(std::string_view severity) -> SeverityParseResult {
     if (const auto it = fair::Logger::fSeverityMap.find(severity);
             it != fair::Logger::fSeverityMap.end()) {
         return SeverityParseResult{
@@ -444,8 +425,7 @@ auto ParseFairLoggerSeverity(std::string_view severity) -> SeverityParseResult
     };
 }
 
-auto ParseUInt32(std::string_view value, uint32_t fallback) -> uint32_t
-{
+auto ParseUInt32(std::string_view value, uint32_t fallback) -> uint32_t {
     try {
         return static_cast<uint32_t>(std::stoul(std::string{value}));
     } catch (...) {
@@ -454,8 +434,7 @@ auto ParseUInt32(std::string_view value, uint32_t fallback) -> uint32_t
 }
 
 auto ReadTelemetryOptions(const boost::program_options::variables_map& vm,
-                          std::string_view defaultServiceName) -> TelemetryOptions
-{
+                          std::string_view defaultServiceName) -> TelemetryOptions {
     auto options = TelemetryOptions{};
     options.serviceName = defaultServiceName;
     ApplyEnvironment(options);
@@ -528,8 +507,7 @@ auto ReadTelemetryOptions(const boost::program_options::variables_map& vm,
     return options;
 }
 
-auto WarnUnknownSeverityFallback(std::string_view severity) -> void
-{
+auto WarnUnknownSeverityFallback(std::string_view severity) -> void {
     if (!ParseFairLoggerSeverity(severity).usedFallback) {
         return;
     }
@@ -537,15 +515,13 @@ auto WarnUnknownSeverityFallback(std::string_view severity) -> void
               << fair::Logger::SeverityName(fair::Severity::info) << "'";
 }
 
-auto SeverityToFairLoggerValue(std::string_view severity) -> int32_t
-{
+auto SeverityToFairLoggerValue(std::string_view severity) -> int32_t {
     return ParseFairLoggerSeverity(severity).value;
 }
 
 auto SetGeneratedUuidProperty(fair::mq::ProgOptions& config,
                               const TelemetryOptions& options,
-                              std::string_view key) -> void
-{
+                              std::string_view key) -> void {
     if (!options.generatedServiceInstanceId || options.serviceInstanceId.empty()) {
         return;
     }
@@ -556,21 +532,18 @@ auto SetGeneratedUuidProperty(fair::mq::ProgOptions& config,
     config.SetProperty<std::string>(propertyKey, options.serviceInstanceId);
 }
 
-TelemetryLibrary::~TelemetryLibrary()
-{
+TelemetryLibrary::~TelemetryLibrary() {
     ShutdownTelemetry(kDefaultTimeoutMs);
     if (fHandle) {
         dlclose(fHandle);
     }
 }
 
-auto TelemetryLibrary::GetLastError() const -> const std::string&
-{
+auto TelemetryLibrary::GetLastError() const -> const std::string& {
     return fLastError;
 }
 
-auto TelemetryLibrary::InitializeWith(const nestdaq_otel_config& config) -> bool
-{
+auto TelemetryLibrary::InitializeWith(const nestdaq_otel_config& config) -> bool {
     if (!fInitialize) {
         return false;
     }
@@ -589,24 +562,21 @@ auto TelemetryLibrary::InitializeWith(const nestdaq_otel_config& config) -> bool
     return true;
 }
 
-auto TelemetryLibrary::ForceFlush(uint64_t timeoutMs) -> bool
-{
+auto TelemetryLibrary::ForceFlush(uint64_t timeoutMs) -> bool {
     if (!fForceFlush) {
         return false;
     }
     return StoreResult(fForceFlush(timeoutMs));
 }
 
-auto TelemetryLibrary::CreateSpdlogSink() const -> std::shared_ptr<spdlog::sinks::sink>
-{
+auto TelemetryLibrary::CreateSpdlogSink() const -> std::shared_ptr<spdlog::sinks::sink> {
     if (!fLogExportEnabled || !fCreateSpdlogSink) {
         return {};
     }
     return fCreateSpdlogSink();
 }
 
-auto TelemetryLibrary::RecordFrameworkFairMQState(int64_t stateId, std::string_view stateName) -> void
-{
+auto TelemetryLibrary::RecordFrameworkFairMQState(int64_t stateId, std::string_view stateName) -> void {
     if (!fRecordFrameworkFairMQState) {
         return;
     }
@@ -619,8 +589,7 @@ auto TelemetryLibrary::MetricAddDoubleCounter(std::string_view name,
         std::string_view unit,
         std::string_view description,
         const nestdaq_otel_attribute* attributes,
-        uint64_t attributeCount) -> bool
-{
+        uint64_t attributeCount) -> bool {
     if (!fMetricAddDoubleCounter) {
         return false;
     }
@@ -632,8 +601,7 @@ auto TelemetryLibrary::MetricRecordDoubleHistogram(std::string_view name,
         std::string_view unit,
         std::string_view description,
         const nestdaq_otel_attribute* attributes,
-        uint64_t attributeCount) -> bool
-{
+        uint64_t attributeCount) -> bool {
     if (!fMetricRecordDoubleHistogram) {
         return false;
     }
@@ -645,16 +613,14 @@ auto TelemetryLibrary::MetricRecordDoubleGauge(std::string_view name,
         std::string_view unit,
         std::string_view description,
         const nestdaq_otel_attribute* attributes,
-        uint64_t attributeCount) -> bool
-{
+        uint64_t attributeCount) -> bool {
     if (!fMetricRecordDoubleGauge) {
         return false;
     }
     return StoreResult(fMetricRecordDoubleGauge(name.data(), value, unit.data(), description.data(), attributes, attributeCount));
 }
 
-auto TelemetryLibrary::Load(const std::string& library) -> bool
-{
+auto TelemetryLibrary::Load(const std::string& library) -> bool {
     auto flags = RTLD_NOW | RTLD_LOCAL;
 #ifdef RTLD_NODELETE
     // OpenTelemetry providers are process-wide; avoid unmapping plugin code
@@ -711,24 +677,21 @@ auto TelemetryLibrary::Load(const std::string& library) -> bool
     return true;
 }
 
-auto TelemetryLibrary::SpanEnd(uint64_t spanHandle) -> bool
-{
+auto TelemetryLibrary::SpanEnd(uint64_t spanHandle) -> bool {
     if (!fSpanEnd) {
         return false;
     }
     return StoreResult(fSpanEnd(spanHandle));
 }
 
-auto TelemetryLibrary::SpanSetAttribute(uint64_t spanHandle, const nestdaq_otel_attribute& attribute) -> bool
-{
+auto TelemetryLibrary::SpanSetAttribute(uint64_t spanHandle, const nestdaq_otel_attribute& attribute) -> bool {
     if (!fSpanSetAttribute) {
         return false;
     }
     return StoreResult(fSpanSetAttribute(spanHandle, &attribute));
 }
 
-auto TelemetryLibrary::SetNestdaqInstanceId(std::string_view instanceId) -> bool
-{
+auto TelemetryLibrary::SetNestdaqInstanceId(std::string_view instanceId) -> bool {
     if (!fSetNestdaqInstanceId) {
         return false;
     }
@@ -738,8 +701,7 @@ auto TelemetryLibrary::SetNestdaqInstanceId(std::string_view instanceId) -> bool
 
 auto TelemetryLibrary::SpanStart(std::string_view name,
                                  const nestdaq_otel_attribute* attributes,
-                                 uint64_t attributeCount) -> uint64_t
-{
+                                 uint64_t attributeCount) -> uint64_t {
     if (!fSpanStart) {
         return 0;
     }
@@ -752,8 +714,7 @@ auto TelemetryLibrary::SpanStart(std::string_view name,
     return spanHandle;
 }
 
-auto TelemetryLibrary::SetMinSeverity(std::string_view severity) -> bool
-{
+auto TelemetryLibrary::SetMinSeverity(std::string_view severity) -> bool {
     const auto parsedSeverity = ParseFairLoggerSeverity(severity);
     const auto updated = SetMinSeverity(parsedSeverity.value);
     if (updated && parsedSeverity.usedFallback) {
@@ -762,8 +723,7 @@ auto TelemetryLibrary::SetMinSeverity(std::string_view severity) -> bool
     return updated;
 }
 
-auto TelemetryLibrary::SetMinSeverity(int32_t severity) -> bool
-{
+auto TelemetryLibrary::SetMinSeverity(int32_t severity) -> bool {
     if (!fSetMinSeverity) {
         return false;
     }
@@ -780,8 +740,7 @@ auto TelemetryLibrary::SetMinSeverity(int32_t severity) -> bool
     return true;
 }
 
-auto TelemetryLibrary::ShutdownTelemetry(uint64_t timeoutMs) const -> void
-{
+auto TelemetryLibrary::ShutdownTelemetry(uint64_t timeoutMs) const -> void {
     fLogExportEnabled = false;
     if (fShutdown && !fShutdownCalled) {
         fShutdownCalled = true;
@@ -789,8 +748,7 @@ auto TelemetryLibrary::ShutdownTelemetry(uint64_t timeoutMs) const -> void
     }
 }
 
-auto TelemetryLibrary::StoreResult(int rc) -> bool
-{
+auto TelemetryLibrary::StoreResult(int rc) -> bool {
     if (rc == 0) {
         fLastError.clear();
         return true;
@@ -804,8 +762,7 @@ auto TelemetryLibrary::StoreResult(int rc) -> bool
 }
 
 auto SubscribeTelemetryOptionChanges(const fair::mq::ProgOptions& config,
-                                     TelemetryLibrary& telemetry) -> void
-{
+                                     TelemetryLibrary& telemetry) -> void {
     config.SubscribeAsString(std::string{kTelemetryConfigSubscriber},
     [&telemetry](const fair::mq::PropertyChange::KeyType& key, std::string value) {
         if (key == "id") {
@@ -822,8 +779,7 @@ auto SubscribeTelemetryOptionChanges(const fair::mq::ProgOptions& config,
     });
 }
 
-auto UnsubscribeTelemetryOptionChanges(const fair::mq::ProgOptions& config) -> void
-{
+auto UnsubscribeTelemetryOptionChanges(const fair::mq::ProgOptions& config) -> void {
     config.UnsubscribeAsString(std::string{kTelemetryConfigSubscriber});
 }
 
