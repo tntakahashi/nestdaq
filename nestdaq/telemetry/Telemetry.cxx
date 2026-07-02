@@ -89,6 +89,31 @@ auto SpdlogNativeConsoleEnabledStorage() -> bool&
     static auto value = true;
     return value;
 }
+
+auto IsValidSpdlogAsyncOverflowPolicy(std::string_view value) -> bool
+{
+    return value == "block" || value == "overrun_oldest" || value == "discard_new";
+}
+
+auto NormalizeSpdlogAsyncOptions(SpdlogAsyncOptions options) -> SpdlogAsyncOptions
+{
+    if (options.queueSize == 0) {
+        options.queueSize = kDefaultSpdlogAsyncQueueSize;
+    }
+    if (options.threadCount == 0) {
+        options.threadCount = kDefaultSpdlogAsyncThreadCount;
+    }
+    if (!IsValidSpdlogAsyncOverflowPolicy(options.overflowPolicy)) {
+        options.overflowPolicy = kDefaultSpdlogAsyncOverflowPolicy;
+    }
+    return options;
+}
+
+auto SpdlogAsyncOptionsStorage() -> SpdlogAsyncOptions&
+{
+    static auto value = SpdlogAsyncOptions{};
+    return value;
+}
 } // namespace
 
 auto SetSpdlogConsolePattern(std::string_view pattern) -> void
@@ -113,6 +138,18 @@ auto GetSpdlogNativeConsoleEnabled() -> bool
 {
     const auto lock = std::scoped_lock{SpdlogConsolePatternMutex()};
     return SpdlogNativeConsoleEnabledStorage();
+}
+
+auto SetSpdlogAsyncOptions(const SpdlogAsyncOptions& options) -> void
+{
+    const auto lock = std::scoped_lock{SpdlogConsolePatternMutex()};
+    SpdlogAsyncOptionsStorage() = NormalizeSpdlogAsyncOptions(options);
+}
+
+auto GetSpdlogAsyncOptions() -> SpdlogAsyncOptions
+{
+    const auto lock = std::scoped_lock{SpdlogConsolePatternMutex()};
+    return SpdlogAsyncOptionsStorage();
 }
 
 TelemetrySpan::TelemetrySpan(TelemetryLibrary& telemetry, uint64_t handle) noexcept

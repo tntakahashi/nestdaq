@@ -96,6 +96,12 @@ int main(int argc, char* argv[])
             nestdaq::telemetry::ParseTelemetryOptions(arguments.argc(), arguments.argv.data(), "nestdaq");
         nestdaq::telemetry::SetSpdlogConsolePattern(telemetryOptions.spdlogConsolePattern);
         nestdaq::telemetry::SetSpdlogNativeConsoleEnabled(telemetryOptions.spdlogNativeConsole);
+        nestdaq::telemetry::SetSpdlogAsyncOptions({
+            .enabled = telemetryOptions.spdlogAsync,
+            .queueSize = telemetryOptions.spdlogAsyncQueueSize,
+            .threadCount = telemetryOptions.spdlogAsyncThreadCount,
+            .overflowPolicy = telemetryOptions.spdlogAsyncOverflowPolicy,
+        });
         auto telemetry = std::make_unique<nestdaq::telemetry::TelemetryLibrary>();
         auto telemetryLoaded = false;
         auto telemetryInitialized = false;

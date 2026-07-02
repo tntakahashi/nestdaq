@@ -230,6 +230,10 @@ records themselves use the FairLogger level names. The alias has the same
 | `--otel-timeout-ms` | none | `5000` | Force-flush, shutdown, and exporter timeout in milliseconds. |
 | `--spdlog-console-pattern` | `NESTDAQ_SPDLOG_CONSOLE_PATTERN` | `[%Y-%m-%d %H:%M:%S.%e] [%n] [%l] %v` | spdlog native console sink pattern. |
 | `--spdlog-native-console` | `NESTDAQ_SPDLOG_NATIVE_CONSOLE` | `true` | Enable spdlog native console output independently from the OTel spdlog sink. |
+| `--spdlog-async` | `NESTDAQ_SPDLOG_ASYNC` | `false` | Use `spdlog::async_logger` for NestDAQ helper loggers. |
+| `--spdlog-async-queue-size` | `NESTDAQ_SPDLOG_ASYNC_QUEUE_SIZE` | `8192` | Queue size for async spdlog helper loggers. |
+| `--spdlog-async-thread-count` | `NESTDAQ_SPDLOG_ASYNC_THREAD_COUNT` | `1` | Worker thread count for async spdlog helper loggers. |
+| `--spdlog-async-overflow-policy` | `NESTDAQ_SPDLOG_ASYNC_OVERFLOW_POLICY` | `block` | Queue overflow policy: `block`, `overrun_oldest`, or `discard_new`. |
 | `--otel-metric-export-interval-ms` | none | `1000` | Periodic metric export interval in milliseconds. |
 | `--otel-log-http-json` | none | `true` | Use JavaScript Object Notation (JSON) content type for OTLP HTTP logs. |
 | `--otel-metric-http-json` | none | `true` | Use JSON content type for OTLP HTTP metrics. |
@@ -291,6 +295,24 @@ my-device \
   --otel-log-protocol=otlp-grpc \
   --spdlog-native-console=false
 ```
+
+NestDAQ helper loggers are synchronous by default and use spdlog multi-thread
+safe sinks. Enable async mode when logging frequency is high enough that caller
+threads should hand records to a background worker:
+
+```sh
+my-device \
+  --spdlog-async=true \
+  --spdlog-async-queue-size=16384 \
+  --spdlog-async-thread-count=2 \
+  --spdlog-async-overflow-policy=block
+```
+
+The `block` overflow policy avoids losing log records but can make caller
+threads wait when the queue is full. `overrun_oldest` drops old queued records,
+and `discard_new` drops newly submitted records when the queue is full. Async
+queue size and worker count are used when async helper loggers are created;
+changing them later does not modify existing loggers.
 
 Use the C++ thin API from an application that manages telemetry explicitly:
 

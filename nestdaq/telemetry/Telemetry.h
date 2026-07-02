@@ -22,8 +22,21 @@ class sink;
 namespace nestdaq::telemetry {
 
 inline constexpr std::string_view kDefaultSpdlogConsolePattern{"[%Y-%m-%d %H:%M:%S.%e] [%n] [%l] %v"};
+inline constexpr uint32_t kDefaultSpdlogAsyncQueueSize{8192};
+inline constexpr uint32_t kDefaultSpdlogAsyncThreadCount{1};
+inline constexpr std::string_view kDefaultSpdlogAsyncOverflowPolicy{"block"};
 
 class TelemetryLibrary;
+
+/**
+ * @brief Process-wide spdlog async logger settings used by helper loggers.
+ */
+struct SpdlogAsyncOptions {
+    bool enabled{false};
+    uint32_t queueSize{kDefaultSpdlogAsyncQueueSize};
+    uint32_t threadCount{kDefaultSpdlogAsyncThreadCount};
+    std::string overflowPolicy{kDefaultSpdlogAsyncOverflowPolicy};
+};
 
 namespace detail {
 template<typename T>
@@ -141,6 +154,10 @@ auto GetSpdlogConsolePattern() -> std::string;
 auto SetSpdlogNativeConsoleEnabled(bool enabled) -> void;
 /** @brief Return whether helper loggers attach the native spdlog console sink. */
 auto GetSpdlogNativeConsoleEnabled() -> bool;
+/** @brief Set the process-wide spdlog async logger settings. */
+auto SetSpdlogAsyncOptions(const SpdlogAsyncOptions& options) -> void;
+/** @brief Return the process-wide spdlog async logger settings. */
+auto GetSpdlogAsyncOptions() -> SpdlogAsyncOptions;
 
 /**
  * @brief Movable RAII wrapper for a span handle owned by the telemetry plugin.

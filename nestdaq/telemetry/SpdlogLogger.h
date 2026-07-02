@@ -12,9 +12,10 @@ namespace nestdaq::telemetry {
 /**
  * @brief Create a spdlog logger for NestDAQ examples and user devices.
  *
- * When OTel log export is active and the loaded telemetry plugin provides the
- * optional spdlog sink, the logger exports through OTel. Otherwise it falls
- * back to spdlog's console sink.
+ * The logger is synchronous by default and uses multi-thread-safe sinks. When
+ * async mode is enabled through telemetry options, this returns a
+ * `spdlog::async_logger` through the same base `spdlog::logger` pointer type.
+ * Native console and OTel sinks can be attached to the same logger.
  */
 auto CreateSpdlogLogger(std::string_view name) -> std::shared_ptr<spdlog::logger>;
 

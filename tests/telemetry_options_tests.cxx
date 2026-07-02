@@ -40,6 +40,10 @@ auto ClearTelemetryEnvironment() -> void
         "NESTDAQ_OTEL_LOG_REQUIRED",
         "NESTDAQ_SPDLOG_CONSOLE_PATTERN",
         "NESTDAQ_SPDLOG_NATIVE_CONSOLE",
+        "NESTDAQ_SPDLOG_ASYNC",
+        "NESTDAQ_SPDLOG_ASYNC_QUEUE_SIZE",
+        "NESTDAQ_SPDLOG_ASYNC_THREAD_COUNT",
+        "NESTDAQ_SPDLOG_ASYNC_OVERFLOW_POLICY",
     };
 
     for (const auto* name : names) {
@@ -100,9 +104,60 @@ TEST_CASE("telemetry options keep unified otel library default", "[telemetry]")
     CHECK(options.metricExportIntervalMs == 1000);
     CHECK(options.spdlogConsolePattern == nestdaq::telemetry::kDefaultSpdlogConsolePattern);
     CHECK(options.spdlogNativeConsole);
+    CHECK_FALSE(options.spdlogAsync);
+    CHECK(options.spdlogAsyncQueueSize == nestdaq::telemetry::kDefaultSpdlogAsyncQueueSize);
+    CHECK(options.spdlogAsyncThreadCount == nestdaq::telemetry::kDefaultSpdlogAsyncThreadCount);
+    CHECK(options.spdlogAsyncOverflowPolicy == nestdaq::telemetry::kDefaultSpdlogAsyncOverflowPolicy);
 
     const auto config = nestdaq::telemetry::MakeConfig(options);
     CHECK(config.metric_export_interval_ms == 1000);
+}
+
+TEST_CASE("spdlog async options follow command line and environment", "[telemetry]")
+{
+    ClearTelemetryEnvironment();
+
+    setenv("NESTDAQ_SPDLOG_ASYNC", "true", 1); // NOLINT(concurrency-mt-unsafe)
+    setenv("NESTDAQ_SPDLOG_ASYNC_QUEUE_SIZE", "1024", 1); // NOLINT(concurrency-mt-unsafe)
+    setenv("NESTDAQ_SPDLOG_ASYNC_THREAD_COUNT", "2", 1); // NOLINT(concurrency-mt-unsafe)
+    setenv("NESTDAQ_SPDLOG_ASYNC_OVERFLOW_POLICY", "overrun_oldest", 1); // NOLINT(concurrency-mt-unsafe)
+
+    const auto envOptions = Parse({"test"});
+    CHECK(envOptions.spdlogAsync);
+    CHECK(envOptions.spdlogAsyncQueueSize == 1024);
+    CHECK(envOptions.spdlogAsyncThreadCount == 2);
+    CHECK(envOptions.spdlogAsyncOverflowPolicy == "overrun_oldest");
+
+    const auto cliOptions = Parse({
+        "test",
+        "--spdlog-async=false",
+        "--spdlog-async-queue-size",
+        "2048",
+        "--spdlog-async-thread-count=3",
+        "--spdlog-async-overflow-policy=discard_new",
+    });
+    CHECK_FALSE(cliOptions.spdlogAsync);
+    CHECK(cliOptions.spdlogAsyncQueueSize == 2048);
+    CHECK(cliOptions.spdlogAsyncThreadCount == 3);
+    CHECK(cliOptions.spdlogAsyncOverflowPolicy == "discard_new");
+
+    ClearTelemetryEnvironment();
+}
+
+TEST_CASE("spdlog async options normalize invalid values", "[telemetry]")
+{
+    ClearTelemetryEnvironment();
+
+    const auto options = Parse({
+        "test",
+        "--spdlog-async-queue-size=0",
+        "--spdlog-async-thread-count=0",
+        "--spdlog-async-overflow-policy=drop_everything",
+    });
+
+    CHECK(options.spdlogAsyncQueueSize == nestdaq::telemetry::kDefaultSpdlogAsyncQueueSize);
+    CHECK(options.spdlogAsyncThreadCount == nestdaq::telemetry::kDefaultSpdlogAsyncThreadCount);
+    CHECK(options.spdlogAsyncOverflowPolicy == nestdaq::telemetry::kDefaultSpdlogAsyncOverflowPolicy);
 }
 
 TEST_CASE("spdlog native console option follows command line and environment", "[telemetry]")
@@ -155,6 +210,66 @@ TEST_CASE("spdlog native console facade stores process setting", "[telemetry]")
 
     nestdaq::telemetry::SetSpdlogNativeConsoleEnabled(true);
     CHECK(nestdaq::telemetry::GetSpdlogNativeConsoleEnabled());
+}
+
+TEST_CASE("spdlog async facade stores process setting", "[telemetry]")
+{
+    nestdaq::telemetry::SetSpdlogAsyncOptions({
+        .enabled = true,
+        .queueSize = 4096,
+        .threadCount = 2,
+        .overflowPolicy = "discard_new",
+    });
+
+    const auto enabledOptions = nestdaq::telemetry::GetSpdlogAsyncOptions();
+    CHECK(enabledOptions.enabled);
+    CHECK(enabledOptions.queueSize == 4096);
+    CHECK(enabledOptions.threadCount == 2);
+    CHECK(enabledOptions.overflowPolicy == "discard_new");
+
+    nestdaq::telemetry::SetSpdlogAsyncOptions({});
+    const auto defaultOptions = nestdaq::telemetry::GetSpdlogAsyncOptions();
+    CHECK_FALSE(defaultOptions.enabled);
+    CHECK(defaultOptions.queueSize == nestdaq::telemetry::kDefaultSpdlogAsyncQueueSize);
+    CHECK(defaultOptions.threadCount == nestdaq::telemetry::kDefaultSpdlogAsyncThreadCount);
+    CHECK(defaultOptions.overflowPolicy == nestdaq::telemetry::kDefaultSpdlogAsyncOverflowPolicy);
+}
+
+TEST_CASE("spdlog async options are read through Boost options", "[telemetry]")
+{
+    ClearTelemetryEnvironment();
+
+    const auto options = ReadWithBoostOptions({
+        "test",
+        "--spdlog-async=true",
+        "--spdlog-async-queue-size=512",
+        "--spdlog-async-thread-count=2",
+        "--spdlog-async-overflow-policy=overrun_oldest",
+    }, "boost-default");
+
+    CHECK(options.spdlogAsync);
+    CHECK(options.spdlogAsyncQueueSize == 512);
+    CHECK(options.spdlogAsyncThreadCount == 2);
+    CHECK(options.spdlogAsyncOverflowPolicy == "overrun_oldest");
+}
+
+TEST_CASE("spdlog async environment survives Boost option defaults", "[telemetry]")
+{
+    ClearTelemetryEnvironment();
+
+    setenv("NESTDAQ_SPDLOG_ASYNC", "true", 1); // NOLINT(concurrency-mt-unsafe)
+    setenv("NESTDAQ_SPDLOG_ASYNC_QUEUE_SIZE", "1024", 1); // NOLINT(concurrency-mt-unsafe)
+    setenv("NESTDAQ_SPDLOG_ASYNC_THREAD_COUNT", "2", 1); // NOLINT(concurrency-mt-unsafe)
+    setenv("NESTDAQ_SPDLOG_ASYNC_OVERFLOW_POLICY", "discard_new", 1); // NOLINT(concurrency-mt-unsafe)
+
+    const auto options = ReadWithBoostOptions({"daq-webctl"}, "daq-webctl");
+
+    CHECK(options.spdlogAsync);
+    CHECK(options.spdlogAsyncQueueSize == 1024);
+    CHECK(options.spdlogAsyncThreadCount == 2);
+    CHECK(options.spdlogAsyncOverflowPolicy == "discard_new");
+
+    ClearTelemetryEnvironment();
 }
 
 TEST_CASE("telemetry command line options populate multi-signal config", "[telemetry]")

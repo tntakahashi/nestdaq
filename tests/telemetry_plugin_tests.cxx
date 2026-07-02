@@ -6,6 +6,7 @@
 #include <catch2/catch_test_macros.hpp>
 
 #if NESTDAQ_HAVE_SPDLOG
+#  include <spdlog/async_logger.h>
 #  include <spdlog/spdlog.h>
 #endif
 
@@ -29,6 +30,7 @@
 #include <string>
 #include <string_view>
 #include <thread>
+#include <vector>
 
 namespace {
 
@@ -394,6 +396,7 @@ TEST_CASE("spdlog logger helper can attach native console and active telemetry s
 TEST_CASE("spdlog logger helper respects native console flag without active telemetry", "[telemetry][plugin][spdlog]")
 {
     nestdaq::telemetry::SetActiveTelemetryLibrary(nullptr);
+    nestdaq::telemetry::SetSpdlogAsyncOptions({});
 
     nestdaq::telemetry::SetSpdlogNativeConsoleEnabled(true);
     auto consoleLogger = nestdaq::telemetry::CreateSpdlogLogger("helper-spdlog-console-only-test");
@@ -403,6 +406,60 @@ TEST_CASE("spdlog logger helper respects native console flag without active tele
     auto disabledLogger = nestdaq::telemetry::CreateSpdlogLogger("helper-spdlog-disabled-test");
     CHECK(disabledLogger->sinks().empty());
 
+    nestdaq::telemetry::SetSpdlogNativeConsoleEnabled(true);
+}
+
+TEST_CASE("spdlog logger helper creates async logger when enabled", "[telemetry][plugin][spdlog]")
+{
+    nestdaq::telemetry::SetActiveTelemetryLibrary(nullptr);
+    nestdaq::telemetry::SetSpdlogNativeConsoleEnabled(false);
+    nestdaq::telemetry::SetSpdlogAsyncOptions({
+        .enabled = true,
+        .queueSize = 256,
+        .threadCount = 1,
+        .overflowPolicy = "block",
+    });
+
+    auto logger = nestdaq::telemetry::CreateSpdlogLogger("helper-spdlog-async-test");
+
+    CHECK(dynamic_cast<spdlog::async_logger*>(logger.get()) != nullptr);
+    CHECK(logger->sinks().empty());
+
+    nestdaq::telemetry::SetSpdlogAsyncOptions({});
+    nestdaq::telemetry::SetSpdlogNativeConsoleEnabled(true);
+}
+
+TEST_CASE("spdlog async logger helper tolerates multi-thread logging", "[telemetry][plugin][spdlog]")
+{
+    nestdaq::telemetry::SetActiveTelemetryLibrary(nullptr);
+    nestdaq::telemetry::SetSpdlogNativeConsoleEnabled(false);
+    nestdaq::telemetry::SetSpdlogAsyncOptions({
+        .enabled = true,
+        .queueSize = 1024,
+        .threadCount = 1,
+        .overflowPolicy = "block",
+    });
+
+    auto logger = nestdaq::telemetry::CreateSpdlogLogger("helper-spdlog-async-thread-test");
+    logger->set_level(spdlog::level::trace);
+
+    auto threads = std::vector<std::thread>{};
+    for (auto index = 0; index < 4; ++index) {
+        threads.emplace_back([logger, index] {
+            for (auto message = 0; message < 25; ++message) {
+                logger->info("thread {} message {}", index, message);
+            }
+        });
+    }
+    for (auto& thread : threads) {
+        thread.join();
+    }
+
+    logger->flush();
+
+    CHECK(dynamic_cast<spdlog::async_logger*>(logger.get()) != nullptr);
+
+    nestdaq::telemetry::SetSpdlogAsyncOptions({});
     nestdaq::telemetry::SetSpdlogNativeConsoleEnabled(true);
 }
 

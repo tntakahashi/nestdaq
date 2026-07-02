@@ -156,6 +156,12 @@ int main(int argc, char* argv[]) // NOLINT(bugprone-exception-escape)
     const auto telemetryOptions = nestdaq::telemetry::ReadTelemetryOptions(vm, "daq-webctl");
     nestdaq::telemetry::SetSpdlogConsolePattern(telemetryOptions.spdlogConsolePattern);
     nestdaq::telemetry::SetSpdlogNativeConsoleEnabled(telemetryOptions.spdlogNativeConsole);
+    nestdaq::telemetry::SetSpdlogAsyncOptions({
+        .enabled = telemetryOptions.spdlogAsync,
+        .queueSize = telemetryOptions.spdlogAsyncQueueSize,
+        .threadCount = telemetryOptions.spdlogAsyncThreadCount,
+        .overflowPolicy = telemetryOptions.spdlogAsyncOverflowPolicy,
+    });
     auto telemetry = std::make_unique<nestdaq::telemetry::TelemetryLibrary>();
     auto telemetryLoaded = false;
     if (!telemetryOptions.library.empty()) {

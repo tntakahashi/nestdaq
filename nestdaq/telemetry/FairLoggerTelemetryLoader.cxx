@@ -36,6 +36,24 @@ auto ResolveSymbol(void* handle, const char* symbol) -> std::function<T>
     return reinterpret_cast<T*>(dlsym(handle, symbol)); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
 }
 
+auto IsValidSpdlogAsyncOverflowPolicy(std::string_view value) -> bool
+{
+    return value == "block" || value == "overrun_oldest" || value == "discard_new";
+}
+
+auto NormalizeSpdlogAsyncOptions(TelemetryOptions& options) -> void
+{
+    if (options.spdlogAsyncQueueSize == 0) {
+        options.spdlogAsyncQueueSize = kDefaultSpdlogAsyncQueueSize;
+    }
+    if (options.spdlogAsyncThreadCount == 0) {
+        options.spdlogAsyncThreadCount = kDefaultSpdlogAsyncThreadCount;
+    }
+    if (!IsValidSpdlogAsyncOverflowPolicy(options.spdlogAsyncOverflowPolicy)) {
+        options.spdlogAsyncOverflowPolicy = kDefaultSpdlogAsyncOverflowPolicy;
+    }
+}
+
 } // namespace
 
 auto AddTelemetryOptions(boost::program_options::options_description& options,
@@ -71,7 +89,11 @@ auto AddTelemetryOptions(boost::program_options::options_description& options,
            ("otel-fairmq-session", bpo::value<std::string>(), "FairMQ session resource attribute")
            ("otel-fairmq-transport", bpo::value<std::string>(), "FairMQ transport resource attribute")
            ("spdlog-console-pattern", bpo::value<std::string>()->default_value(std::string{kDefaultSpdlogConsolePattern}), "spdlog native console sink pattern")
-           ("spdlog-native-console", bpo::value<bool>()->default_value(true), "Enable spdlog native console sink independently from OTel spdlog sink");
+           ("spdlog-native-console", bpo::value<bool>()->default_value(true), "Enable spdlog native console sink independently from OTel spdlog sink")
+           ("spdlog-async", bpo::value<bool>()->default_value(false), "Use spdlog async logger for NestDAQ helper loggers")
+           ("spdlog-async-queue-size", bpo::value<uint32_t>()->default_value(kDefaultSpdlogAsyncQueueSize), "spdlog async queue size")
+           ("spdlog-async-thread-count", bpo::value<uint32_t>()->default_value(kDefaultSpdlogAsyncThreadCount), "spdlog async worker thread count")
+           ("spdlog-async-overflow-policy", bpo::value<std::string>()->default_value(std::string{kDefaultSpdlogAsyncOverflowPolicy}), "spdlog async overflow policy: block, overrun_oldest, discard_new");
 }
 
 auto ApplyEnvironment(TelemetryOptions& options) -> void
@@ -126,6 +148,18 @@ auto ApplyEnvironment(TelemetryOptions& options) -> void
     }
     if (const auto* value = Env("NESTDAQ_SPDLOG_NATIVE_CONSOLE")) {
         options.spdlogNativeConsole = ParseBool(value);
+    }
+    if (const auto* value = Env("NESTDAQ_SPDLOG_ASYNC")) {
+        options.spdlogAsync = ParseBool(value);
+    }
+    if (const auto* value = Env("NESTDAQ_SPDLOG_ASYNC_QUEUE_SIZE")) {
+        options.spdlogAsyncQueueSize = ParseUInt32(value, options.spdlogAsyncQueueSize);
+    }
+    if (const auto* value = Env("NESTDAQ_SPDLOG_ASYNC_THREAD_COUNT")) {
+        options.spdlogAsyncThreadCount = ParseUInt32(value, options.spdlogAsyncThreadCount);
+    }
+    if (const auto* value = Env("NESTDAQ_SPDLOG_ASYNC_OVERFLOW_POLICY")) {
+        options.spdlogAsyncOverflowPolicy = value;
     }
 }
 
@@ -189,6 +223,14 @@ auto AssignOption(TelemetryOptions& options, std::string_view key, std::string_v
         options.spdlogConsolePattern = value;
     } else if (key == "spdlog-native-console") {
         options.spdlogNativeConsole = ParseBool(value);
+    } else if (key == "spdlog-async") {
+        options.spdlogAsync = ParseBool(value);
+    } else if (key == "spdlog-async-queue-size") {
+        options.spdlogAsyncQueueSize = ParseUInt32(value, options.spdlogAsyncQueueSize);
+    } else if (key == "spdlog-async-thread-count") {
+        options.spdlogAsyncThreadCount = ParseUInt32(value, options.spdlogAsyncThreadCount);
+    } else if (key == "spdlog-async-overflow-policy") {
+        options.spdlogAsyncOverflowPolicy = value;
     }
 }
 
@@ -325,6 +367,7 @@ auto ParseTelemetryOptions(int argc, char* argv[], // NOLINT(cppcoreguidelines-a
     options.serviceName = defaultServiceName;
     if (argv == nullptr) {
         ApplyEnvironment(options);
+        NormalizeSpdlogAsyncOptions(options);
         EnsureHostName(options);
         EnsureServiceInstanceId(options);
         return options;
@@ -380,6 +423,7 @@ auto ParseTelemetryOptions(int argc, char* argv[], // NOLINT(cppcoreguidelines-a
     }
 
     NormalizeServiceName(options);
+    NormalizeSpdlogAsyncOptions(options);
     EnsureHostName(options);
     EnsureServiceInstanceId(options);
     return options;
@@ -418,7 +462,7 @@ auto ReadTelemetryOptions(const boost::program_options::variables_map& vm,
 
     const auto readString = [&vm, &options](std::string_view key) {
         const auto name = std::string{key};
-        if (vm.count(name) != 0) {
+        if (vm.count(name) != 0 && !vm[name].defaulted()) {
             AssignOption(options, key, vm[name].as<std::string>());
         }
     };
@@ -446,28 +490,39 @@ auto ReadTelemetryOptions(const boost::program_options::variables_map& vm,
     readString("otel-fairmq-transport");
     readString("spdlog-console-pattern");
 
-    if (vm.count("spdlog-native-console") != 0) {
+    if (vm.count("spdlog-native-console") != 0 && !vm["spdlog-native-console"].defaulted()) {
         options.spdlogNativeConsole = vm["spdlog-native-console"].as<bool>();
     }
-    if (vm.count("otel-log-required") != 0) {
+    if (vm.count("spdlog-async") != 0 && !vm["spdlog-async"].defaulted()) {
+        options.spdlogAsync = vm["spdlog-async"].as<bool>();
+    }
+    if (vm.count("spdlog-async-queue-size") != 0 && !vm["spdlog-async-queue-size"].defaulted()) {
+        options.spdlogAsyncQueueSize = vm["spdlog-async-queue-size"].as<uint32_t>();
+    }
+    if (vm.count("spdlog-async-thread-count") != 0 && !vm["spdlog-async-thread-count"].defaulted()) {
+        options.spdlogAsyncThreadCount = vm["spdlog-async-thread-count"].as<uint32_t>();
+    }
+    readString("spdlog-async-overflow-policy");
+    if (vm.count("otel-log-required") != 0 && !vm["otel-log-required"].defaulted()) {
         options.required = vm["otel-log-required"].as<bool>();
     }
-    if (vm.count("otel-timeout-ms") != 0) {
+    if (vm.count("otel-timeout-ms") != 0 && !vm["otel-timeout-ms"].defaulted()) {
         options.timeoutMs = vm["otel-timeout-ms"].as<uint32_t>();
     }
-    if (vm.count("otel-metric-export-interval-ms") != 0) {
+    if (vm.count("otel-metric-export-interval-ms") != 0 && !vm["otel-metric-export-interval-ms"].defaulted()) {
         options.metricExportIntervalMs = vm["otel-metric-export-interval-ms"].as<uint32_t>();
     }
-    if (vm.count("otel-log-http-json") != 0) {
+    if (vm.count("otel-log-http-json") != 0 && !vm["otel-log-http-json"].defaulted()) {
         options.logOtlpHttpJson = vm["otel-log-http-json"].as<bool>() ? 1U : 0U;
     }
-    if (vm.count("otel-metric-http-json") != 0) {
+    if (vm.count("otel-metric-http-json") != 0 && !vm["otel-metric-http-json"].defaulted()) {
         options.metricOtlpHttpJson = vm["otel-metric-http-json"].as<bool>() ? 1U : 0U;
     }
-    if (vm.count("otel-trace-http-json") != 0) {
+    if (vm.count("otel-trace-http-json") != 0 && !vm["otel-trace-http-json"].defaulted()) {
         options.traceOtlpHttpJson = vm["otel-trace-http-json"].as<bool>() ? 1U : 0U;
     }
     NormalizeServiceName(options);
+    NormalizeSpdlogAsyncOptions(options);
     EnsureHostName(options);
     EnsureServiceInstanceId(options);
     return options;

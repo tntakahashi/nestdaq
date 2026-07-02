@@ -60,6 +60,10 @@ struct TelemetryOptions {
     std::string traceHeaders;
     std::string spdlogConsolePattern{kDefaultSpdlogConsolePattern};
     bool spdlogNativeConsole{true};
+    bool spdlogAsync{false};
+    uint32_t spdlogAsyncQueueSize{kDefaultSpdlogAsyncQueueSize};
+    uint32_t spdlogAsyncThreadCount{kDefaultSpdlogAsyncThreadCount};
+    std::string spdlogAsyncOverflowPolicy{kDefaultSpdlogAsyncOverflowPolicy};
     std::string severity{"info"};
     std::string serviceName{"nestdaq"};
     std::string serviceNamespace{kDefaultServiceNamespace};
