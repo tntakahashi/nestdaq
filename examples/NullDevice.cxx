@@ -6,6 +6,7 @@
 #include <memory>
 #include <string_view>
 #include <thread>
+#include <utility>
 
 #include <nestdaq/runDevice.h>
 
@@ -64,9 +65,11 @@ void NullDevice::Init()
     fLogger->info("NullDevice example spdlog log");
 #elif __has_include(<spdlog/spdlog.h>)
     if (!fLogger) {
+        auto consoleSink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
+        consoleSink->set_pattern(nestdaq::telemetry::GetSpdlogConsolePattern());
         fLogger = std::make_shared<spdlog::logger>(
                       "NullDevice",
-                      spdlog::sinks_init_list{std::make_shared<spdlog::sinks::stdout_color_sink_mt>()});
+                      spdlog::sinks_init_list{std::move(consoleSink)});
     }
     fLogger->info("NullDevice example spdlog log");
 #endif

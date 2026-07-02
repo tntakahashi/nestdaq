@@ -38,6 +38,7 @@ auto ClearTelemetryEnvironment() -> void
         "NESTDAQ_OTEL_TRACE_HEADERS",
         "NESTDAQ_OTEL_LOG_SEVERITY",
         "NESTDAQ_OTEL_LOG_REQUIRED",
+        "NESTDAQ_SPDLOG_CONSOLE_PATTERN",
     };
 
     for (const auto* name : names) {
@@ -96,9 +97,36 @@ TEST_CASE("telemetry options keep unified otel library default", "[telemetry]")
     CHECK(options.metricProtocol.empty());
     CHECK(options.traceProtocol.empty());
     CHECK(options.metricExportIntervalMs == 1000);
+    CHECK(options.spdlogConsolePattern == nestdaq::telemetry::kDefaultSpdlogConsolePattern);
 
     const auto config = nestdaq::telemetry::MakeConfig(options);
     CHECK(config.metric_export_interval_ms == 1000);
+}
+
+TEST_CASE("spdlog console pattern follows command line and environment", "[telemetry]")
+{
+    ClearTelemetryEnvironment();
+
+    const auto cliOptions = Parse({"test", "--spdlog-console-pattern=[%n] %v"});
+    CHECK(cliOptions.spdlogConsolePattern == "[%n] %v");
+
+    setenv("NESTDAQ_SPDLOG_CONSOLE_PATTERN", "%l:%v", 1); // NOLINT(concurrency-mt-unsafe)
+    const auto envOptions = Parse({"test"});
+    CHECK(envOptions.spdlogConsolePattern == "%l:%v");
+
+    const auto overrideOptions = Parse({"test", "--spdlog-console-pattern", "%v"});
+    CHECK(overrideOptions.spdlogConsolePattern == "%v");
+
+    ClearTelemetryEnvironment();
+}
+
+TEST_CASE("spdlog console pattern facade stores process setting", "[telemetry]")
+{
+    nestdaq::telemetry::SetSpdlogConsolePattern("%v");
+    CHECK(nestdaq::telemetry::GetSpdlogConsolePattern() == "%v");
+
+    nestdaq::telemetry::SetSpdlogConsolePattern(nestdaq::telemetry::kDefaultSpdlogConsolePattern);
+    CHECK(nestdaq::telemetry::GetSpdlogConsolePattern() == nestdaq::telemetry::kDefaultSpdlogConsolePattern);
 }
 
 TEST_CASE("telemetry command line options populate multi-signal config", "[telemetry]")

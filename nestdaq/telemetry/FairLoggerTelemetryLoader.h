@@ -1,6 +1,7 @@
 #pragma once
 
 #include <nestdaq/telemetry/OpenTelemetryInitializer.h>
+#include <nestdaq/telemetry/Telemetry.h>
 
 #include <cstdint>
 #include <functional>
@@ -57,6 +58,7 @@ struct TelemetryOptions {
     std::string logHeaders;
     std::string metricHeaders;
     std::string traceHeaders;
+    std::string spdlogConsolePattern{kDefaultSpdlogConsolePattern};
     std::string severity{"info"};
     std::string serviceName{"nestdaq"};
     std::string serviceNamespace{kDefaultServiceNamespace};

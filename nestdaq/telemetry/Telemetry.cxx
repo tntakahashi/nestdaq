@@ -8,6 +8,7 @@
 
 #include <algorithm>
 #include <atomic>
+#include <mutex>
 
 namespace nestdaq::telemetry {
 
@@ -69,6 +70,32 @@ auto MakeOtelAttributes(std::span<const Attribute> attributes) -> std::vector<ne
     return MakeOtelAttributes(attributes.data(), attributes.size());
 }
 #endif
+
+namespace {
+auto SpdlogConsolePatternMutex() -> std::mutex&
+{
+    static auto value = std::mutex{};
+    return value;
+}
+
+auto SpdlogConsolePatternStorage() -> std::string&
+{
+    static auto value = std::string{kDefaultSpdlogConsolePattern};
+    return value;
+}
+} // namespace
+
+auto SetSpdlogConsolePattern(std::string_view pattern) -> void
+{
+    const auto lock = std::scoped_lock{SpdlogConsolePatternMutex()};
+    SpdlogConsolePatternStorage() = pattern;
+}
+
+auto GetSpdlogConsolePattern() -> std::string
+{
+    const auto lock = std::scoped_lock{SpdlogConsolePatternMutex()};
+    return SpdlogConsolePatternStorage();
+}
 
 TelemetrySpan::TelemetrySpan(TelemetryLibrary& telemetry, uint64_t handle) noexcept
     : fTelemetry {

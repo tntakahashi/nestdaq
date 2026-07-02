@@ -69,7 +69,8 @@ auto AddTelemetryOptions(boost::program_options::options_description& options,
            ("otel-fairmq-id", bpo::value<std::string>(), "FairMQ id resource attribute")
            ("otel-fairmq-device", bpo::value<std::string>(), "FairMQ device resource attribute")
            ("otel-fairmq-session", bpo::value<std::string>(), "FairMQ session resource attribute")
-           ("otel-fairmq-transport", bpo::value<std::string>(), "FairMQ transport resource attribute");
+           ("otel-fairmq-transport", bpo::value<std::string>(), "FairMQ transport resource attribute")
+           ("spdlog-console-pattern", bpo::value<std::string>()->default_value(std::string{kDefaultSpdlogConsolePattern}), "spdlog native console sink pattern used when OTel log export is disabled");
 }
 
 auto ApplyEnvironment(TelemetryOptions& options) -> void
@@ -118,6 +119,9 @@ auto ApplyEnvironment(TelemetryOptions& options) -> void
     }
     if (const auto* value = Env("NESTDAQ_OTEL_LOG_REQUIRED")) {
         options.required = ParseBool(value);
+    }
+    if (const auto* value = Env("NESTDAQ_SPDLOG_CONSOLE_PATTERN")) {
+        options.spdlogConsolePattern = value;
     }
 }
 
@@ -177,6 +181,8 @@ auto AssignOption(TelemetryOptions& options, std::string_view key, std::string_v
         options.fairmqSession = value;
     } else if (key == "otel-fairmq-transport") {
         options.fairmqTransport = value;
+    } else if (key == "spdlog-console-pattern") {
+        options.spdlogConsolePattern = value;
     }
 }
 
@@ -338,7 +344,7 @@ auto ParseTelemetryOptions(int argc, char* argv[], // NOLINT(cppcoreguidelines-a
         if (equals != std::string_view::npos) {
             value = key.substr(equals + 1);
             key = key.substr(0, equals);
-        } else if ((key.rfind("otel-", 0) == 0 || key == "service-name" || key == "uuid") && i + 1 < argc &&
+        } else if ((key.rfind("otel-", 0) == 0 || key.rfind("spdlog-", 0) == 0 || key == "service-name" || key == "uuid") && i + 1 < argc &&
                    std::string_view{argv[i + 1]}.rfind("--", 0) != 0) { // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
             value = argv[++i]; // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
         } else if (key == "otel-log-protocol" || key == "otel-metric-protocol" || key == "otel-trace-protocol") {
@@ -432,6 +438,7 @@ auto ReadTelemetryOptions(const boost::program_options::variables_map& vm,
     readString("otel-fairmq-device");
     readString("otel-fairmq-session");
     readString("otel-fairmq-transport");
+    readString("spdlog-console-pattern");
 
     if (vm.count("otel-log-required") != 0) {
         options.required = vm["otel-log-required"].as<bool>();

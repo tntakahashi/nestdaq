@@ -228,6 +228,7 @@ records themselves use the FairLogger level names. The alias has the same
 | `--otel-log-severity` | `NESTDAQ_OTEL_LOG_SEVERITY` | `info` | Minimum FairLogger severity exported. |
 | `--otel-log-required` | `NESTDAQ_OTEL_LOG_REQUIRED` | `false` | Fail startup if telemetry cannot load or initialize. |
 | `--otel-timeout-ms` | none | `5000` | Force-flush, shutdown, and exporter timeout in milliseconds. |
+| `--spdlog-console-pattern` | `NESTDAQ_SPDLOG_CONSOLE_PATTERN` | `[%Y-%m-%d %H:%M:%S.%e] [%n] [%l] %v` | spdlog native console sink pattern used when OTel log export is disabled. |
 | `--otel-metric-export-interval-ms` | none | `1000` | Periodic metric export interval in milliseconds. |
 | `--otel-log-http-json` | none | `true` | Use JavaScript Object Notation (JSON) content type for OTLP HTTP logs. |
 | `--otel-metric-http-json` | none | `true` | Use JSON content type for OTLP HTTP metrics. |
@@ -269,6 +270,15 @@ Disable logs explicitly by passing the protocol option without a value:
 
 ```sh
 my-device --otel-log-protocol
+```
+
+Use spdlog's native console sink with a custom pattern by disabling OTel log
+export and setting the spdlog pattern:
+
+```sh
+my-device \
+  --otel-log-protocol '' \
+  --spdlog-console-pattern '[%n] [%l] %v'
 ```
 
 Use the C++ thin API from an application that manages telemetry explicitly:

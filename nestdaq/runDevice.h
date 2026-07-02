@@ -94,6 +94,7 @@ int main(int argc, char* argv[])
         auto arguments = nestdaq::run_device_detail::NormalizeArguments(argc, argv);
         const auto telemetryOptions =
             nestdaq::telemetry::ParseTelemetryOptions(arguments.argc(), arguments.argv.data(), "nestdaq");
+        nestdaq::telemetry::SetSpdlogConsolePattern(telemetryOptions.spdlogConsolePattern);
         auto telemetry = std::make_unique<nestdaq::telemetry::TelemetryLibrary>();
         auto telemetryLoaded = false;
         auto telemetryInitialized = false;

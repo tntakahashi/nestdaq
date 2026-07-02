@@ -21,6 +21,8 @@ class sink;
 
 namespace nestdaq::telemetry {
 
+inline constexpr std::string_view kDefaultSpdlogConsolePattern{"[%Y-%m-%d %H:%M:%S.%e] [%n] [%l] %v"};
+
 class TelemetryLibrary;
 
 namespace detail {
@@ -130,6 +132,11 @@ auto MakeOtelAttributes(std::initializer_list<Attribute> attributes) -> std::vec
 /** @brief Convert a C++20 attribute span into the C ABI representation. */
 auto MakeOtelAttributes(std::span<const Attribute> attributes) -> std::vector<nestdaq_otel_attribute>;
 #endif
+
+/** @brief Set the process-wide pattern used by native spdlog console fallback sinks. */
+auto SetSpdlogConsolePattern(std::string_view pattern) -> void;
+/** @brief Return the process-wide pattern used by native spdlog console fallback sinks. */
+auto GetSpdlogConsolePattern() -> std::string;
 
 /**
  * @brief Movable RAII wrapper for a span handle owned by the telemetry plugin.

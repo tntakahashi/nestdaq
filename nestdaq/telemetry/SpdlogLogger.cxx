@@ -14,9 +14,6 @@
 #include <vector>
 
 namespace nestdaq::telemetry {
-namespace {
-constexpr std::string_view kConsolePattern{"[%Y-%m-%d %H:%M:%S.%e] [%n] [%l] %v"};
-} // namespace
 
 auto CreateSpdlogLogger(std::string_view name) -> std::shared_ptr<spdlog::logger>
 {
@@ -25,7 +22,7 @@ auto CreateSpdlogLogger(std::string_view name) -> std::shared_ptr<spdlog::logger
         sinks.emplace_back(std::move(otelSink));
     } else {
         auto consoleSink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
-        consoleSink->set_pattern(std::string{kConsolePattern});
+        consoleSink->set_pattern(GetSpdlogConsolePattern());
         sinks.emplace_back(std::move(consoleSink));
     }
     return std::make_shared<spdlog::logger>(std::string{name}, sinks.begin(), sinks.end());
