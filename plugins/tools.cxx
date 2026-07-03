@@ -19,7 +19,6 @@
 namespace bpo = boost::program_options;
 namespace net = boost::asio;
 
-//_____________________________________________________________________________
 std::string currentDate()
 {
     auto timePoint = std::chrono::system_clock::now();
@@ -35,7 +34,6 @@ std::string currentDate()
     return ret.str();
 }
 
-//_____________________________________________________________________________
 std::string getIPv4FromHostname(const std::string& name)
 {
     try {
@@ -57,7 +55,6 @@ std::string getIPv4FromHostname(const std::string& name)
     return "";
 }
 
-//_____________________________________________________________________________
 int parseCommandLine(int argc, char* argv[], // NOLINT(cppcoreguidelines-avoid-c-arrays)
                      const bpo::options_description& options,
                      bpo::variables_map& vm)
@@ -89,7 +86,6 @@ int parseCommandLine(int argc, char* argv[], // NOLINT(cppcoreguidelines-avoid-c
     return ret;
 }
 
-//_____________________________________________________________________________
 boost::property_tree::ptree toJson(std::string_view s)
 {
     std::istringstream iss(std::string{s});
@@ -98,7 +94,6 @@ boost::property_tree::ptree toJson(std::string_view s)
     return ret;
 }
 
-//_____________________________________________________________________________
 std::string toJsonString(const boost::property_tree::ptree& pt, bool pretty)
 {
     std::ostringstream oss;

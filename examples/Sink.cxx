@@ -26,13 +26,11 @@ static constexpr std::chrono::milliseconds kDrainRetryInterval{200};
 
 namespace bpo = boost::program_options;
 
-//_____________________________________________________________________________
 // NOLINTNEXTLINE(cppcoreguidelines-pro-type-member-init)
 Sink::Sink()
 {
 }
 
-//_____________________________________________________________________________
 void addCustomOptions(bpo::options_description &options)
 {
     using opt = Sink::OptionKey;
@@ -42,13 +40,11 @@ void addCustomOptions(bpo::options_description &options)
            (opt::Multipart, bpo::value<std::string>()->default_value("true"), "Handle multipart message\n");
 }
 
-//_____________________________________________________________________________
 std::unique_ptr<fair::mq::Device> getDevice(const fair::mq::ProgOptions& /*config*/)
 {
     return std::make_unique<Sink>();
 }
 
-//_____________________________________________________________________________
 void PrintConfig(const fair::mq::ProgOptions* config, std::string_view name, std::string_view funcname)
 {
     const auto prefix = std::string{name};
@@ -61,7 +57,6 @@ void PrintConfig(const fair::mq::ProgOptions* config, std::string_view name, std
     LOG(debug) << ss.str();
 }
 
-//_____________________________________________________________________________
 bool Sink::HandleData(fair::mq::MessagePtr &msg, int index)
 {
     auto span = nestdaq::telemetry::GetTelemetry().StartSpan("sink.receive",
@@ -89,7 +84,6 @@ bool Sink::HandleData(fair::mq::MessagePtr &msg, int index)
     return true;
 }
 
-//_____________________________________________________________________________
 bool Sink::HandleMultipartData(fair::mq::Parts &msgParts, int index)
 {
     auto multipartSpan = nestdaq::telemetry::GetTelemetry().StartSpan("sink.receive.multipart",
@@ -127,7 +121,6 @@ bool Sink::HandleMultipartData(fair::mq::Parts &msgParts, int index)
     return true;
 }
 
-//_____________________________________________________________________________
 void Sink::Init()
 {
 #if __has_include(<spdlog/spdlog.h>) && __has_include(<nestdaq/telemetry/SpdlogLogger.h>)
@@ -155,7 +148,6 @@ void Sink::Init()
     fNumMessages = 0;
 }
 
-//_____________________________________________________________________________
 void Sink::InitTask()
 {
     PrintConfig(fConfig, "channel-config", __PRETTY_FUNCTION__);
@@ -185,7 +177,6 @@ void Sink::InitTask()
 
 }
 
-//_____________________________________________________________________________
 void Sink::PostRun()
 {
     using opt = OptionKey;

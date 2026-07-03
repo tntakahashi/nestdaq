@@ -8,13 +8,11 @@
 
 #include "controller/beast_tools.h"
 
-//_____________________________________________________________________________
 void fail(beast::error_code ec, char const* what)
 {
     LOG(warn) << "boost::beast fail(): what = " << what << ": ec.message() = " << ec.message();
 }
 
-//_____________________________________________________________________________
 beast::string_view mimeType(beast::string_view path)
 {
     auto const ext = [&path]
@@ -51,7 +49,6 @@ beast::string_view mimeType(beast::string_view path)
 
 }
 
-//_____________________________________________________________________________
 std::string pathCat(beast::string_view base, beast::string_view path)
 {
     if(base.empty()) {

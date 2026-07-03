@@ -16,7 +16,6 @@
 
 namespace daq::service {
 
-//_____________________________________________________________________________
 /**
  * @brief Join Redis key components with the configured separator.
  */
@@ -25,7 +24,6 @@ inline std::string join(const std::vector<std::string> &v, std::string_view sepa
     return boost::join(v, separator.data());
 }
 
-//_____________________________________________________________________________
 /**
  * @brief Scan Redis keys matching @p pattern and return all matches.
  */
@@ -43,7 +41,6 @@ inline std::unordered_set<std::string> scan(sw::redis::Redis &r,
     return keys;
 }
 
-//_____________________________________________________________________________
 /**
  * @brief Build a scan pattern from key components and scan Redis for matches.
  */

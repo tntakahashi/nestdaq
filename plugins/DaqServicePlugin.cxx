@@ -68,7 +68,6 @@ static const std::unordered_set<std::string_view> kKnownCommandList{
 
 using namespace std::string_literals;
 
-//_____________________________________________________________________________
 bool endsWith(const std::string& s, const std::string& suffix)
 {
     if (s.size() < suffix.size()) return false;
@@ -76,7 +75,7 @@ bool endsWith(const std::string& s, const std::string& suffix)
 }
 
 namespace daq::service {
-//_____________________________________________________________________________
+
 auto PluginProgramOptions() -> fair::mq::Plugin::ProgOptions
 {
     namespace bpo = boost::program_options;
@@ -125,7 +124,6 @@ auto PluginProgramOptions() -> fair::mq::Plugin::ProgOptions
     return pluginOptions;
 }
 
-//_____________________________________________________________________________
 Plugin::Plugin(std::string_view name,
                const fair::mq::Plugin::Version& version,
                std::string_view maintainer,
@@ -304,7 +302,6 @@ Plugin::Plugin(std::string_view name,
 
 }
 
-//_____________________________________________________________________________
 Plugin::~Plugin()
 {
     UnsubscribeFromDeviceStateChange();
@@ -336,7 +333,6 @@ Plugin::~Plugin()
     LOG(debug) << "~" << kMyClass << "() bye";
 }
 
-//_____________________________________________________________________________
 void Plugin::ChangeDeviceStateByMultiCommand(std::string_view cmd)
 {
     //LOG(debug) << kMyClass << ":" << __func__;
@@ -563,7 +559,6 @@ void Plugin::ChangeDeviceStateByMultiCommand(std::string_view cmd)
 
 }
 
-//_____________________________________________________________________________
 void Plugin::ChangeDeviceStateBySingleCommand(std::string_view cmd)
 {
     //LOG(debug) << kMyClass << ":" << __func__;
@@ -656,7 +651,6 @@ void Plugin::ChangeDeviceStateBySingleCommand(std::string_view cmd)
 
 }
 
-//_____________________________________________________________________________
 void Plugin::ReadRunNumber()
 {
     auto key = join({std::string{RunInfoPrefix}, std::string{RunNumber}}, fSeparator);
@@ -680,7 +674,6 @@ void Plugin::ReadRunNumber()
     }
 }
 
-//_____________________________________________________________________________
 /**
  * @brief Register the FairMQ service instance in Redis.
  *
@@ -771,7 +764,6 @@ void Plugin::Register()
     }
 }
 
-//_____________________________________________________________________________
 /**
  * @brief Refresh registry TTLs and liveness timestamps for this service.
  *
@@ -803,7 +795,6 @@ void Plugin::ResetTtl()
     pipe.exec();
 }
 
-//_____________________________________________________________________________
 /**
  * @brief Drive the device from Idle toward the configured startup state.
  */
@@ -837,7 +828,6 @@ void Plugin::RunStartupSequence()
     LOG(debug) << kMyClass << " RunStartupSequence() done";
 }
 
-//_____________________________________________________________________________
 /**
  * @brief Drive the device through the shutdown path and release control.
  */
@@ -879,7 +869,6 @@ void Plugin::RunShutdownSequence()
     LOG(debug) << kMyClass << " RunShutdownSequence() done";
 }
 
-//_____________________________________________________________________________
 void Plugin::SetCurrentWorkingDirectory()
 {
     std::array<char, kCwdBufferSize> d{};
@@ -891,7 +880,6 @@ void Plugin::SetCurrentWorkingDirectory()
 
 }
 
-//_____________________________________________________________________________
 void Plugin::SetId()
 {
     // Initialize device ID
@@ -975,7 +963,6 @@ void Plugin::SetId()
 
 }
 
-//_____________________________________________________________________________
 void Plugin::SetProcessName()
 {
     fPid = getpid();
@@ -1000,7 +987,6 @@ void Plugin::SetProcessName()
 
 }
 
-//_____________________________________________________________________________
 /**
  * @brief Subscribe to DAQ control commands published through Redis.
  *
@@ -1088,7 +1074,6 @@ void Plugin::SubscribeToDaqCommand()
     LOG(debug) << " " << __func__ << " exit.";
 }
 
-//_____________________________________________________________________________
 /**
  * @brief Remove service registry keys and allocated instance-index fields.
  */
@@ -1116,7 +1101,6 @@ void Plugin::Unregister()
     }
 }
 
-//_____________________________________________________________________________
 /**
  * @brief Write FairMQ program options to the service registry.
  */
@@ -1146,7 +1130,7 @@ void Plugin::WriteProgOptions()
     })
     .expire(fProgOptionKeyName, fMaxTtl);
 }
-//_____________________________________________________________________________
+
 /**
  * @brief Record run start time in Redis and mirror it into FairMQ properties.
  */
@@ -1163,7 +1147,6 @@ void Plugin::WriteStartTime()
     SetProperty(std::string{StartTimeNS}, tNS);
 }
 
-//_____________________________________________________________________________
 /**
  * @brief Record run stop time in Redis and mirror it into FairMQ properties.
  */

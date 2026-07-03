@@ -41,7 +41,6 @@ static const std::vector<std::string> WaitDeviceReadyTargets {
 using namespace std::string_literals;
 using namespace std::chrono_literals;
 
-//_____________________________________________________________________________
 void PrintConfig(const std::map<std::string, std::string> &p, std::string_view name)
 {
     std::ostringstream ss;
@@ -52,7 +51,6 @@ void PrintConfig(const std::map<std::string, std::string> &p, std::string_view n
     LOG(debug) << ss.str();
 }
 
-//_____________________________________________________________________________
 std::string MakeAddress(const std::string &address, std::string_view peerIP)
 {
     // e.g. address = tcp://AAAA:XXXX
@@ -67,7 +65,6 @@ std::string MakeAddress(const std::string &address, std::string_view peerIP)
     return address;
 }
 
-//_____________________________________________________________________________
 // convert a socket property to format of command line option of FairMQ
 const std::string ToChannelConfig(const daq::service::SocketProperty& p)
 {
@@ -122,7 +119,6 @@ const std::string ToChannelConfig(const daq::service::SocketProperty& p)
 
 }
 
-//_____________________________________________________________________________
 // convert hash in redis to struct
 template <typename Container>
 const daq::service::SocketProperty ToSocketProperty(const Container& c)
@@ -178,7 +174,6 @@ const daq::service::SocketProperty ToSocketProperty(const Container& c)
     return sp;
 }
 
-//_____________________________________________________________________________
 daq::service::TopologyConfig::TopologyConfig(daq::service::Plugin& plugin)
     : fPlugin(plugin)
 {
@@ -202,12 +197,10 @@ daq::service::TopologyConfig::TopologyConfig(daq::service::Plugin& plugin)
     }
 }
 
-//_____________________________________________________________________________
 daq::service::TopologyConfig::~TopologyConfig()
 {
 }
 
-//_____________________________________________________________________________
 /**
  * @brief Apply explicit connect configuration from the plugin property set.
  *
@@ -517,7 +510,6 @@ void daq::service::TopologyConfig::ConfigConnect()
 
 }
 
-//_____________________________________________________________________________
 /**
  * @brief Read FairMQ states for peers connected to the given channels.
  */
@@ -573,7 +565,6 @@ auto daq::service::TopologyConfig::GetPeerState(const MQChannel & channels) -> s
     return result;
 }
 
-//_____________________________________________________________________________
 /**
  * @brief Load topology endpoint/link definitions and install channel properties.
  */
@@ -708,7 +699,6 @@ void daq::service::TopologyConfig::Initialize()
     LOG(debug) << kMyClass << " Initialize() done";
 }
 
-//_____________________________________________________________________________
 /**
  * @brief Capture existing FairMQ channel properties as defaults.
  */
@@ -748,7 +738,6 @@ void daq::service::TopologyConfig::InitializeDefaultChannelProperties()
     // PrintConfig(fDefaultChannelProperties, "(default) chans.");
 }
 
-//_____________________________________________________________________________
 /**
  * @brief Check whether all peers are on the same host IP and can use UDS.
  */
@@ -766,7 +755,6 @@ bool daq::service::TopologyConfig::IsUdsAvailable(const std::vector<std::string>
     return true;
 }
 
-//_____________________________________________________________________________
 /**
  * @brief React to FairMQ lifecycle states that require topology synchronization.
  */
@@ -804,7 +792,6 @@ void daq::service::TopologyConfig::OnDeviceStateChange(DeviceState newState)
     }
 }
 
-//_____________________________________________________________________________
 /**
  * @brief Read one endpoint definition from Redis.
  */
@@ -822,7 +809,6 @@ const daq::service::SocketProperty daq::service::TopologyConfig::ReadEndpointPro
     return sp;
 }
 
-//_____________________________________________________________________________
 /**
  * @brief Scan Redis for endpoint definitions for this service.
  */
@@ -846,7 +832,6 @@ std::unordered_set<std::string> daq::service::TopologyConfig::ReadEndpoints()
     return keys;
 }
 
-//_____________________________________________________________________________
 /**
  * @brief Read and normalize one topology link definition from Redis.
  */
@@ -903,7 +888,6 @@ const daq::service::LinkProperty daq::service::TopologyConfig::ReadLinkProperty(
     return lp;
 }
 
-//_____________________________________________________________________________
 /**
  * @brief Scan Redis for topology links involving this service.
  */
@@ -931,7 +915,6 @@ std::unordered_set<std::string> daq::service::TopologyConfig::ReadLinks()
     return keys;
 }
 
-//_____________________________________________________________________________
 /**
  * @brief Read bound socket addresses published by a peer channel.
  */
@@ -982,7 +965,6 @@ const std::vector<std::string> daq::service::TopologyConfig::ReadPeerAddress(con
     return ret;
 }
 
-//_____________________________________________________________________________
 /**
  * @brief Read the host IP of a peer service instance.
  */
@@ -1003,7 +985,6 @@ const std::string daq::service::TopologyConfig::ReadPeerIP(const std::string& pe
     return peerIP.value();
 }
 
-//_____________________________________________________________________________
 /**
  * @brief Clear installed channel properties and remove topology registry keys.
  */
@@ -1019,7 +1000,6 @@ void daq::service::TopologyConfig::Reset()
     Unregister();
 }
 
-//_____________________________________________________________________________
 /**
  * @brief Queue TTL refreshes for topology keys owned by this instance.
  */
@@ -1032,7 +1012,6 @@ void daq::service::TopologyConfig::ResetTtl(sw::redis::Pipeline& pipe)
     });
 }
 
-//_____________________________________________________________________________
 /**
  * @brief Resolve connect socket addresses from peer bind channel registry data.
  */
@@ -1169,7 +1148,6 @@ void daq::service::TopologyConfig::ResolveConnectAddress()
 //  PrintConfig(GetPropertiesAsStringStartingWith("chans."), "chans.");
 }
 
-//_____________________________________________________________________________
 /**
  * @brief Remove topology registry keys owned by this instance.
  */
@@ -1182,7 +1160,6 @@ void daq::service::TopologyConfig::Unregister()
     }
 }
 
-//_____________________________________________________________________________
 /**
  * @brief Wait until peer bind channels have published their bound addresses.
  */
@@ -1242,7 +1219,6 @@ void daq::service::TopologyConfig::WaitBindAddress()
     }
 }
 
-//_____________________________________________________________________________
 /**
  * @brief Wait for configured peer devices to reach a connection-ready state.
  */
@@ -1323,7 +1299,6 @@ void daq::service::TopologyConfig::WaitForPeerConnection()
     LOG(debug) << __FUNCTION__ << " done";
 }
 
-//_____________________________________________________________________________
 /**
  * @brief Publish current FairMQ socket addresses for a channel set.
  */
@@ -1373,7 +1348,6 @@ void daq::service::TopologyConfig::WriteAddress(MQChannel &channels, std::functi
     }
 }
 
-//_____________________________________________________________________________
 /**
  * @brief Publish bind socket addresses and mark channels as bound.
  */
@@ -1394,7 +1368,6 @@ void daq::service::TopologyConfig::WriteBindAddress()
     //LOG(debug) << __PRETTY_FUNCTION__ << " done";
 }
 
-//_____________________________________________________________________________
 /**
  * @brief Publish one logical channel and its peer list to Redis.
  */
@@ -1443,7 +1416,6 @@ void daq::service::TopologyConfig::WriteChannel(SocketProperty &sp, const std::v
 
 }
 
-//_____________________________________________________________________________
 /**
  * @brief Publish connect socket addresses to Redis.
  */

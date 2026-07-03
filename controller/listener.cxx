@@ -8,7 +8,6 @@
 #include "controller/http_session.h"
 #include "controller/listener.h"
 
-//_____________________________________________________________________________
 Listener::Listener(const std::shared_ptr<net::io_context> &ioc, const tcp::endpoint& endpoint, std::shared_ptr<std::string const> const& doc_root)
     : fContext(ioc)
     , fAcceptor(net::make_strand(*ioc))
@@ -54,7 +53,6 @@ Listener::Listener(const std::shared_ptr<net::io_context> &ioc, const tcp::endpo
     }
 }
 
-//_____________________________________________________________________________
 void Listener::doAccept()
 {
     // The new connection gets its own strand
@@ -63,7 +61,6 @@ void Listener::doAccept()
                           );
 }
 
-//_____________________________________________________________________________
 void Listener::onAccept(beast::error_code ec, tcp::socket socket)
 {
     if(ec) {

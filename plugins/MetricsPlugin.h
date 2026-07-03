@@ -218,7 +218,6 @@ private:
     std::unordered_set<std::string> fRegisteredSockKeys;
 };
 
-//_____________________________________________________________________________
 /**
  * @brief Declare metrics plugin command-line options.
  */

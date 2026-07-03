@@ -10,7 +10,6 @@
 #include "controller/listener.h"
 #include "controller/HttpWebSocketServer.h"
 
-//_____________________________________________________________________________
 HttpWebSocketServer::HttpWebSocketServer(int nThreads)
     : fContext(std::make_shared<net::io_context>(nThreads)) // The io_context is required for all I/O
     , fNThreads(nThreads)
@@ -18,7 +17,6 @@ HttpWebSocketServer::HttpWebSocketServer(int nThreads)
     fThreads.reserve(nThreads-1);
 }
 
-//_____________________________________________________________________________
 HttpWebSocketServer::~HttpWebSocketServer()
 {
     // Block until all the threads exist
@@ -27,7 +25,6 @@ HttpWebSocketServer::~HttpWebSocketServer()
     }
 }
 
-//_____________________________________________________________________________
 void HttpWebSocketServer::run(std::string_view /*scheme*/, std::string_view address, std::string_view port, std::string_view doc_root)
 {
     const auto docRoot = std::make_shared<std::string>(doc_root);

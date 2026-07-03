@@ -16,10 +16,9 @@ namespace websocket = beast::websocket;         // from <boost/beast/websocket.h
 namespace net = boost::asio;                    // from <boost/asio.hpp>
 using tcp = net::ip::tcp;                       // from <boost/asio/ip/tcp.hpp>
 
-//_____________________________________________________________________________
 /** Report a Boost.Beast failure to stderr. */
 void fail(beast::error_code ec, char const* what);
-//_____________________________________________________________________________
+
 /**
  * @brief Produce an HTTP response for a static-file request.
  *
@@ -29,16 +28,13 @@ void fail(beast::error_code ec, char const* what);
 template<class Body, class Allocator, class Send>
 void handleRequest(beast::string_view doc_root, http::request<Body, http::basic_fields<Allocator>>&& req, Send&& send);
 
-//_____________________________________________________________________________
 // Return a reasonable mime type based on the extension of a file.
 beast::string_view mimeType(beast::string_view path);
 
-//_____________________________________________________________________________
 // Append an HTTP rel-path to a local filesystem path.
 // The returned path is normalized for the platform.
 std::string pathCat(beast::string_view base, beast::string_view path);
 
-//_____________________________________________________________________________
 template<class Body, class Allocator, class Send>
 // NOLINTNEXTLINE(cppcoreguidelines-rvalue-reference-param-not-moved,cppcoreguidelines-missing-std-forward)
 void handleRequest(beast::string_view doc_root, http::request<Body, http::basic_fields<Allocator>>&& req, Send&& send)

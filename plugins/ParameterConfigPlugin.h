@@ -128,7 +128,6 @@ private:
     void ToMap(std::string_view name, std::string line);
 };
 
-//_____________________________________________________________________________
 /**
  * @brief Declare parameter configuration plugin command-line options.
  */

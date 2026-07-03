@@ -43,7 +43,7 @@ auto TimevalToSeconds(const timeval &value) -> double
 } // namespace
 
 namespace daq::service {
-//_____________________________________________________________________________
+
 ProcessStatKey  Append(const ProcessStatKey& input, std::string_view s, std::string_view separator)
 {
     ProcessStatKey ret;
@@ -53,7 +53,6 @@ ProcessStatKey  Append(const ProcessStatKey& input, std::string_view s, std::str
     return ret;
 }
 
-//_____________________________________________________________________________
 SocketMetricsKey  Append(const SocketMetricsKey &input, std::string_view s, std::string_view separator)
 {
     SocketMetricsKey ret;
@@ -64,7 +63,6 @@ SocketMetricsKey  Append(const SocketMetricsKey &input, std::string_view s, std:
     return ret;
 }
 
-//_____________________________________________________________________________
 ProcessStatKey Prepend(const ProcessStatKey& input, std::string_view s, std::string_view separator)
 {
     ProcessStatKey ret;
@@ -74,7 +72,6 @@ ProcessStatKey Prepend(const ProcessStatKey& input, std::string_view s, std::str
     return ret;
 }
 
-//_____________________________________________________________________________
 SocketMetricsKey Prepend(const SocketMetricsKey& input, std::string_view s, std::string_view separator)
 {
     SocketMetricsKey ret;
@@ -85,7 +82,6 @@ SocketMetricsKey Prepend(const SocketMetricsKey& input, std::string_view s, std:
     return ret;
 }
 
-//_____________________________________________________________________________
 ProcessStatKey ReplaceAll(const ProcessStatKey& input, std::string_view search, std::string format)
 {
     ProcessStatKey ret;
@@ -95,7 +91,6 @@ ProcessStatKey ReplaceAll(const ProcessStatKey& input, std::string_view search, 
     return ret;
 }
 
-//_____________________________________________________________________________
 SocketMetricsKey ReplaceAll(const SocketMetricsKey& input, std::string_view search, std::string format)
 {
     SocketMetricsKey ret;
@@ -107,7 +102,6 @@ SocketMetricsKey ReplaceAll(const SocketMetricsKey& input, std::string_view sear
 }
 } // namespace daq::service
 
-//_____________________________________________________________________________
 auto daq::service::MetricsPluginProgramOptions() -> fair::mq::Plugin::ProgOptions
 {
     namespace bpo = boost::program_options;
@@ -124,7 +118,6 @@ auto daq::service::MetricsPluginProgramOptions() -> fair::mq::Plugin::ProgOption
     return options;
 }
 
-//_____________________________________________________________________________
 daq::service::MetricsPlugin::MetricsPlugin(std::string_view name,
         const fair::mq::Plugin::Version &version,
         std::string_view maintainer,
@@ -324,7 +317,6 @@ daq::service::MetricsPlugin::MetricsPlugin(std::string_view name,
 
 }
 
-//_____________________________________________________________________________
 daq::service::MetricsPlugin::~MetricsPlugin()
 {
 
@@ -343,7 +335,6 @@ daq::service::MetricsPlugin::~MetricsPlugin()
     LOG(debug) << "~" << kMyClass << "() bye";
 }
 
-//_____________________________________________________________________________
 /**
  * @brief Create RedisTimeSeries keys for one socket direction and its sum.
  */
@@ -383,7 +374,6 @@ bool daq::service::MetricsPlugin::CreateSocketTS(std::string_view keyMsg,
     return pipelineUsed;
 }
 
-//_____________________________________________________________________________
 /**
  * @brief Create RedisTimeSeries keys for all configured FairMQ sockets.
  */
@@ -423,7 +413,6 @@ bool daq::service::MetricsPlugin::CreateSocketTS()
     return pipelineUsed;
 }
 
-//_____________________________________________________________________________
 /**
  * @brief Queue creation of one RedisTimeSeries key with standard labels.
  */
@@ -462,7 +451,6 @@ bool daq::service::MetricsPlugin::CreateTimeseries(std::string_view key,
     return true;
 }
 
-//_____________________________________________________________________________
 /**
  * @brief Delete stale Redis hash fields for service instances past the metrics TTL.
  */
@@ -525,7 +513,6 @@ void daq::service::MetricsPlugin::DeleteExpiredFields()
     }
 }
 
-//_____________________________________________________________________________
 /**
  * @brief Delete RedisTimeSeries keys created by this plugin instance.
  */
@@ -538,7 +525,6 @@ void daq::service::MetricsPlugin::DeleteTSKeys()
     }
 }
 
-//_____________________________________________________________________________
 /**
  * @brief Read FairMQ channel properties and cache per-socket metadata.
  */
@@ -590,7 +576,6 @@ void daq::service::MetricsPlugin::InitializeSocketProperties()
     }
 }
 
-//_____________________________________________________________________________
 /**
  * @brief Check whether time-series keys should be recreated when running starts.
  */
@@ -607,7 +592,6 @@ bool daq::service::MetricsPlugin::IsRecreateTS()
     return false;
 }
 
-//_____________________________________________________________________________
 /**
  * @brief Read cumulative CPU time consumed by this process.
  */
@@ -626,7 +610,6 @@ auto daq::service::MetricsPlugin::ReadProcessUsage() const -> ProcessUsageSample
     };
 }
 
-//_____________________________________________________________________________
 /**
  * @brief Read resident memory usage of this process in MiB.
  */
@@ -644,7 +627,6 @@ auto daq::service::MetricsPlugin::ReadResidentMemoryMiB() const -> double
     return static_cast<double>(residentPages) * static_cast<double>(fPageSize) / kBytesPerMiB;
 }
 
-//_____________________________________________________________________________
 /**
  * @brief Record CPU, memory, state, and last-update metrics.
  */
@@ -693,7 +675,6 @@ void daq::service::MetricsPlugin::SendProcessMetrics()
     //std::cout << kMyClass << " " << __FUNCTION__ << " done";
 }
 
-//_____________________________________________________________________________
 /**
  * @brief Parse a FairMQ throughput log line and record socket metrics.
  */

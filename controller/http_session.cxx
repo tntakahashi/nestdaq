@@ -10,7 +10,6 @@
 static constexpr std::uint64_t kHttpBodyLimit{10000};
 static constexpr int kHttpSessionTimeoutSeconds{30};
 
-//_____________________________________________________________________________
 HttpSession::Queue::Queue(HttpSession& self)
     : fSelf(self)
 {
@@ -18,7 +17,6 @@ HttpSession::Queue::Queue(HttpSession& self)
     fItems.reserve(kLimit);
 }
 
-//_____________________________________________________________________________
 bool HttpSession::Queue::onWrite()
 {
     BOOST_ASSERT(! fItems.empty());
@@ -32,7 +30,6 @@ bool HttpSession::Queue::onWrite()
 
 //=============================================================================
 
-//_____________________________________________________________________________
 HttpSession::HttpSession(tcp::socket&& socket, std::shared_ptr<std::string const> const& doc_root)
     : fStream(std::move(socket))
     , fDocRoot(doc_root)
@@ -40,7 +37,6 @@ HttpSession::HttpSession(tcp::socket&& socket, std::shared_ptr<std::string const
 {
 }
 
-//_____________________________________________________________________________
 void HttpSession::doRead()
 {
     // Construct a new parser for each message
@@ -59,7 +55,6 @@ void HttpSession::doRead()
                     );
 }
 
-//_____________________________________________________________________________
 void HttpSession::onRead(beast::error_code ec, std::size_t bytes_transferred)
 {
     boost::ignore_unused(bytes_transferred);
@@ -94,7 +89,6 @@ void HttpSession::onRead(beast::error_code ec, std::size_t bytes_transferred)
     }
 }
 
-//_____________________________________________________________________________
 void HttpSession::onWrite(bool close, beast::error_code ec, std::size_t bytes_transferred)
 {
     boost::ignore_unused(bytes_transferred);
@@ -118,7 +112,6 @@ void HttpSession::onWrite(bool close, beast::error_code ec, std::size_t bytes_tr
     }
 }
 
-//_____________________________________________________________________________
 void HttpSession::doClose()
 {
     // Send a TCP shutdown

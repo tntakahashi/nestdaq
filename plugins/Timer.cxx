@@ -11,7 +11,6 @@
 
 #include "plugins/Timer.h"
 
-//______________________________________________________________________________
 daq::service::Timer::~Timer() noexcept
 {
     if (fTimer) {
@@ -20,7 +19,6 @@ daq::service::Timer::~Timer() noexcept
     }
 }
 
-//______________________________________________________________________________
 void daq::service::Timer::Start(const std::shared_ptr<net::io_context> &ctx,
                                 //const std::shared_ptr<strand_t> &strand,
                                 unsigned int timeoutMS,
@@ -35,7 +33,6 @@ void daq::service::Timer::Start(const std::shared_ptr<net::io_context> &ctx,
     Start();
 }
 
-//_____________________________________________________________________________
 void daq::service::Timer::Start()
 {
     fTimer->expires_after(std::chrono::milliseconds(fTimeoutMS));

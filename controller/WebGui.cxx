@@ -70,7 +70,6 @@ static const std::vector<std::string> kWaitReadyTargets {
     GetStateName(fair::mq::State::Running),
 };
 
-//_____________________________________________________________________________
 std::string GetRedisDBNumber(const std::string& uri)
 {
     //                      scheme    ://host      :port (/db)
@@ -88,7 +87,6 @@ std::string GetRedisDBNumber(const std::string& uri)
     return db.empty() ? "0" : db;
 }
 
-//_____________________________________________________________________________
 bool WebGui::ConnectToRedis(std::string_view redisUri,
                             std::string_view commandChannelName,
                             std::string_view separator)
@@ -125,7 +123,6 @@ bool WebGui::ConnectToRedis(std::string_view redisUri,
     return true;
 }
 
-//_____________________________________________________________________________
 // read/write operation on redis and send the value to the web client
 void WebGui::CopyLatestRunNumber(unsigned int connid)
 {
@@ -146,7 +143,6 @@ void WebGui::CopyLatestRunNumber(unsigned int connid)
     Send(connid, reply);
 }
 
-//_____________________________________________________________________________
 // increment operation on redis and send the value to the web client
 void WebGui::IncrementRunNumber(unsigned int connid)
 {
@@ -162,7 +158,6 @@ void WebGui::IncrementRunNumber(unsigned int connid)
     Send(connid, reply);
 }
 
-//_____________________________________________________________________________
 void WebGui::InitializeFunctionList()
 {
     AddFunction({
@@ -206,7 +201,6 @@ void WebGui::InitializeFunctionList()
 
 }
 
-//_____________________________________________________________________________
 void WebGui::PollState()
 {
     auto tPrev = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
@@ -295,7 +289,6 @@ void WebGui::PollState()
     } // while ()
 }
 
-//_____________________________________________________________________________
 void WebGui::ProcessData(unsigned int connid,
                          const std::string& arg)
 {
@@ -312,7 +305,6 @@ void WebGui::ProcessData(unsigned int connid,
 //  }
 }
 
-//_____________________________________________________________________________
 void WebGui::ProcessExpiredKey(std::string_view key)
 {
     LOG(trace) << __func__ << ":" << __LINE__ << " " << key;
@@ -350,7 +342,6 @@ void WebGui::ProcessExpiredKey(std::string_view key)
     }
 }
 
-//_____________________________________________________________________________
 // read operation on redis and send the value to the web client
 void WebGui::ReadLatestRunNumber(unsigned int connid)
 {
@@ -368,7 +359,6 @@ void WebGui::ReadLatestRunNumber(unsigned int connid)
     Send(connid, reply);
 }
 
-//_____________________________________________________________________________
 // read operation on redis and send the value to the web client
 void WebGui::ReadRunNumber(unsigned int connid)
 {
@@ -386,7 +376,6 @@ void WebGui::ReadRunNumber(unsigned int connid)
     Send(connid, reply);
 }
 
-//_____________________________________________________________________________
 void WebGui::RedisGet(unsigned int connid, const boost::property_tree::ptree &arg)
 {
     LOG(debug) << __func__ << " websocket connid = " << connid;
@@ -399,7 +388,6 @@ void WebGui::RedisGet(unsigned int connid, const boost::property_tree::ptree &ar
     }
 }
 
-//_____________________________________________________________________________
 void WebGui::RedisIncr(unsigned int connid, const boost::property_tree::ptree &arg)
 {
     const auto& val = arg.get_optional<std::string>("value");
@@ -410,7 +398,6 @@ void WebGui::RedisIncr(unsigned int connid, const boost::property_tree::ptree &a
     }
 }
 
-//_____________________________________________________________________________
 // publish command via redis
 void WebGui::RedisPublishDaqCommand(unsigned int connid, const boost::property_tree::ptree& arg)
 {
@@ -512,7 +499,6 @@ void WebGui::RedisPublishDaqCommand(unsigned int connid, const boost::property_t
 
 }
 
-//_____________________________________________________________________________
 void WebGui::RedisSet(unsigned int connid, const boost::property_tree::ptree &arg)
 {
     LOG(debug) <<  __func__ << " " << connid;
@@ -531,7 +517,6 @@ void WebGui::RedisSet(unsigned int connid, const boost::property_tree::ptree &ar
     }
 }
 
-//_____________________________________________________________________________
 void WebGui::SendStateSummary(const std::map<std::string, ServiceState> & summaryTable)
 {
     static std::map<std::string, ServiceState> prevTable;
@@ -613,7 +598,6 @@ void WebGui::SendStateSummary(const std::map<std::string, ServiceState> & summar
     }
 }
 
-//_____________________________________________________________________________
 void WebGui::SendWebSocketIdList(const std::vector<std::pair<unsigned int, std::string>> &v)
 {
     std::string msg{"WebSocket Connected ID: Date<br>"};
@@ -625,7 +609,6 @@ void WebGui::SendWebSocketIdList(const std::vector<std::pair<unsigned int, std::
     Send(0, msg);
 }
 
-//_____________________________________________________________________________
 void WebGui::SubscribeToRedisPubSub()
 {
     //std::cout << __func__ << std::endl;
@@ -672,7 +655,6 @@ void WebGui::SubscribeToRedisPubSub()
     LOG(error) << kMyClass << "::" << __func__ << " exit";
 }
 
-//_____________________________________________________________________________
 void WebGui::Wait(const std::vector<std::string> &keys, const std::vector<std::string>& waitStateTargets)
 {
     bool done{false};
@@ -726,7 +708,6 @@ void WebGui::Wait(const std::vector<std::string> &keys, const std::vector<std::s
     }
 }
 
-//_____________________________________________________________________________
 void WebGui::Wait(const std::unordered_set<std::string> &services, const std::unordered_set<std::string> &instances, const std::vector<std::string> &waitStateTargets)
 {
 

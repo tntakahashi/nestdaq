@@ -22,7 +22,6 @@
 
 namespace bpo = boost::program_options;
 
-//_____________________________________________________________________________
 void addCustomOptions(bpo::options_description& options)
 {
     options.add_options()
@@ -32,13 +31,11 @@ void addCustomOptions(bpo::options_description& options)
 
 }
 
-//_____________________________________________________________________________
 std::unique_ptr<fair::mq::Device> getDevice(const fair::mq::ProgOptions& /*config*/)
 {
     return std::make_unique<Sampler>();
 }
 
-//_____________________________________________________________________________
 void PrintConfig(const fair::mq::ProgOptions* config, std::string_view name, std::string_view funcname)
 {
     const auto prefix = std::string{name};
@@ -51,14 +48,12 @@ void PrintConfig(const fair::mq::ProgOptions* config, std::string_view name, std
     LOG(debug) << ss.str();
 }
 
-//_____________________________________________________________________________
 // NOLINTNEXTLINE(cppcoreguidelines-pro-type-member-init)
 Sampler::Sampler()
 {
     LOG(debug) << "Sampler : hello";
 }
 
-//_____________________________________________________________________________
 //Sampler::~Sampler()
 //{
 // unsubscribe to property change
@@ -66,7 +61,6 @@ Sampler::Sampler()
 //  LOG(debug) << "Sampler : bye";
 //}
 
-//_____________________________________________________________________________
 void Sampler::Init()
 {
 #if __has_include(<spdlog/spdlog.h>) && __has_include(<nestdaq/telemetry/SpdlogLogger.h>)
@@ -96,7 +90,6 @@ void Sampler::Init()
     PrintConfig(fConfig, "chans.", __PRETTY_FUNCTION__);
 }
 
-//_____________________________________________________________________________
 void Sampler::InitTask()
 {
     PrintConfig(fConfig, "channel-config", __PRETTY_FUNCTION__);
@@ -118,7 +111,6 @@ void Sampler::InitTask()
     fIteration = telemetry.Gauge("examples.sampler.iteration", "1", "Sampler example iteration number");
 }
 
-//_____________________________________________________________________________
 bool Sampler::ConditionalRun()
 {
     for (auto iSubChannel = 0; iSubChannel < fNumSubChannels; ++iSubChannel) {
@@ -180,20 +172,17 @@ bool Sampler::ConditionalRun()
     return true;
 }
 
-//_____________________________________________________________________________
 void Sampler::PostRun()
 {
     LOG(debug) << __FUNCTION__;
     fNumIterations = 0;
 }
 
-//_____________________________________________________________________________
 void Sampler::PreRun()
 {
     LOG(debug) << __FUNCTION__;
 }
 
-//_____________________________________________________________________________
 void Sampler::Run()
 {
     LOG(debug) << __FUNCTION__;

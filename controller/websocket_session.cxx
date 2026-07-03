@@ -10,13 +10,11 @@
 #include "controller/WebSocketHandle.h"
 #include "controller/websocket_session.h"
 
-//_____________________________________________________________________________
 WebSocketSession::WebSocketSession(tcp::socket&& socket)
     : fWebSocket(std::move(socket))
 {
 }
 
-//_____________________________________________________________________________
 void WebSocketSession::onAccept(beast::error_code ec)
 {
     LOG(debug) << " websocket session : new connection\n";
@@ -37,7 +35,6 @@ void WebSocketSession::onAccept(beast::error_code ec)
     doRead();
 }
 
-//_____________________________________________________________________________
 void WebSocketSession::doRead()
 {
     // Read a message into our buffer
@@ -46,7 +43,6 @@ void WebSocketSession::doRead()
                          );
 }
 
-//_____________________________________________________________________________
 void WebSocketSession::onRead(beast::error_code ec, std::size_t bytes_transferred)
 {
     boost::ignore_unused(bytes_transferred);
@@ -93,7 +89,6 @@ void WebSocketSession::onRead(beast::error_code ec, std::size_t bytes_transferre
     doRead();
 }
 
-//_____________________________________________________________________________
 void WebSocketSession::write(const std::string &message)
 {
     // synchronous write

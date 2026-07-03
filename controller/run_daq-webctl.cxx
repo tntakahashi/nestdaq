@@ -39,7 +39,6 @@ std::mutex gWsMutex; // NOLINT(cppcoreguidelines-avoid-non-const-global-variable
 std::unordered_map<unsigned int, std::pair<std::shared_ptr<WebSocketSession>, std::string>> gWsSessions; // NOLINT(cppcoreguidelines-avoid-non-const-global-variables)
 std::unique_ptr<WebGui> gDaqControl; // NOLINT(cppcoreguidelines-avoid-non-const-global-variables)
 
-//_____________________________________________________________________________
 bpo::options_description makeOption() {
     bpo::options_description options("options");
     bpo::options_description wsOptions("websocket handler options");
@@ -96,7 +95,6 @@ bpo::options_description makeOption() {
     return options;
 }
 
-//_____________________________________________________________________________
 auto parseHttpUri(const std::string& uri) -> const std::tuple<std::string, std::string, std::string> {
     // pattern = (scheme)://(address):(port)
     std::regex pattern{R"(^([^:\/?#]+)://([^\/?#]+):(\d+))"};
@@ -126,7 +124,6 @@ auto parseHttpUri(const std::string& uri) -> const std::tuple<std::string, std::
     return {matchResult[1], matchResult[2], matchResult[3]};
 }
 
-//_____________________________________________________________________________
 int main(int argc, char* argv[]) { // NOLINT(bugprone-exception-escape)
     std::cin.tie(nullptr);
     std::ios::sync_with_stdio(false);
@@ -247,7 +244,7 @@ int main(int argc, char* argv[]) { // NOLINT(bugprone-exception-escape)
 
 //=============================================================================
 // WebSocketHandle functions
-//_____________________________________________________________________________
+
 void handleWebSocketClose(unsigned int id) {
     std::vector<std::pair<unsigned int, std::string>> v;
     {
@@ -261,7 +258,6 @@ void handleWebSocketClose(unsigned int id) {
     LOG(info) << __func__ << " websocket id = " << id << " done";
 }
 
-//_____________________________________________________________________________
 void handleWebSocketConnect(const std::shared_ptr<WebSocketSession> &session) {
     unsigned int id{0};
     std::string msg{"My WebSocket Connection ID: "};
@@ -281,17 +277,14 @@ void handleWebSocketConnect(const std::shared_ptr<WebSocketSession> &session) {
     LOG(info) << __func__ << " websocket id = " << id << " done";
 }
 
-//_____________________________________________________________________________
 void handleWebSocketRead(unsigned int id, const std::string& message) {
     gDaqControl->ProcessData(id, message);
     LOG(trace) << __func__ << " websocket id = " << id << " done";
 }
 
-//_____________________________________________________________________________
 void handleWebSocketRead(unsigned int /*id*/, const std::vector<char>& /*message*/) {
 }
 
-//_____________________________________________________________________________
 void writeWebSocketMessage(unsigned int id, const std::string& message) {
     auto &[session, d] = gWsSessions[id];
     if (session) {

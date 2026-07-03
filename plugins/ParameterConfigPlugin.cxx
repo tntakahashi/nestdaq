@@ -68,7 +68,6 @@ const std::unordered_set<std::string_view> reservedOptionsVectorString
 };
 namespace daq::service {
 
-//_____________________________________________________________________________
 /**
  * @brief Return command-line options provided by the parameter configuration plugin.
  */
@@ -82,7 +81,6 @@ auto ParameterConfigPluginProgramOptions() -> fair::mq::Plugin::ProgOptions
     return options;
 }
 
-//_____________________________________________________________________________
 /**
  * @brief Construct the plugin, load Redis-backed parameters, and start watching for changes.
  */
@@ -137,14 +135,12 @@ ParameterConfigPlugin::ParameterConfigPlugin(std::string_view name,
     fSubscriberThread.detach();
 }
 
-//_____________________________________________________________________________
 ParameterConfigPlugin::~ParameterConfigPlugin()
 {
     UnsubscribeFromDeviceStateChange();
     LOG(debug) << kMyClass << " bye";
 }
 
-//_____________________________________________________________________________
 /**
  * @brief Check whether a parameter name maps to a FairMQ reserved option type.
  */
@@ -174,7 +170,6 @@ bool ParameterConfigPlugin::IsReservedOption(std::string_view name)
     return false;
 }
 
-//_____________________________________________________________________________
 /**
  * @brief Parse one Redis parameter value and store it as a FairMQ property.
  *
@@ -198,7 +193,6 @@ void ParameterConfigPlugin::Parse(std::string_view name, std::string line)
     }
 }
 
-//_____________________________________________________________________________
 /**
  * @brief Read a Redis hash and apply its fields as parameters.
  */
@@ -215,7 +209,6 @@ void ParameterConfigPlugin::ReadHash(const std::string& name)
     }
 }
 
-//_____________________________________________________________________________
 /**
  * @brief Read a Redis list and apply it as a vector property.
  */
@@ -234,7 +227,6 @@ void ParameterConfigPlugin::ReadList(const std::string& name)
     }
 }
 
-//_____________________________________________________________________________
 /**
  * @brief Load group, instance, and nested parameter keys from Redis.
  */
@@ -314,7 +306,6 @@ void ParameterConfigPlugin::ReadParameters()
     //LOG(debug) << kMyClass << " " << __FUNCTION__ << " done";
 }
 
-//_____________________________________________________________________________
 /**
  * @brief Read a Redis set and apply it as an unordered-set property.
  */
@@ -334,7 +325,6 @@ void ParameterConfigPlugin::ReadSet(const std::string& name)
     }
 }
 
-//_____________________________________________________________________________
 /**
  * @brief Read a Redis string and parse it as a parameter value.
  */
@@ -349,7 +339,6 @@ void ParameterConfigPlugin::ReadString(const std::string& name)
     Parse(field, *value);
 }
 
-//_____________________________________________________________________________
 /**
  * @brief Read a Redis sorted set and apply it as a value-to-score map property.
  */
@@ -368,7 +357,6 @@ void ParameterConfigPlugin::ReadZset(const std::string& name)
     }
 }
 
-//_____________________________________________________________________________
 /**
  * @brief Convert and store a Redis value for a FairMQ reserved option.
  */
@@ -405,7 +393,6 @@ void ParameterConfigPlugin::SetPropertyOfReservedOption(std::string_view name, s
     }
 }
 
-//_____________________________________________________________________________
 /**
  * @brief Subscribe to Redis keyspace notifications for parameter changes.
  */
@@ -451,7 +438,6 @@ void ParameterConfigPlugin::SubscribeToParameterChange()
     LOG(debug) << " " << __func__ << " exit.";
 }
 
-//_____________________________________________________________________________
 /**
  * @brief Convert a delimited Redis value into a vector property.
  */
@@ -470,7 +456,6 @@ void ParameterConfigPlugin::ToArray(std::string_view name, std::string line)
     SetProperty(name.data(), v);
 }
 
-//_____________________________________________________________________________
 /**
  * @brief Convert a delimited key-value Redis value into a map property.
  */

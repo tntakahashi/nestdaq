@@ -179,7 +179,6 @@ private:
     std::unique_ptr<TopologyConfig> fTopology;
 };
 
-//_____________________________________________________________________________
 /**
  * @brief Declare DAQ service plugin command-line options.
  */
