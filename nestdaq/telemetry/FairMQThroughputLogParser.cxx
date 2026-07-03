@@ -50,7 +50,7 @@ auto parseDoubleToken(std::string_view &input, double &value) -> bool
     }
 
     const auto token = input.substr(0, token_end);
-    if (!compat::ParseDouble(token, value) || value < 0.0) {
+    if (!compat::parseDouble(token, value) || value < 0.0) {
         return false;
     }
     input.remove_prefix(token_end);
@@ -94,7 +94,7 @@ auto parseChannel(std::string_view value, FairMQThroughputSample &sample) -> boo
 
     const auto index_token = value.substr(open_bracket + 1, value.size() - open_bracket - 2);
     uint64_t index = 0;
-    if (!compat::ParseInteger(index_token, index)) {
+    if (!compat::parseInteger(index_token, index)) {
         return false;
     }
 

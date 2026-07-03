@@ -241,7 +241,7 @@ auto parseInstanceIndex(std::string_view instance_id) -> std::optional<std::pair
 
     auto index = int64_t{0};
     const auto suffix = instance_id.substr(separator + 1);
-    if (!telemetry::compat::ParseInteger(suffix, index)) {
+    if (!telemetry::compat::parseInteger(suffix, index)) {
         return std::nullopt;
     }
     return std::pair{instance_id.substr(0, separator), index};
@@ -250,7 +250,7 @@ auto parseInstanceIndex(std::string_view instance_id) -> std::optional<std::pair
 auto parseLine(std::string_view line) -> int64_t
 {
     int64_t value = 0;
-    if (!telemetry::compat::ParseInteger(line, value)) {
+    if (!telemetry::compat::parseInteger(line, value)) {
         return 0;
     }
     return value;

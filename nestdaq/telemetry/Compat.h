@@ -16,7 +16,7 @@
 
 namespace nestdaq::telemetry::compat {
 
-inline auto ParseDouble(std::string_view token, double& value) -> bool
+inline auto parseDouble(std::string_view token, double& value) -> bool
 {
 #if !defined(__GNUC__) || defined(__clang__) || (__GNUC__ >= 11)
     const auto* first = token.data();
@@ -38,9 +38,9 @@ inline auto ParseDouble(std::string_view token, double& value) -> bool
 }
 
 template <typename Integer>
-inline auto ParseInteger(std::string_view token, Integer& value) -> bool
+inline auto parseInteger(std::string_view token, Integer& value) -> bool
 {
-    static_assert(std::is_integral_v<Integer>, "ParseInteger requires an integral type");
+    static_assert(std::is_integral_v<Integer>, "parseInteger requires an integral type");
 
 #if !defined(__GNUC__) || defined(__clang__) || (__GNUC__ >= 11)
     const auto* first = token.data();
