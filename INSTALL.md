@@ -17,9 +17,9 @@ The main NestDAQ build builds and installs the examples by default when
 were disabled in the main build, or when a separate examples build directory or
 install prefix is needed.
 
-## Install external packages
+## 1. Install prerequisites
 
-### Prerequisites for AlmaLinux 9 and 10
+### AlmaLinux 9 and 10
 
 ```bash
 dnf -y update && \
@@ -67,7 +67,7 @@ dnf -y install \
 # dnf -y install gcc-toolset-14
 ```
 
-### Prerequisites for AlmaLinux 8
+### AlmaLinux 8
 
 ```bash
 dnf -y update && \
@@ -107,7 +107,7 @@ dnf -y install \
 AlmaLinux 8 uses `powertools` instead of `crb`. Use the Python 3.11 packages
 shown above instead of `python3`, `python3-devel`, and `python3-pip`.
 
-### Prerequisites for Debian 12/13 and Ubuntu 22.04/24.04/26.04
+### Debian 12/13 and Ubuntu 22.04/24.04/26.04
 
 ```bash
 apt update && \
@@ -153,7 +153,7 @@ apt install -y \
 `pkg-config` is included in the common Debian/Ubuntu list because Ubuntu 22.04
 needs it for the dependency build.
 
-### Build and install external dependencies
+## 2. Build and install external dependencies
 The following command installs ZeroMQ, Boost, FairLogger, FairMQ, Catch2,
 nlohmann/json, hiredis, redis++, and Redis Stack.
 
@@ -202,7 +202,7 @@ rather than through the Redis 8 `redis/modules` tree.
   - GCC 12.1 or later: Add `-DCMAKE_EXE_LINKER_FLAGS="-fuse-ld=mold"` and `-DCMAKE_SHARED_LINKER_FLAGS="-fuse-ld=mold"` to the CMake options
   - GCC 12.0 or earlier: Add `-DCMAKE_EXE_LINKER_FLAGS="-B<path-to-mold>"` and `-DCMAKE_SHARED_LINKER_FLAGS="-B<path-to-mold>"`
 
-#### External dependency build options
+### External dependency build options
 
 | Option | Default | Description |
 | :-- | :-- | :-- |
@@ -232,7 +232,7 @@ cache or `cmake/dependencies/redis-stack.cmake` when those knobs are needed.
 For Redis 7.x maintenance knobs, inspect
 `cmake/dependencies/redis-server-7.cmake`.
 
-#### Versions of installed external dependencies
+### Versions of installed external dependencies
 
 | Package                                                                  | Version (default) | CMake options to modify versions |
 | :--                                                                      | :--               | :--                              |
@@ -279,7 +279,7 @@ the Redis 8.2.7 source tree.
 | [RedisTimeSeries standalone](https://github.com/RedisTimeSeries/RedisTimeSeries) | 1.12.14 for Redis 7.4; 1.10.24 for Redis 7.2 | `RedisTimeSeries7_VERSION`, `REDIS_SERVER_7_SERIES` |
 
 
-### Build and install NestDAQ library
+## 3. Build and install NestDAQ library
 ```bash
 cmake \
   -DCMAKE_PREFIX_PATH=./install \
@@ -295,7 +295,7 @@ cmake --install ./build
 - When `doxygen-awesome-css` is available, it is installed with the generated documentation under `./install/share/doc/nestdaq/doxygen-awesome-css`.
 - When `-DNestDAQ_BUILD_DOCS=ON` and Doxygen is available, the HTML documentation is generated under `./build/docs/html` and installed under `./install/share/doc/nestdaq/html`.
 
-#### Verbose CMake builds
+### Verbose CMake builds
 
 To show the underlying compiler and linker commands, add `--verbose` to the
 `cmake --build` command. This is useful when checking include paths, compiler
@@ -313,7 +313,7 @@ The environment form is also supported:
 VERBOSE=1 cmake --build ./build
 ```
 
-#### NestDAQ build options
+### NestDAQ build options
 
 | Option | Default | Description |
 | :-- | :-- | :-- |
@@ -323,7 +323,7 @@ VERBOSE=1 cmake --build ./build
 | `NESTDAQ_DOXYGEN_AWESOME_DIR` | discovered from `CMAKE_PREFIX_PATH` or install prefix | Directory containing `doxygen-awesome-css` assets used by generated documentation. |
 | `BUILD_TESTING` | `ON` | Build NestDAQ tests when enabled. |
 
-### Run local OpenTelemetry Collector and backend containers
+## Run local OpenTelemetry Collector and backend containers
 
 NestDAQ can export OpenTelemetry logs, metrics, and traces to an OpenTelemetry
 Collector. The repository provides optional Compose setups for local validation
@@ -374,7 +374,7 @@ For host package installation and systemd-managed services, use
 `apt-get` on Debian/Ubuntu systems and `dnf` or `yum` on RHEL-family systems,
 and install into system-managed locations such as `/usr` and `/etc`.
 
-### Build and install examples
+## 4. Build and install examples
 
 The examples are included in the main NestDAQ build by default. They can also be
 built as a separate CMake project after installing NestDAQ. For a separate
