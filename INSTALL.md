@@ -7,13 +7,15 @@ flowchart TD
   Prerequisites[1. Install prerequisites]
   Dependencies[2. Build and install dependencies]
   NestDAQ[3. Build and install NestDAQ]
-  Examples[4. Build and install NestDAQ examples separately<br/>if not using the main NestDAQ build]
+  Examples[4. Optionally build and install examples separately<br/>when NestDAQ_BUILD_EXAMPLES=OFF or a separate examples build is needed]
 
   Prerequisites --> Dependencies --> NestDAQ --> Examples
 ```
 
-The separate examples build is optional. The main NestDAQ build builds and
-installs the examples by default when `NestDAQ_BUILD_EXAMPLES=ON`.
+The main NestDAQ build builds and installs the examples by default when
+`NestDAQ_BUILD_EXAMPLES=ON`. Run the separate examples build only when examples
+were disabled in the main build, or when a separate examples build directory or
+install prefix is needed.
 
 ## Install external packages
 
