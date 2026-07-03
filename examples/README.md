@@ -81,18 +81,18 @@ The diagram shows a typical local run sequence, not a strict dependency graph.
 Start the OpenTelemetry Collector backend first when logs, metrics, or traces
 should be exported and no suitable collector/backend is already running. If
 telemetry is disabled, console-only telemetry is used, or an existing collector
-is already available, treat step 1 as already complete. Redis is required; start
+is already available, treat step A as already complete. Redis is required; start
 it using the local deployment method in use, such as a local `redis-server`, a
 containerized Redis/Redis Stack instance, or a host package managed by systemd.
-Perform the run start operation last. Steps 5 and 6 may be reordered as long as
-they are done after Redis is available and before step 8. The browser can be
+Perform the run start operation last. Steps E and F may be reordered as long as
+they are done after Redis is available and before step H. The browser can be
 opened as soon as `daq-webctl` starts; devices may not appear until the topology
-and parameter settings are registered and the user devices are running. Steps 7
-and 8 are browser-controller operations. Run-start commands require the target
+and parameter settings are registered and the user devices are running. Steps G
+and H are browser-controller operations. Run-start commands require the target
 devices to be running. `daq-webctl` and the user devices use Redis and can
 export OpenTelemetry logs to the collector.
 
-1. Start an OpenTelemetry Collector backend.
+A. Start an OpenTelemetry Collector backend.
 
    The backend can be the local Compose setup, a host-installed
    `otelcol-contrib` service, or another collector reachable from the NestDAQ
@@ -124,7 +124,7 @@ export OpenTelemetry logs to the collector.
    the collector service name, such as `otel-collector:4317` or
    `clickstack:4317`.
 
-2. Start Redis.
+B. Start Redis.
 
    Redis is required by the NestDAQ DAQ service, metrics, and parameter
    configuration plugins. Redis can be a locally built server, a host package
@@ -188,7 +188,7 @@ export OpenTelemetry logs to the collector.
    Redis unit name first because it can differ between packages and
    distributions.
 
-3. Start `daq-webctl`.
+C. Start `daq-webctl`.
 
    ```sh
    <install-prefix>/bin/daq-webctl \
@@ -213,13 +213,13 @@ export OpenTelemetry logs to the collector.
    instead. In the same ClickStack compose network, use
    `--otel-log-endpoint-grpc=clickstack:4317`.
 
-4. Open the browser controller.
+D. Open the browser controller.
 
    Open `http://localhost:8080/` in a browser. At this point the controller may
    not show user devices yet. They become available after topology and
    parameter registration and after the user device processes start.
 
-5. Register topology and parameter settings.
+E. Register topology and parameter settings.
 
    Before starting devices, register the topology and parameter examples in
    Redis. The topology script writes channel and link settings used by the
@@ -232,7 +232,7 @@ export OpenTelemetry logs to the collector.
    ./mq-param.sh
    ```
 
-6. Start the user devices with `start_device.sh`.
+F. Start the user devices with `start_device.sh`.
 
    The installed script loads the NestDAQ plugins, uses Redis at
    `127.0.0.1:6379` by default, and exports OpenTelemetry logs to
@@ -271,7 +271,7 @@ export OpenTelemetry logs to the collector.
    <install-prefix>/scripts/start_device.sh Sampler
    ```
 
-7. Set the run number if it is missing.
+G. Set the run number if it is missing.
 
    If Redis does not already contain `run_info:run_number`, set or increment the
    run number from the browser controller before starting a run. The controller
@@ -280,7 +280,7 @@ export OpenTelemetry logs to the collector.
    and [`plugins/README.md`](../plugins/README.md#23-redis-keys-written-or-read)
    for the Redis command interface and run information keys.
 
-8. Start the run from the browser controller.
+H. Start the run from the browser controller.
 
    Use the browser controller to move the selected user devices through the
    required state-machine transitions and publish `RUN` to start the run. When
@@ -296,11 +296,11 @@ controller and shared services.
 
 ```mermaid
 flowchart TD
-  End[A. Web UI: END PROCESS for user devices]
-  DeviceFallback[B. If needed: stop device terminals or send kill]
-  WebCtl[C. Stop daq-webctl from its terminal]
-  Redis[D. Stop Redis server or service]
-  Otel[E. Stop OTel Collector backend]
+  End[S-A. Web UI: END PROCESS for user devices]
+  DeviceFallback[S-B. If needed: stop device terminals or send kill]
+  WebCtl[S-C. Stop daq-webctl from its terminal]
+  Redis[S-D. Stop Redis server or service]
+  Otel[S-E. Stop OTel Collector backend]
 
   End --> DeviceFallback --> WebCtl --> Redis --> Otel
 ```
@@ -308,10 +308,10 @@ flowchart TD
 The diagram shows the recommended shutdown order. If the user devices have
 already exited after `END PROCESS`, skip the terminal fallback step.
 
-1. Select the target user devices in the browser controller and click
+S-A. Select the target user devices in the browser controller and click
    `END PROCESS`. This publishes the DAQ `END` command to the selected devices.
 
-2. If a user device does not exit, stop it from the terminal where it is
+S-B. If a user device does not exit, stop it from the terminal where it is
    running, for example with Ctrl-C. If a separate signal is needed, prefer a
    normal termination signal first:
 
@@ -322,7 +322,7 @@ already exited after `END PROCESS`, skip the terminal fallback step.
    Use `kill -KILL <pid>` only as a last resort when the process does not
    respond to normal termination.
 
-3. Stop `daq-webctl`. The `END PROCESS` button does not stop `daq-webctl`
+S-C. Stop `daq-webctl`. The `END PROCESS` button does not stop `daq-webctl`
    itself; it only publishes `END` to user devices. Stop `daq-webctl` from the
    terminal where it is running, for example with Ctrl-C. From another terminal,
    send SIGTERM if needed:
@@ -334,7 +334,7 @@ already exited after `END PROCESS`, skip the terminal fallback step.
    `daq-webctl` handles SIGINT and SIGTERM for clean HTTP/WebSocket server
    shutdown.
 
-4. Stop Redis. Use the stop procedure that matches how Redis was started. For
+S-D. Stop Redis. Use the stop procedure that matches how Redis was started. For
    a locally installed Redis server:
 
    ```sh
@@ -352,7 +352,7 @@ already exited after `END PROCESS`, skip the terminal fallback step.
    sudo systemctl stop redis-stack-server
    ```
 
-5. Stop the OpenTelemetry backend. Use the stop procedure that matches how the
+S-E. Stop the OpenTelemetry backend. Use the stop procedure that matches how the
    collector and backend were started. For the OpenSearch backend Compose
    example:
 
