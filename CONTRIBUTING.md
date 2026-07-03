@@ -1,69 +1,68 @@
-# Contributing
+# Contribution Guidelines
+
+This document describes recommended and prohibited practices for contributing
+to NestDAQ.
+
+## Forking workflow
+
+- Do not push directly to the upstream NestDAQ repository.
+- Push changes to your own fork.
+- Open a Pull Request or Draft Pull Request from your fork to the upstream
+  repository.
+- Use Draft Pull Requests when the change is not ready for final review but
+  early feedback is useful.
+
+## Commits and Pull Requests
+
+- Avoid combining several unrelated changes into one large commit.
+- Split commits by intent when separate changes can be reviewed independently.
+- Keep Pull Requests small enough to review carefully.
+- Prefer opening Pull Requests frequently instead of waiting until many unrelated
+  changes have accumulated.
+
+## Formatting
+
+- Apply a formatter before opening a Pull Request or moving a Draft Pull
+  Request to ready-for-review.
+- For C/C++ files, apply `astyle`.
+- Format only files touched by your change.
+- Do not reformat unrelated files.
+
+## Static analysis
+
+- Run `clang-tidy` before opening a Pull Request when practical.
+- Use the repository-local `.clang-tidy` configuration.
+- Do not enable extra checks for project code unless the Pull Request is about
+  clang-tidy policy itself.
+- To run `clang-tidy` through CMake, configure with
+  `-DNESTDAQ_ENABLE_CLANG_TIDY=ON`.
 
 ## Code style and naming
 
-## C++
+### C++
 
-### Code
+- Indent with 4 spaces.
+
+### Naming
 
 - `PascalCase` and `UpperCamelCase` mean the same naming style.
-- class and type names: `PascalCase` / `UpperCamelCase`
-- namespaces: `snake_case`
-- functions and member functions: prefer lower camel case / `camelCase`; `PascalCase` / `UpperCamelCase` is also allowed.
-- variables: prefer snake case / `snake_case`; lower camel case / `camelCase` is also allowed.
-- data members: `fPascalCase`
-- static data members: start with `fg`, for example `fgPascalCase`
-- static variables: start with `g`, for example `gPascalCase`
-- constants: start with `k`, for example `kPascalCase`, or use `SCREAMING_SNAKE_CASE`
-- macro names: `SCREAMING_SNAKE_CASE`
-- enum constants: `kPascalCase`, `PascalCase` / `UpperCamelCase`, or `SCREAMING_SNAKE_CASE`
-- base namespace: nestdaq
-- indent: 4 spaces
-- function declarations and definitions: shoud be preferebly be ordered in lexicographical order.
-- Use trailing return types for functions: `auto name(args) -> ReturnType`.
-
+- Class and type names: `PascalCase` / `UpperCamelCase`.
+- Namespaces: `snake_case`.
+- Functions and member functions: prefer lower camel case / `camelCase`;
+  `PascalCase` / `UpperCamelCase` is allowed for existing-style consistency.
+- Variables: prefer `snake_case`; lower camel case / `camelCase` is allowed for
+  existing-style consistency.
+- Data members: `fPascalCase`.
+- Static data members: start with `fg`, for example `fgPascalCase`.
+- Static variables: start with `g`, for example `gPascalCase`.
+- Constants: start with `k`, for example `kPascalCase`, or use
+  `SCREAMING_SNAKE_CASE`.
+- Macro names: `SCREAMING_SNAKE_CASE`.
+- Enum constants: `kPascalCase`, `PascalCase` / `UpperCamelCase`, or
+  `SCREAMING_SNAKE_CASE`.
+- Base namespace for NestDAQ code: `nestdaq`.
 
 ### File naming
 
-- file extensions: prefer `.cpp` and `.hpp`; `.cxx`, `.h`, `.hh`, and `.hxx` are also allowed.
-- templated classes: end with "T" (classes that inherit from them don't, unless they are also a template)
-- interface classes: start with "I"
-
-### Example
-
-(This code sample is temporary and needs further development)
-
-```c++
-#include <vector>
-
-/** Doxygen style for Foo */
-class Foo {
-    friend class AnotherClass;
-
-public:
-    Foo(some_arg) {
-        fField = some_arg;
-    }
-
-private:
-    int fField;
-};
-
-class AnotherClass {
-public:
-
-    static const int kMaxValue = 42;
-    static const int kMinValue = 0;
-
-    virtual void method1() = 0;
-    virtual void method2() = 0;
-
-    int  x() { return fX; }
-    void setX(x) { fX = x; }
-
-private:
-    int fX;
-
-};
-
-```
+- Preferred file extensions: `.cpp` and `.hpp`.
+- Allowed file extensions: `.cxx`, `.h`, `.hh`, and `.hxx`.
