@@ -31,13 +31,13 @@ public:
      * The callback receives the Asio error code. Returning true schedules the
      * next tick; returning false stops the repeating timer.
      */
-    void Start(const std::shared_ptr<net::io_context> &ctx,
+    void start(const std::shared_ptr<net::io_context> &ctx,
 //           const std::shared_ptr<strand_t> &strand,
                unsigned int timeoutMS,
                std::function<bool(const std::error_code &)> f);
 
 private:
-    void Start();
+    void start();
 
     std::shared_ptr<net::io_context> fContext;
 //  std::shared_ptr<strand_t> fStrand;

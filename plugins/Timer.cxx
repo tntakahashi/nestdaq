@@ -19,7 +19,7 @@ daq::service::Timer::~Timer() noexcept
     }
 }
 
-void daq::service::Timer::Start(const std::shared_ptr<net::io_context> &ctx,
+void daq::service::Timer::start(const std::shared_ptr<net::io_context> &ctx,
                                 //const std::shared_ptr<strand_t> &strand,
                                 unsigned int timeoutMS,
                                 std::function<bool(const std::error_code &)> f)
@@ -30,10 +30,10 @@ void daq::service::Timer::Start(const std::shared_ptr<net::io_context> &ctx,
     fTimer     = std::make_unique<net::steady_timer>(*fContext);
     fTimeoutMS = timeoutMS;
     fHandle    = std::move(f);
-    Start();
+    start();
 }
 
-void daq::service::Timer::Start()
+void daq::service::Timer::start()
 {
     fTimer->expires_after(std::chrono::milliseconds(fTimeoutMS));
     fTimer->async_wait( //
@@ -47,7 +47,7 @@ void daq::service::Timer::Start()
             if (!fHandle(ec)) {
                 // std::cout << " restart timer" << std::endl;
                 fTimer->cancel();
-                Start();
+                start();
             }
             // std::cout << " no restart timer" << std::endl;
         }

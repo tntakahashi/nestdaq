@@ -66,7 +66,7 @@ public:
     /** React to FairMQ state changes and update topology-related Redis state. */
     void onDeviceStateChange(DeviceState newState);
     /** @brief Reset transient topology state owned by this instance. */
-    void Reset();
+    void reset();
     /** @brief Refresh TTLs for Redis topology keys owned by this instance. */
     void resetTtl(sw::redis::Pipeline& pipe);
     /** @brief Set raw connect configuration from command-line or property input. */

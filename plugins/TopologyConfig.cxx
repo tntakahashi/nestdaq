@@ -780,7 +780,7 @@ void daq::service::TopologyConfig::onDeviceStateChange(DeviceState newState)
             waitForPeerConnection();
             break;
         case DeviceState::ResettingDevice:
-            Reset();
+            reset();
             break;
         default:
             break;
@@ -988,7 +988,7 @@ const std::string daq::service::TopologyConfig::readPeerIp(const std::string& pe
 /**
  * @brief Clear installed channel properties and remove topology registry keys.
  */
-void daq::service::TopologyConfig::Reset()
+void daq::service::TopologyConfig::reset()
 {
     LOG(debug) << kMyClass << " " << __FUNCTION__;
     fBindChannels.clear();

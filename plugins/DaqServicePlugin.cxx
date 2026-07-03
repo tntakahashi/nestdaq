@@ -327,7 +327,7 @@ Plugin::~Plugin()
     }
 
     if (fTopology) {
-        fTopology->Reset();
+        (*fTopology).reset();
     }
     unregisterService();
     LOG(debug) << "~" << kMyClass << "() bye";
@@ -719,7 +719,7 @@ void Plugin::registerService()
 
             LOG(debug) << " timer start " << (fTtlUpdateInterval * kMillisecondsPerSecond)  << " msec";
             fTimer = std::make_unique<Timer>();
-            fTimer->Start(fContext, fTtlUpdateInterval * kMillisecondsPerSecond, [this](const auto& /*ec*/) {
+            fTimer->start(fContext, fTtlUpdateInterval * kMillisecondsPerSecond, [this](const auto& /*ec*/) {
                 resetTtl();
                 return false; // for restart
             });
