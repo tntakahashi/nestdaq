@@ -224,6 +224,42 @@ function link () {
 the FairMQ socket, for example `type push`, `method bind`, and
 `autoSubChannel false`.
 
+The `endpoint()` helper uses Redis `HSET`, so rerunning a topology script only
+updates the fields written by that script. It does not delete fields that are
+omitted from the new script content. For example, if `autoSubChannel true` has
+already been written to Redis, removing `autoSubChannel` from the script and
+running it again leaves the Redis field set to `true`. To change it back, write
+`autoSubChannel false` explicitly and run the topology script again. If the
+topology should be rebuilt from scratch, flush the Redis database used by
+`daq_service` / `TopologyConfig` before registering the new topology again.
+The same `HSET` rule applies to parameter hashes written by helpers such as
+`mq-param.sh`: omitting a field from the script does not remove an existing
+Redis hash field.
+
+If user device channel connection information is changed, or if a user device
+does not exit cleanly, old `daq_service` topology/channel metadata can remain
+in Redis. Stale connection metadata can occasionally make later device starts
+resolve socket addresses differently from the intended topology. In a local
+validation environment, flush the Redis database used by `daq_service` /
+`TopologyConfig` before registering the new topology again:
+
+```sh
+redis-cli -u redis://127.0.0.1:6379/0 FLUSHDB
+```
+
+`FLUSHDB` deletes all keys in the selected Redis database. If the entire local
+Redis instance should be reset, use `FLUSHALL` instead:
+
+```sh
+redis-cli -u redis://127.0.0.1:6379 FLUSHALL
+```
+
+`FLUSHALL` deletes all keys in all databases of that Redis instance. Do not use
+`FLUSHDB` or `FLUSHALL` on a production or shared Redis server unless deleting
+that data is intentional. The Redis address and database number in these
+examples are local defaults; replace them with the address and database number
+of the Redis instance/database you intend to operate on.
+
 ### 2.1. Bind and connect endpoints
 
 In topology endpoint settings, `method bind` and `method connect` describe
