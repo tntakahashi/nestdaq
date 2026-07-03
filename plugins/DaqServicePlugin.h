@@ -86,27 +86,27 @@ public:
     ~Plugin() override;
 
     /** @brief Return the current health record published for this instance. */
-    const Health& GetHealth() const {
+    const Health& getHealth() const {
         return *fHealth;
     }
     /** @brief Return the plugin mutex shared with topology helpers. */
-    std::mutex& GetMutex() {
+    std::mutex& getMutex() {
         return fMutex;
     }
     /** @brief Return the Redis client used by service-related helpers. */
-    std::shared_ptr<sw::redis::Redis> GetClient() const {
+    std::shared_ptr<sw::redis::Redis> getClient() const {
         return fClient;
     }
     /** @brief Return true when shutdown or reset cancellation was requested. */
-    bool IsCanceled() const {
+    bool isCanceled() const {
         return fResetDeviceRequested || fPluginShutdownRequested;
     }
     /** @brief Return true when a Redis command requested FairMQ RESET DEVICE. */
-    bool IsResetDeviceRequested() const {
+    bool isResetDeviceRequested() const {
         return fResetDeviceRequested;
     }
     /** @brief Return true when the plugin shutdown sequence has started. */
-    bool IsShutdownRequested() const {
+    bool isShutdownRequested() const {
         return fPluginShutdownRequested;
     }
 

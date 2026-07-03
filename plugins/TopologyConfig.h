@@ -83,10 +83,10 @@ private:
         fPlugin.DeleteProperty(key);
     }
     std::shared_ptr<sw::redis::Redis> getClient() const {
-        return fPlugin.GetClient();
+        return fPlugin.getClient();
     }
     std::mutex& getMutex() {
-        return fPlugin.GetMutex();
+        return fPlugin.getMutex();
     }
     auto getPeerState(const MQChannel & channels) -> std::map<std::string, std::string>;
     std::map<std::string, std::string> getPropertiesAsStringStartingWith(const std::string& q) const {
@@ -100,7 +100,7 @@ private:
     /** @brief Populate default channel properties from FairMQ options. */
     void initializeDefaultChannelProperties();
     bool isCanceled() const {
-        return fPlugin.IsCanceled();
+        return fPlugin.isCanceled();
     }
     /** @brief Return true when all peers can use UDS transport. */
     bool isUdsAvailable(const std::vector<std::string> &peers);

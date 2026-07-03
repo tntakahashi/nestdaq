@@ -743,7 +743,7 @@ void daq::service::TopologyConfig::initializeDefaultChannelProperties()
  */
 bool daq::service::TopologyConfig::isUdsAvailable(const std::vector<std::string> &peers)
 {
-    const auto& myIP = fPlugin.GetHealth().ipAddress;
+    const auto& myIP = fPlugin.getHealth().ipAddress;
     for (const auto& x : peers) {
         const auto& ip = readPeerIp(x);
         if (myIP!=ip) {
