@@ -21,7 +21,7 @@ podman compose -f compose-victoria.yaml up
 `podman compose` requires a Compose provider such as `podman-compose` or the
 Docker Compose plugin to be installed and discoverable in `PATH`.
 
-## Components
+## 1. Components
 
 - `otel-collector`: receives OpenTelemetry Protocol (OTLP) logs, metrics, and
   traces.
@@ -46,7 +46,7 @@ http://victoriametrics:8428/opentelemetry/v1/metrics
 http://victoriatraces:10428/insert/opentelemetry/v1/traces
 ```
 
-## Ports
+## 2. Ports
 
 - VictoriaMetrics: `http://localhost:8428`
 - VictoriaLogs: `http://localhost:9428`
@@ -60,7 +60,7 @@ or `daq-webctl` container in the same compose network should use
 `otel-collector:4317` for OTLP gRPC, or `http://otel-collector:4318` for OTLP
 HTTP.
 
-## Runtime Options
+## 3. Runtime Options
 
 | Variable | Default | Description |
 | :-- | :-- | :-- |
@@ -83,7 +83,7 @@ HTTP.
 | `GRAFANA_PROVISIONING_DIR` | `./grafana/provisioning` | Grafana provisioning directory. |
 | `OTEL_COLLECTOR_CONFIG_FILE` | `./otel-collector-config-victoria.yaml` | Collector config file. |
 
-## Stop
+## 4. Stop
 
 Stop and remove the local validation containers and network:
 

@@ -19,7 +19,7 @@ In the key patterns below, `{sep}` means the configured separator. The default
 separator is `:`. Other placeholders are `{service}`, `{id}`, `{channel}`, and
 `{subindex}`.
 
-## Time To Live (TTL) Behavior
+## 1. Time To Live (TTL) Behavior
 
 TTL handling is different for each plugin:
 
@@ -32,13 +32,13 @@ TTL handling is different for each plugin:
 - `parameter_config` does not set TTLs on parameter keys. Parameter lifetime is
   controlled by the producer or operator that writes those Redis keys.
 
-## daq_service
+## 2. daq_service
 
 `daq_service` is the main Redis service-registry plugin. It registers a device
 instance, refreshes TTLs, publishes FairMQ state and health data, subscribes to
 DAQ commands, and writes topology/channel metadata used by other services.
 
-### Runtime Options
+### 2.1. Runtime Options
 
 | Option                           | Default                    | Required | Description |
 |----------------------------------|----------------------------|----------|-------------|
@@ -55,7 +55,7 @@ DAQ commands, and writes topology/channel metadata used by other services.
 | `--connect-config`               | none                       | No       | JavaScript Object Notation (JSON) string describing temporary message queue (MQ) channel connection parameters. |
 | `--max-retry-to-resolve-address` | `10`                       | No       | Maximum retry count for resolving connect addresses. |
 
-### DAQ Service Identity Defaults
+### 2.2. DAQ Service Identity Defaults
 
 `daq_service` uses `--service-name` as the service name stored in Redis and
 shown by controllers. When `--service-name` is not set or is empty, the plugin
@@ -68,7 +68,7 @@ instance id to `{service-name}-{index}`, such as `Sampler-0`. The `--uuid`
 value is separate from the instance id; it identifies this process for
 presence, health, and index reuse.
 
-### Redis Keys Written or Read
+### 2.3. Redis Keys Written or Read
 
 | Key pattern | Redis type | Fields / value | Writer / reader | Purpose |
 |-------------|------------|----------------|-----------------|---------|
@@ -84,7 +84,7 @@ presence, health, and index reuse.
 | `run_info{sep}wait-ready` | string boolean | `1`, `true`, or any other string | Read/write by controller | If true, the web controller publishes prerequisite `INIT TASK` before `RUN`. |
 | `daqctl` | pub/sub channel | JSON DAQ command messages | Subscribed by plugin; published by controller/operator | Receives controller commands. |
 
-### DAQ Command Publish/Subscribe (Pub/Sub)
+### 2.4. DAQ Command Publish/Subscribe (Pub/Sub)
 
 `daq_service` subscribes to `daqctl` and translates matching command messages
 into FairMQ state transitions for the local service instance. Controllers and
@@ -203,7 +203,7 @@ The web controller's prerequisite wait logic uses the same target intent:
 presence, health, and timestamp keys. Controllers such as `daq-webctl` can
 poll or scan those keys to build state summaries.
 
-### Topology and Channel Keys
+### 2.5. Topology and Channel Keys
 
 `daq_service` also writes channel metadata through `TopologyConfig`.
 
@@ -215,7 +215,7 @@ poll or scan those keys to build state summaries.
 | `daq_service{sep}topology{sep}endpoint...` | string/hash keys | Topology endpoint configuration | Read/scanned | External topology configuration used to resolve endpoints. |
 | `daq_service{sep}topology{sep}link...` | string/hash keys | Topology link configuration | Read/scanned | External topology configuration used to resolve links between services/channels. |
 
-#### `autoSubChannel`
+#### 2.5.1. `autoSubChannel`
 
 `autoSubChannel` controls how `TopologyConfig` expands FairMQ subchannels when
 a topology peer is written without an explicit `[subindex]`.
@@ -307,7 +307,7 @@ with `autoSubChannel=true`, `numSockets` grows with the discovered peer
 instances/subchannels so each FairMQ sub-socket can receive a distinct
 `address:port` and subchannel index.
 
-#### Bind/Connect Sequence
+#### 2.5.2. Bind/Connect Sequence
 
 `TopologyConfig` synchronizes bind and connect endpoints through Redis during
 FairMQ state transitions.
@@ -356,7 +356,7 @@ from Redis and write the resulting FairMQ `chans.*` properties. A bind channel
 with `waitForPeerConnection=false` skips the final peer-ready wait. Reset or
 cancellation interrupts the waiting steps.
 
-### TTL Details (daq_service)
+### 2.6. TTL Details (daq_service)
 
 `daq_service` uses `--max-ttl` in seconds. The default is `5` seconds.
 `--ttl-update-interval` controls how often the plugin refreshes TTLs. The
@@ -405,7 +405,7 @@ waiting for its next polling cycle. `metrics` uses `--metrics-max-ttl` as a
 stale-field cleanup threshold, not as Redis key TTL. `parameter_config` does
 not set TTLs on parameter keys.
 
-## metrics
+## 3. metrics
 
 `metrics` publishes process-level metrics and FairMQ channel throughput metrics.
 Process central processing unit (CPU) usage is reported in top/htop style: one
@@ -413,7 +413,7 @@ fully used CPU core is approximately `100`, and two fully used CPU cores are
 approximately `200`. Memory usage is current resident set size (RSS) in
 mebibytes (MiB).
 
-### Runtime Options
+### 3.1. Runtime Options
 
 | Option                        | Default | Required | Description |
 |-------------------------------|---------|----------|-------------|
@@ -423,7 +423,7 @@ mebibytes (MiB).
 | `--recreate-ts`               | `true`  | No       | Recreate RedisTimeSeries keys on transition to `Running`. |
 | `--metrics-max-ttl`           | `3000`  | No       | Maximum TTL in milliseconds for metrics fields. If zero or negative, no TTL cleanup is applied. |
 
-### Redis Keys Written or Read
+### 3.2. Redis Keys Written or Read
 
 | Key pattern | Redis type | Fields / value | Writer / reader | Purpose |
 |-------------|------------|----------------|-----------------|---------|
@@ -454,7 +454,7 @@ data[0]: in: 123 (4.5 MB) out: 67 (8.9 MB)
 
 Only indexed subchannel records are used for channel throughput metrics.
 
-### TTL and Retention Details (metrics)
+### 3.3. TTL and Retention Details (metrics)
 
 `--metrics-max-ttl` is not a Redis key TTL. It is a stale-field cleanup threshold
 in milliseconds. The plugin reads `metrics{sep}last-update-ns`, finds instances
@@ -466,19 +466,19 @@ negative, this cleanup is disabled.
 passed to `TS.CREATE ... RETENTION` in milliseconds. A value of `0` means that
 RedisTimeSeries samples are not trimmed by retention time.
 
-## parameter_config
+## 4. parameter_config
 
 `parameter_config` reads Redis parameter keys and mirrors values into FairMQ
 program properties. Instance-specific parameters override group parameters when
 both are present.
 
-### Runtime Options
+### 4.1. Runtime Options
 
 | Option                   | Default | Required | Description |
 |--------------------------|---------|----------|-------------|
 | `--parameter-config-uri` | none    | No       | Redis URI for parameter configuration. If empty, `--registry-uri` is used. |
 
-### Redis Keys Read or Subscribed
+### 4.2. Redis Keys Read or Subscribed
 
 | Key pattern | Redis type | Fields / value | Writer / reader | Purpose |
 |-------------|------------|----------------|-----------------|---------|
@@ -496,7 +496,7 @@ Redis keyspace notifications must be enabled on the Redis server for live
 reloads to work. Initial parameter loading does not require keyspace
 notifications.
 
-### TTL Details (parameter_config)
+### 4.3. TTL Details (parameter_config)
 
 `parameter_config` does not call `EXPIRE`, `SETEX`, or `DEL` for parameter
 keys. It only reads parameter keys and subscribes to keyspace notifications for

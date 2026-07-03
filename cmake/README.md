@@ -5,7 +5,7 @@ This directory contains CMake files used by the NestDAQ build, the installed
 project. For build commands, dependency versions, and user-facing options, see
 [`INSTALL.md`](../INSTALL.md).
 
-## Top-Level Build Helpers
+## 1. Top-Level Build Helpers
 
 | File | Purpose |
 | :-- | :-- |
@@ -15,7 +15,7 @@ project. For build commands, dependency versions, and user-facing options, see
 | `NestDAQExamplesStandalone.cmake` | Shared setup used when `examples/` is configured as its own standalone CMake project. |
 | `PatchDoxygenAwesomeCssRefs.cmake` | Post-processes generated Doxygen HTML so pages refer to the installed `doxygen-awesome-css` asset path. |
 
-## Installed Package Files
+## 2. Installed Package Files
 
 These files are installed with NestDAQ and are used by downstream projects that
 call `find_package(NestDAQ REQUIRED CONFIG)`.
@@ -26,7 +26,7 @@ call `find_package(NestDAQ REQUIRED CONFIG)`.
 | `NestDAQVersion.cmake.in` | Template for installed NestDAQ version and Git metadata variables. |
 | `NestDAQTargets.cmake` | Defines the imported `NestDAQ::NestDAQ` interface target and its include directories, link directories, and link libraries. |
 
-## External Dependency Project
+## 3. External Dependency Project
 
 `cmake/CMakeLists.txt` is a standalone project for building and installing the
 external dependencies used by NestDAQ. It includes files from

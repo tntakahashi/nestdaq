@@ -8,7 +8,7 @@ Redis-backed control operations for DAQ devices.
 The static browser assets served by `daq-webctl` are documented separately in
 [`share/controller/README.md`](../share/controller/README.md).
 
-## Runtime Role
+## 1. Runtime Role
 
 `daq-webctl` listens on an HTTP endpoint, serves the configured document root,
 and accepts WebSocket clients. Commands from the browser are translated into
@@ -19,7 +19,7 @@ At startup, `daq-webctl` configures FairLogger output and can load the optional
 NestDAQ OpenTelemetry plugin through the shared telemetry loader. The controller
 does not link OpenTelemetry directly.
 
-## Main Components
+## 2. Main Components
 
 | Component | Purpose |
 | :-- | :-- |
@@ -33,7 +33,7 @@ does not link OpenTelemetry directly.
 | `beast_tools` | Provides shared Boost.Beast HTTP response helpers. |
 | `DaqWebControlDefaultDocRootPath.h.in` | Generates the default installed document root path used by `--doc-root`. |
 
-## Typical Usage
+## 3. Typical Usage
 
 ```sh
 daq-webctl --http-uri=http://0.0.0.0:8080 --redis-uri=tcp://127.0.0.1:6379
@@ -47,7 +47,7 @@ state.
 Use `daq-webctl --help` to inspect the available HTTP, Redis, FairLogger, and
 OpenTelemetry options.
 
-## Communication Flow
+## 4. Communication Flow
 
 The browser never connects to Redis or user device processes directly.
 `daq-webctl` has two roles: it is the browser-facing HTTP/WebSocket server, and
@@ -89,7 +89,7 @@ The diagram shows the control and status path. FairMQ data-channel traffic
 between user device processes is separate and is not routed through
 `daq-webctl`.
 
-## Command-Line Options
+## 5. Command-Line Options
 
 `daq-webctl` accepts the following options. OpenTelemetry options are also
 available through the shared NestDAQ telemetry option helper for the
@@ -118,7 +118,7 @@ OpenTelemetry option list.
 | `--verbosity` | `medium` | FairLogger verbosity. |
 | `--color` | `true` | Enable FairLogger console colors. |
 
-### OpenTelemetry Options
+### 5.1. OpenTelemetry Options
 
 `daq-webctl` uses the shared NestDAQ OpenTelemetry option helper with
 `daq-webctl` as the default `service.name`. The controller does not link
@@ -169,26 +169,26 @@ collector, use console exporters such as `--otel-metric-protocol=console` or
 [`nestdaq/telemetry/README.md`](../nestdaq/telemetry/README.md) for the full
 OpenTelemetry option list and resource attribute details.
 
-## Redis Command Interface
+## 6. Redis Command Interface
 
 `daq-webctl` uses the Redis command interface implemented by the `daq_service`
 plugin. DAQ command keys, the `daqctl` Publish/Subscribe (Pub/Sub) channel,
 message shape, accepted command values, and `RUN`/`STOP` sequencing are
 documented in
-[`plugins/README.md`](../plugins/README.md#daq-command-publishsubscribe-pubsub).
+[`plugins/README.md`](../plugins/README.md#24-daq-command-publishsubscribe-pubsub).
 
 At startup, `daq-webctl` sets Redis `notify-keyspace-events` to `AKE` so it can
 receive key-event notifications, including expired key events. It also polls
 `daq_service{sep}*{sep}*{sep}fair-mq-state` and
 `daq_service{sep}*{sep}*{sep}updatedTime` to build browser state summaries.
 
-## WebSocket Messages
+## 7. WebSocket Messages
 
 Browser clients send JSON commands to the WebSocket endpoint. The controller
 executes Redis operations or publishes Redis pub/sub messages.
 For `redis-publish`, the Redis Pub/Sub command message shape, accepted command
 values, and `services` / `instances` target selection rules are documented in
-[`plugins/README.md`](../plugins/README.md#daq-command-publishsubscribe-pubsub).
+[`plugins/README.md`](../plugins/README.md#24-daq-command-publishsubscribe-pubsub).
 
 | Client message | Effect |
 | :-- | :-- |
@@ -215,7 +215,7 @@ The `state-summary-table` message contains:
 - per-service `instances`: array with `service`, `instance`, `state`, and
   `date`.
 
-## State Polling and Expiration
+## 8. State Polling and Expiration
 
 `daq-webctl` polls `daq_service{sep}*{sep}*{sep}fair-mq-state` and
 `daq_service{sep}*{sep}*{sep}updatedTime` every `--poll-interval` milliseconds.

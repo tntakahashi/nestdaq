@@ -19,7 +19,7 @@ podman compose -f compose-opensearch.yaml up
 `podman compose` requires a Compose provider such as `podman-compose` or the
 Docker Compose plugin to be installed and discoverable in `PATH`.
 
-## Components
+## 1. Components
 
 - `otel-collector`: receives OpenTelemetry Protocol (OTLP) logs and traces over
   Google remote procedure call (gRPC) and Hypertext Transfer Protocol (HTTP).
@@ -39,7 +39,7 @@ service creates Data Views for `otel-logs-*` and `otel-traces-*`, and sets
 `otel-logs-*` as the default only when no default Data View is already
 configured.
 
-## Collector Pipelines
+## 2. Collector Pipelines
 
 The collector stores logs in indices named:
 
@@ -58,7 +58,7 @@ lowercase index names. NestDAQ telemetry lowercases ASCII uppercase letters in
 `service.name` before export; external OTLP clients should also send lowercase
 `service.name` values when using this compose setup.
 
-## Ports
+## 3. Ports
 
 - OpenSearch: `http://localhost:9200`
 - OpenSearch Dashboards: `http://localhost:5601`
@@ -70,7 +70,7 @@ or `daq-webctl` container in the same compose network should use
 `otel-collector:4317` for OTLP gRPC, or `http://otel-collector:4318` for OTLP
 HTTP.
 
-## Rootless Podman
+## 4. Rootless Podman
 
 OpenSearch runs as container `uid=1000,gid=1000`. Here `uid/gid` means user
 identifier/group identifier. With rootless Podman, the host directory
@@ -97,7 +97,7 @@ The `PODMAN_USERNS` setting changes the user namespace mapping. It does not
 change the OpenSearch image's runtime user, which remains container
 `uid=1000,gid=1000`.
 
-## Runtime Options
+## 5. Runtime Options
 
 | Variable | Default | Description |
 | :-- | :-- | :-- |
@@ -113,7 +113,7 @@ change the OpenSearch image's runtime user, which remains container
 | `OPENSEARCH_DASHBOARDS_CONFIG_FILE` | `./opensearch_dashboards.yaml` | OpenSearch Dashboards config file. |
 | `OPENSEARCH_DASHBOARDS_SETUP_SCRIPT` | `./opensearch-dashboards/setup-dashboards.js` | Initial Dashboards setup script. |
 
-## Stop
+## 6. Stop
 
 Stop and remove the local validation containers and network:
 

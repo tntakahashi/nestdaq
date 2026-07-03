@@ -17,7 +17,7 @@ The plugin can export three OpenTelemetry signals:
 `libnestdaq_otel.so` is built and installed only when `opentelemetry-cpp` is
 found at CMake configure time.
 
-## Runtime Model
+## 1. Runtime Model
 
 NestDAQ installs process-wide OpenTelemetry providers inside the telemetry
 plugin. FairLogger logs are captured by a process-wide custom sink. spdlog logs
@@ -37,7 +37,7 @@ HTTP means Hypertext Transfer Protocol, and gRPC means Google remote procedure
 call. The aliases `http`, `otlp_http`, `grpc`, and `otlp_grpc` are also
 accepted by the plugin. An empty protocol disables the signal.
 
-## Resource Attributes
+## 2. Resource Attributes
 
 Logs, metrics, and traces share one OpenTelemetry resource. NestDAQ sets these
 resource attributes when values are available. The `service.*` and `host.*`
@@ -64,7 +64,7 @@ log bodies, not as resource attributes. The OpenTelemetry software development
 kit (SDK) may add its own SDK resource attributes independently; this table
 lists attributes explicitly set by NestDAQ.
 
-## FairLogger Log Records
+## 3. FairLogger Log Records
 
 The FairLogger custom sink converts each emitted FairLogger message into an
 OpenTelemetry LogRecord when the FairLogger severity is at or above
@@ -101,7 +101,7 @@ their resource contains `nestdaq.instance.id`. Logs are initialized at process
 startup with `nestdaq.instance.id.status=unresolved`, then reinitialized with
 `nestdaq.instance.id.status=resolved` when the id becomes available.
 
-## spdlog Log Records
+## 4. spdlog Log Records
 
 The spdlog OpenTelemetry sink is experimental and not yet fully verified.
 
@@ -156,7 +156,7 @@ The spdlog sink records these OpenTelemetry fields and attributes:
 | `spdlog.logger.name` | NestDAQ/spdlog custom | spdlog logger name. |
 | `spdlog.level` | NestDAQ/spdlog custom | Original spdlog level text. |
 
-## Log Severity Mapping
+## 5. Log Severity Mapping
 
 OpenTelemetry stores the normalized log level in the LogRecord
 `SeverityNumber` and `SeverityText` fields. The original logging-library level
@@ -170,7 +170,7 @@ FairLogger severity exported to OpenTelemetry logs. It does not filter records
 emitted through the optional spdlog sink; spdlog filtering remains controlled by
 the spdlog logger and sink levels.
 
-### FairLogger Severity Mapping
+### 5.1. FairLogger Severity Mapping
 
 | FairLogger level | `fair::Severity` int | OTel SeverityNumber | OTel SeverityText | Original level attributes |
 | ---------------- | -------------------- | ------------------- | ----------------- | ------------------------- |
@@ -195,7 +195,7 @@ the spdlog logger and sink levels.
 records themselves use the FairLogger level names. The alias has the same
 `fair::Severity` value as `warn`, `10`.
 
-### spdlog Severity Mapping
+### 5.2. spdlog Severity Mapping
 
 | spdlog level | `spdlog::level::level_enum` int | OTel SeverityNumber | OTel SeverityText | Original level attribute |
 | ------------ | -------------------------------- | ------------------- | ----------------- | ------------------------ |
@@ -208,7 +208,7 @@ records themselves use the FairLogger level names. The alias has the same
 | `off` | `6` | `0` | invalid / unspecified | `spdlog.level` |
 | `n_levels` | `7` | `0` | invalid / unspecified | `spdlog.level` |
 
-## Command-Line Options
+## 6. Command-Line Options
 
 | Option | Env var | Default | Meaning |
 | ------ | ------- | ------- | ------- |
@@ -250,7 +250,7 @@ Severity names are `nolog`, `trace`, `debug4`, `debug3`, `debug2`, `debug1`,
 `debug`, `detail`, `info`, `state`, `warn`, `warning`, `important`, `alarm`,
 `error`, `critical`, and `fatal`.
 
-## Examples
+## 7. Examples
 
 Default operation exports logs to the console exporter and leaves metrics and
 traces disabled:
@@ -394,12 +394,12 @@ only reads it during the telemetry call. In C++20 builds, equivalent overloads
 also accept `std::span<const nestdaq_otel_attribute>` and forward to the same
 low-level implementation.
 
-## Collector Compose Setup
+## 8. Collector Compose Setup
 
 For a local OpenTelemetry Collector, OpenSearch, and OpenSearch Dashboards
 environment, see [OpenTelemetry Collector Compose Setup](../../share/otel-collector-compose/README.md).
 
-## Troubleshooting
+## 9. Troubleshooting
 
 - If `--otel-library` cannot be loaded, check `LD_LIBRARY_PATH`, install rpath,
   or pass an absolute path.

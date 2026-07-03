@@ -4,9 +4,9 @@ Set of examples of how to use the plugins.
 The scripts can be copied to your favorite directory. 
 Redis server must be started before executing the scripts. 
 
-## Helper script to launch a data acquisition (DAQ) process
+## 1. Helper script to launch a data acquisition (DAQ) process
 
-### start_device.sh 
+### 1.1. start_device.sh
 This example shows how to start FairMQDevice with the custom plugins. 
 The device must be those provided by the present repository or those which contains `fairmq-` in the path. 
 Arguments after the device name are passed through to the device and FairMQ, so
@@ -136,7 +136,7 @@ An example of launching a `Sampler` with a different service name (`A-Sampler`) 
 
 `start_device.sh` does not set `--service-name` by itself. Options after the
 device name are passed through to FairMQ and the NestDAQ plugins. See
-[`plugins/README.md#daq-service-identity-defaults`](../plugins/README.md#daq-service-identity-defaults)
+[`plugins/README.md#22-daq-service-identity-defaults`](../plugins/README.md#22-daq-service-identity-defaults)
 for the `daq_service` defaults used when `--service-name` or `--id` is empty.
 
 ```bash
@@ -167,7 +167,7 @@ flowchart TB
   end
 ```
 
-## Topology configuration
+## 2. Topology configuration
 
 Default value for endpoint parameter
 
@@ -201,7 +201,7 @@ Use `autoSubChannel false` for fixed 1:1-style connections such as
 topologies such as `topology-n-n-m.sh` and `topology-2samplers-n-m.sh`, where
 the plugin discovers peer subchannels and updates `numSockets` accordingly.
 When `[subindex]` is written explicitly, only that subchannel is used.
-See [`plugins/README.md#autosubchannel`](../plugins/README.md#autosubchannel)
+See [`plugins/README.md#251-autosubchannel`](../plugins/README.md#251-autosubchannel)
 for the detailed topology plugin behavior.
 
 Topology scripts write endpoint and link definitions to Redis DB 0. Their
@@ -224,7 +224,7 @@ function link () {
 the FairMQ socket, for example `type push`, `method bind`, and
 `autoSubChannel false`.
 
-### Bind and connect endpoints
+### 2.1. Bind and connect endpoints
 
 In topology endpoint settings, `method bind` and `method connect` describe
 which side owns the socket address. Here, an address means the endpoint
@@ -239,7 +239,7 @@ Redis, or it can be set directly through parameters for a fixed setup.
 between two endpoint definitions. The topology plugin reads these definitions
 when each device starts and turns them into concrete FairMQ channel properties.
 
-### topology-1-1.sh
+### 2.2. topology-1-1.sh
 A simple topology of **Sampler** and **Sink** with the **PUSH-PULL** pattern. 
 If _N_ Samplers and _N_ Sinks are started, they form _N_ pairs of Sampler and Sink.
 Each Sampler sends data to one Sink with the same instance index. 
@@ -268,7 +268,7 @@ graph LR
   Sampler-2 --> Sink-2
 ```
 
-### topology-n-n-m.sh
+### 2.3. topology-n-n-m.sh
 A simple topology of _N_-**Sampler**s, _N_-**fairmq-splitter**s, and _M_-**Sink**s with the **PUSH-PULL** pattern. 
 Each Sampler sends data to one fairmq-splitter with the same instance index. 
 Then, the fairmq-splitter sends the data to Sinks. 
@@ -303,7 +303,7 @@ graph LR
   fairmq-splitter-0 & fairmq-splitter-1 & fairmq-splitter-2  --> Sink-0 & Sink-1
 ```
 
-### topology-2samplers-n-m.sh
+### 2.4. topology-2samplers-n-m.sh
 Two sampler services send data to one sink service. 
 
 This script demonstrates the service-name grouping described above. It expects
@@ -324,9 +324,9 @@ graph LR
   A-Sampler-0 & A-Sampler-1 & B-Sampler-0 & B-Sampler-1 & B-Sampler-2 --> Sink-0 & Sink-1 
 ```
 
-## Parameter configuration
+## 3. Parameter configuration
 
-### mq-param.sh
+### 3.1. mq-param.sh
 This example shows how to configure parameters via Redis. 
 
 ```bash
@@ -360,7 +360,7 @@ named `parameters:Sampler-0` with fields `text`, `rate`, and `max-iterations`.
 When `Sampler-0` starts with the `parameter_config` plugin, those values are
 mirrored into the device program options.
 
-## Device skeleton generation
+## 4. Device skeleton generation
 
 `generate-device-skeleton.py` creates a minimal NestDAQ FairMQ device project
 from templates built into the script.
@@ -407,7 +407,7 @@ Processing modes:
 | `on-data` | Generates an `OnData()` callback registration in `InitTask()`; requires `--input-channel`. |
 
 For how to choose between `OnData()`, `ConditionalRun()`, and `Run()`, see
-[`examples/README.md#choosing-ondata-conditionalrun-or-run`](../examples/README.md#choosing-ondata-conditionalrun-or-run).
+[`examples/README.md#44-choosing-ondata-conditionalrun-or-run`](../examples/README.md#44-choosing-ondata-conditionalrun-or-run).
 
 Channel options passed to the generator are not the final device command-line
 options. They describe how to generate those options in C++:

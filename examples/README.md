@@ -4,7 +4,7 @@ This directory contains small NestDAQ device examples. The examples are a
 standalone CMake project, and are also included in the main NestDAQ build when
 `NestDAQ_BUILD_EXAMPLES=ON` is set. `NestDAQ_BUILD_EXAMPLES` defaults to `ON`.
 
-## Example Devices
+## 1. Example Devices
 
 | Executable | Purpose |
 | :-- | :-- |
@@ -21,7 +21,7 @@ and metrics without including OpenTelemetry headers. Enable them at runtime with
 the telemetry options, for example `--otel-metric-protocol=console` and
 `--otel-trace-protocol=console`.
 
-## Build
+## 2. Build
 
 The main NestDAQ build builds and installs these examples by default. Configure
 with `-DNestDAQ_BUILD_EXAMPLES=OFF` to skip them.
@@ -45,7 +45,7 @@ libraries. The example CMake project sets an install runtime search path
 (rpath) relative to the
 example install prefix and uses link paths discovered through `NestDAQ::NestDAQ`.
 
-## Running
+## 3. Running
 
 Use the installed helper scripts or invoke the binaries directly with FairMQ
 channel options. A typical local validation run starts Redis, an OpenTelemetry
@@ -57,21 +57,21 @@ Sink --help
 NullDevice --help
 ```
 
-### Local Run Sequence
+### 3.1. Local Run Sequence
 
 The commands below assume that NestDAQ was installed under
 `<install-prefix>`. Run long-lived processes in separate terminals.
 
 ```mermaid
 flowchart TD
-  Otel[1. Start OTel Collector backend<br/>if needed]
-  Redis[2. Start Redis]
-  WebCtl[3. Start daq-webctl]
-  Browser[4. Open browser controller<br/>http://localhost:8080/]
-  Config[5. Register topology and parameters<br/>topology-*.sh, mq-param.sh]
-  UserDevices[6. Start user device processes<br/>NullDevice, Sink, Sampler]
-  RunNumber[7. Set run number if missing]
-  StartRun[8. Start run<br/>state transition to RUN]
+  Otel[(1) Start OTel Collector backend<br/>if needed]
+  Redis[(2) Start Redis]
+  WebCtl[(3) Start daq-webctl]
+  Browser[(4) Open browser controller<br/>http://localhost:8080/]
+  Config[(5) Register topology and parameters<br/>topology-*.sh, mq-param.sh]
+  UserDevices[(6) Start user device processes<br/>NullDevice, Sink, Sampler]
+  RunNumber[(7) Set run number if missing]
+  StartRun[(8) Start run<br/>state transition to RUN]
 
   Otel --> Redis --> WebCtl --> Browser --> Config --> UserDevices --> RunNumber
   RunNumber --> StartRun
@@ -248,7 +248,7 @@ export OpenTelemetry logs to the collector.
    match a different topology, parameter set, or service grouping. For repeated
    runs, it is also fine to put those overrides in a small wrapper shell script.
    See
-   [`plugins/README.md#daq-service-identity-defaults`](../plugins/README.md#daq-service-identity-defaults)
+   [`plugins/README.md#22-daq-service-identity-defaults`](../plugins/README.md#22-daq-service-identity-defaults)
    for the `daq_service` defaults used when `--service-name` or `--id` is
    empty.
 
@@ -276,8 +276,8 @@ export OpenTelemetry logs to the collector.
    If Redis does not already contain `run_info:run_number`, set or increment the
    run number from the browser controller before starting a run. The controller
    reads and writes this value through Redis and uses it when publishing `RUN`.
-   See [`controller/README.md`](../controller/README.md#redis-command-interface)
-   and [`plugins/README.md`](../plugins/README.md#redis-keys-written-or-read)
+   See [`controller/README.md`](../controller/README.md#6-redis-command-interface)
+   and [`plugins/README.md`](../plugins/README.md#23-redis-keys-written-or-read)
    for the Redis command interface and run information keys.
 
 8. Start the run from the browser controller.
@@ -286,21 +286,21 @@ export OpenTelemetry logs to the collector.
    required state-machine transitions and publish `RUN` to start the run. When
    `RUN` is requested, the controller copies `run_info:run_number` to
    `run_info:latest_run_number` and publishes the run-start command sequence.
-   See [`plugins/README.md`](../plugins/README.md#daq-command-publishsubscribe-pubsub)
+   See [`plugins/README.md`](../plugins/README.md#24-daq-command-publishsubscribe-pubsub)
    for the accepted DAQ commands and `RUN` sequencing.
 
-### Stop the Local Services
+### 3.2. Stop the Local Services
 
 Use the browser controller to end the user device processes before stopping the
 controller and shared services.
 
 ```mermaid
 flowchart TD
-  End[1. Web UI: END PROCESS for user devices]
-  DeviceFallback[2. If needed: stop device terminals or send kill]
-  WebCtl[3. Stop daq-webctl from its terminal]
-  Redis[4. Stop Redis server or service]
-  Otel[5. Stop OTel Collector backend]
+  End[(1) Web UI: END PROCESS for user devices]
+  DeviceFallback[(2) If needed: stop device terminals or send kill]
+  WebCtl[(3) Stop daq-webctl from its terminal]
+  Redis[(4) Stop Redis server or service]
+  Otel[(5) Stop OTel Collector backend]
 
   End --> DeviceFallback --> WebCtl --> Redis --> Otel
 ```
@@ -381,7 +381,7 @@ already exited after `END PROCESS`, skip the terminal fallback step.
    data is reused. See the backend README for data directory names and explicit
    discard commands.
 
-### Example-Specific Options
+### 3.3. Example-Specific Options
 
 The examples also accept FairMQ options, NestDAQ plugin options, and NestDAQ
 telemetry options. Use `--help` on each executable for the complete option set.
@@ -396,7 +396,7 @@ telemetry options. Use `--help` on each executable for the complete option set.
 
 For script-based launch examples, see [`scripts/README.md`](../scripts/README.md).
 
-## Creating Your Own User Device
+## 4. Creating Your Own User Device
 
 A NestDAQ user device is the process that actually produces, consumes, or
 transforms data. In C++ it is implemented as a class derived from
@@ -413,7 +413,7 @@ The main pieces are:
 - Redis stores runtime service information, topology settings, parameter
   settings, DAQ commands, and metrics used by the NestDAQ plugins.
 
-### Start From the Skeleton Generator
+### 4.1. Start From the Skeleton Generator
 
 The recommended first step is to generate a small project and then edit it.
 
@@ -450,10 +450,10 @@ final command-line options of the generated device. For example,
 `--input-channel in-chan-name:in` makes the generated C++ register a runtime
 option named `in-chan-name` with default value `in`.
 
-See [`scripts/README.md#device-skeleton-generation`](../scripts/README.md#device-skeleton-generation)
+See [`scripts/README.md#4-device-skeleton-generation`](../scripts/README.md#4-device-skeleton-generation)
 for all generator options.
 
-### C++ Device Structure
+### 4.2. C++ Device Structure
 
 A minimal NestDAQ device has three C++ entry points around a
 `fair::mq::Device` subclass:
@@ -545,7 +545,7 @@ Use lifecycle functions for different kinds of work:
 | `Run()` | Use only when the device owns the full run loop. Do not normally combine it with meaningful `ConditionalRun()` work. |
 | `PostRun()` | Flush, drain, or release run-time resources after RUNNING ends. |
 
-### Command-Line Options and Type Conversion
+### 4.3. Command-Line Options and Type Conversion
 
 In current NestDAQ examples and skeleton code, custom options are normally
 registered as `std::string`, even when the logical value is numeric. Convert
@@ -565,7 +565,7 @@ This keeps command-line, Redis parameter injection, and generated code behavior
 consistent. If a numeric option is invalid, let the conversion fail early or
 catch the exception and log a clear error.
 
-### Choosing OnData(), ConditionalRun(), or Run()
+### 4.4. Choosing OnData(), ConditionalRun(), or Run()
 
 FairMQ calls the user hooks from its state-machine wrappers. The following
 pseudo-code summarizes the relevant part of FairMQ's `Device.cxx`:
@@ -674,7 +674,7 @@ auto MySource::ConditionalRun() -> bool
 }
 ```
 
-### CMake Project
+### 4.5. CMake Project
 
 The generated `CMakeLists.txt` is intentionally small. A standalone device
 project only needs to find NestDAQ and link to `NestDAQ::NestDAQ`:
@@ -726,7 +726,7 @@ cmake --install ./build-MyDevice
 executable is installed. It may be the same prefix as NestDAQ or a separate
 prefix.
 
-### Running the New Device
+### 4.6. Running the New Device
 
 Use the same runtime services described in the local run sequence above:
 
@@ -761,7 +761,7 @@ These command-line options override the defaults registered by the device or
 plugins. Keep the defaults when they already match your topology, or override
 them on the command line or in a wrapper shell script when a specific use case
 needs different service or channel names. See
-[`plugins/README.md#daq-service-identity-defaults`](../plugins/README.md#daq-service-identity-defaults)
+[`plugins/README.md#22-daq-service-identity-defaults`](../plugins/README.md#22-daq-service-identity-defaults)
 for the `daq_service` defaults used when `--service-name` or `--id` is empty.
 
 The service name and channel names must match the topology registered in
@@ -778,7 +778,7 @@ For a new service name, copy one of the installed `topology-*.sh` scripts and
 add endpoint/link entries for your service and channels. Topology scripts
 write Redis keys that tell the `daq_service` plugin which FairMQ channels
 exist and how services are connected. See
-[`scripts/README.md#topology-configuration`](../scripts/README.md#topology-configuration)
+[`scripts/README.md#2-topology-configuration`](../scripts/README.md#2-topology-configuration)
 and [`plugins/README.md`](../plugins/README.md) for the Redis keys and channel
 behavior.
 

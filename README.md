@@ -1,12 +1,12 @@
 # NestDAQ
 A streaming data acquisition (DAQ) implementation for the particle measurements
 
-## Project guide
+## 1. Project guide
 
 | Path / document | Purpose |
 | :-- | :-- |
 | [INSTALL.md](INSTALL.md) | Prerequisites, external dependency versions and build options, NestDAQ build options, runtime service choices, examples, and optional documentation generation. |
-| [examples/](examples/README.md) | Example devices such as `Sampler`, `Sink`, and `NullDevice`; see its README for detailed local run steps and [custom user device creation](examples/README.md#creating-your-own-user-device). |
+| [examples/](examples/README.md) | Example devices such as `Sampler`, `Sink`, and `NullDevice`; see its README for detailed local run steps and [custom user device creation](examples/README.md#4-creating-your-own-user-device). |
 | [scripts/](scripts/README.md) | Runtime start/topology helper scripts and the `generate-device-skeleton.py` device skeleton generator. |
 | [controller/](controller/README.md) | `daq-webctl` HTTP/WebSocket server, Redis control, and telemetry setup. |
 | [share/controller/](share/controller/README.md) | Browser assets served by `daq-webctl`. |
@@ -21,7 +21,7 @@ A streaming data acquisition (DAQ) implementation for the particle measurements
 | [share/installers/](share/installers/README.md) | Host package installer helper scripts for runtime services with `apt` or `dnf`. |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | Contribution workflow, formatting, static analysis, and naming rules. |
 
-## Tested systems
+## 2. Tested systems
 | Distro    | Version | Compiler    | CMake  | FairMQ |
 | ---       | ---     | ---         | ---    | ---    |
 | AlmaLinux | 8.10    | GCC 8.5.0   | 3.26.5 | 1.9.2  |
@@ -33,7 +33,7 @@ A streaming data acquisition (DAQ) implementation for the particle measurements
 | Ubuntu    | 24.04   | GCC 13.3.0  | 3.28.3 | 1.10.0 |
 | Ubuntu    | 26.04   | GCC 15.2.0  | 4.2.3  | 1.10.0 |
 
-## Dependencies
+## 3. Dependencies
 
 NestDAQ uses Boost, FairLogger, FairMQ, hiredis, redis-plus-plus, and optional
 telemetry/logging dependencies such as opentelemetry-cpp and spdlog. See

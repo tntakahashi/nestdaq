@@ -14,7 +14,7 @@ The scripts use pinned image tags instead of `latest`:
 - `docker.io/redis/redis-stack:7.2.0-v20` for Redis Stack 7.2 with RedisInsight.
 - `docker.io/redis/redis-stack-server:7.2.0-v20` for Redis Stack 7.2 Server only.
 
-## Choose an Image
+## 1. Choose an Image
 
 | Script | Image | RedisInsight | Notes |
 | :-- | :-- | :-- | :-- |
@@ -35,7 +35,7 @@ The Redis Stack 7.2 image tags are Stack release tags, not exact Redis server
 patch-version tags. Use the commands above after startup when the precise Redis
 server patch version matters.
 
-## Start Redis 8.2.7
+## 2. Start Redis 8.2.7
 
 Run:
 
@@ -51,7 +51,7 @@ Data is bind-mounted from `redis-8.2.7-data` next to the script to `/data` in
 the container. This helper uses the official Redis image, so extra Redis server
 arguments in `REDIS_ARGS` are passed as container command arguments.
 
-## Start Redis Stack 7.2
+## 3. Start Redis Stack 7.2
 
 Run Redis Stack with RedisInsight:
 
@@ -70,7 +70,7 @@ Default endpoints:
 - Redis: `localhost:6379`
 - RedisInsight: `http://localhost:8001` when using `run-redis-7.2-stack.sh`
 
-## Start Redis Stack with RedisInsight
+## 4. Start Redis Stack with RedisInsight
 
 Run:
 
@@ -88,7 +88,7 @@ Redis server data is bind-mounted from `redis-stack-data` next to the script to
 `redisinsight-data` to `/redisinsight`, so RedisInsight can create its internal
 subdirectories under that mounted directory.
 
-## Start Redis Stack Server Only
+## 5. Start Redis Stack Server Only
 
 Run:
 
@@ -103,7 +103,7 @@ Default endpoint:
 Data is bind-mounted from `redis-stack-server-data` next to the script to
 `/data` in the container.
 
-## Rerun Behavior
+## 6. Rerun Behavior
 
 By default, each script removes any existing container with the configured
 container name before starting a new one. This makes repeated invocations safe
@@ -114,7 +114,7 @@ or named volume.
 Set `REDIS_CONTAINER_REPLACE=0` to make the script fail instead when a
 same-name container already exists.
 
-## Security-Enhanced Linux (SELinux)
+## 7. Security-Enhanced Linux (SELinux)
 
 SELinux label options are only used with `REDIS_VOLUME_MODE=bind`. Bind mounts
 use the `:Z` label option by default so the container can write to the data
@@ -123,7 +123,7 @@ data directory must be shared by multiple containers. Set `REDIS_VOLUME_LABEL=`
 to omit the label option entirely. In RedisInsight-enabled helpers, the same
 label option is applied to both Redis and RedisInsight bind mounts.
 
-## Directory Permissions
+## 8. Directory Permissions
 
 By default, the scripts create bind-mounted data directories as the host user
 running the script and do not change directory permissions.
@@ -138,7 +138,7 @@ containers may create files owned by host root in the bind-mounted directories.
 If a bind-mounted directory is not writable, adjust host-side ownership or
 permissions explicitly outside these helper scripts.
 
-## Named Volumes
+## 9. Named Volumes
 
 Named volumes are optional. Use `REDIS_VOLUME_MODE=volume` when you want Docker
 or Podman to manage Redis data outside the helper script directory.
@@ -177,7 +177,7 @@ helper scripts:
 REDIS_VOLUME_MODE=volume ./run-redis-stack.sh
 ```
 
-## Runtime Options
+## 10. Runtime Options
 
 Both scripts use the directory containing the script as `THIS_SCRIPT_DIR`.
 Bind-mount data directories are relative to that directory, so copied installed

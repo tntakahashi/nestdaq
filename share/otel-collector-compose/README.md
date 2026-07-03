@@ -20,7 +20,7 @@ backend directory explicitly:
   logs, metrics, and traces in ClickStack, viewed with the ClickStack user
   interface (UI).
 
-## Start
+## 1. Start
 
 After installation, copy the installed setup to a working directory. If
 `./otel-collector-compose` already exists, remove it first or choose a
@@ -58,7 +58,7 @@ Google remote procedure call, and HTTP means Hypertext Transfer Protocol.
 Each backend directory is self-contained. It can be copied on its own and run
 from that copied directory.
 
-## Stop
+## 2. Stop
 
 Stop the selected backend stack from its backend directory:
 
@@ -74,7 +74,7 @@ same backend again with the same data directories reuses the previous data.
 Delete those directories only when you want to discard the stored backend data;
 see the backend-local README for the exact directory names.
 
-## Telemetry Endpoints
+## 3. Telemetry Endpoints
 
 Choose the telemetry endpoint according to where the NestDAQ process runs.
 The same rule applies to NestDAQ device processes and to `daq-webctl`.
@@ -88,7 +88,7 @@ The same rule applies to NestDAQ device processes and to `daq-webctl`.
 For OTLP HTTP, use the signal-specific paths required by the telemetry client,
 such as `/v1/logs`, `/v1/metrics`, and `/v1/traces`.
 
-## Backend Details
+## 4. Backend Details
 
 See the backend-local README:
 

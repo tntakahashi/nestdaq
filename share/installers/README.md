@@ -13,7 +13,7 @@ On Debian and Ubuntu systems, the scripts use `apt-get`. On RHEL-family
 systems such as AlmaLinux, Rocky Linux, RHEL, CentOS, and Fedora, the scripts
 prefer `dnf` and fall back to `yum` when `dnf` is not available.
 
-## Scripts
+## 1. Scripts
 
 | Script | Installs or updates |
 | :-- | :-- |
@@ -22,7 +22,7 @@ prefer `dnf` and fall back to `yum` when `dnf` is not available.
 | `install-opensearch.sh` | OpenSearch from the OpenSearch 2.x package repository. |
 | `install-opensearch-dashboards.sh` | OpenSearch Dashboards from the OpenSearch 2.x package repository. |
 
-## Usage
+## 2. Usage
 
 Run a script with one of these actions:
 
@@ -41,7 +41,7 @@ The uninstall action is intentionally conservative: it does not delete package
 repository files, service configuration, logs, Redis persistence files, or
 OpenSearch data paths. Review those files manually before deleting them. If a
 service is managed by `systemd`, stop and disable it before uninstalling the
-package; see [systemd Management](#systemd-management).
+package; see [systemd Management](#6-systemd-management).
 
 Set `SUDO=` when running as root or when you want to provide your own privilege
 wrapper:
@@ -50,7 +50,7 @@ wrapper:
 SUDO=doas ./install-opensearch.sh install
 ```
 
-## Redis
+## 3. Redis
 
 The Redis script registers `packages.redis.io` and installs Redis `8.2.7` by
 default. For Redis 8 packages, the default package name is `redis`. It installs
@@ -137,7 +137,7 @@ Official install instructions:
 - https://redis.io/docs/latest/operate/oss_and_stack/install/install-stack/apt/
 - https://redis.io/docs/latest/operate/oss_and_stack/install/install-stack/rpm/
 
-## OpenTelemetry Collector Contrib
+## 4. OpenTelemetry Collector Contrib
 
 The OpenTelemetry project publishes Linux packages with each GitHub release.
 There is no apt or dnf repository configured by this helper. The script
@@ -159,7 +159,7 @@ Official install and release instructions:
 - https://opentelemetry.io/docs/collector/install/
 - https://github.com/open-telemetry/opentelemetry-collector-releases/releases
 
-## OpenSearch
+## 5. OpenSearch
 
 The OpenSearch scripts register the OpenSearch 2.x package repositories and
 install OpenSearch `2.19.5` and OpenSearch Dashboards `2.19.5` by default. Use
@@ -194,7 +194,7 @@ Official install instructions:
 - https://docs.opensearch.org/latest/install-and-configure/install-dashboards/rpm/
 - https://docs.opensearch.org/latest/install-and-configure/install-dashboards/debian/
 
-## systemd Management
+## 6. systemd Management
 
 The package scripts install software only. Review service configuration before
 enabling or starting services with `systemd`.
