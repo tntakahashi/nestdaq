@@ -23,8 +23,8 @@ class Sink : public fair::mq::Device {
 public:
 
     struct OptionKey {
-        static constexpr const char* InputChannelName{"in"};
-        static constexpr const char* Multipart{"multipart"};
+        static constexpr const char* kInputChannelName{"in"};
+        static constexpr const char* kMultipart{"multipart"};
     };
 
     Sink();
@@ -35,8 +35,8 @@ public:
     ~Sink() override = default;
 
 private:
-    bool HandleData(fair::mq::MessagePtr &msg, int index);
-    bool HandleMultipartData(fair::mq::Parts &msgParts, int index);
+    bool handleData(fair::mq::MessagePtr &msg, int index);
+    bool handleMultipartData(fair::mq::Parts &msg_parts, int index);
     void Init() override;
     void InitTask() override;
     void PostRun() override;
@@ -51,6 +51,6 @@ private:
 #if __has_include(<spdlog/spdlog.h>)
     std::shared_ptr<spdlog::logger> fLogger;
 #endif
-    uint64_t fNumMessages{0};
+    uint64_t fNumMessages {0};
 
 };

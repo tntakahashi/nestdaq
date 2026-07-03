@@ -36,16 +36,16 @@ std::unique_ptr<fair::mq::Device> getDevice(const fair::mq::ProgOptions& /*confi
     return std::make_unique<Sampler>();
 }
 
-void PrintConfig(const fair::mq::ProgOptions* config, std::string_view name, std::string_view funcname)
+void printConfig(const fair::mq::ProgOptions* config, std::string_view name, std::string_view function_name)
 {
     const auto prefix = std::string{name};
-    auto c = config->GetPropertiesAsStringStartingWith(prefix);
-    std::ostringstream ss;
-    ss << funcname << "\n\t " << name << "\n";
-    for (const auto &[k, v] : c) {
-        ss << "\t key = " << k << ", value = " << v << "\n";
+    auto properties = config->GetPropertiesAsStringStartingWith(prefix);
+    std::ostringstream message;
+    message << function_name << "\n\t " << name << "\n";
+    for (const auto &[key, value] : properties) {
+        message << "\t key = " << key << ", value = " << value << "\n";
     }
-    LOG(debug) << ss.str();
+    LOG(debug) << message.str();
 }
 
 // NOLINTNEXTLINE(cppcoreguidelines-pro-type-member-init)
@@ -71,11 +71,11 @@ void Sampler::Init()
 #elif __has_include(<spdlog/spdlog.h>)
     if (!fLogger) {
         if (nestdaq::telemetry::GetSpdlogNativeConsoleEnabled()) {
-            auto consoleSink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
-            consoleSink->set_pattern(nestdaq::telemetry::GetSpdlogConsolePattern());
+            auto console_sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
+            console_sink->set_pattern(nestdaq::telemetry::GetSpdlogConsolePattern());
             fLogger = std::make_shared<spdlog::logger>(
                           "Sampler",
-                          spdlog::sinks_init_list{std::move(consoleSink)});
+                          spdlog::sinks_init_list{std::move(console_sink)});
         }
     }
     if (fLogger) {
@@ -86,14 +86,14 @@ void Sampler::Init()
 //  fConfig->SubscribeAsString("Sampler", [](const std::string& key, std::string value){
 //    LOG(debug) << "Sampler (subscribe) : key = " << key << ", value = " << value;
 //  });
-    PrintConfig(fConfig, "channel-config", __PRETTY_FUNCTION__);
-    PrintConfig(fConfig, "chans.", __PRETTY_FUNCTION__);
+    printConfig(fConfig, "channel-config", __PRETTY_FUNCTION__);
+    printConfig(fConfig, "chans.", __PRETTY_FUNCTION__);
 }
 
 void Sampler::InitTask()
 {
-    PrintConfig(fConfig, "channel-config", __PRETTY_FUNCTION__);
-    PrintConfig(fConfig, "chans.", __PRETTY_FUNCTION__);
+    printConfig(fConfig, "channel-config", __PRETTY_FUNCTION__);
+    printConfig(fConfig, "chans.", __PRETTY_FUNCTION__);
 
     fId = fConfig->GetProperty<std::string>("id");
     fOutputChannelName = fConfig->GetProperty<std::string>("out-chan-name");
@@ -113,38 +113,38 @@ void Sampler::InitTask()
 
 bool Sampler::ConditionalRun()
 {
-    for (auto iSubChannel = 0; iSubChannel < fNumSubChannels; ++iSubChannel) {
-        auto text = new std::string(fId + "[" + std::to_string(iSubChannel) + "]:" + fText + " : " + std::to_string(fNumIterations));
+    for (auto sub_channel_index = 0; sub_channel_index < fNumSubChannels; ++sub_channel_index) {
+        auto text = new std::string(fId + "[" + std::to_string(sub_channel_index) + "]:" + fText + " : " + std::to_string(fNumIterations));
 
         // copy
-        auto txt = *text;
+        auto text_copy = *text;
 
         fair::mq::MessagePtr msg(NewMessage(
                                      const_cast<char*>(text->data()),
                                      text->length(),
         [](void * /*data*/, void* object) {
-            auto p = static_cast<std::string*>(object);
-            //LOG(debug) << " sent " << *p;
-            delete p; // NOLINT(cppcoreguidelines-owning-memory)
+            auto payload = static_cast<std::string*>(object);
+            //LOG(debug) << " sent " << *payload;
+            delete payload; // NOLINT(cppcoreguidelines-owning-memory)
         },
         text
                                  )
                                 );
 
-        LOG(info) << "Sending \"" << txt << "\"";
+        LOG(info) << "Sending \"" << text_copy << "\"";
 
         auto span = nestdaq::telemetry::GetTelemetry().StartSpan("sampler.send",
         {   {"fairmq.channel.name", fOutputChannelName},
-            {"fairmq.channel.index", iSubChannel},
+            {"fairmq.channel.index", sub_channel_index},
             {"message.size", text->length()}
         });
 
-        if (Send(msg, fOutputChannelName, iSubChannel) < 0) {
-            LOG(warn) << "failed to send. event:  " << fNumIterations << ", sub channel = " << iSubChannel;
+        if (Send(msg, fOutputChannelName, sub_channel_index) < 0) {
+            LOG(warn) << "failed to send. event:  " << fNumIterations << ", sub channel = " << sub_channel_index;
             // Record failures with channel attributes so send-side drops can be
             // separated by FairMQ channel and subchannel.
             fMessagesFailed.Add(1, {{"fairmq.channel.name", fOutputChannelName},
-                {"fairmq.channel.index", iSubChannel}
+                {"fairmq.channel.index", sub_channel_index}
             });
             span.SetAttribute({"send.ok", false});
             return false;
@@ -152,10 +152,10 @@ bool Sampler::ConditionalRun()
         // Record normal send metrics close to the send result to demonstrate
         // how user code attaches operational context to each measurement.
         fMessagesSent.Add(1, {{"fairmq.channel.name", fOutputChannelName},
-            {"fairmq.channel.index", iSubChannel}
+            {"fairmq.channel.index", sub_channel_index}
         });
         fMessageSize.Record(text->length(), {{"fairmq.channel.name", fOutputChannelName},
-            {"fairmq.channel.index", iSubChannel}
+            {"fairmq.channel.index", sub_channel_index}
         });
         span.SetAttribute({"send.ok", true});
     }

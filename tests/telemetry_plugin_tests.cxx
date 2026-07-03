@@ -35,8 +35,8 @@
 namespace {
 
 struct CoutCapture {
-    std::ostringstream output;
-    std::streambuf* oldBuffer{std::cout.rdbuf(output.rdbuf())};
+    std::ostringstream fOutput;
+    std::streambuf* fOldBuffer{std::cout.rdbuf(fOutput.rdbuf())};
 
     CoutCapture() = default;
     CoutCapture(const CoutCapture&) = delete;
@@ -45,11 +45,11 @@ struct CoutCapture {
     CoutCapture& operator=(CoutCapture&&) = delete;
 
     ~CoutCapture() {
-        std::cout.rdbuf(oldBuffer);
+        std::cout.rdbuf(fOldBuffer);
     }
 };
 
-auto BaseConfig() -> nestdaq_otel_config {
+auto baseConfig() -> nestdaq_otel_config {
     auto config = nestdaq_otel_config{};
     config.size = sizeof(config);
     config.logs = nestdaq::telemetry::MakeSignalConfig(
@@ -79,18 +79,18 @@ auto BaseConfig() -> nestdaq_otel_config {
     return config;
 }
 
-auto DisabledConfig() -> nestdaq_otel_config {
-    return BaseConfig();
+auto disabledConfig() -> nestdaq_otel_config {
+    return baseConfig();
 }
 
-auto LogOnlyConfig() -> nestdaq_otel_config {
-    auto config = BaseConfig();
+auto logOnlyConfig() -> nestdaq_otel_config {
+    auto config = baseConfig();
     config.logs.protocol = "console";
     return config;
 }
 
-auto MetricsConsoleConfig() -> nestdaq_otel_config {
-    auto config = BaseConfig();
+auto metricsConsoleConfig() -> nestdaq_otel_config {
+    auto config = baseConfig();
     config.metrics.protocol = "console";
     config.service_namespace = "nestdaq";
     config.service_instance_id = "test-instance";
@@ -101,8 +101,8 @@ auto MetricsConsoleConfig() -> nestdaq_otel_config {
     return config;
 }
 
-auto TraceConsoleConfig() -> nestdaq_otel_config {
-    auto config = BaseConfig();
+auto traceConsoleConfig() -> nestdaq_otel_config {
+    auto config = baseConfig();
     config.traces.protocol = "console";
     config.service_namespace = "nestdaq";
     config.service_instance_id = "test-instance";
@@ -112,8 +112,8 @@ auto TraceConsoleConfig() -> nestdaq_otel_config {
     return config;
 }
 
-auto LogsAndMetricsConsoleConfig() -> nestdaq_otel_config {
-    auto config = BaseConfig();
+auto logsAndMetricsConsoleConfig() -> nestdaq_otel_config {
+    auto config = baseConfig();
     config.logs.protocol = "console";
     config.metrics.protocol = "console";
     config.service_namespace = "nestdaq";
@@ -125,16 +125,16 @@ auto LogsAndMetricsConsoleConfig() -> nestdaq_otel_config {
     return config;
 }
 
-auto ExtractJsonLog(std::string_view logs, std::string_view root) -> nlohmann::json {
+auto extractJsonLog(std::string_view logs, std::string_view root) -> nlohmann::json {
     const auto marker = std::string{"{\""} + std::string{root} + "\":";
     const auto begin = logs.find(marker);
     REQUIRE(begin != std::string_view::npos);
-    const auto lineEnd = logs.find('\n', begin);
-    const auto jsonText = logs.substr(begin, lineEnd == std::string_view::npos ? logs.size() - begin : lineEnd - begin);
-    return nlohmann::json::parse(jsonText);
+    const auto line_end = logs.find('\n', begin);
+    const auto json_text = logs.substr(begin, line_end == std::string_view::npos ? logs.size() - begin : line_end - begin);
+    return nlohmann::json::parse(json_text);
 }
 
-auto CountOccurrences(std::string_view haystack, std::string_view needle) -> std::size_t {
+auto countOccurrences(std::string_view haystack, std::string_view needle) -> std::size_t {
     auto count = std::size_t{0};
     auto offset = std::size_t{0};
     while (true) {
@@ -153,7 +153,7 @@ TEST_CASE("telemetry plugin loads unified nestdaq_otel library", "[telemetry][pl
     auto library = nestdaq::telemetry::TelemetryLibrary{};
 
     REQUIRE(library.Load(NESTDAQ_OTEL_LIBRARY_PATH));
-    CHECK(library.InitializeWith(DisabledConfig()));
+    CHECK(library.InitializeWith(disabledConfig()));
     library.ShutdownTelemetry(nestdaq::telemetry::kDefaultTimeoutMs);
 }
 
@@ -161,7 +161,7 @@ TEST_CASE("telemetry plugin rejects severity values outside FairLogger range", "
     auto library = nestdaq::telemetry::TelemetryLibrary{};
 
     REQUIRE(library.Load(NESTDAQ_OTEL_LIBRARY_PATH));
-    REQUIRE(library.InitializeWith(DisabledConfig()));
+    REQUIRE(library.InitializeWith(disabledConfig()));
 
     CHECK(library.SetMinSeverity(static_cast<int32_t>(fair::Severity::fatal)));
     CHECK_FALSE(library.SetMinSeverity(-1));
@@ -173,7 +173,7 @@ TEST_CASE("telemetry plugin rejects severity values outside FairLogger range", "
 TEST_CASE("FairMQ throughput logs are safe when metrics are disabled", "[telemetry][plugin]") {
     auto library = nestdaq::telemetry::TelemetryLibrary{};
     REQUIRE(library.Load(NESTDAQ_OTEL_LIBRARY_PATH));
-    REQUIRE(library.InitializeWith(LogOnlyConfig()));
+    REQUIRE(library.InitializeWith(logOnlyConfig()));
 
     LOG(info) << "data: in: 123 (4.5 MB) out: 6.7 (8.9 MB)";
 
@@ -185,13 +185,13 @@ TEST_CASE("FairLogger severity records OTel fields and original severity attribu
 
     auto library = nestdaq::telemetry::TelemetryLibrary{};
     REQUIRE(library.Load(NESTDAQ_OTEL_LIBRARY_PATH));
-    REQUIRE(library.InitializeWith(LogOnlyConfig()));
+    REQUIRE(library.InitializeWith(logOnlyConfig()));
 
     LOG(warn) << "severity attribute probe";
 
     library.ShutdownTelemetry(nestdaq::telemetry::kDefaultTimeoutMs);
 
-    const auto logs = capture.output.str();
+    const auto logs = capture.fOutput.str();
     CHECK(logs.find("severity attribute probe") != std::string::npos);
     CHECK(logs.find("severity_num       : 13") != std::string::npos);
     CHECK(logs.find("severity_text      : WARN") != std::string::npos);
@@ -204,14 +204,14 @@ TEST_CASE("FairLogger logs include NestDAQ instance id attributes", "[telemetry]
 
     auto library = nestdaq::telemetry::TelemetryLibrary{};
     REQUIRE(library.Load(NESTDAQ_OTEL_LIBRARY_PATH));
-    REQUIRE(library.InitializeWith(LogOnlyConfig()));
+    REQUIRE(library.InitializeWith(logOnlyConfig()));
     REQUIRE(library.SetNestdaqInstanceId("sampler-0"));
 
     LOG(warn) << "nestdaq instance id probe";
 
     library.ShutdownTelemetry(nestdaq::telemetry::kDefaultTimeoutMs);
 
-    const auto logs = capture.output.str();
+    const auto logs = capture.fOutput.str();
     CHECK(logs.find("nestdaq instance id probe") != std::string::npos);
     CHECK(logs.find("host.name: test-host") != std::string::npos);
     CHECK(logs.find("nestdaq.instance.id: sampler-0") != std::string::npos);
@@ -224,13 +224,13 @@ TEST_CASE("FairLogger logs use unresolved resource before NestDAQ instance id is
 
     auto library = nestdaq::telemetry::TelemetryLibrary{};
     REQUIRE(library.Load(NESTDAQ_OTEL_LIBRARY_PATH));
-    REQUIRE(library.InitializeWith(LogOnlyConfig()));
+    REQUIRE(library.InitializeWith(logOnlyConfig()));
 
     LOG(warn) << "early unresolved nestdaq instance id probe";
 
     library.ShutdownTelemetry(nestdaq::telemetry::kDefaultTimeoutMs);
 
-    const auto logs = capture.output.str();
+    const auto logs = capture.fOutput.str();
     CHECK(logs.find("early unresolved nestdaq instance id probe") != std::string::npos);
     CHECK(logs.find("host.name: test-host") != std::string::npos);
     CHECK(logs.find("nestdaq.instance.id.status: unresolved") != std::string::npos);
@@ -242,21 +242,21 @@ TEST_CASE("FairLogger logs use resolved resource after NestDAQ instance id reini
 
     auto library = nestdaq::telemetry::TelemetryLibrary{};
     REQUIRE(library.Load(NESTDAQ_OTEL_LIBRARY_PATH));
-    REQUIRE(library.InitializeWith(LogOnlyConfig()));
+    REQUIRE(library.InitializeWith(logOnlyConfig()));
 
     LOG(warn) << "before resolved nestdaq instance id";
 
-    auto resolvedConfig = LogOnlyConfig();
-    resolvedConfig.nestdaq_instance_id = "sampler-0";
-    resolvedConfig.nestdaq_instance_id_status = "resolved";
-    REQUIRE(library.InitializeWith(resolvedConfig));
+    auto resolved_config = logOnlyConfig();
+    resolved_config.nestdaq_instance_id = "sampler-0";
+    resolved_config.nestdaq_instance_id_status = "resolved";
+    REQUIRE(library.InitializeWith(resolved_config));
     REQUIRE(library.SetNestdaqInstanceId("sampler-0"));
 
     LOG(warn) << "after resolved nestdaq instance id";
 
     library.ShutdownTelemetry(nestdaq::telemetry::kDefaultTimeoutMs);
 
-    const auto logs = capture.output.str();
+    const auto logs = capture.fOutput.str();
     CHECK(logs.find("before resolved nestdaq instance id") != std::string::npos);
     CHECK(logs.find("after resolved nestdaq instance id") != std::string::npos);
     CHECK(logs.find("host.name: test-host") != std::string::npos);
@@ -270,14 +270,14 @@ TEST_CASE("FairLogger logs omit derived NestDAQ instance fields for non-indexed 
 
     auto library = nestdaq::telemetry::TelemetryLibrary{};
     REQUIRE(library.Load(NESTDAQ_OTEL_LIBRARY_PATH));
-    REQUIRE(library.InitializeWith(LogOnlyConfig()));
+    REQUIRE(library.InitializeWith(logOnlyConfig()));
     REQUIRE(library.SetNestdaqInstanceId("sampler-main"));
 
     LOG(warn) << "nestdaq non indexed instance id probe";
 
     library.ShutdownTelemetry(nestdaq::telemetry::kDefaultTimeoutMs);
 
-    const auto logs = capture.output.str();
+    const auto logs = capture.fOutput.str();
     CHECK(logs.find("nestdaq non indexed instance id probe") != std::string::npos);
     CHECK(logs.find("nestdaq.instance.id: sampler-main") != std::string::npos);
     CHECK(logs.find("nestdaq.instance.name:") == std::string::npos);
@@ -289,18 +289,18 @@ TEST_CASE("FairLogger NestDAQ instance id is cleared on shutdown", "[telemetry][
 
     auto library = nestdaq::telemetry::TelemetryLibrary{};
     REQUIRE(library.Load(NESTDAQ_OTEL_LIBRARY_PATH));
-    REQUIRE(library.InitializeWith(LogOnlyConfig()));
+    REQUIRE(library.InitializeWith(logOnlyConfig()));
     REQUIRE(library.SetNestdaqInstanceId("sink-1"));
     LOG(warn) << "before instance id clear";
     library.ShutdownTelemetry(nestdaq::telemetry::kDefaultTimeoutMs);
 
-    auto libraryAfterShutdown = nestdaq::telemetry::TelemetryLibrary{};
-    REQUIRE(libraryAfterShutdown.Load(NESTDAQ_OTEL_LIBRARY_PATH));
-    REQUIRE(libraryAfterShutdown.InitializeWith(LogOnlyConfig()));
+    auto library_after_shutdown = nestdaq::telemetry::TelemetryLibrary{};
+    REQUIRE(library_after_shutdown.Load(NESTDAQ_OTEL_LIBRARY_PATH));
+    REQUIRE(library_after_shutdown.InitializeWith(logOnlyConfig()));
     LOG(warn) << "after instance id clear";
-    libraryAfterShutdown.ShutdownTelemetry(nestdaq::telemetry::kDefaultTimeoutMs);
+    library_after_shutdown.ShutdownTelemetry(nestdaq::telemetry::kDefaultTimeoutMs);
 
-    const auto logs = capture.output.str();
+    const auto logs = capture.fOutput.str();
     CHECK(logs.find("before instance id clear") != std::string::npos);
     CHECK(logs.find("nestdaq.instance.id: sink-1") != std::string::npos);
     const auto after = logs.find("after instance id clear");
@@ -314,7 +314,7 @@ TEST_CASE("spdlog sink exports logs independently from FairLogger instrumentatio
 
     auto library = nestdaq::telemetry::TelemetryLibrary{};
     REQUIRE(library.Load(NESTDAQ_OTEL_LIBRARY_PATH));
-    REQUIRE(library.InitializeWith(LogOnlyConfig()));
+    REQUIRE(library.InitializeWith(logOnlyConfig()));
     REQUIRE(library.SetMinSeverity(static_cast<int32_t>(fair::Severity::fatal)));
 
     auto logger = spdlog::logger{"otel-spdlog-test", {nestdaq::telemetry::CreateSpdlogOpenTelemetrySink()}};
@@ -325,7 +325,7 @@ TEST_CASE("spdlog sink exports logs independently from FairLogger instrumentatio
 
     library.ShutdownTelemetry(nestdaq::telemetry::kDefaultTimeoutMs);
 
-    const auto logs = capture.output.str();
+    const auto logs = capture.fOutput.str();
     CHECK(logs.find("spdlog warning probe") != std::string::npos);
     CHECK(logs.find("fairlogger warning filtered by fatal threshold") == std::string::npos);
     CHECK(logs.find("severity_num       : 13") != std::string::npos);
@@ -339,7 +339,7 @@ TEST_CASE("spdlog logger helper exports through active telemetry plugin", "[tele
 
     auto library = nestdaq::telemetry::TelemetryLibrary{};
     REQUIRE(library.Load(NESTDAQ_OTEL_LIBRARY_PATH));
-    REQUIRE(library.InitializeWith(LogOnlyConfig()));
+    REQUIRE(library.InitializeWith(logOnlyConfig()));
     nestdaq::telemetry::SetActiveTelemetryLibrary(&library);
     nestdaq::telemetry::SetSpdlogNativeConsoleEnabled(false);
 
@@ -350,7 +350,7 @@ TEST_CASE("spdlog logger helper exports through active telemetry plugin", "[tele
     nestdaq::telemetry::SetActiveTelemetryLibrary(nullptr);
     library.ShutdownTelemetry(nestdaq::telemetry::kDefaultTimeoutMs);
 
-    const auto logs = capture.output.str();
+    const auto logs = capture.fOutput.str();
     CHECK(logs.find("spdlog helper probe") != std::string::npos);
     CHECK(logs.find("spdlog.logger.name: helper-spdlog-test") != std::string::npos);
     CHECK(logs.find("spdlog.level: info") != std::string::npos);
@@ -360,7 +360,7 @@ TEST_CASE("spdlog logger helper exports through active telemetry plugin", "[tele
 TEST_CASE("spdlog logger helper can attach native console and active telemetry sinks", "[telemetry][plugin][spdlog]") {
     auto library = nestdaq::telemetry::TelemetryLibrary{};
     REQUIRE(library.Load(NESTDAQ_OTEL_LIBRARY_PATH));
-    REQUIRE(library.InitializeWith(LogOnlyConfig()));
+    REQUIRE(library.InitializeWith(logOnlyConfig()));
     nestdaq::telemetry::SetActiveTelemetryLibrary(&library);
     nestdaq::telemetry::SetSpdlogNativeConsoleEnabled(true);
 
@@ -377,12 +377,12 @@ TEST_CASE("spdlog logger helper respects native console flag without active tele
     nestdaq::telemetry::SetSpdlogAsyncOptions({});
 
     nestdaq::telemetry::SetSpdlogNativeConsoleEnabled(true);
-    auto consoleLogger = nestdaq::telemetry::CreateSpdlogLogger("helper-spdlog-console-only-test");
-    CHECK(consoleLogger->sinks().size() == 1);
+    auto console_logger = nestdaq::telemetry::CreateSpdlogLogger("helper-spdlog-console-only-test");
+    CHECK(console_logger->sinks().size() == 1);
 
     nestdaq::telemetry::SetSpdlogNativeConsoleEnabled(false);
-    auto disabledLogger = nestdaq::telemetry::CreateSpdlogLogger("helper-spdlog-disabled-test");
-    CHECK(disabledLogger->sinks().empty());
+    auto disabled_logger = nestdaq::telemetry::CreateSpdlogLogger("helper-spdlog-disabled-test");
+    CHECK(disabled_logger->sinks().empty());
 
     nestdaq::telemetry::SetSpdlogNativeConsoleEnabled(true);
 }
@@ -444,7 +444,7 @@ TEST_CASE("spdlog sink records source location attributes", "[telemetry][plugin]
 
     auto library = nestdaq::telemetry::TelemetryLibrary{};
     REQUIRE(library.Load(NESTDAQ_OTEL_LIBRARY_PATH));
-    REQUIRE(library.InitializeWith(LogOnlyConfig()));
+    REQUIRE(library.InitializeWith(logOnlyConfig()));
 
     auto logger = spdlog::logger{"otel-spdlog-source-test", {nestdaq::telemetry::CreateSpdlogOpenTelemetrySink()}};
     logger.set_level(spdlog::level::trace);
@@ -454,7 +454,7 @@ TEST_CASE("spdlog sink records source location attributes", "[telemetry][plugin]
 
     library.ShutdownTelemetry(nestdaq::telemetry::kDefaultTimeoutMs);
 
-    const auto logs = capture.output.str();
+    const auto logs = capture.fOutput.str();
     CHECK(logs.find("spdlog source probe") != std::string::npos);
     CHECK(logs.find("severity_num       : 17") != std::string::npos);
     CHECK(logs.find("severity_text      : ERROR") != std::string::npos);
@@ -470,34 +470,34 @@ TEST_CASE("FairMQ build metadata is logged instead of stored as resource attribu
 
     auto library = nestdaq::telemetry::TelemetryLibrary{};
     REQUIRE(library.Load(NESTDAQ_OTEL_LIBRARY_PATH));
-    REQUIRE(library.InitializeWith(LogOnlyConfig()));
+    REQUIRE(library.InitializeWith(logOnlyConfig()));
     library.ShutdownTelemetry(nestdaq::telemetry::kDefaultTimeoutMs);
 
-    const auto logs = capture.output.str();
-    const auto nestdaqJson = ExtractJsonLog(logs, "nestdaq");
-    const auto fairmqJson = ExtractJsonLog(logs, "fairmq");
+    const auto logs = capture.fOutput.str();
+    const auto nestdaq_json = extractJsonLog(logs, "nestdaq");
+    const auto fairmq_json = extractJsonLog(logs, "fairmq");
 
-    CHECK(nestdaqJson["nestdaq"]["version"]["string"].is_string());
-    CHECK(nestdaqJson["nestdaq"]["version"]["major"].is_number_unsigned());
-    CHECK(nestdaqJson["nestdaq"]["version"]["minor"].is_number_unsigned());
-    CHECK(nestdaqJson["nestdaq"]["version"]["patch"].is_number_unsigned());
-    CHECK(nestdaqJson["nestdaq"]["version"]["prerelease"].is_string());
-    CHECK(nestdaqJson["nestdaq"]["build"]["type"].is_string());
-    CHECK(nestdaqJson["nestdaq"]["git"]["commit_count"].is_number_unsigned());
-    CHECK(nestdaqJson["nestdaq"]["git"]["commit_hash"].is_string());
-    CHECK(nestdaqJson["nestdaq"]["git"]["branch"].is_string());
-    CHECK(nestdaqJson["nestdaq"]["git"]["remote_url"].is_string());
-    CHECK(nestdaqJson["nestdaq"]["git"]["commit_date"].is_string());
+    CHECK(nestdaq_json["nestdaq"]["version"]["string"].is_string());
+    CHECK(nestdaq_json["nestdaq"]["version"]["major"].is_number_unsigned());
+    CHECK(nestdaq_json["nestdaq"]["version"]["minor"].is_number_unsigned());
+    CHECK(nestdaq_json["nestdaq"]["version"]["patch"].is_number_unsigned());
+    CHECK(nestdaq_json["nestdaq"]["version"]["prerelease"].is_string());
+    CHECK(nestdaq_json["nestdaq"]["build"]["type"].is_string());
+    CHECK(nestdaq_json["nestdaq"]["git"]["commit_count"].is_number_unsigned());
+    CHECK(nestdaq_json["nestdaq"]["git"]["commit_hash"].is_string());
+    CHECK(nestdaq_json["nestdaq"]["git"]["branch"].is_string());
+    CHECK(nestdaq_json["nestdaq"]["git"]["remote_url"].is_string());
+    CHECK(nestdaq_json["nestdaq"]["git"]["commit_date"].is_string());
 
-    CHECK(fairmqJson["fairmq"]["version"]["string"].is_string());
-    CHECK(fairmqJson["fairmq"]["version"]["major"].is_number_unsigned());
-    CHECK(fairmqJson["fairmq"]["version"]["minor"].is_number_unsigned());
-    CHECK(fairmqJson["fairmq"]["version"]["patch"].is_number_unsigned());
-    CHECK(fairmqJson["fairmq"]["version"]["git"].is_string());
-    CHECK(fairmqJson["fairmq"]["build"]["type"].is_string());
-    CHECK(fairmqJson["fairmq"]["source"]["repo_url"].is_string());
-    CHECK(fairmqJson["fairmq"]["license"].is_string());
-    CHECK(fairmqJson["fairmq"]["copyright"].is_string());
+    CHECK(fairmq_json["fairmq"]["version"]["string"].is_string());
+    CHECK(fairmq_json["fairmq"]["version"]["major"].is_number_unsigned());
+    CHECK(fairmq_json["fairmq"]["version"]["minor"].is_number_unsigned());
+    CHECK(fairmq_json["fairmq"]["version"]["patch"].is_number_unsigned());
+    CHECK(fairmq_json["fairmq"]["version"]["git"].is_string());
+    CHECK(fairmq_json["fairmq"]["build"]["type"].is_string());
+    CHECK(fairmq_json["fairmq"]["source"]["repo_url"].is_string());
+    CHECK(fairmq_json["fairmq"]["license"].is_string());
+    CHECK(fairmq_json["fairmq"]["copyright"].is_string());
 
     REQUIRE(logs.find("{\"nestdaq\":") != std::string::npos);
     REQUIRE(logs.find("{\"fairmq\":") != std::string::npos);
@@ -516,29 +516,29 @@ TEST_CASE("metrics console initializes and exports resource attributes", "[telem
 
     auto library = nestdaq::telemetry::TelemetryLibrary{};
     REQUIRE(library.Load(NESTDAQ_OTEL_LIBRARY_PATH));
-    REQUIRE(library.InitializeWith(MetricsConsoleConfig()));
+    REQUIRE(library.InitializeWith(metricsConsoleConfig()));
 
     auto telemetry = nestdaq::telemetry::Telemetry{library};
     CHECK(telemetry.AddDoubleCounter("probe.counter", 42.0, "1", "probe counter"));
     nestdaq::telemetry::SetActiveTelemetryLibrary(&library);
-    auto userTelemetry = nestdaq::telemetry::GetTelemetry();
-    CHECK(userTelemetry.AddCounter("user.inferred.counter", 1, "1", "inferred counter"));
-    CHECK(userTelemetry.RecordHistogram("user.inferred.histogram", uint64_t{4096}, "By", "inferred histogram"));
-    CHECK(userTelemetry.RecordGauge("user.inferred.gauge", 12.5F, "1", "inferred gauge"));
-    CHECK(userTelemetry.Counter("user.messages.total", "1", "user messages")
+    auto user_telemetry = nestdaq::telemetry::GetTelemetry();
+    CHECK(user_telemetry.AddCounter("user.inferred.counter", 1, "1", "inferred counter"));
+    CHECK(user_telemetry.RecordHistogram("user.inferred.histogram", uint64_t{4096}, "By", "inferred histogram"));
+    CHECK(user_telemetry.RecordGauge("user.inferred.gauge", 12.5F, "1", "inferred gauge"));
+    CHECK(user_telemetry.Counter("user.messages.total", "1", "user messages")
     .Add(3, {{"channel", "data"}, {"running", true}, {"partition", uint64_t{2}}}));
-    CHECK(userTelemetry.Histogram("user.decode.duration", "ms", "user decode duration")
+    CHECK(user_telemetry.Histogram("user.decode.duration", "ms", "user decode duration")
     .Record(4.5F, {{"channel", "data"}, {"attempt", int64_t{1}}, {"ratio", 0.5}}));
-    CHECK(userTelemetry.Gauge("user.queue.depth", "1", "user queue depth")
+    CHECK(user_telemetry.Gauge("user.queue.depth", "1", "user queue depth")
     .Record(uint64_t{1234}, {{"channel", "data"}, {"slot", uint64_t{2}}}));
-    CHECK(userTelemetry.Gauge("user.queue.depth", "1", "user queue depth")
+    CHECK(user_telemetry.Gauge("user.queue.depth", "1", "user queue depth")
     .Record(9876.5, {{"channel", "data"}, {"slot", uint64_t{2}}}));
 
     std::this_thread::sleep_for(std::chrono::milliseconds{250});
     nestdaq::telemetry::SetActiveTelemetryLibrary(nullptr);
     library.ShutdownTelemetry(nestdaq::telemetry::kDefaultTimeoutMs);
 
-    const auto output = capture.output.str();
+    const auto output = capture.fOutput.str();
     CHECK(output.find("probe.counter") != std::string::npos);
     CHECK(output.find("service.name") != std::string::npos);
     CHECK(output.find("nestdaq-test") != std::string::npos);
@@ -572,7 +572,7 @@ TEST_CASE("user telemetry facade accepts low-level attribute arrays", "[telemetr
 
     auto library = nestdaq::telemetry::TelemetryLibrary{};
     REQUIRE(library.Load(NESTDAQ_OTEL_LIBRARY_PATH));
-    REQUIRE(library.InitializeWith(MetricsConsoleConfig()));
+    REQUIRE(library.InitializeWith(metricsConsoleConfig()));
 
     auto telemetry = nestdaq::telemetry::Telemetry{library};
     auto attributes = std::array{
@@ -600,7 +600,7 @@ TEST_CASE("user telemetry facade accepts low-level attribute arrays", "[telemetr
     std::this_thread::sleep_for(std::chrono::milliseconds{250});
     library.ShutdownTelemetry(nestdaq::telemetry::kDefaultTimeoutMs);
 
-    const auto output = capture.output.str();
+    const auto output = capture.fOutput.str();
     CHECK(output.find("lowlevel.counter") != std::string::npos);
     CHECK(output.find("channel") != std::string::npos);
     CHECK(output.find("data") != std::string::npos);
@@ -613,7 +613,7 @@ TEST_CASE("user telemetry facade accepts C++20 span attributes", "[telemetry][pl
 
     auto library = nestdaq::telemetry::TelemetryLibrary{};
     REQUIRE(library.Load(NESTDAQ_OTEL_LIBRARY_PATH));
-    REQUIRE(library.InitializeWith(MetricsConsoleConfig()));
+    REQUIRE(library.InitializeWith(metricsConsoleConfig()));
 
     auto telemetry = nestdaq::telemetry::Telemetry{library};
     auto attributes = std::array{
@@ -641,7 +641,7 @@ TEST_CASE("user telemetry facade accepts C++20 span attributes", "[telemetry][pl
     std::this_thread::sleep_for(std::chrono::milliseconds{250});
     library.ShutdownTelemetry(nestdaq::telemetry::kDefaultTimeoutMs);
 
-    const auto output = capture.output.str();
+    const auto output = capture.fOutput.str();
     CHECK(output.find("span.counter") != std::string::npos);
     CHECK(output.find("channel") != std::string::npos);
     CHECK(output.find("data") != std::string::npos);
@@ -669,7 +669,7 @@ TEST_CASE("user telemetry facade exports RAII spans and attributes", "[telemetry
 
     auto library = nestdaq::telemetry::TelemetryLibrary{};
     REQUIRE(library.Load(NESTDAQ_OTEL_LIBRARY_PATH));
-    REQUIRE(library.InitializeWith(TraceConsoleConfig()));
+    REQUIRE(library.InitializeWith(traceConsoleConfig()));
     nestdaq::telemetry::SetActiveTelemetryLibrary(&library);
 
     {
@@ -682,7 +682,7 @@ TEST_CASE("user telemetry facade exports RAII spans and attributes", "[telemetry
     nestdaq::telemetry::SetActiveTelemetryLibrary(nullptr);
     library.ShutdownTelemetry(nestdaq::telemetry::kDefaultTimeoutMs);
 
-    const auto output = capture.output.str();
+    const auto output = capture.fOutput.str();
     CHECK(output.find("user-decode") != std::string::npos);
     CHECK(output.find("channel") != std::string::npos);
     CHECK(output.find("data") != std::string::npos);
@@ -701,12 +701,12 @@ TEST_CASE("process metrics export without FairLogger logs or MetricsPlugin", "[t
 
     auto library = nestdaq::telemetry::TelemetryLibrary{};
     REQUIRE(library.Load(NESTDAQ_OTEL_LIBRARY_PATH));
-    REQUIRE(library.InitializeWith(MetricsConsoleConfig()));
+    REQUIRE(library.InitializeWith(metricsConsoleConfig()));
 
     std::this_thread::sleep_for(std::chrono::milliseconds{250});
     library.ShutdownTelemetry(nestdaq::telemetry::kDefaultTimeoutMs);
 
-    const auto output = capture.output.str();
+    const auto output = capture.fOutput.str();
     CHECK(output.find("process.cpu.time") != std::string::npos);
     CHECK(output.find("process.cpu.utilization") != std::string::npos);
     CHECK(output.find("process.memory.usage") != std::string::npos);
@@ -726,12 +726,12 @@ TEST_CASE("user force flush exports no framework metrics when no framework sampl
 
     auto library = nestdaq::telemetry::TelemetryLibrary{};
     REQUIRE(library.Load(NESTDAQ_OTEL_LIBRARY_PATH));
-    REQUIRE(library.InitializeWith(MetricsConsoleConfig()));
+    REQUIRE(library.InitializeWith(metricsConsoleConfig()));
 
     CHECK(library.ForceFlush(nestdaq::telemetry::kDefaultTimeoutMs));
     library.ShutdownTelemetry(nestdaq::telemetry::kDefaultTimeoutMs);
 
-    const auto output = capture.output.str();
+    const auto output = capture.fOutput.str();
     CHECK(output.find("process.cpu.time") == std::string::npos);
     CHECK(output.find("process.cpu.utilization") == std::string::npos);
     CHECK(output.find("process.memory.usage") == std::string::npos);
@@ -747,14 +747,14 @@ TEST_CASE("FairMQ throughput metrics export parsed rate log samples", "[telemetr
 
     auto library = nestdaq::telemetry::TelemetryLibrary{};
     REQUIRE(library.Load(NESTDAQ_OTEL_LIBRARY_PATH));
-    REQUIRE(library.InitializeWith(LogsAndMetricsConsoleConfig()));
+    REQUIRE(library.InitializeWith(logsAndMetricsConsoleConfig()));
 
     LOG(info) << "data: in: 123 (4.5 MB) out: 6.7 (8.9 MB)";
 
     std::this_thread::sleep_for(std::chrono::milliseconds{250});
     library.ShutdownTelemetry(nestdaq::telemetry::kDefaultTimeoutMs);
 
-    const auto output = capture.output.str();
+    const auto output = capture.fOutput.str();
     CHECK(output.find("fairmq.channel.messages_per_second") != std::string::npos);
     CHECK(output.find("fairmq.channel.megabytes_per_second") != std::string::npos);
     CHECK(output.find("fairmq.channel.name") != std::string::npos);
@@ -766,22 +766,22 @@ TEST_CASE("FairMQ throughput metrics are not re-exported without a new log sampl
 
     auto library = nestdaq::telemetry::TelemetryLibrary{};
     REQUIRE(library.Load(NESTDAQ_OTEL_LIBRARY_PATH));
-    REQUIRE(library.InitializeWith(LogsAndMetricsConsoleConfig()));
+    REQUIRE(library.InitializeWith(logsAndMetricsConsoleConfig()));
 
     LOG(info) << "data: in: 123 (4.5 MB) out: 6.7 (8.9 MB)";
 
-    const auto afterLog = capture.output.str();
-    REQUIRE(afterLog.find("fairmq.channel.messages_per_second") != std::string::npos);
-    REQUIRE(afterLog.find("fairmq.channel.megabytes_per_second") != std::string::npos);
-    const auto messagesCount = CountOccurrences(afterLog, "fairmq.channel.messages_per_second");
-    const auto megabytesCount = CountOccurrences(afterLog, "fairmq.channel.megabytes_per_second");
+    const auto after_log = capture.fOutput.str();
+    REQUIRE(after_log.find("fairmq.channel.messages_per_second") != std::string::npos);
+    REQUIRE(after_log.find("fairmq.channel.megabytes_per_second") != std::string::npos);
+    const auto messages_count = countOccurrences(after_log, "fairmq.channel.messages_per_second");
+    const auto megabytes_count = countOccurrences(after_log, "fairmq.channel.megabytes_per_second");
 
     CHECK(library.ForceFlush(nestdaq::telemetry::kDefaultTimeoutMs));
     library.ShutdownTelemetry(nestdaq::telemetry::kDefaultTimeoutMs);
 
-    const auto output = capture.output.str();
-    CHECK(CountOccurrences(output, "fairmq.channel.messages_per_second") == messagesCount);
-    CHECK(CountOccurrences(output, "fairmq.channel.megabytes_per_second") == megabytesCount);
+    const auto output = capture.fOutput.str();
+    CHECK(countOccurrences(output, "fairmq.channel.messages_per_second") == messages_count);
+    CHECK(countOccurrences(output, "fairmq.channel.megabytes_per_second") == megabytes_count);
 }
 
 TEST_CASE("FairMQ state metrics export transitions once", "[telemetry][plugin]") {
@@ -789,21 +789,21 @@ TEST_CASE("FairMQ state metrics export transitions once", "[telemetry][plugin]")
 
     auto library = nestdaq::telemetry::TelemetryLibrary{};
     REQUIRE(library.Load(NESTDAQ_OTEL_LIBRARY_PATH));
-    REQUIRE(library.InitializeWith(MetricsConsoleConfig()));
+    REQUIRE(library.InitializeWith(metricsConsoleConfig()));
 
     library.RecordFrameworkFairMQState(12, "RUNNING");
 
-    const auto afterState = capture.output.str();
-    REQUIRE(afterState.find("fairmq.state.id") != std::string::npos);
-    REQUIRE(afterState.find("fairmq.state.name") != std::string::npos);
-    REQUIRE(afterState.find("RUNNING") != std::string::npos);
-    const auto stateMetricCount = CountOccurrences(afterState, "fairmq.state.id");
+    const auto after_state = capture.fOutput.str();
+    REQUIRE(after_state.find("fairmq.state.id") != std::string::npos);
+    REQUIRE(after_state.find("fairmq.state.name") != std::string::npos);
+    REQUIRE(after_state.find("RUNNING") != std::string::npos);
+    const auto state_metric_count = countOccurrences(after_state, "fairmq.state.id");
 
     CHECK(library.ForceFlush(nestdaq::telemetry::kDefaultTimeoutMs));
     library.ShutdownTelemetry(nestdaq::telemetry::kDefaultTimeoutMs);
 
-    const auto output = capture.output.str();
-    CHECK(CountOccurrences(output, "fairmq.state.id") == stateMetricCount);
+    const auto output = capture.fOutput.str();
+    CHECK(countOccurrences(output, "fairmq.state.id") == state_metric_count);
 }
 
 TEST_CASE("framework metrics flush does not export user metrics", "[telemetry][plugin]") {
@@ -811,28 +811,28 @@ TEST_CASE("framework metrics flush does not export user metrics", "[telemetry][p
 
     auto library = nestdaq::telemetry::TelemetryLibrary{};
     REQUIRE(library.Load(NESTDAQ_OTEL_LIBRARY_PATH));
-    REQUIRE(library.InitializeWith(MetricsConsoleConfig()));
+    REQUIRE(library.InitializeWith(metricsConsoleConfig()));
 
     auto telemetry = nestdaq::telemetry::Telemetry{library};
     CHECK(telemetry.AddDoubleCounter("user.framework_isolation.counter", 1.0, "1", "framework isolation"));
 
     library.RecordFrameworkFairMQState(11, "READY");
 
-    const auto afterFrameworkFlush = capture.output.str();
-    CHECK(afterFrameworkFlush.find("fairmq.state.id") != std::string::npos);
-    CHECK(afterFrameworkFlush.find("user.framework_isolation.counter") == std::string::npos);
+    const auto after_framework_flush = capture.fOutput.str();
+    CHECK(after_framework_flush.find("fairmq.state.id") != std::string::npos);
+    CHECK(after_framework_flush.find("user.framework_isolation.counter") == std::string::npos);
 
     CHECK(library.ForceFlush(nestdaq::telemetry::kDefaultTimeoutMs));
     library.ShutdownTelemetry(nestdaq::telemetry::kDefaultTimeoutMs);
 
-    const auto output = capture.output.str();
+    const auto output = capture.fOutput.str();
     CHECK(output.find("user.framework_isolation.counter") != std::string::npos);
 }
 
 TEST_CASE("disabled metric and trace signals are no-op through loaded plugin", "[telemetry][plugin]") {
     auto library = nestdaq::telemetry::TelemetryLibrary{};
     REQUIRE(library.Load(NESTDAQ_OTEL_LIBRARY_PATH));
-    REQUIRE(library.InitializeWith(DisabledConfig()));
+    REQUIRE(library.InitializeWith(disabledConfig()));
 
     auto telemetry = nestdaq::telemetry::Telemetry{library};
     CHECK(telemetry.AddDoubleCounter("disabled.counter", 1.0, "1", "disabled counter"));
