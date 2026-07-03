@@ -64,12 +64,12 @@ The commands below assume that NestDAQ was installed under
 
 ```mermaid
 flowchart TD
-  Otel[1. OTel Collector backend]
-  Redis[2. Redis server or service]
-  WebCtl[3. daq-webctl on host]
-  Browser[4. Open browser<br/>http://localhost:8080/]
+  Otel[1. Start OTel Collector backend<br/>if needed]
+  Redis[2. Start Redis]
+  WebCtl[3. Start daq-webctl]
+  Browser[4. Open browser controller<br/>http://localhost:8080/]
   Config[5. Register topology and parameters<br/>topology-*.sh, mq-param.sh]
-  UserDevices[6. User devices<br/>NullDevice, Sink, Sampler]
+  UserDevices[6. Start user device processes<br/>NullDevice, Sink, Sampler]
   RunNumber[7. Set run number if missing]
   StartRun[8. Start run<br/>state transition to RUN]
 
@@ -78,14 +78,19 @@ flowchart TD
 ```
 
 The diagram shows a typical local run sequence, not a strict dependency graph.
-Start the OpenTelemetry Collector backend and Redis first, and perform the run
-start operation last. Steps 5 and 6 may be reordered as long as they are done
-after step 2 and before step 8. The browser can be opened as soon as
-`daq-webctl` starts; devices may not appear until the topology and parameter
-settings are registered and the user devices are running. Steps 7 and 8 are
-browser-controller operations. Run-start commands require the target devices to
-be running. `daq-webctl` and the user devices use Redis and export
-OpenTelemetry logs to the collector.
+Start the OpenTelemetry Collector backend first when logs, metrics, or traces
+should be exported and no suitable collector/backend is already running. If
+telemetry is disabled, console-only telemetry is used, or an existing collector
+is already available, treat step 1 as already complete. Redis is required; start
+it using the local deployment method in use, such as a local `redis-server`, a
+containerized Redis/Redis Stack instance, or a host package managed by systemd.
+Perform the run start operation last. Steps 5 and 6 may be reordered as long as
+they are done after Redis is available and before step 8. The browser can be
+opened as soon as `daq-webctl` starts; devices may not appear until the topology
+and parameter settings are registered and the user devices are running. Steps 7
+and 8 are browser-controller operations. Run-start commands require the target
+devices to be running. `daq-webctl` and the user devices use Redis and can
+export OpenTelemetry logs to the collector.
 
 1. Start an OpenTelemetry Collector backend.
 
