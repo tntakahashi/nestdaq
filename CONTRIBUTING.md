@@ -30,7 +30,7 @@ to NestDAQ.
 
 ## Static analysis
 
-- Run `clang-tidy` before opening a Pull Request when practical.
+- Run `clang-tidy` before opening a Pull Request.
 - Use the repository-local `.clang-tidy` configuration.
 - Do not enable extra checks for project code unless the Pull Request is about
   clang-tidy policy itself.

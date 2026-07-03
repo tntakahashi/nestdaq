@@ -19,6 +19,7 @@ A streaming data acquisition (DAQ) implementation for the particle measurements
 | [share/otel-collector-compose/](share/otel-collector-compose/README.md) | Local OpenTelemetry Collector and backend Compose stacks for [OpenSearch](share/otel-collector-compose/opensearch/README.md), [Victoria](share/otel-collector-compose/victoria/README.md), and [ClickStack](share/otel-collector-compose/clickhouse/README.md). |
 | [share/redis-stack-container/](share/redis-stack-container/README.md) | Redis Stack container helper scripts. |
 | [share/installers/](share/installers/README.md) | Host package installer helper scripts for runtime services with `apt` or `dnf`. |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | Contribution workflow, formatting, static analysis, and naming rules. |
 
 ## Tested systems
 | Distro    | Version | Compiler    | CMake  | FairMQ |
