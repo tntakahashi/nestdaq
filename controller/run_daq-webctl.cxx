@@ -99,10 +99,10 @@ auto parseHttpUri(const std::string& uri) -> const std::tuple<std::string, std::
     // pattern = (scheme)://(address):(port)
     std::regex pattern{R"(^([^:\/?#]+)://([^\/?#]+):(\d+))"};
 
-    std::smatch matchResult;
-    if (std::regex_match(uri, matchResult, pattern)) {
+    std::smatch match_result;
+    if (std::regex_match(uri, match_result, pattern)) {
         // int count=0;
-        //  for (const auto & s : matchResult) {
+        //  for (const auto & s : match_result) {
         //    std::cout << count++ << " : " << s << std::endl;
         //  }
         //std::cout << " count = " << count << std::endl;
@@ -113,15 +113,15 @@ auto parseHttpUri(const std::string& uri) -> const std::tuple<std::string, std::
         return {};
     }
 
-    // LOG(debug) << " matchResult.size() = " << matchResult.size();
-    if (matchResult.size()!=4) {
+    // LOG(debug) << " match_result.size() = " << match_result.size();
+    if (match_result.size()!=4) {
         LOG(error) << "error: " << __FILE__ << ":" << __LINE__ << " " << __func__
                    << "\n  http server URI format is invalid. URI = " << uri
-                   << "\n  number of matched parts = " << matchResult.size()
+                   << "\n  number of matched parts = " << match_result.size()
                    << "\n  It should be (scheme)://(address):(port)";
         return {};
     }
-    return {matchResult[1], matchResult[2], matchResult[3]};
+    return {match_result[1], match_result[2], match_result[3]};
 }
 
 int main(int argc, char* argv[]) { // NOLINT(bugprone-exception-escape)
@@ -183,43 +183,43 @@ int main(int argc, char* argv[]) { // NOLINT(bugprone-exception-escape)
 
     // ============================================
     // redis client setup
-    const auto redisUri  = vm["redis-uri"].as<std::string>();
+    const auto redis_uri  = vm["redis-uri"].as<std::string>();
     const auto channel   = daq::service::CommandChannelName.data();
     const auto sep       = vm["separator"].as<std::string>();
-    LOG(info) << "redis-server URI  = " << redisUri;
+    LOG(info) << "redis-server URI  = " << redis_uri;
     LOG(info) << "command-channel   = " << channel;
     LOG(info) << "separator         = " << sep;
 
     gDaqControl = std::make_unique<WebGui>();
 
-    gDaqControl->SetPollIntervalMS(vm["poll-interval"].as<uint64_t>());
-    if (!gDaqControl->ConnectToRedis(redisUri, channel, sep)) {
+    gDaqControl->setPollIntervalMs(vm["poll-interval"].as<uint64_t>());
+    if (!gDaqControl->connectToRedis(redis_uri, channel, sep)) {
         return EXIT_FAILURE;
     }
     // ============================================
-    gDaqControl->SetSendFunction([](auto connid, const auto& arg) {
+    gDaqControl->setSendFunction([](auto conn_id, const auto& arg) {
         if (gWsSessions.empty()) {
             LOG(debug) << " no websocket clients";
             std::this_thread::sleep_for(std::chrono::milliseconds(kWebSocketRetryIntervalMs));
             return;
         }
-        if (connid==0) { // broadcast message to registered clients
+        if (conn_id==0) { // broadcast message to registered clients
             for (const auto& [i, t] : gWsSessions) {
-                LOG(debug) << "Send message to websocket client id = " << i << ", msg = " << arg;
+                LOG(debug) << "send message to websocket client id = " << i << ", msg = " << arg;
                 writeWebSocketMessage(i, arg);
             }
         } else {
-            writeWebSocketMessage(connid, arg);
+            writeWebSocketMessage(conn_id, arg);
         }
     });
-    gDaqControl->SetTerminateFunction([]() {
+    gDaqControl->setTerminateFunction([]() {
         LOG(info) << " Termination is requested.";
     });
 
-    gDaqControl->SetPreRunCommand(vm["pre-run"].as<std::string>());
-    gDaqControl->SetPostRunCommand(vm["post-run"].as<std::string>());
-    gDaqControl->SetPreStopCommand(vm["pre-stop"].as<std::string>());
-    gDaqControl->SetPostStopCommand(vm["post-stop"].as<std::string>());
+    gDaqControl->setPreRunCommand(vm["pre-run"].as<std::string>());
+    gDaqControl->setPostRunCommand(vm["post-run"].as<std::string>());
+    gDaqControl->setPreStopCommand(vm["pre-stop"].as<std::string>());
+    gDaqControl->setPostStopCommand(vm["post-stop"].as<std::string>());
 
     // ============================================
     // http server setup
@@ -254,7 +254,7 @@ void handleWebSocketClose(unsigned int id) {
             v.emplace_back(i, t.second);
         }
     }
-    gDaqControl->SendWebSocketIdList(v);
+    gDaqControl->sendWebSocketIdList(v);
     LOG(info) << __func__ << " websocket id = " << id << " done";
 }
 
@@ -272,13 +272,13 @@ void handleWebSocketConnect(const std::shared_ptr<WebSocketSession> &session) {
             v.emplace_back(i, t.second);
         }
     }
-    gDaqControl->Send(id, msg);
-    gDaqControl->SendWebSocketIdList(v);
+    gDaqControl->send(id, msg);
+    gDaqControl->sendWebSocketIdList(v);
     LOG(info) << __func__ << " websocket id = " << id << " done";
 }
 
 void handleWebSocketRead(unsigned int id, const std::string& message) {
-    gDaqControl->ProcessData(id, message);
+    gDaqControl->processData(id, message);
     LOG(trace) << __func__ << " websocket id = " << id << " done";
 }
 
