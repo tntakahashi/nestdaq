@@ -71,7 +71,7 @@ namespace daq::service {
 /**
  * @brief Return command-line options provided by the parameter configuration plugin.
  */
-auto ParameterConfigPluginProgramOptions() -> fair::mq::Plugin::ProgOptions
+auto parameterConfigPluginProgramOptions() -> fair::mq::Plugin::ProgOptions
 {
     namespace bpo = boost::program_options;
     using opt = ParameterConfigPlugin::OptionKey;
@@ -121,11 +121,11 @@ ParameterConfigPlugin::ParameterConfigPlugin(std::string_view name,
     });
 
     if (fClient) {
-        ReadParameters();
+        readParameters();
     }
     fSubscriberThread = std::thread([this]() {
         try {
-            SubscribeToParameterChange();
+            subscribeToParameterChange();
         } catch (const std::exception &e) {
             LOG(error) << kMyClass << " in CheckThread" << e.what();
         } catch (...) {
@@ -144,7 +144,7 @@ ParameterConfigPlugin::~ParameterConfigPlugin()
 /**
  * @brief Check whether a parameter name maps to a FairMQ reserved option type.
  */
-bool ParameterConfigPlugin::IsReservedOption(std::string_view name)
+bool ParameterConfigPlugin::isReservedOption(std::string_view name)
 {
     if (reservedOptionsString.count(name)>0) {
         return true;
@@ -177,26 +177,26 @@ bool ParameterConfigPlugin::IsReservedOption(std::string_view name)
  * values are interpreted as strings, arrays, or maps based on comma and equals
  * separators.
  */
-void ParameterConfigPlugin::Parse(std::string_view name, std::string line)
+void ParameterConfigPlugin::parse(std::string_view name, std::string line)
 {
     //LOG(debug) << " parameter: field = " << name << ", value = " << line;
-    if (IsReservedOption(name)) {
-        SetPropertyOfReservedOption(name, line);
+    if (isReservedOption(name)) {
+        setPropertyOfReservedOption(name, line);
     } else if (line.find(",")==std::string::npos) {
-        SetPropertyFromString<std::string>(name, line);
+        setPropertyFromString<std::string>(name, line);
     } else if (line.find("=")==std::string::npos) {
         // <value> has "," but doesn't have "=".
-        ToArray(name, line);
+        toArray(name, line);
     } else {
         // <value> has "," and "=".
-        ToMap(name, line);
+        toMap(name, line);
     }
 }
 
 /**
  * @brief Read a Redis hash and apply its fields as parameters.
  */
-void ParameterConfigPlugin::ReadHash(const std::string& name)
+void ParameterConfigPlugin::readHash(const std::string& name)
 {
     std::unordered_map<std::string, std::string> h;
     fClient->hgetall(name, std::inserter(h, h.begin()));
@@ -205,14 +205,14 @@ void ParameterConfigPlugin::ReadHash(const std::string& name)
     for (const auto &[field, value] : h) {
         auto f = prefix.empty() ? field : (prefix + fSeparator + field);
         //LOG(info) << " f = " << f << ", field = " << field << ", value = " << value;
-        Parse(f, value);
+        parse(f, value);
     }
 }
 
 /**
  * @brief Read a Redis list and apply it as a vector property.
  */
-void ParameterConfigPlugin::ReadList(const std::string& name)
+void ParameterConfigPlugin::readList(const std::string& name)
 {
     std::vector<std::string> v;
     fClient->lrange(name, 0, -1, std::back_inserter(v));
@@ -230,7 +230,7 @@ void ParameterConfigPlugin::ReadList(const std::string& name)
 /**
  * @brief Load group, instance, and nested parameter keys from Redis.
  */
-void ParameterConfigPlugin::ReadParameters()
+void ParameterConfigPlugin::readParameters()
 {
     //LOG(debug) << kMyClass << " " << __FUNCTION__;
 
@@ -253,7 +253,7 @@ void ParameterConfigPlugin::ReadParameters()
     //LOG(debug) << " separator  = " << fSeparator;
 
     if (fKey.empty()) {
-        fKey = ParametersPrefix.data() + fSeparator + fId;
+        fKey = kParametersPrefix.data() + fSeparator + fId;
     }
     if (fGroupKey.empty()) {
         auto lastHyphen = fKey.find_last_of("-");
@@ -271,8 +271,8 @@ void ParameterConfigPlugin::ReadParameters()
     }
 
     //LOG(debug) << " parameter config key = " << fKey;
-    ReadHash(fGroupKey);
-    ReadHash(fKey);
+    readHash(fGroupKey);
+    readHash(fKey);
 
     for (const auto &k : {
                 fGroupKey, fKey
@@ -289,15 +289,15 @@ void ParameterConfigPlugin::ReadParameters()
                 auto t = fClient->type(x);
                 LOG(debug) << " key = " << x << ", type = " << t;
                 if (t=="string") {
-                    ReadString(x);
+                    readString(x);
                 } else if (t=="list") {
-                    ReadList(x);
+                    readList(x);
                 } else if (t=="hash") {
-                    ReadHash(x);
+                    readHash(x);
                 } else if (t=="set") {
-                    ReadSet(x);
+                    readSet(x);
                 } else if (t=="zset") {
-                    ReadZset(x);
+                    readZset(x);
                 }
             }
         }
@@ -309,7 +309,7 @@ void ParameterConfigPlugin::ReadParameters()
 /**
  * @brief Read a Redis set and apply it as an unordered-set property.
  */
-void ParameterConfigPlugin::ReadSet(const std::string& name)
+void ParameterConfigPlugin::readSet(const std::string& name)
 {
     std::unordered_set<std::string> members;
     fClient->smembers(name, std::inserter(members, members.begin()));
@@ -328,7 +328,7 @@ void ParameterConfigPlugin::ReadSet(const std::string& name)
 /**
  * @brief Read a Redis string and parse it as a parameter value.
  */
-void ParameterConfigPlugin::ReadString(const std::string& name)
+void ParameterConfigPlugin::readString(const std::string& name)
 {
     auto value = fClient->get(name);
     if (!value) {
@@ -336,13 +336,13 @@ void ParameterConfigPlugin::ReadString(const std::string& name)
     }
     std::string field = name.substr(name.find_last_of(fSeparator)+1).data();
     LOG(debug) << " string: name = " << field << ", value = " << *value;
-    Parse(field, *value);
+    parse(field, *value);
 }
 
 /**
  * @brief Read a Redis sorted set and apply it as a value-to-score map property.
  */
-void ParameterConfigPlugin::ReadZset(const std::string& name)
+void ParameterConfigPlugin::readZset(const std::string& name)
 {
     std::unordered_map<std::string, double> m;
     fClient->zrange(name, 0, -1, std::inserter(m, m.end()));
@@ -360,35 +360,35 @@ void ParameterConfigPlugin::ReadZset(const std::string& name)
 /**
  * @brief Convert and store a Redis value for a FairMQ reserved option.
  */
-void ParameterConfigPlugin::SetPropertyOfReservedOption(std::string_view name, std::string_view value)
+void ParameterConfigPlugin::setPropertyOfReservedOption(std::string_view name, std::string_view value)
 {
     if (reservedOptionsString.count(name)>0) {
-        SetPropertyFromString<std::string>(name,  value);
+        setPropertyFromString<std::string>(name,  value);
         return;
     }
 
     if (reservedOptionsInt.count(name)>0) {
-        SetPropertyFromString<int>(name, value);
+        setPropertyFromString<int>(name, value);
         return;
     }
 
     if (reservedOptionsSize.count(name)>0) {
-        SetPropertyFromString<uint64_t>(name, value);
+        setPropertyFromString<uint64_t>(name, value);
         return;
     }
 
     if (reservedOptionsBool.count(name)>0) {
-        SetPropertyFromString<bool>(name, value);
+        setPropertyFromString<bool>(name, value);
         return;
     }
 
     if (reservedOptionsFloat.count(name)>0) {
-        SetPropertyFromString<float>(name, value);
+        setPropertyFromString<float>(name, value);
         return;
     }
 
     if (reservedOptionsVectorString.count(name)>0) {
-        ToArray(name, value.data());
+        toArray(name, value.data());
         return;
     }
 }
@@ -396,7 +396,7 @@ void ParameterConfigPlugin::SetPropertyOfReservedOption(std::string_view name, s
 /**
  * @brief Subscribe to Redis keyspace notifications for parameter changes.
  */
-void ParameterConfigPlugin::SubscribeToParameterChange()
+void ParameterConfigPlugin::subscribeToParameterChange()
 {
     using opt = ParameterConfigPlugin::OptionKey;
     LOG(debug) << " create a subscriber. (parameter change)";
@@ -414,7 +414,7 @@ void ParameterConfigPlugin::SubscribeToParameterChange()
         if (redisKeySpaceNotificationChannel!=channel && redisKeySpaceNotificationGroupChannel!=channel) {
             return;
         }
-        ReadParameters();
+        readParameters();
     });
 
     sub.subscribe({redisKeySpaceNotificationChannel, redisKeySpaceNotificationGroupChannel});
@@ -441,7 +441,7 @@ void ParameterConfigPlugin::SubscribeToParameterChange()
 /**
  * @brief Convert a delimited Redis value into a vector property.
  */
-void ParameterConfigPlugin::ToArray(std::string_view name, std::string line)
+void ParameterConfigPlugin::toArray(std::string_view name, std::string line)
 {
     std::vector<std::string> v;
     // remove left-space and right space
@@ -459,7 +459,7 @@ void ParameterConfigPlugin::ToArray(std::string_view name, std::string line)
 /**
  * @brief Convert a delimited key-value Redis value into a map property.
  */
-void ParameterConfigPlugin::ToMap(std::string_view name, std::string line)
+void ParameterConfigPlugin::toMap(std::string_view name, std::string line)
 {
     // Assuming the counts of "," and "=" are the same.
     std::vector<std::string> v;

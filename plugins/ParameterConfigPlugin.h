@@ -23,7 +23,7 @@ class Redis;
 namespace daq::service {
 
 /** @brief Redis key prefix that stores parameter configuration. */
-static constexpr std::string_view ParametersPrefix{"parameters"};
+static constexpr std::string_view kParametersPrefix{"parameters"};
 
 /**
  * @brief FairMQ plugin that mirrors Redis parameter values into ProgOptions.
@@ -62,30 +62,30 @@ private:
     std::atomic<bool> fPluginShutdownRequested{false};
 
     /** @brief Return true for options that must not be overwritten from Redis. */
-    static bool IsReservedOption(std::string_view name);
+    static bool isReservedOption(std::string_view name);
     /** @brief Parse one Redis value and dispatch to the appropriate type converter. */
-    void Parse(std::string_view name, std::string line);
+    void parse(std::string_view name, std::string line);
     /** @brief Read a Redis hash into FairMQ properties. */
-    void ReadHash(const std::string& name);
+    void readHash(const std::string& name);
     /** @brief Read a Redis list into an indexed FairMQ property array. */
-    void ReadList(const std::string& name);
+    void readList(const std::string& name);
     /** @brief Read all configured parameter keys from Redis at startup. */
-    void ReadParameters();
+    void readParameters();
     /** @brief Read a Redis set into a FairMQ property array. */
-    void ReadSet(const std::string& name);
+    void readSet(const std::string& name);
     /** @brief Read a Redis string into a FairMQ property. */
-    void ReadString(const std::string& name);
+    void readString(const std::string& name);
     /** @brief Read a Redis sorted set into an ordered FairMQ property array. */
-    void ReadZset(const std::string& name);
+    void readZset(const std::string& name);
     /** @brief Apply reserved options through their dedicated FairMQ property path. */
-    void SetPropertyOfReservedOption(std::string_view name, std::string_view value);
+    void setPropertyOfReservedOption(std::string_view name, std::string_view value);
     /**
      * @brief Convert one Redis string value to the requested FairMQ property type.
      *
      * Existing values are updated only when the converted value differs.
      */
     template <typename T>
-    void SetPropertyFromString(std::string_view name, std::string_view value)
+    void setPropertyFromString(std::string_view name, std::string_view value)
     {
         auto isNewValue = !PropertyExists(name.data());
         T v;
@@ -121,17 +121,17 @@ private:
         }
     }
     /** @brief Subscribe to Redis parameter key changes and update properties. */
-    void SubscribeToParameterChange();
+    void subscribeToParameterChange();
     /** @brief Convert a comma-separated value into an indexed property array. */
-    void ToArray(std::string_view name, std::string line);
+    void toArray(std::string_view name, std::string line);
     /** @brief Convert a comma-separated key/value list into FairMQ properties. */
-    void ToMap(std::string_view name, std::string line);
+    void toMap(std::string_view name, std::string line);
 };
 
 /**
  * @brief Declare parameter configuration plugin command-line options.
  */
-auto ParameterConfigPluginProgramOptions() -> fair::mq::Plugin::ProgOptions;
+auto parameterConfigPluginProgramOptions() -> fair::mq::Plugin::ProgOptions;
 
 // NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables,cppcoreguidelines-pro-type-reinterpret-cast,performance-no-int-to-ptr)
 REGISTER_FAIRMQ_PLUGIN(
@@ -140,7 +140,7 @@ REGISTER_FAIRMQ_PLUGIN(
 (fair::mq::Plugin::Version{0, 0, 0}),
 "ParameterConfig <maintainer@daq.service.net>",
 "https://github.com/spadi-alliance/nestdaq",
-daq::service::ParameterConfigPluginProgramOptions
+daq::service::parameterConfigPluginProgramOptions
 ) // end of macro: REGISTER_FAIRMQ_PLUGIN
 
 } // namespace daq::service

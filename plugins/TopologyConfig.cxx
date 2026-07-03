@@ -41,7 +41,7 @@ static const std::vector<std::string> WaitDeviceReadyTargets {
 using namespace std::string_literals;
 using namespace std::chrono_literals;
 
-void PrintConfig(const std::map<std::string, std::string> &p, std::string_view name)
+void printConfig(const std::map<std::string, std::string> &p, std::string_view name)
 {
     std::ostringstream ss;
     ss << " name = " << name << "\n";
@@ -178,11 +178,11 @@ daq::service::TopologyConfig::TopologyConfig(daq::service::Plugin& plugin)
     : fPlugin(plugin)
 {
     try {
-        fTopPrefix   = GetProperty<std::string>("top-prefix");
-        fServiceName = GetProperty<std::string>(ServiceName.data());
-        fId          = GetProperty<std::string>("id");
-        fSeparator   = GetProperty<std::string>(Separator.data());
-        fMaxTtl      = GetProperty<long long>(MaxTtl.data());
+        fTopPrefix   = getProperty<std::string>("top-prefix");
+        fServiceName = getProperty<std::string>(ServiceName.data());
+        fId          = getProperty<std::string>("id");
+        fSeparator   = getProperty<std::string>(Separator.data());
+        fMaxTtl      = getProperty<long long>(MaxTtl.data());
 
         LOG(debug) << kMyClass
                    << " top prefix = " << fTopPrefix
@@ -207,12 +207,12 @@ daq::service::TopologyConfig::~TopologyConfig()
  * Peer references are resolved through Redis, converted into FairMQ
  * channel-config options, and written back to the device properties.
  */
-void daq::service::TopologyConfig::ConfigConnect()
+void daq::service::TopologyConfig::configConnect()
 {
     auto findPeerIP = [this](const auto& service, const auto& id) {
         const auto &idFull = join({service, id}, fSeparator);
         const auto& peerHealthKey = join({fTopPrefix, idFull,  HealthPrefix.data()}, fSeparator);
-        auto  peerIP = GetClient()->hget(peerHealthKey, "hostIp");
+        auto  peerIP = getClient()->hget(peerHealthKey, "hostIp");
         if (!peerIP) {
             LOG(warn) << " id = " << idFull << " : hostIp not found";
             return ""s;
@@ -234,14 +234,14 @@ void daq::service::TopologyConfig::ConfigConnect()
         std::string address;
         int nRetry = 0;
         while (true) {
-            auto a = GetClient()->hget(key, "address"s);
+            auto a = getClient()->hget(key, "address"s);
             if (a) {
                 LOG(warn) << " ch = " << chFull << " : address found " << *a;
                 address = *a;
                 break;
             }
             LOG(warn) << " ch = " << chFull << " : address not found";
-            if (IsCanceled() || nRetry>fMaxRetryToResolveAddress) {
+            if (isCanceled() || nRetry>fMaxRetryToResolveAddress) {
                 LOG(warn) << " find address of peer channel = " << chFull << " -> canceled";
                 return ""s;
             }
@@ -259,18 +259,18 @@ void daq::service::TopologyConfig::ConfigConnect()
         }
 
         const auto &socketKeyPattern = join({fTopPrefix, service, id, topology::SocketPrefix.data(), channel}, fSeparator);
-        const auto &socketKeys = scan(*GetClient(), socketKeyPattern);
+        const auto &socketKeys = scan(*getClient(), socketKeyPattern);
         for (const auto &socketKey : socketKeys) {
             int nRetry = 0;
             while (true) {
-                auto a = GetClient()->hget(socketKey, "address");
+                auto a = getClient()->hget(socketKey, "address");
                 if (a) {
                     LOG(warn) << " ch = " << socketKey << " : address found " << *a;
                     ret.push_back(MakeAddress(*a, peerIP));
                     break;
                 }
                 LOG(warn) << " ch = " << socketKey << " : address not found";
-                if (IsCanceled() || nRetry>fMaxRetryToResolveAddress) {
+                if (isCanceled() || nRetry>fMaxRetryToResolveAddress) {
                     LOG(warn) << " find address of peer channel = " << socketKey << " -> canceled";
                     break;
                 }
@@ -497,7 +497,7 @@ void daq::service::TopologyConfig::ConfigConnect()
             LOG(debug) << " id = " << fId << " set property : " << k << " " << s;
         }
 
-        SetProperties(properties);
+        setProperties(properties);
     } catch (const std::exception& e) {
         LOG(error) << kMyClass << " error on SetProperty(chans.) : id = " << fId << ": " << e.what();
     } catch (...) {
@@ -505,15 +505,15 @@ void daq::service::TopologyConfig::ConfigConnect()
     }
     LOG(debug) << __FUNCTION__ << " done";
     //LOG(debug) << " after update";
-    //PrintConfig(GetPropertiesAsStringStartingWith("channel-config"), "channel-config");
-    //PrintConfig(GetPropertiesAsStringStartingWith("chans."), "chans.");
+    //printConfig(getPropertiesAsStringStartingWith("channel-config"), "channel-config");
+    //printConfig(getPropertiesAsStringStartingWith("chans."), "chans.");
 
 }
 
 /**
  * @brief Read FairMQ states for peers connected to the given channels.
  */
-auto daq::service::TopologyConfig::GetPeerState(const MQChannel & channels) -> std::map<std::string, std::string>
+auto daq::service::TopologyConfig::getPeerState(const MQChannel & channels) -> std::map<std::string, std::string>
 {
     std::unordered_set<std::string> peerKeys;
     for (const auto &[name, sp] : channels) {
@@ -533,7 +533,7 @@ auto daq::service::TopologyConfig::GetPeerState(const MQChannel & channels) -> s
 
 
     std::unordered_set<std::string> stateKeys;
-    auto client = GetClient();
+    auto client = getClient();
     for (const auto &k : peerKeys) {
         //LOG(debug) << " peer key = " << k;
         auto s = daq::service::scan(*client, {k, daq::service::FairMQStatePrefix.data()}, fSeparator);
@@ -568,11 +568,11 @@ auto daq::service::TopologyConfig::GetPeerState(const MQChannel & channels) -> s
 /**
  * @brief Load topology endpoint/link definitions and install channel properties.
  */
-void daq::service::TopologyConfig::Initialize()
+void daq::service::TopologyConfig::initialize()
 {
 //  fNSubscribed = -1;
     if (fDefaultChannelProperties.empty()) {
-        InitializeDefaultChannelProperties();
+        initializeDefaultChannelProperties();
     }
     if (!fConnectConfig.empty()) {
         LOG(info) << "connect-config = " <<  fConnectConfig;
@@ -599,10 +599,10 @@ void daq::service::TopologyConfig::Initialize()
         }
     }
 
-    auto endpoints = ReadEndpoints();
+    auto endpoints = readEndpoints();
 
     for (const auto& k : endpoints) {
-        const auto sp = ReadEndpointProperty(k);
+        const auto sp = readEndpointProperty(k);
         if (sp.method=="bind") {
             fBindChannels.emplace(sp.name, sp);
         } else if (sp.method=="connect") {
@@ -612,9 +612,9 @@ void daq::service::TopologyConfig::Initialize()
         }
     }
 
-    auto links = ReadLinks();
+    auto links = readLinks();
     for (const auto& k : links) {
-        const auto lp = ReadLinkProperty(k);
+        const auto lp = readLinkProperty(k);
         const auto kk = lp.myService + fSeparator + lp.myChannel + "," + lp.peerService + fSeparator + lp.peerChannel;
         LOG(debug) << " link = " << kk;
         if (fLinks.count(kk)) {
@@ -650,7 +650,7 @@ void daq::service::TopologyConfig::Initialize()
             const auto &peerService = (useL) ? l.myService : l.peerService;
             const auto &peerChannel = (useL) ? l.myChannel : l.peerChannel;
             // scan keys by a pattern = "daq_servie:service:*:presence"
-            const auto &keys = scan(*GetClient(), {fTopPrefix, peerService, "*", PresencePrefix.data()}, fSeparator);
+            const auto &keys = scan(*getClient(), {fTopPrefix, peerService, "*", PresencePrefix.data()}, fSeparator);
             LOG(debug) << kMyClass << " " << __FUNCTION__ << " scan-service : peer name = " << peerService << ", n peers " << keys.size();
             for (const auto &a: keys) {
                 auto k = a.substr(0, a.find_last_of(fSeparator));
@@ -667,7 +667,7 @@ void daq::service::TopologyConfig::Initialize()
 
         LOG(debug) << " channel = " << sp.name << " autoSubChannel set numSockets = " << sp.numSockets;
 
-        if (IsUdsAvailable(peers) && fEnableUds && (sp.method=="bind") && (sp.transport=="zeromq")) {
+        if (isUdsAvailable(peers) && fEnableUds && (sp.method=="bind") && (sp.transport=="zeromq")) {
             sp.address += "ipc://@/tmp/nestdaq/"s + "/" + fServiceName + "/" + fId + "/" + sp.name + "[0]";
             for (auto i=1; i<sp.numSockets; ++i) {
                 sp.address += ",ipc://@/tmp/nestdaq/"s + "/" + fServiceName + "/" + fId + "/" + sp.name + "[" + std::to_string(i) + "]";
@@ -676,7 +676,7 @@ void daq::service::TopologyConfig::Initialize()
         }
         channelConfigOptions.emplace_back(ToChannelConfig(sp));
 
-        WriteChannel(sp, peers);
+        writeChannel(sp, peers);
     }
 
     try {
@@ -689,39 +689,39 @@ void daq::service::TopologyConfig::Initialize()
                 ++it;
             }
         }
-        SetProperties(properties);
+        setProperties(properties);
     } catch (const std::exception& e) {
         LOG(error) << kMyClass << " error on SetProperty(chans.) : " << e.what();
     } catch (...) {
         LOG(error) << kMyClass << " unknown exception on SetProperty(chans.) :";
     }
 
-    LOG(debug) << kMyClass << " Initialize() done";
+    LOG(debug) << kMyClass << " initialize() done";
 }
 
 /**
  * @brief Capture existing FairMQ channel properties as defaults.
  */
-void daq::service::TopologyConfig::InitializeDefaultChannelProperties()
+void daq::service::TopologyConfig::initializeDefaultChannelProperties()
 {
-    //PrintConfig(GetPropertiesAsStringStartingWith("channel-config"), "(default) channel-config"); // available in InitializingDevice
-    //PrintConfig(GetPropertiesAsStringStartingWith("mq-config"), "(default) mq-config"); // available in InitializingDevice
+    //printConfig(getPropertiesAsStringStartingWith("channel-config"), "(default) channel-config"); // available in InitializingDevice
+    //printConfig(getPropertiesAsStringStartingWith("mq-config"), "(default) mq-config"); // available in InitializingDevice
     std::string idForParser;
-    if (PropertyExists("config-key")) {
-        idForParser = GetProperty<std::string>("config-key");
-    } else if (PropertyExists("id")) {
-        idForParser = GetProperty<std::string>("id");
+    if (propertyExists("config-key")) {
+        idForParser = getProperty<std::string>("config-key");
+    } else if (propertyExists("id")) {
+        idForParser = getProperty<std::string>("id");
     }
 
     if (!idForParser.empty()) {
         try {
-            if (PropertyExists("mq-config")) {
-                auto properties = fair::mq::JSONParser(GetProperty<std::string>("mq-config"), idForParser);
+            if (propertyExists("mq-config")) {
+                auto properties = fair::mq::JSONParser(getProperty<std::string>("mq-config"), idForParser);
                 for (auto &[k, v] : properties) {
                     fDefaultChannelProperties[k] = fair::mq::PropertyHelper::ConvertPropertyToString(v);
                 }
-            } else if (PropertyExists("channel-config")) {
-                auto properties = fair::mq::SuboptParser(GetProperty<std::vector<std::string>>("channel-config"), idForParser);
+            } else if (propertyExists("channel-config")) {
+                auto properties = fair::mq::SuboptParser(getProperty<std::vector<std::string>>("channel-config"), idForParser);
                 for (auto &[k, v] : properties) {
                     LOG(debug) << " property name = " << k;
                     fDefaultChannelProperties[k] = fair::mq::PropertyHelper::ConvertPropertyToString(v);
@@ -735,17 +735,17 @@ void daq::service::TopologyConfig::InitializeDefaultChannelProperties()
             LOG(error) << kMyClass << " " << __FUNCTION__ << " : unknown exception";
         }
     }
-    // PrintConfig(fDefaultChannelProperties, "(default) chans.");
+    // printConfig(fDefaultChannelProperties, "(default) chans.");
 }
 
 /**
  * @brief Check whether all peers are on the same host IP and can use UDS.
  */
-bool daq::service::TopologyConfig::IsUdsAvailable(const std::vector<std::string> &peers)
+bool daq::service::TopologyConfig::isUdsAvailable(const std::vector<std::string> &peers)
 {
     const auto& myIP = fPlugin.GetHealth().ipAddress;
     for (const auto& x : peers) {
-        const auto& ip = ReadPeerIP(x);
+        const auto& ip = readPeerIp(x);
         if (myIP!=ip) {
             LOG(debug4) << __func__ << " different ip: me =  " << myIP << ", peer = " << ip;
             return false;
@@ -758,26 +758,26 @@ bool daq::service::TopologyConfig::IsUdsAvailable(const std::vector<std::string>
 /**
  * @brief React to FairMQ lifecycle states that require topology synchronization.
  */
-void daq::service::TopologyConfig::OnDeviceStateChange(DeviceState newState)
+void daq::service::TopologyConfig::onDeviceStateChange(DeviceState newState)
 {
     try {
         switch (newState) {
         case DeviceState::InitializingDevice:
-            Initialize();
+            initialize();
             break;
         case DeviceState::Bound:
-            WriteBindAddress();
-            if (IsCanceled()) break;
-            WaitBindAddress();
-            if (IsCanceled()) break;
+            writeBindAddress();
+            if (isCanceled()) break;
+            waitBindAddress();
+            if (isCanceled()) break;
             if (!fConnectConfig.empty()) {
-                ConfigConnect();
+                configConnect();
             } else {
-                ResolveConnectAddress();
+                resolveConnectAddress();
             }
-            if (IsCanceled()) break;
-            WriteConnectAddress();
-            WaitForPeerConnection();
+            if (isCanceled()) break;
+            writeConnectAddress();
+            waitForPeerConnection();
             break;
         case DeviceState::ResettingDevice:
             Reset();
@@ -795,13 +795,13 @@ void daq::service::TopologyConfig::OnDeviceStateChange(DeviceState newState)
 /**
  * @brief Read one endpoint definition from Redis.
  */
-const daq::service::SocketProperty daq::service::TopologyConfig::ReadEndpointProperty(std::string_view key)
+const daq::service::SocketProperty daq::service::TopologyConfig::readEndpointProperty(std::string_view key)
 {
     const auto& prefix = join({fTopPrefix, topology::Prefix.data(), topology::EndpointPrefix.data(), fServiceName, ""}, fSeparator);
     LOG(debug) << __FUNCTION__ << " prefix = " << prefix;
     const auto& channelName = key.substr(prefix.size());
     std::unordered_map<std::string, std::string> h;
-    GetClient()->hgetall(key, std::inserter(h, h.begin()));
+    getClient()->hgetall(key, std::inserter(h, h.begin()));
     // std::ostringstream ss;
     // ss << " name = " << channelName;
     SocketProperty sp = ToSocketProperty(h);
@@ -812,10 +812,10 @@ const daq::service::SocketProperty daq::service::TopologyConfig::ReadEndpointPro
 /**
  * @brief Scan Redis for endpoint definitions for this service.
  */
-std::unordered_set<std::string> daq::service::TopologyConfig::ReadEndpoints()
+std::unordered_set<std::string> daq::service::TopologyConfig::readEndpoints()
 {
     // scan keys by a pattern = "daq_service:topology:endpoint:service:*"
-    auto keys = scan(*GetClient(), {fTopPrefix, topology::Prefix.data(), topology::EndpointPrefix.data(), fServiceName, "*"}, fSeparator);
+    auto keys = scan(*getClient(), {fTopPrefix, topology::Prefix.data(), topology::EndpointPrefix.data(), fServiceName, "*"}, fSeparator);
 
     auto n = keys.size();
     std::ostringstream ss;
@@ -835,14 +835,14 @@ std::unordered_set<std::string> daq::service::TopologyConfig::ReadEndpoints()
 /**
  * @brief Read and normalize one topology link definition from Redis.
  */
-const daq::service::LinkProperty daq::service::TopologyConfig::ReadLinkProperty(std::string_view key)
+const daq::service::LinkProperty daq::service::TopologyConfig::readLinkProperty(std::string_view key)
 {
     // key = ...:link:service0:channel0,service1:channel1
 
-    auto val = GetClient()->get(key);
+    auto val = getClient()->get(key);
 
     const auto& prefix = join({fTopPrefix, topology::Prefix.data(), topology::LinkPrefix.data(), ""}, fSeparator);
-    // LOG(debug) << " ReadLinkProperty prefix = " << prefix;
+    // LOG(debug) << " readLinkProperty prefix = " << prefix;
 
     // socketPairName = service0:channel0,service1:channel1
     const auto& socketPairName = key.substr(prefix.size());
@@ -891,9 +891,9 @@ const daq::service::LinkProperty daq::service::TopologyConfig::ReadLinkProperty(
 /**
  * @brief Scan Redis for topology links involving this service.
  */
-std::unordered_set<std::string> daq::service::TopologyConfig::ReadLinks()
+std::unordered_set<std::string> daq::service::TopologyConfig::readLinks()
 {
-    auto &r         = *GetClient();
+    auto &r         = *getClient();
     // scan keys by a pattern = "daq_service:topology:link:service:*,*:*"
     auto keys = scan(r, {fTopPrefix, topology::Prefix.data(), topology::LinkPrefix.data(), fServiceName + "*,*", "*"}, fSeparator);
 
@@ -918,12 +918,12 @@ std::unordered_set<std::string> daq::service::TopologyConfig::ReadLinks()
 /**
  * @brief Read bound socket addresses published by a peer channel.
  */
-const std::vector<std::string> daq::service::TopologyConfig::ReadPeerAddress(const std::string& peer)
+const std::vector<std::string> daq::service::TopologyConfig::readPeerAddress(const std::string& peer)
 {
     const auto &peerInstanceKey = peer.substr(0, peer.find(fSeparator+topology::ChannelPrefix.data()));
     const auto &peerHealthKey   = join({peerInstanceKey, HealthPrefix.data()}, fSeparator);
     const auto &peerChannel     = peer.substr(peer.find_last_of(fSeparator)+1);
-    auto &r = *GetClient();
+    auto &r = *getClient();
     LOG(debug) << "peerInstanceKey = " << peerInstanceKey << ", peerHealthKey =  " << peerHealthKey << ", peerChannel = " << peerChannel;
     auto peerIP = r.hget(peerHealthKey, "hostIp");
     LOG(debug) << "id = " << fId << " peer health = " << peerHealthKey;
@@ -945,13 +945,13 @@ const std::vector<std::string> daq::service::TopologyConfig::ReadPeerAddress(con
         std::string address;
         int nRetry = 0;
         while (true) {
-            auto a = GetClient()->hget(k, "address");
+            auto a = getClient()->hget(k, "address");
             if (a) {
                 address = MakeAddress(*a, peerIP->data());
                 break;
             }
             LOG(warn) << " address not found for " << k;
-            if (IsCanceled() || nRetry>fMaxRetryToResolveAddress) {
+            if (isCanceled() || nRetry>fMaxRetryToResolveAddress) {
                 LOG(warn) << " find address of peer channel = " << k << " -> canceled";
                 break;
             }
@@ -968,11 +968,11 @@ const std::vector<std::string> daq::service::TopologyConfig::ReadPeerAddress(con
 /**
  * @brief Read the host IP of a peer service instance.
  */
-const std::string daq::service::TopologyConfig::ReadPeerIP(const std::string& peer)
+const std::string daq::service::TopologyConfig::readPeerIp(const std::string& peer)
 {
     const auto &peerInstanceKey = peer.substr(0, peer.find(fSeparator+topology::ChannelPrefix.data()));
     const auto &peerHealthKey   = join({peerInstanceKey, HealthPrefix.data()}, fSeparator);
-    auto &r = *GetClient();
+    auto &r = *getClient();
     LOG(debug4) << "peerInstanceKey = " << peerInstanceKey << ", peerHealthKey =  " << peerHealthKey;
     auto peerIP = r.hget(peerHealthKey, "hostIp");
     LOG(debug4) << "id = " << fId << " peer health = " << peerHealthKey;
@@ -994,16 +994,16 @@ void daq::service::TopologyConfig::Reset()
     fBindChannels.clear();
     fConnectChannels.clear();
     for (const auto& [k, v] : fCustomChannelProperties) {
-        DeleteProperty(k);
+        deleteProperty(k);
     }
     fCustomChannelProperties.clear();
-    Unregister();
+    unregisterService();
 }
 
 /**
  * @brief Queue TTL refreshes for topology keys owned by this instance.
  */
-void daq::service::TopologyConfig::ResetTtl(sw::redis::Pipeline& pipe)
+void daq::service::TopologyConfig::resetTtl(sw::redis::Pipeline& pipe)
 {
     //LOG(debug) << kMyClass << " " << __FUNCTION__ << " num registered = " << fRegisteredKeys.size();
     std::for_each(fRegisteredKeys.cbegin(), fRegisteredKeys.cend(),
@@ -1015,7 +1015,7 @@ void daq::service::TopologyConfig::ResetTtl(sw::redis::Pipeline& pipe)
 /**
  * @brief Resolve connect socket addresses from peer bind channel registry data.
  */
-void daq::service::TopologyConfig::ResolveConnectAddress()
+void daq::service::TopologyConfig::resolveConnectAddress()
 {
     //LOG(debug) << __PRETTY_FUNCTION__;
     if (fConnectChannels.empty()) {
@@ -1023,7 +1023,7 @@ void daq::service::TopologyConfig::ResolveConnectAddress()
     }
 
     LOG(debug) << __PRETTY_FUNCTION__ << " id = " << fId << " wait done";
-    auto &r = *GetClient();
+    auto &r = *getClient();
 
     // list of instances with the same service name
     //     auto sameServices = scan(r, {fTopPrefix, fServiceName, "*", PresencePrefix.data()}, fSeparator);
@@ -1085,7 +1085,7 @@ void daq::service::TopologyConfig::ResolveConnectAddress()
             const auto &peerProperty = ToSocketProperty(h);
 
             LOG(debug) << "id = " << fId << " numSocket (me) = " << sp.numSockets << ", (peer) = " << peerProperty.numSockets;
-            const auto address = ReadPeerAddress(p); //peerHealthKey, *peerIP, peerChannel);
+            const auto address = readPeerAddress(p); //peerHealthKey, *peerIP, peerChannel);
             const auto myAddressIndex = static_cast<decltype(address)::size_type>(myIndex);
             if ((sp.numSockets<=1) && (peerProperty.numSockets<=1)) {
                 is1to1 = true;
@@ -1120,8 +1120,8 @@ void daq::service::TopologyConfig::ResolveConnectAddress()
     }
 
 //  LOG(debug) << " before update";
-//  PrintConfig(GetPropertiesAsStringStartingWith("channel-config"), "channel-config");
-//  PrintConfig(GetPropertiesAsStringStartingWith("chans."), "chans.");
+//  printConfig(getPropertiesAsStringStartingWith("channel-config"), "channel-config");
+//  printConfig(getPropertiesAsStringStartingWith("chans."), "chans.");
 
     if (options.empty()) {
         return;
@@ -1136,7 +1136,7 @@ void daq::service::TopologyConfig::ResolveConnectAddress()
                 LOG(debug) << " id = " << fId << " set property : " << k << " " << s;
             }
 
-            SetProperties(properties);
+            setProperties(properties);
         }
     } catch (const std::exception& e) {
         LOG(error) << kMyClass << " error on SetProperty(chans.) : id = " << fId << ": " << e.what();
@@ -1144,17 +1144,17 @@ void daq::service::TopologyConfig::ResolveConnectAddress()
         LOG(error) << kMyClass << " unknown exception on SetProperty(chans.) :";
     }
 //  LOG(debug) << " after update";
-//  PrintConfig(GetPropertiesAsStringStartingWith("channel-config"), "channel-config");
-//  PrintConfig(GetPropertiesAsStringStartingWith("chans."), "chans.");
+//  printConfig(getPropertiesAsStringStartingWith("channel-config"), "channel-config");
+//  printConfig(getPropertiesAsStringStartingWith("chans."), "chans.");
 }
 
 /**
  * @brief Remove topology registry keys owned by this instance.
  */
-void daq::service::TopologyConfig::Unregister()
+void daq::service::TopologyConfig::unregisterService()
 {
     if (!fRegisteredKeys.empty()) {
-        auto ndeleted = GetClient()->del(fRegisteredKeys.cbegin(), fRegisteredKeys.cend());
+        auto ndeleted = getClient()->del(fRegisteredKeys.cbegin(), fRegisteredKeys.cend());
         fRegisteredKeys.clear();
         LOG(debug) << kMyClass << " " << __FUNCTION__ << " n deleted = " << ndeleted;
     }
@@ -1163,14 +1163,14 @@ void daq::service::TopologyConfig::Unregister()
 /**
  * @brief Wait until peer bind channels have published their bound addresses.
  */
-void daq::service::TopologyConfig::WaitBindAddress()
+void daq::service::TopologyConfig::waitBindAddress()
 {
     //LOG(debug) << __PRETTY_FUNCTION__;
     if (fConnectChannels.empty()) {
         return;
     }
 
-    auto &r = *GetClient();
+    auto &r = *getClient();
     // find bind channels of peers
     std::unordered_set<std::string> channels;
     for (const auto& [name, sp] : fConnectChannels) {
@@ -1211,7 +1211,7 @@ void daq::service::TopologyConfig::WaitBindAddress()
                     break;
                 }
             }
-            if (IsCanceled()) {
+            if (isCanceled()) {
                 return;
             }
             std::this_thread::sleep_for(1000ms);
@@ -1222,7 +1222,7 @@ void daq::service::TopologyConfig::WaitBindAddress()
 /**
  * @brief Wait for configured peer devices to reach a connection-ready state.
  */
-void daq::service::TopologyConfig::WaitForPeerConnection()
+void daq::service::TopologyConfig::waitForPeerConnection()
 {
     LOG(debug) << __FUNCTION__ << " ...";
     std::unordered_set<std::string> peerKeys;
@@ -1247,8 +1247,8 @@ void daq::service::TopologyConfig::WaitForPeerConnection()
 
 
     bool done{false};
-    auto client = GetClient();
-    while (!done && !IsCanceled()) {
+    auto client = getClient();
+    while (!done && !isCanceled()) {
         std::unordered_set<std::string> stateKeys;
         for (const auto &k : peerKeys) {
             auto s = daq::service::scan(*client, {k, daq::service::FairMQStatePrefix.data()}, fSeparator);
@@ -1302,18 +1302,18 @@ void daq::service::TopologyConfig::WaitForPeerConnection()
 /**
  * @brief Publish current FairMQ socket addresses for a channel set.
  */
-void daq::service::TopologyConfig::WriteAddress(MQChannel &channels, std::function<void (sw::redis::Pipeline&, std::string_view)> f)
+void daq::service::TopologyConfig::writeAddress(MQChannel &channels, std::function<void (sw::redis::Pipeline&, std::string_view)> f)
 {
-    auto &r    = *GetClient();
+    auto &r    = *getClient();
     auto pipe  = r.pipeline();
 
-    std::scoped_lock<std::mutex> lock{GetMutex()};
+    std::scoped_lock<std::mutex> lock{getMutex()};
     try {
         for (auto &[name, sp] : channels) {
             auto localKeyPrefix = "chans." + sp.name + ".";
             for (auto index=0; ; ++index) {
                 auto localKey = localKeyPrefix + std::to_string(index);
-                const auto &chans = GetPropertiesAsStringStartingWith(localKey);
+                const auto &chans = getPropertiesAsStringStartingWith(localKey);
                 if (chans.empty()) {
                     break;
                 }
@@ -1351,7 +1351,7 @@ void daq::service::TopologyConfig::WriteAddress(MQChannel &channels, std::functi
 /**
  * @brief Publish bind socket addresses and mark channels as bound.
  */
-void daq::service::TopologyConfig::WriteBindAddress()
+void daq::service::TopologyConfig::writeBindAddress()
 {
     //LOG(debug) << __PRETTY_FUNCTION__;
     if (fBindChannels.empty()) {
@@ -1359,7 +1359,7 @@ void daq::service::TopologyConfig::WriteBindAddress()
     }
 
     LOG(debug) << kMyClass << " write bind address to the registry. (n =  " << fBindChannels.size() << ")";
-    WriteAddress(fBindChannels, [this](auto &pipe, auto name) {
+    writeAddress(fBindChannels, [this](auto &pipe, auto name) {
         auto channel = join({fTopPrefix, fServiceName, fId, topology::ChannelPrefix.data(), name.data()}, fSeparator);
         pipe.hset(channel, "bound", "1");
         LOG(warn) << kMyClass << " " << __FUNCTION__ << " bound channel: " << channel;
@@ -1371,7 +1371,7 @@ void daq::service::TopologyConfig::WriteBindAddress()
 /**
  * @brief Publish one logical channel and its peer list to Redis.
  */
-void daq::service::TopologyConfig::WriteChannel(SocketProperty &sp, const std::vector<std::string> &peers)
+void daq::service::TopologyConfig::writeChannel(SocketProperty &sp, const std::vector<std::string> &peers)
 {
     if (peers.empty()) {
         //LOG(debug) << " empty peers";
@@ -1382,7 +1382,7 @@ void daq::service::TopologyConfig::WriteChannel(SocketProperty &sp, const std::v
     LOG(debug) << kMyClass << " " << __FUNCTION__ << " channel : " << sp.name << " : n peers = " << peers.size();
     fPlugin.SetProperty("n-peers:"s+sp.name, std::to_string(peers.size()));
 
-    auto pipe = GetClient()->pipeline();
+    auto pipe = getClient()->pipeline();
     pipe.hset(key, {
         std::make_pair("name",                  sp.name),
         std::make_pair("type",                  sp.type),
@@ -1419,7 +1419,7 @@ void daq::service::TopologyConfig::WriteChannel(SocketProperty &sp, const std::v
 /**
  * @brief Publish connect socket addresses to Redis.
  */
-void daq::service::TopologyConfig::WriteConnectAddress()
+void daq::service::TopologyConfig::writeConnectAddress()
 {
     // LOG(debug) << __PRETTY_FUNCTION__;
     if (fConnectChannels.empty()) {
@@ -1427,6 +1427,6 @@ void daq::service::TopologyConfig::WriteConnectAddress()
     }
 
     LOG(debug) << kMyClass << " write connect address to the registry. (n =  " << fConnectChannels.size() << ")";
-    WriteAddress(fConnectChannels);
+    writeAddress(fConnectChannels);
     //LOG(debug) << __PRETTY_FUNCTION__ << " done";
 }

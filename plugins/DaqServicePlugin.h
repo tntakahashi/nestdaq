@@ -112,35 +112,35 @@ public:
 
 private:
     /** @brief Execute a multi-step DAQ command sequence such as start or stop. */
-    void ChangeDeviceStateByMultiCommand(std::string_view cmd);
+    void changeDeviceStateByMultiCommand(std::string_view cmd);
     /** @brief Execute a single FairMQ command received from Redis. */
-    void ChangeDeviceStateBySingleCommand(std::string_view cmd);
+    void changeDeviceStateBySingleCommand(std::string_view cmd);
     /** @brief Read the current run number from Redis run information. */
-    void ReadRunNumber();
-    /** @brief Register presence, health, state, and option keys in Redis. */
-    void Register();
+    void readRunNumber();
+    /** @brief registerService presence, health, state, and option keys in Redis. */
+    void registerService();
     /** @brief Refresh TTLs for Redis keys owned by this plugin. */
-    void ResetTtl();
+    void resetTtl();
     /** @brief Run startup registration and initial topology configuration. */
-    void RunStartupSequence();
+    void runStartupSequence();
     /** @brief Run shutdown cleanup and Redis unregistration. */
-    void RunShutdownSequence();
+    void runShutdownSequence();
     /** @brief Capture the process current working directory for health data. */
-    void SetCurrentWorkingDirectory();
+    void setCurrentWorkingDirectory();
     /** @brief Resolve the service instance id from options or generated UUID. */
-    void SetId();
+    void setId();
     /** @brief Capture the process name for health data. */
-    void SetProcessName();
+    void setProcessName();
     /** @brief Subscribe to DAQ command messages from Redis pub/sub. */
-    void SubscribeToDaqCommand();
+    void subscribeToDaqCommand();
     /** @brief Remove service keys and subscriptions owned by this plugin. */
-    void Unregister();
+    void unregisterService();
     /** @brief Publish FairMQ program options under the service option key. */
-    void WriteProgOptions();
+    void writeProgOptions();
     /** @brief Publish run start timestamps to Redis. */
-    void WriteStartTime();
+    void writeStartTime();
     /** @brief Publish run stop timestamps to Redis. */
-    void WriteStopTime();
+    void writeStopTime();
 
     std::string fSeparator;
 
@@ -182,7 +182,7 @@ private:
 /**
  * @brief Declare DAQ service plugin command-line options.
  */
-auto PluginProgramOptions() -> fair::mq::Plugin::ProgOptions;
+auto pluginProgramOptions() -> fair::mq::Plugin::ProgOptions;
 
 // NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables,cppcoreguidelines-pro-type-reinterpret-cast,performance-no-int-to-ptr)
 REGISTER_FAIRMQ_PLUGIN(
@@ -191,7 +191,7 @@ REGISTER_FAIRMQ_PLUGIN(
 (fair::mq::Plugin::Version{0, 0, 0}),        // Version
 "DAQService <maintainer@daq.service.net>",   // Maintainer
 "https://github.com/spadi-alliance/nestdaq", // Homepage
-daq::service::PluginProgramOptions           // Free function which declares custom program options for the plugin
+daq::service::pluginProgramOptions           // Free function which declares custom program options for the plugin
 //    signature: () -> boost::optional<boost::program_options::options_decription>
 ) // end of macro: REGISTER_FAIRMQ_PLUGIN
 

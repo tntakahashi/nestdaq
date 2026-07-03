@@ -34,7 +34,7 @@ using namespace std::string_literals;
 
 namespace {
 
-auto TimevalToSeconds(const timeval &value) -> double
+auto timevalToSeconds(const timeval &value) -> double
 {
     static constexpr auto kMicrosecondsPerSecond = 1'000'000.0;
     return static_cast<double>(value.tv_sec) + (static_cast<double>(value.tv_usec) / kMicrosecondsPerSecond);
@@ -102,11 +102,11 @@ SocketMetricsKey ReplaceAll(const SocketMetricsKey& input, std::string_view sear
 }
 } // namespace daq::service
 
-auto daq::service::MetricsPluginProgramOptions() -> fair::mq::Plugin::ProgOptions
+auto daq::service::metricsPluginProgramOptions() -> fair::mq::Plugin::ProgOptions
 {
     namespace bpo = boost::program_options;
     using opt = daq::service::MetricsPlugin::OptionKey;
-    LOG(debug) << "daq::service::MetricsPluginProgramOptions: add_options";
+    LOG(debug) << "daq::service::metricsPluginProgramOptions: add_options";
 
     auto options = bpo::options_description(kMyClass.data());
     options.add_options()
@@ -131,12 +131,12 @@ daq::service::MetricsPlugin::MetricsPlugin(std::string_view name,
 //  fPid          = getpid();
 //  LOG(debug) << kMyClass << " pid = " << fPid;
     fPageSize     = sysconf(_SC_PAGESIZE);
-    fProcessUsage = ReadProcessUsage();
+    fProcessUsage = readProcessUsage();
 
     fId          = GetProperty<std::string>("id");
     fServiceName = GetProperty<std::string>(ServiceName.data());
     fSeparator   = GetProperty<std::string>(Separator.data());
-    fTopPrefix   = MetricsPrefix.data();
+    fTopPrefix   = kMetricsPrefix.data();
 
     fRetentionMS = GetProperty<std::string>(opt::Retention.data());
     fMaxTtl      = std::stoll(GetProperty<std::string>(opt::MaxTtl.data()));
@@ -150,24 +150,24 @@ daq::service::MetricsPlugin::MetricsPlugin(std::string_view name,
     }
     fCreatedTime = std::chrono::steady_clock::now();
 
-    fStateKey        = join({fTopPrefix, StatePrefix.data()},        fSeparator);
-    fLastUpdateKey   = join({fTopPrefix, LastUpdatePrefix.data()},   fSeparator);
-    fLastUpdateNSKey = join({fTopPrefix, LastUpdateNSPrefix.data()}, fSeparator);
-    fProcKey.stateId = join({fTopPrefix, StateIdPrefix.data()},      fSeparator);
-    fProcKey.cpu     = join({fTopPrefix, CpuStatPrefix.data()},      fSeparator);
-    fProcKey.ram     = join({fTopPrefix, RamStatPrefix.data()},      fSeparator);
+    fStateKey        = join({fTopPrefix, kStatePrefix.data()},        fSeparator);
+    fLastUpdateKey   = join({fTopPrefix, kLastUpdatePrefix.data()},   fSeparator);
+    fLastUpdateNSKey = join({fTopPrefix, kLastUpdateNSPrefix.data()}, fSeparator);
+    fProcKey.stateId = join({fTopPrefix, kStateIdPrefix.data()},      fSeparator);
+    fProcKey.cpu     = join({fTopPrefix, kCpuStatPrefix.data()},      fSeparator);
+    fProcKey.ram     = join({fTopPrefix, kRamStatPrefix.data()},      fSeparator);
 
-    fSockKey.msgIn    = join({fTopPrefix, MessageInPrefix.data()},  fSeparator);
-    fSockKey.bytesIn  = join({fTopPrefix, BytesInPrefix.data()},    fSeparator);
-    fSockKey.msgOut   = join({fTopPrefix, MessageOutPrefix.data()}, fSeparator);
-    fSockKey.bytesOut = join({fTopPrefix, BytesOutPrefix.data()},   fSeparator);
+    fSockKey.msgIn    = join({fTopPrefix, kMessageInPrefix.data()},  fSeparator);
+    fSockKey.bytesIn  = join({fTopPrefix, kBytesInPrefix.data()},    fSeparator);
+    fSockKey.msgOut   = join({fTopPrefix, kMessageOutPrefix.data()}, fSeparator);
+    fSockKey.bytesOut = join({fTopPrefix, kBytesOutPrefix.data()},   fSeparator);
 
     fSockSumKey       = Append(fSockKey, "sum", "-");
 
-    fNumMessageKey    = join({fTopPrefix, NumMessagePrefix.data()},    fSeparator);
-    fBytesKey         = join({fTopPrefix, BytesPrefix.data()},         fSeparator);
-    fNumMessageSumKey = join({fTopPrefix, NumMessageSumPrefix.data()}, fSeparator);
-    fBytesSumKey      = join({fTopPrefix, BytesSumPrefix.data()},      fSeparator);
+    fNumMessageKey    = join({fTopPrefix, kNumMessagePrefix.data()},    fSeparator);
+    fBytesKey         = join({fTopPrefix, kBytesPrefix.data()},         fSeparator);
+    fNumMessageSumKey = join({fTopPrefix, kNumMessageSumPrefix.data()}, fSeparator);
+    fBytesSumKey      = join({fTopPrefix, kBytesSumPrefix.data()},      fSeparator);
 
     auto t     = ReplaceAll(fProcKey, std::string(fTopPrefix)+fSeparator.data(), "");
     fTsProcKey = Prepend(t, join({"ts", fId}, fSeparator), fSeparator);
@@ -211,9 +211,9 @@ daq::service::MetricsPlugin::MetricsPlugin(std::string_view name,
         fClient = std::make_shared<sw::redis::Redis>(serverUri);
     }
 
-    fCreatedTimeKey = join({fTopPrefix, CreatedTimePrefix.data()},   fSeparator);
-    fHostNameKey    = join({fTopPrefix, HostnamePrefix.data()},      fSeparator);
-    fIpAddressKey   = join({fTopPrefix, HostIpAddressPrefix.data()}, fSeparator);
+    fCreatedTimeKey = join({fTopPrefix, kCreatedTimePrefix.data()},   fSeparator);
+    fHostNameKey    = join({fTopPrefix, kHostnamePrefix.data()},      fSeparator);
+    fIpAddressKey   = join({fTopPrefix, kHostIpAddressPrefix.data()}, fSeparator);
 
     //LOG(debug) << " createdTimeKey = " << fCreatedTimeKey
     //           << "\n hostnameKey    = " << fHostnameKey
@@ -239,7 +239,7 @@ daq::service::MetricsPlugin::MetricsPlugin(std::string_view name,
 
     fPipe = std::make_unique<sw::redis::Pipeline>(std::move(fClient->pipeline()));
     if (fMaxTtl>0) {
-        DeleteExpiredFields();
+        deleteExpiredFields();
     }
 
     {
@@ -255,7 +255,7 @@ daq::service::MetricsPlugin::MetricsPlugin(std::string_view name,
     }
     fair::Logger::AddCustomSink(kMyClass.data(), "info", [this](const std::string &content, const fair::LogMetaData & /*metadata*/) {
         std::scoped_lock<std::mutex> lock{fMutex};
-        SendSocketMetrics(content);
+        sendSocketMetrics(content);
     });
 
     SubscribeToPropertyChangeAsString([this](const std::string& key, std::string value) {
@@ -288,23 +288,23 @@ daq::service::MetricsPlugin::MetricsPlugin(std::string_view name,
         }
         switch (newState) {
         case DeviceState::DeviceReady:
-            InitializeSocketProperties();
+            initializeSocketProperties();
             break;
         case DeviceState::Ready:
         {
-            if (IsRecreateTS()) {
-                DeleteTSKeys();
+            if (isRecreateTs()) {
+                deleteTsKeys();
             }
             fSocketMetrics.clear();
             fNumChannels.clear();
             break;
         }
         case DeviceState::Running:
-            if (IsRecreateTS()) {
-                pipelineUsed |= CreateTimeseries(fTsProcKey.cpu,     {{DataType.data(), CpuStatPrefix.data()}});
-                pipelineUsed |= CreateTimeseries(fTsProcKey.ram,     {{DataType.data(), RamStatPrefix.data()}});
-                pipelineUsed |= CreateTimeseries(fTsProcKey.stateId, {{DataType.data(), StateIdPrefix.data()}});
-                pipelineUsed |= CreateSocketTS();
+            if (isRecreateTs()) {
+                pipelineUsed |= createTimeseries(fTsProcKey.cpu,     {{kDataType.data(), kCpuStatPrefix.data()}});
+                pipelineUsed |= createTimeseries(fTsProcKey.ram,     {{kDataType.data(), kRamStatPrefix.data()}});
+                pipelineUsed |= createTimeseries(fTsProcKey.stateId, {{kDataType.data(), kStateIdPrefix.data()}});
+                pipelineUsed |= createSocketTS();
                 if (pipelineUsed) {
                     fPipe->exec();
                 }
@@ -338,7 +338,7 @@ daq::service::MetricsPlugin::~MetricsPlugin()
 /**
  * @brief Create RedisTimeSeries keys for one socket direction and its sum.
  */
-bool daq::service::MetricsPlugin::CreateSocketTS(std::string_view keyMsg,
+bool daq::service::MetricsPlugin::createSocketTS(std::string_view keyMsg,
         std::string_view keyBytes,
         std::string_view labelMsg,
         std::string_view labelBytes,
@@ -363,21 +363,21 @@ bool daq::service::MetricsPlugin::CreateSocketTS(std::string_view keyMsg,
     //           << "\n labelMsgSum   = " << labelMsgSum
     //           << "\n labelBytesSum = " << labelBytesSum;
 
-    labelsMsg.emplace(DataType.data(),      labelMsg);
-    labelsBytes.emplace(DataType.data(),    labelBytes);
-    labelsMsgSum.emplace(DataType.data(),   labelMsgSum);
-    labelsBytesSum.emplace(DataType.data(), labelBytesSum);
-    pipelineUsed |= CreateTimeseries(keyMsg,      labelsMsg);
-    pipelineUsed |= CreateTimeseries(keyBytes,    labelsBytes);
-    pipelineUsed |= CreateTimeseries(keyMsgSum,   labelsMsgSum);
-    pipelineUsed |= CreateTimeseries(keyBytesSum, labelsBytesSum);
+    labelsMsg.emplace(kDataType.data(),      labelMsg);
+    labelsBytes.emplace(kDataType.data(),    labelBytes);
+    labelsMsgSum.emplace(kDataType.data(),   labelMsgSum);
+    labelsBytesSum.emplace(kDataType.data(), labelBytesSum);
+    pipelineUsed |= createTimeseries(keyMsg,      labelsMsg);
+    pipelineUsed |= createTimeseries(keyBytes,    labelsBytes);
+    pipelineUsed |= createTimeseries(keyMsgSum,   labelsMsgSum);
+    pipelineUsed |= createTimeseries(keyBytesSum, labelsBytesSum);
     return pipelineUsed;
 }
 
 /**
  * @brief Create RedisTimeSeries keys for all configured FairMQ sockets.
  */
-bool daq::service::MetricsPlugin::CreateSocketTS()
+bool daq::service::MetricsPlugin::createSocketTS()
 {
     //LOG(warn) << __func__ << ":" << __LINE__;
     bool pipelineUsed=false;
@@ -404,10 +404,10 @@ bool daq::service::MetricsPlugin::CreateSocketTS()
             {"socket",    property.type},
             {"transport", property.transport}};
         if (hasInput) {
-            pipelineUsed |= CreateSocketTS(tsKey.msgIn, tsKey.bytesIn, MessageInPrefix, BytesInPrefix, labels);
+            pipelineUsed |= createSocketTS(tsKey.msgIn, tsKey.bytesIn, kMessageInPrefix, kBytesInPrefix, labels);
         }
         if (hasOutput) {
-            pipelineUsed |= CreateSocketTS(tsKey.msgOut, tsKey.bytesOut, MessageOutPrefix, BytesOutPrefix, labels);
+            pipelineUsed |= createSocketTS(tsKey.msgOut, tsKey.bytesOut, kMessageOutPrefix, kBytesOutPrefix, labels);
         }
     }
     return pipelineUsed;
@@ -416,7 +416,7 @@ bool daq::service::MetricsPlugin::CreateSocketTS()
 /**
  * @brief Queue creation of one RedisTimeSeries key with standard labels.
  */
-bool daq::service::MetricsPlugin::CreateTimeseries(std::string_view key,
+bool daq::service::MetricsPlugin::createTimeseries(std::string_view key,
         const std::unordered_map<std::string, std::string> &labels)
 {
     //LOG(warn) << __func__ << ":" << __LINE__;
@@ -454,7 +454,7 @@ bool daq::service::MetricsPlugin::CreateTimeseries(std::string_view key,
 /**
  * @brief Delete stale Redis hash fields for service instances past the metrics TTL.
  */
-void daq::service::MetricsPlugin::DeleteExpiredFields()
+void daq::service::MetricsPlugin::deleteExpiredFields()
 {
     while (true) {
         try {
@@ -516,7 +516,7 @@ void daq::service::MetricsPlugin::DeleteExpiredFields()
 /**
  * @brief Delete RedisTimeSeries keys created by this plugin instance.
  */
-void daq::service::MetricsPlugin::DeleteTSKeys()
+void daq::service::MetricsPlugin::deleteTsKeys()
 {
     if (!fRegisteredTSKeys.empty()) {
         auto ndeleted = fClient->del(fRegisteredTSKeys.cbegin(), fRegisteredTSKeys.cend());
@@ -528,7 +528,7 @@ void daq::service::MetricsPlugin::DeleteTSKeys()
 /**
  * @brief Read FairMQ channel properties and cache per-socket metadata.
  */
-void daq::service::MetricsPlugin::InitializeSocketProperties()
+void daq::service::MetricsPlugin::initializeSocketProperties()
 {
     // Get parameters of channel configuration as std::map<sstd::tring, std::1string>
     const auto properties = GetPropertiesAsStringStartingWith("chans.");
@@ -579,7 +579,7 @@ void daq::service::MetricsPlugin::InitializeSocketProperties()
 /**
  * @brief Check whether time-series keys should be recreated when running starts.
  */
-bool daq::service::MetricsPlugin::IsRecreateTS()
+bool daq::service::MetricsPlugin::isRecreateTs()
 {
     //LOG(warn) << __func__ << ":" << __LINE__;
     using opt = OptionKey;
@@ -595,7 +595,7 @@ bool daq::service::MetricsPlugin::IsRecreateTS()
 /**
  * @brief Read cumulative CPU time consumed by this process.
  */
-auto daq::service::MetricsPlugin::ReadProcessUsage() const -> ProcessUsageSample
+auto daq::service::MetricsPlugin::readProcessUsage() const -> ProcessUsageSample
 {
     rusage usage{};
     if (getrusage(RUSAGE_SELF, &usage) != 0) {
@@ -605,7 +605,7 @@ auto daq::service::MetricsPlugin::ReadProcessUsage() const -> ProcessUsageSample
     }
 
     return {
-        .cpuSeconds = TimevalToSeconds(usage.ru_utime) + TimevalToSeconds(usage.ru_stime),
+        .cpuSeconds = timevalToSeconds(usage.ru_utime) + timevalToSeconds(usage.ru_stime),
         .timestamp = std::chrono::steady_clock::now(),
     };
 }
@@ -613,7 +613,7 @@ auto daq::service::MetricsPlugin::ReadProcessUsage() const -> ProcessUsageSample
 /**
  * @brief Read resident memory usage of this process in MiB.
  */
-auto daq::service::MetricsPlugin::ReadResidentMemoryMiB() const -> double
+auto daq::service::MetricsPlugin::readResidentMemoryMiB() const -> double
 {
     std::ifstream input{"/proc/self/statm"};
     uint64_t totalPages = 0;
@@ -630,11 +630,11 @@ auto daq::service::MetricsPlugin::ReadResidentMemoryMiB() const -> double
 /**
  * @brief Record CPU, memory, state, and last-update metrics.
  */
-void daq::service::MetricsPlugin::SendProcessMetrics()
+void daq::service::MetricsPlugin::sendProcessMetrics()
 {
     //std::cout << kMyClass << " " << __FUNCTION__;
 
-    auto nowProcessUsage = ReadProcessUsage();
+    auto nowProcessUsage = readProcessUsage();
 
     const auto cpuSeconds = nowProcessUsage.cpuSeconds - fProcessUsage.cpuSeconds;
     const auto wallSeconds =
@@ -642,7 +642,7 @@ void daq::service::MetricsPlugin::SendProcessMetrics()
 
     // Top/htop style percent: one fully used CPU core is 100%, two cores are 200%.
     const auto cpuUsage = wallSeconds > 0.0 ? cpuSeconds / wallSeconds * 100.0 : 0.0;
-    const auto ramUsage = ReadResidentMemoryMiB();
+    const auto ramUsage = readResidentMemoryMiB();
 
 //  std::cout << " diff (self) = " << diffSelf
 //             << ", diff (all) = " << diffAll << "\n"
@@ -678,7 +678,7 @@ void daq::service::MetricsPlugin::SendProcessMetrics()
 /**
  * @brief Parse a FairMQ throughput log line and record socket metrics.
  */
-void daq::service::MetricsPlugin::SendSocketMetrics(const std::string &content)
+void daq::service::MetricsPlugin::sendSocketMetrics(const std::string &content)
 {
     //LOG(debug) << kMyClass << " " << __FUNCTION__;
     //return;
@@ -785,7 +785,7 @@ void daq::service::MetricsPlugin::SendSocketMetrics(const std::string &content)
                 countAll += static_cast<std::size_t>(v);
             }
             if (countAll==fSocketMetrics.size()) {
-                SendProcessMetrics();
+                sendProcessMetrics();
                 fPipe->exec();
                 fNumChannels.clear();
             }

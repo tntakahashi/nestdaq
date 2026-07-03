@@ -32,35 +32,35 @@ using Pipeline = QueuedRedis<PipelineImpl>;
 
 namespace daq::service {
 
-static constexpr std::string_view MetricsPrefix{"metrics"};
-static constexpr std::string_view StatePrefix{"state"};
-static constexpr std::string_view StateIdPrefix{"state-id"};
-static constexpr std::string_view CpuStatPrefix{"cpu-stat"};
-static constexpr std::string_view RamStatPrefix{"ram-stat"};
+static constexpr std::string_view kMetricsPrefix{"metrics"};
+static constexpr std::string_view kStatePrefix{"state"};
+static constexpr std::string_view kStateIdPrefix{"state-id"};
+static constexpr std::string_view kCpuStatPrefix{"cpu-stat"};
+static constexpr std::string_view kRamStatPrefix{"ram-stat"};
 
-static constexpr std::string_view MessageInPrefix{"msg-in"};
-static constexpr std::string_view BytesInPrefix{"mb-in"};
-static constexpr std::string_view MessageOutPrefix{"msg-out"};
-static constexpr std::string_view BytesOutPrefix{"mb-out"};
+static constexpr std::string_view kMessageInPrefix{"msg-in"};
+static constexpr std::string_view kBytesInPrefix{"mb-in"};
+static constexpr std::string_view kMessageOutPrefix{"msg-out"};
+static constexpr std::string_view kBytesOutPrefix{"mb-out"};
 
-static constexpr std::string_view NumMessagePrefix{"num-msg"};
-static constexpr std::string_view BytesPrefix{"mb"};
-static constexpr std::string_view NumMessageSumPrefix{"num-msg-sum"};
-static constexpr std::string_view BytesSumPrefix{"mb-sum"};
+static constexpr std::string_view kNumMessagePrefix{"num-msg"};
+static constexpr std::string_view kBytesPrefix{"mb"};
+static constexpr std::string_view kNumMessageSumPrefix{"num-msg-sum"};
+static constexpr std::string_view kBytesSumPrefix{"mb-sum"};
 
-static constexpr std::string_view CreatedTimePrefix{"created-time"};
-static constexpr std::string_view LastUpdatePrefix{"last-update"};
-static constexpr std::string_view LastUpdateNSPrefix{"last-update-ns"};
+static constexpr std::string_view kCreatedTimePrefix{"created-time"};
+static constexpr std::string_view kLastUpdatePrefix{"last-update"};
+static constexpr std::string_view kLastUpdateNSPrefix{"last-update-ns"};
 
-static constexpr std::string_view HostnamePrefix{"hostname"};
-static constexpr std::string_view HostIpAddressPrefix{"host-ip"};
+static constexpr std::string_view kHostnamePrefix{"hostname"};
+static constexpr std::string_view kHostIpAddressPrefix{"host-ip"};
 
 /** @brief RedisTimeSeries label names attached to socket metric series. */
-static constexpr std::string_view DataType{"data"};
-static constexpr std::string_view SocketName{"name"};
-static constexpr std::string_view SocketType{"socket"};
-static constexpr std::string_view SocketTransport{"transport"};
-static constexpr std::string_view SocketMethod{"method"};
+static constexpr std::string_view kDataType{"data"};
+static constexpr std::string_view kSocketName{"name"};
+static constexpr std::string_view kSocketType{"socket"};
+static constexpr std::string_view kSocketTransport{"transport"};
+static constexpr std::string_view kSocketMethod{"method"};
 
 /**
  * @brief Process CPU sample used to compute CPU usage between timer ticks.
@@ -130,32 +130,32 @@ public:
 
 private:
     /** @brief Create RedisTimeSeries entries for one socket metric pair. */
-    bool CreateSocketTS(std::string_view keyMsg,
+    bool createSocketTS(std::string_view keyMsg,
                         std::string_view keyBytes,
                         std::string_view labelMsg,
                         std::string_view labelBytes,
                         const std::unordered_map<std::string, std::string> &labels);
     /** @brief Create all configured socket RedisTimeSeries entries. */
-    bool CreateSocketTS();
+    bool createSocketTS();
     /** @brief Create one RedisTimeSeries key with labels and retention. */
-    bool CreateTimeseries(std::string_view key,
+    bool createTimeseries(std::string_view key,
                           const std::unordered_map<std::string, std::string> &labels);
     /** @brief Remove stale hash fields whose update timestamp exceeded max TTL. */
-    void DeleteExpiredFields();
+    void deleteExpiredFields();
     /** @brief Delete RedisTimeSeries keys owned by this metrics instance. */
-    void DeleteTSKeys();
+    void deleteTsKeys();
     /** @brief Load socket metadata from topology keys for metric labels. */
-    void InitializeSocketProperties();
+    void initializeSocketProperties();
     /** @brief Return whether time-series keys should be recreated on startup. */
-    bool IsRecreateTS();
+    bool isRecreateTs();
     /** @brief Read process user/system CPU time for usage deltas. */
-    ProcessUsageSample ReadProcessUsage() const;
+    ProcessUsageSample readProcessUsage() const;
     /** @brief Read resident memory in MiB from `/proc/self/stat`. */
-    double ReadResidentMemoryMiB() const;
+    double readResidentMemoryMiB() const;
     /** @brief Publish process CPU, RSS, and FairMQ state metrics to Redis. */
-    void SendProcessMetrics();
+    void sendProcessMetrics();
     /** @brief Parse and publish socket throughput metrics from a FairMQ log line. */
-    void SendSocketMetrics(const std::string &content);
+    void sendSocketMetrics(const std::string &content);
 
     //pid_t fPid;
     std::string fId;
@@ -221,7 +221,7 @@ private:
 /**
  * @brief Declare metrics plugin command-line options.
  */
-auto MetricsPluginProgramOptions() -> fair::mq::Plugin::ProgOptions;
+auto metricsPluginProgramOptions() -> fair::mq::Plugin::ProgOptions;
 
 // NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables,cppcoreguidelines-pro-type-reinterpret-cast,performance-no-int-to-ptr)
 REGISTER_FAIRMQ_PLUGIN(
@@ -230,7 +230,7 @@ REGISTER_FAIRMQ_PLUGIN(
 (fair::mq::Plugin::Version{0, 0, 0}),
 "Metrics <maintainer@daq.service.net>",
 "https://github.com/spadi-alliance/nestdaq",
-daq::service::MetricsPluginProgramOptions
+daq::service::metricsPluginProgramOptions
 ) // end of macro: REGISTER_FAIRMQ_PLUGIN
 
 } // namespace daq::service

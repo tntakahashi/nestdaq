@@ -337,10 +337,10 @@ sequenceDiagram
         TopologyConfig->>Redis: wait for peer bind channels bound=1
         alt explicit connect-config is set
             TopologyConfig->>Redis: read peer health and socket records
-            TopologyConfig->>FairMQProperties: ConfigConnect() sets connect addresses
+            TopologyConfig->>FairMQProperties: configConnect() sets connect addresses
         else topology links are used
             TopologyConfig->>Redis: read peer lists and socket records
-            TopologyConfig->>FairMQProperties: ResolveConnectAddress() sets connect addresses
+            TopologyConfig->>FairMQProperties: resolveConnectAddress() sets connect addresses
         end
         TopologyConfig->>Redis: write resolved connect channel addresses
     end

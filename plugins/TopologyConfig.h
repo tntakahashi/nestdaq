@@ -49,95 +49,95 @@ public:
     ~TopologyConfig();
 
     /** Resolve and apply channel connection properties from Redis. */
-    void ConfigConnect();
+    void configConnect();
     /** @brief Enable or disable UDS address preference where available. */
-    void EnableUds(bool f=true) {
+    void enableUds(bool f=true) {
         fEnableUds = f;
     }
     /** @brief Return current peer states for local bind channels. */
-    auto GetPeerStateOfBindChannels() -> std::map<std::string, std::string> {
-        return GetPeerState(fBindChannels);
+    auto getPeerStateOfBindChannels() -> std::map<std::string, std::string> {
+        return getPeerState(fBindChannels);
     }
     /** @brief Return current peer states for local connect channels. */
-    auto GetPeerStateOfConnectChannels() -> std::map<std::string, std::string> {
-        return GetPeerState(fConnectChannels);
+    auto getPeerStateOfConnectChannels() -> std::map<std::string, std::string> {
+        return getPeerState(fConnectChannels);
     }
 
     /** React to FairMQ state changes and update topology-related Redis state. */
-    void OnDeviceStateChange(DeviceState newState);
+    void onDeviceStateChange(DeviceState newState);
     /** @brief Reset transient topology state owned by this instance. */
     void Reset();
     /** @brief Refresh TTLs for Redis topology keys owned by this instance. */
-    void ResetTtl(sw::redis::Pipeline& pipe);
+    void resetTtl(sw::redis::Pipeline& pipe);
     /** @brief Set raw connect configuration from command-line or property input. */
-    void SetConnectConfig(std::string_view arg) {
+    void setConnectConfig(std::string_view arg) {
         fConnectConfig = arg;
     }
     /** @brief Set retry count used while resolving peer addresses. */
-    void SetMaxRetryToResolveAddress(int arg) {
+    void setMaxRetryToResolveAddress(int arg) {
         fMaxRetryToResolveAddress = arg;
     }
 
 private:
-    void DeleteProperty(const std::string& key) {
+    void deleteProperty(const std::string& key) {
         fPlugin.DeleteProperty(key);
     }
-    std::shared_ptr<sw::redis::Redis> GetClient() const {
+    std::shared_ptr<sw::redis::Redis> getClient() const {
         return fPlugin.GetClient();
     }
-    std::mutex& GetMutex() {
+    std::mutex& getMutex() {
         return fPlugin.GetMutex();
     }
-    auto GetPeerState(const MQChannel & channels) -> std::map<std::string, std::string>;
-    std::map<std::string, std::string> GetPropertiesAsStringStartingWith(const std::string& q) const {
+    auto getPeerState(const MQChannel & channels) -> std::map<std::string, std::string>;
+    std::map<std::string, std::string> getPropertiesAsStringStartingWith(const std::string& q) const {
         return fPlugin.GetPropertiesAsStringStartingWith(q);
     }
-    template <typename T> T GetProperty(const std::string& key) const {
+    template <typename T> T getProperty(const std::string& key) const {
         return fPlugin.GetProperty<T>(key);
     }
     /** @brief Load Redis topology and initialize local FairMQ channel properties. */
-    void Initialize();
+    void initialize();
     /** @brief Populate default channel properties from FairMQ options. */
-    void InitializeDefaultChannelProperties();
-    bool IsCanceled() const {
+    void initializeDefaultChannelProperties();
+    bool isCanceled() const {
         return fPlugin.IsCanceled();
     }
     /** @brief Return true when all peers can use UDS transport. */
-    bool IsUdsAvailable(const std::vector<std::string> &peers);
-    int PropertyExists(const std::string& key) {
+    bool isUdsAvailable(const std::vector<std::string> &peers);
+    int propertyExists(const std::string& key) {
         return fPlugin.PropertyExists(key);
     }
     /** @brief Read one endpoint definition from Redis. */
-    const SocketProperty ReadEndpointProperty(std::string_view key);
+    const SocketProperty readEndpointProperty(std::string_view key);
     /** @brief Read all endpoint keys relevant to this topology. */
-    std::unordered_set<std::string> ReadEndpoints();
+    std::unordered_set<std::string> readEndpoints();
     /** @brief Read one logical link definition from Redis. */
-    const LinkProperty ReadLinkProperty(std::string_view key);
+    const LinkProperty readLinkProperty(std::string_view key);
     /** @brief Read all logical link keys relevant to this topology. */
-    std::unordered_set<std::string> ReadLinks();
+    std::unordered_set<std::string> readLinks();
     /** @brief Read candidate addresses published by a peer service. */
-    const std::vector<std::string> ReadPeerAddress(const std::string& peer);
+    const std::vector<std::string> readPeerAddress(const std::string& peer);
     /** @brief Read the peer service IP address from Redis health data. */
-    const std::string ReadPeerIP(const std::string& peer);
+    const std::string readPeerIp(const std::string& peer);
     /** @brief Resolve connect channel addresses from peer bind publications. */
-    void ResolveConnectAddress();
-    void SetProperties(const fair::mq::Properties &props) {
+    void resolveConnectAddress();
+    void setProperties(const fair::mq::Properties &props) {
         fPlugin.SetProperties(props);
     }
     /** @brief Remove topology keys owned by this service instance. */
-    void Unregister();
+    void unregisterService();
     /** @brief Wait until local bind addresses have been published. */
-    void WaitBindAddress();
+    void waitBindAddress();
     /** @brief Wait until required peers reach a connectable state. */
-    void WaitForPeerConnection();
+    void waitForPeerConnection();
     /** @brief Write channel addresses through the provided Redis pipeline callback. */
-    void WriteAddress(MQChannel &channels, std::function<void (sw::redis::Pipeline&, std::string_view)> f = nullptr);
+    void writeAddress(MQChannel &channels, std::function<void (sw::redis::Pipeline&, std::string_view)> f = nullptr);
     /** @brief Publish local bind channel addresses to Redis. */
-    void WriteBindAddress();
+    void writeBindAddress();
     /** @brief Write one socket property and associated peer metadata. */
-    void WriteChannel(SocketProperty &sp, const std::vector<std::string> &peers);
+    void writeChannel(SocketProperty &sp, const std::vector<std::string> &peers);
     /** @brief Publish resolved connect channel addresses to FairMQ properties. */
-    void WriteConnectAddress();
+    void writeConnectAddress();
 
     daq::service::Plugin &fPlugin;
     std::string fServiceName;
