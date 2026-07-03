@@ -278,6 +278,24 @@ cmake --install ./build
 - When `doxygen-awesome-css` is available, it is installed with the generated documentation under `./install/share/doc/nestdaq/doxygen-awesome-css`.
 - When `-DNestDAQ_BUILD_DOCS=ON` and Doxygen is available, the HTML documentation is generated under `./build/docs/html` and installed under `./install/share/doc/nestdaq/html`.
 
+#### Verbose CMake builds
+
+To show the underlying compiler and linker commands, add `--verbose` to the
+`cmake --build` command. This is useful when checking include paths, compiler
+options, or link flags.
+
+```bash
+cmake --build ./build-external --verbose
+cmake --build ./build --parallel $(nproc) --verbose
+cmake --build ./build-examples --parallel $(nproc) --verbose
+```
+
+The environment form is also supported:
+
+```bash
+VERBOSE=1 cmake --build ./build
+```
+
 #### NestDAQ build options
 
 | Option | Default | Description |
