@@ -17,15 +17,15 @@ public:
     FairLoggerOpenTelemetrySink() = delete;
 
     /** @brief Return the current FairLogger severity threshold used by the sink. */
-    static auto GetMinSeverity() noexcept -> int32_t;
+    static auto getMinSeverity() noexcept -> int32_t;
     /** @brief Install the FairLogger custom sink once for the process. */
-    static auto Initialize() -> void;
+    static auto initialize() -> void;
     /** @brief Set the NestDAQ instance id attached to subsequent log records. */
-    static auto SetNestdaqInstanceId(std::string_view instanceId) -> void;
+    static auto setNestdaqInstanceId(std::string_view instanceId) -> void;
     /** @brief Set the minimum FairLogger severity exported as OpenTelemetry logs. */
-    static auto SetMinSeverity(int32_t severity) noexcept -> void;
+    static auto setMinSeverity(int32_t severity) noexcept -> void;
     /** @brief Remove the custom sink and clear per-process log attributes. */
-    static auto Shutdown() noexcept -> void;
+    static auto shutdown() noexcept -> void;
 };
 
 } // namespace nestdaq

@@ -161,8 +161,8 @@ auto OpenTelemetryInitializer::Initialize(const nestdaq_otel_config *config) -> 
             opentelemetry::nostd::shared_ptr<opentelemetry::logs::LoggerProvider> {
                 std::shared_ptr<opentelemetry::logs::LoggerProvider>{loggerProvider}
             });
-            FairLoggerOpenTelemetrySink::SetMinSeverity(localConfig.min_severity);
-            FairLoggerOpenTelemetrySink::Initialize();
+            FairLoggerOpenTelemetrySink::setMinSeverity(localConfig.min_severity);
+            FairLoggerOpenTelemetrySink::initialize();
             LOG(info) << nestDAQMetadataLogBody();
             LOG(info) << fairMQMetadataLogBody(localConfig);
         }
@@ -195,7 +195,7 @@ auto OpenTelemetryInitializer::LastError() noexcept -> const char *
 
 auto OpenTelemetryInitializer::SetNestdaqInstanceId(const char *instance_id) -> int
 {
-    FairLoggerOpenTelemetrySink::SetNestdaqInstanceId(isEmpty(instance_id) ? "" : instance_id);
+    FairLoggerOpenTelemetrySink::setNestdaqInstanceId(isEmpty(instance_id) ? "" : instance_id);
     clearLastError();
     return NESTDAQ_OTEL_OK;
 }
@@ -205,7 +205,7 @@ auto OpenTelemetryInitializer::SetMinSeverity(int32_t severity) -> int
     if (!validateSeverity(severity)) {
         return setLastError("severity must be a valid fair::Severity numeric value");
     }
-    FairLoggerOpenTelemetrySink::SetMinSeverity(severity);
+    FairLoggerOpenTelemetrySink::setMinSeverity(severity);
     clearLastError();
     return NESTDAQ_OTEL_OK;
 }
@@ -255,7 +255,7 @@ auto OpenTelemetryInitializer::Shutdown(uint64_t timeout_ms) -> int
             state.availableCpuCount = 0.0;
             state.spans.clear();
         }
-        FairLoggerOpenTelemetrySink::Shutdown();
+        FairLoggerOpenTelemetrySink::shutdown();
         if (loggerProvider) {
             loggerProvider->ForceFlush(timeoutFromMs(timeout_ms));
             loggerProvider->Shutdown(timeoutFromMs(timeout_ms));

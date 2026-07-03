@@ -275,12 +275,12 @@ auto toStringView(std::string_view value) noexcept -> opentelemetry::nostd::stri
 
 } // namespace
 
-auto FairLoggerOpenTelemetrySink::GetMinSeverity() noexcept -> int32_t
+auto FairLoggerOpenTelemetrySink::getMinSeverity() noexcept -> int32_t
 {
     return minSeverity().load(std::memory_order_acquire);
 }
 
-auto FairLoggerOpenTelemetrySink::Initialize() -> void
+auto FairLoggerOpenTelemetrySink::initialize() -> void
 {
     bool expected = false;
     if (!sinkRegistered().compare_exchange_strong(expected, true, std::memory_order_acq_rel)) {
@@ -299,20 +299,20 @@ auto FairLoggerOpenTelemetrySink::Initialize() -> void
     }
 }
 
-auto FairLoggerOpenTelemetrySink::SetNestdaqInstanceId(std::string_view instanceId) -> void
+auto FairLoggerOpenTelemetrySink::setNestdaqInstanceId(std::string_view instanceId) -> void
 {
     std::scoped_lock lock{instanceIdMutex()};
     instanceIdStorage() = instanceId;
 }
 
-auto FairLoggerOpenTelemetrySink::SetMinSeverity(int32_t severity) noexcept -> void
+auto FairLoggerOpenTelemetrySink::setMinSeverity(int32_t severity) noexcept -> void
 {
     minSeverity().store(severity, std::memory_order_release);
 }
 
-auto FairLoggerOpenTelemetrySink::Shutdown() noexcept -> void
+auto FairLoggerOpenTelemetrySink::shutdown() noexcept -> void
 {
-    SetNestdaqInstanceId({});
+    setNestdaqInstanceId({});
 
     bool expected = true;
     if (!sinkRegistered().compare_exchange_strong(expected, false, std::memory_order_acq_rel)) {
