@@ -1,5 +1,20 @@
 # Installation
 
+## Installation flow
+
+```mermaid
+flowchart TD
+  Prerequisites[1. Install prerequisites]
+  Dependencies[2. Build and install dependencies]
+  NestDAQ[3. Build and install NestDAQ]
+  Examples[4. Build and install NestDAQ examples separately<br/>if not using the main NestDAQ build]
+
+  Prerequisites --> Dependencies --> NestDAQ --> Examples
+```
+
+The separate examples build is optional. The main NestDAQ build builds and
+installs the examples by default when `NestDAQ_BUILD_EXAMPLES=ON`.
+
 ## Install external packages
 
 ### Prerequisites for AlmaLinux 9 and 10
