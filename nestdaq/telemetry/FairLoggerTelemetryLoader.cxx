@@ -270,7 +270,7 @@ auto GenerateUuidString() -> std::string {
     return boost::uuids::to_string(boost::uuids::random_generator{}());
 }
 
-auto ToLowerAscii(std::string_view value) -> std::string {
+auto toLowerAscii(std::string_view value) -> std::string {
     auto lowered = std::string{value};
     std::transform(lowered.begin(), lowered.end(), lowered.begin(), [](unsigned char ch) {
         if (ch >= 'A' && ch <= 'Z') {
@@ -281,8 +281,8 @@ auto ToLowerAscii(std::string_view value) -> std::string {
     return lowered;
 }
 
-auto NormalizeServiceName(TelemetryOptions& options) -> void {
-    options.serviceName = ToLowerAscii(options.serviceName);
+auto normalizeServiceName(TelemetryOptions& options) -> void {
+    options.serviceName = toLowerAscii(options.serviceName);
 }
 
 auto MakeConfig(const TelemetryOptions& options) -> nestdaq_otel_config {
@@ -404,7 +404,7 @@ auto ParseTelemetryOptions(int argc, char* argv[], // NOLINT(cppcoreguidelines-a
         }
     }
 
-    NormalizeServiceName(options);
+    normalizeServiceName(options);
     normalizeSpdlogAsyncOptions(options);
     EnsureHostName(options);
     EnsureServiceInstanceId(options);
@@ -500,7 +500,7 @@ auto ReadTelemetryOptions(const boost::program_options::variables_map& vm,
     if (vm.count("otel-trace-http-json") != 0 && !vm["otel-trace-http-json"].defaulted()) {
         options.traceOtlpHttpJson = vm["otel-trace-http-json"].as<bool>() ? 1U : 0U;
     }
-    NormalizeServiceName(options);
+    normalizeServiceName(options);
     normalizeSpdlogAsyncOptions(options);
     EnsureHostName(options);
     EnsureServiceInstanceId(options);
