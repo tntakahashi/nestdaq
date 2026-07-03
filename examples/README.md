@@ -64,14 +64,14 @@ The commands below assume that NestDAQ was installed under
 
 ```mermaid
 flowchart TD
-  Otel[(1) Start OTel Collector backend<br/>if needed]
-  Redis[(2) Start Redis]
-  WebCtl[(3) Start daq-webctl]
-  Browser[(4) Open browser controller<br/>http://localhost:8080/]
-  Config[(5) Register topology and parameters<br/>topology-*.sh, mq-param.sh]
-  UserDevices[(6) Start user device processes<br/>NullDevice, Sink, Sampler]
-  RunNumber[(7) Set run number if missing]
-  StartRun[(8) Start run<br/>state transition to RUN]
+  Otel[A. Start OTel Collector backend<br/>if needed]
+  Redis[B. Start Redis]
+  WebCtl[C. Start daq-webctl]
+  Browser[D. Open browser controller<br/>http://localhost:8080/]
+  Config[E. Register topology and parameters<br/>topology-*.sh, mq-param.sh]
+  UserDevices[F. Start user device processes<br/>NullDevice, Sink, Sampler]
+  RunNumber[G. Set run number if missing]
+  StartRun[H. Start run<br/>state transition to RUN]
 
   Otel --> Redis --> WebCtl --> Browser --> Config --> UserDevices --> RunNumber
   RunNumber --> StartRun
@@ -296,11 +296,11 @@ controller and shared services.
 
 ```mermaid
 flowchart TD
-  End[(1) Web UI: END PROCESS for user devices]
-  DeviceFallback[(2) If needed: stop device terminals or send kill]
-  WebCtl[(3) Stop daq-webctl from its terminal]
-  Redis[(4) Stop Redis server or service]
-  Otel[(5) Stop OTel Collector backend]
+  End[A. Web UI: END PROCESS for user devices]
+  DeviceFallback[B. If needed: stop device terminals or send kill]
+  WebCtl[C. Stop daq-webctl from its terminal]
+  Redis[D. Stop Redis server or service]
+  Otel[E. Stop OTel Collector backend]
 
   End --> DeviceFallback --> WebCtl --> Redis --> Otel
 ```
