@@ -39,7 +39,7 @@ auto OpenTelemetryInitializer::ForceFlush(uint64_t timeout_ms) -> int
         std::shared_ptr<opentelemetry::sdk::metrics::MeterProvider> meterProvider;
         std::shared_ptr<opentelemetry::sdk::trace::TracerProvider> tracerProvider;
         {
-            auto &state = State();
+            auto &state = runtimeState();
             std::scoped_lock lock{state.mutex};
             loggerProvider = state.loggerProvider;
             meterProvider = state.meterProvider;
@@ -47,23 +47,23 @@ auto OpenTelemetryInitializer::ForceFlush(uint64_t timeout_ms) -> int
         }
         auto ok = true;
         if (loggerProvider) {
-            ok = loggerProvider->ForceFlush(TimeoutFromMs(timeout_ms)) && ok;
+            ok = loggerProvider->ForceFlush(timeoutFromMs(timeout_ms)) && ok;
         }
         if (meterProvider) {
-            ok = meterProvider->ForceFlush(TimeoutFromMs(timeout_ms)) && ok;
+            ok = meterProvider->ForceFlush(timeoutFromMs(timeout_ms)) && ok;
         }
         if (tracerProvider) {
-            ok = tracerProvider->ForceFlush(TimeoutFromMs(timeout_ms)) && ok;
+            ok = tracerProvider->ForceFlush(timeoutFromMs(timeout_ms)) && ok;
         }
         if (!ok) {
-            return SetLastError("OpenTelemetry force flush failed");
+            return setLastError("OpenTelemetry force flush failed");
         }
-        ClearLastError();
+        clearLastError();
         return NESTDAQ_OTEL_OK;
     } catch (const std::exception &ex) {
-        return SetLastError(ex.what());
+        return setLastError(ex.what());
     } catch (...) {
-        return SetLastError("unknown OpenTelemetry force flush error");
+        return setLastError("unknown OpenTelemetry force flush error");
     }
 }
 
@@ -74,28 +74,28 @@ auto OpenTelemetryInitializer::FlushFrameworkMetricsIfDirty(uint64_t timeout_ms)
 
 auto OpenTelemetryInitializer::Initialize(const nestdaq_otel_config *config) -> int
 {
-    auto localConfig = DefaultConfig();
+    auto localConfig = defaultConfig();
     if (config != nullptr) {
         if (config->size != sizeof(nestdaq_otel_config)) {
-            return SetLastError("nestdaq_otel_config has an unsupported size");
+            return setLastError("nestdaq_otel_config has an unsupported size");
         }
         localConfig = *config;
     }
-    if (!ValidateSeverity(localConfig.min_severity)) {
-        return SetLastError("min_severity must be a valid fair::Severity numeric value");
+    if (!validateSeverity(localConfig.min_severity)) {
+        return setLastError("min_severity must be a valid fair::Severity numeric value");
     }
 
     auto logProtocols = std::vector<Protocol> {};
     auto metricProtocols = std::vector<Protocol> {};
     auto traceProtocols = std::vector<Protocol> {};
-    if ((SignalEnabled(localConfig.logs) && !ParseProtocols(localConfig.logs.protocol, logProtocols)) ||
-            (SignalEnabled(localConfig.metrics) && !ParseProtocols(localConfig.metrics.protocol, metricProtocols)) ||
-            (SignalEnabled(localConfig.traces) && !ParseProtocols(localConfig.traces.protocol, traceProtocols))) {
-        return SetLastError("unsupported OpenTelemetry protocol; expected comma-separated console, otlp-http, or otlp-grpc");
+    if ((signalEnabled(localConfig.logs) && !parseProtocols(localConfig.logs.protocol, logProtocols)) ||
+            (signalEnabled(localConfig.metrics) && !parseProtocols(localConfig.metrics.protocol, metricProtocols)) ||
+            (signalEnabled(localConfig.traces) && !parseProtocols(localConfig.traces.protocol, traceProtocols))) {
+        return setLastError("unsupported OpenTelemetry protocol; expected comma-separated console, otlp-http, or otlp-grpc");
     }
 
     try {
-        auto resource = MakeResource(localConfig);
+        auto resource = makeResource(localConfig);
         std::shared_ptr<opentelemetry::sdk::logs::LoggerProvider> loggerProvider;
         std::shared_ptr<opentelemetry::sdk::metrics::MeterProvider> meterProvider;
         std::shared_ptr<opentelemetry::sdk::trace::TracerProvider> tracerProvider;
@@ -103,7 +103,7 @@ auto OpenTelemetryInitializer::Initialize(const nestdaq_otel_config *config) -> 
         if (!logProtocols.empty()) {
             auto processors = std::vector<std::unique_ptr<opentelemetry::sdk::logs::LogRecordProcessor>> {};
             for (const auto protocol : logProtocols) {
-                processors.emplace_back(CreateLogProcessor(CreateLogExporter(localConfig, protocol), protocol));
+                processors.emplace_back(createLogProcessor(createLogExporter(localConfig, protocol), protocol));
             }
             loggerProvider = std::shared_ptr<opentelemetry::sdk::logs::LoggerProvider> {
                 opentelemetry::sdk::logs::LoggerProviderFactory::Create(std::move(processors), resource)
@@ -116,14 +116,14 @@ auto OpenTelemetryInitializer::Initialize(const nestdaq_otel_config *config) -> 
                 opentelemetry::sdk::metrics::MeterProviderFactory::Create(std::move(views), resource)
             };
             for (const auto protocol : metricProtocols) {
-                meterProvider->AddMetricReader(CreateMetricReader(CreateMetricExporter(localConfig, protocol), localConfig));
+                meterProvider->AddMetricReader(createMetricReader(createMetricExporter(localConfig, protocol), localConfig));
             }
         }
 
         if (!traceProtocols.empty()) {
             auto processors = std::vector<std::unique_ptr<opentelemetry::sdk::trace::SpanProcessor>> {};
             for (const auto protocol : traceProtocols) {
-                processors.emplace_back(CreateSpanProcessor(CreateSpanExporter(localConfig, protocol), protocol));
+                processors.emplace_back(createSpanProcessor(createSpanExporter(localConfig, protocol), protocol));
             }
             tracerProvider = std::shared_ptr<opentelemetry::sdk::trace::TracerProvider> {
                 opentelemetry::sdk::trace::TracerProviderFactory::Create(std::move(processors), resource)
@@ -132,7 +132,7 @@ auto OpenTelemetryInitializer::Initialize(const nestdaq_otel_config *config) -> 
 
         Shutdown(localConfig.timeout_ms);
         {
-            auto &state = State();
+            auto &state = runtimeState();
             std::scoped_lock lock{state.mutex};
             state.loggerProvider = loggerProvider;
             state.meterProvider = meterProvider;
@@ -144,8 +144,8 @@ auto OpenTelemetryInitializer::Initialize(const nestdaq_otel_config *config) -> 
                 state.meter = meterProvider->GetMeter("nestdaq", std::string{NESTDAQ_VERSION});
             }
             if (!metricProtocols.empty()) {
-                StoreFrameworkMetricConfig(state, localConfig, metricProtocols, resource);
-                ConfigureFrameworkMetricsProvider(state);
+                storeFrameworkMetricConfig(state, localConfig, metricProtocols, resource);
+                configureFrameworkMetricsProvider(state);
             }
             if (tracerProvider) {
                 state.tracer = tracerProvider->GetTracer("nestdaq", std::string{NESTDAQ_VERSION});
@@ -153,7 +153,7 @@ auto OpenTelemetryInitializer::Initialize(const nestdaq_otel_config *config) -> 
             state.lastError.clear();
         }
         if (!metricProtocols.empty()) {
-            StartProcessMetricsThread(localConfig.metric_export_interval_ms);
+            startProcessMetricsThread(localConfig.metric_export_interval_ms);
         }
 
         if (loggerProvider) {
@@ -163,8 +163,8 @@ auto OpenTelemetryInitializer::Initialize(const nestdaq_otel_config *config) -> 
             });
             FairLoggerOpenTelemetrySink::SetMinSeverity(localConfig.min_severity);
             FairLoggerOpenTelemetrySink::Initialize();
-            LOG(info) << NestDAQMetadataLogBody();
-            LOG(info) << FairMQMetadataLogBody(localConfig);
+            LOG(info) << nestDAQMetadataLogBody();
+            LOG(info) << fairMQMetadataLogBody(localConfig);
         }
         if (meterProvider) {
             opentelemetry::metrics::Provider::SetMeterProvider(
@@ -180,48 +180,48 @@ auto OpenTelemetryInitializer::Initialize(const nestdaq_otel_config *config) -> 
         }
         return NESTDAQ_OTEL_OK;
     } catch (const std::exception &ex) {
-        return SetLastError(ex.what());
+        return setLastError(ex.what());
     } catch (...) {
-        return SetLastError("unknown OpenTelemetry initialization error");
+        return setLastError("unknown OpenTelemetry initialization error");
     }
 }
 
 auto OpenTelemetryInitializer::LastError() noexcept -> const char *
 {
-    auto &state = State();
+    auto &state = runtimeState();
     std::scoped_lock lock{state.mutex};
     return state.lastError.data();
 }
 
 auto OpenTelemetryInitializer::SetNestdaqInstanceId(const char *instance_id) -> int
 {
-    FairLoggerOpenTelemetrySink::SetNestdaqInstanceId(IsEmpty(instance_id) ? "" : instance_id);
-    ClearLastError();
+    FairLoggerOpenTelemetrySink::SetNestdaqInstanceId(isEmpty(instance_id) ? "" : instance_id);
+    clearLastError();
     return NESTDAQ_OTEL_OK;
 }
 
 auto OpenTelemetryInitializer::SetMinSeverity(int32_t severity) -> int
 {
-    if (!ValidateSeverity(severity)) {
-        return SetLastError("severity must be a valid fair::Severity numeric value");
+    if (!validateSeverity(severity)) {
+        return setLastError("severity must be a valid fair::Severity numeric value");
     }
     FairLoggerOpenTelemetrySink::SetMinSeverity(severity);
-    ClearLastError();
+    clearLastError();
     return NESTDAQ_OTEL_OK;
 }
 
 auto OpenTelemetryInitializer::Shutdown(uint64_t timeout_ms) -> int
 {
     try {
-        StopProcessMetricsThread();
-        auto &runtimeState = State();
-        std::scoped_lock reconfigureLock{runtimeState.frameworkReconfigureMutex};
+        stopProcessMetricsThread();
+        auto &runtime_state = runtimeState();
+        std::scoped_lock reconfigureLock{runtime_state.frameworkReconfigureMutex};
         std::shared_ptr<opentelemetry::sdk::logs::LoggerProvider> loggerProvider;
         std::shared_ptr<opentelemetry::sdk::metrics::MeterProvider> meterProvider;
         std::shared_ptr<opentelemetry::sdk::metrics::MeterProvider> frameworkMeterProvider;
         std::shared_ptr<opentelemetry::sdk::trace::TracerProvider> tracerProvider;
         {
-            auto &state = runtimeState;
+            auto &state = runtime_state;
             std::scoped_lock lock{state.mutex};
             loggerProvider = std::move(state.loggerProvider);
             meterProvider = std::move(state.meterProvider);
@@ -257,28 +257,28 @@ auto OpenTelemetryInitializer::Shutdown(uint64_t timeout_ms) -> int
         }
         FairLoggerOpenTelemetrySink::Shutdown();
         if (loggerProvider) {
-            loggerProvider->ForceFlush(TimeoutFromMs(timeout_ms));
-            loggerProvider->Shutdown(TimeoutFromMs(timeout_ms));
+            loggerProvider->ForceFlush(timeoutFromMs(timeout_ms));
+            loggerProvider->Shutdown(timeoutFromMs(timeout_ms));
         }
         if (meterProvider) {
-            meterProvider->ForceFlush(TimeoutFromMs(timeout_ms));
-            meterProvider->Shutdown(TimeoutFromMs(timeout_ms));
+            meterProvider->ForceFlush(timeoutFromMs(timeout_ms));
+            meterProvider->Shutdown(timeoutFromMs(timeout_ms));
         }
         if (frameworkMeterProvider) {
-            frameworkMeterProvider->ForceFlush(TimeoutFromMs(timeout_ms));
-            frameworkMeterProvider->Shutdown(TimeoutFromMs(timeout_ms));
+            frameworkMeterProvider->ForceFlush(timeoutFromMs(timeout_ms));
+            frameworkMeterProvider->Shutdown(timeoutFromMs(timeout_ms));
         }
         if (tracerProvider) {
-            tracerProvider->ForceFlush(TimeoutFromMs(timeout_ms));
-            tracerProvider->Shutdown(TimeoutFromMs(timeout_ms));
+            tracerProvider->ForceFlush(timeoutFromMs(timeout_ms));
+            tracerProvider->Shutdown(timeoutFromMs(timeout_ms));
         }
-        InstallNoopProviders();
-        ClearLastError();
+        installNoopProviders();
+        clearLastError();
         return NESTDAQ_OTEL_OK;
     } catch (const std::exception &ex) {
-        return SetLastError(ex.what());
+        return setLastError(ex.what());
     } catch (...) {
-        return SetLastError("unknown OpenTelemetry shutdown error");
+        return setLastError("unknown OpenTelemetry shutdown error");
     }
 }
 

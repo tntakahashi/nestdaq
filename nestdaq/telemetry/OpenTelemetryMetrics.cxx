@@ -42,40 +42,40 @@ namespace {
 
 constexpr auto kFrameworkMetricReaderIntervalMs = uint32_t{24U * 60U * 60U * 1000U};
 
-auto MetricEndpointGrpc(const nestdaq_otel_config &config) -> const char *
+auto metricEndpointGrpc(const nestdaq_otel_config &config) -> const char *
 {
-    return IsEmpty(config.metrics.endpoint_grpc) ? kDefaultGrpcEndpoint.data() : config.metrics.endpoint_grpc;
+    return isEmpty(config.metrics.endpoint_grpc) ? kDefaultGrpcEndpoint.data() : config.metrics.endpoint_grpc;
 }
 
-auto MetricEndpointHttp(const nestdaq_otel_config &config) -> const char *
+auto metricEndpointHttp(const nestdaq_otel_config &config) -> const char *
 {
-    return IsEmpty(config.metrics.endpoint_http) ? kDefaultMetricHttpEndpoint.data() : config.metrics.endpoint_http;
+    return isEmpty(config.metrics.endpoint_http) ? kDefaultMetricHttpEndpoint.data() : config.metrics.endpoint_http;
 }
 
-auto ObserveFairMQThroughput(opentelemetry::metrics::ObserverResult observer, bool observeMegabytes) noexcept -> void;
-auto ObserveFairMQState(opentelemetry::metrics::ObserverResult observer, void * /* state */) noexcept -> void;
-auto ObserveProcessCpuTime(opentelemetry::metrics::ObserverResult observer, void * /* state */) noexcept -> void;
-auto ObserveProcessCpuUtilization(opentelemetry::metrics::ObserverResult observer, void * /* state */) noexcept
+auto observeFairMQThroughput(opentelemetry::metrics::ObserverResult observer, bool observeMegabytes) noexcept -> void;
+auto observeFairMQState(opentelemetry::metrics::ObserverResult observer, void * /* state */) noexcept -> void;
+auto observeProcessCpuTime(opentelemetry::metrics::ObserverResult observer, void * /* state */) noexcept -> void;
+auto observeProcessCpuUtilization(opentelemetry::metrics::ObserverResult observer, void * /* state */) noexcept
 -> void;
-auto ObserveProcessMemoryUsage(opentelemetry::metrics::ObserverResult observer, void * /* state */) noexcept -> void;
-auto ReadAvailableCpuCount() noexcept -> double;
-auto ReadProcessCpuUsage() noexcept -> std::optional<ProcessCpuUsageSample>;
-auto ReadProcessMemoryUsageBytes(long pageSize) -> std::optional<double>;
-auto TimevalToSeconds(const timeval &value) noexcept -> double;
+auto observeProcessMemoryUsage(opentelemetry::metrics::ObserverResult observer, void * /* state */) noexcept -> void;
+auto readAvailableCpuCount() noexcept -> double;
+auto readProcessCpuUsage() noexcept -> std::optional<ProcessCpuUsageSample>;
+auto readProcessMemoryUsageBytes(long page_size) -> std::optional<double>;
+auto timevalToSeconds(const timeval &value) noexcept -> double;
 
-auto ObserveFairMQMegabytesPerSecond(opentelemetry::metrics::ObserverResult observer, void * /* state */) noexcept
+auto observeFairMQMegabytesPerSecond(opentelemetry::metrics::ObserverResult observer, void * /* state */) noexcept
 -> void
 {
-    ObserveFairMQThroughput(observer, true);
+    observeFairMQThroughput(observer, true);
 }
 
-auto ObserveFairMQMessagesPerSecond(opentelemetry::metrics::ObserverResult observer, void * /* state */) noexcept
+auto observeFairMQMessagesPerSecond(opentelemetry::metrics::ObserverResult observer, void * /* state */) noexcept
 -> void
 {
-    ObserveFairMQThroughput(observer, false);
+    observeFairMQThroughput(observer, false);
 }
 
-auto ObserveFairMQThroughput(opentelemetry::metrics::ObserverResult observer, bool observeMegabytes) noexcept -> void
+auto observeFairMQThroughput(opentelemetry::metrics::ObserverResult observer, bool observeMegabytes) noexcept -> void
 {
     using DoubleObserver = opentelemetry::nostd::shared_ptr<opentelemetry::metrics::ObserverResultT<double>>;
     if (!opentelemetry::nostd::holds_alternative<DoubleObserver>(observer)) {
@@ -89,7 +89,7 @@ auto ObserveFairMQThroughput(opentelemetry::metrics::ObserverResult observer, bo
 
     auto measurements = std::vector<FairMQThroughputMeasurement> {};
     {
-        auto &state = State();
+        auto &state = runtimeState();
         std::scoped_lock lock{state.mutex};
         measurements = state.exportingFairMQThroughputMeasurements;
     }
@@ -111,7 +111,7 @@ auto ObserveFairMQThroughput(opentelemetry::metrics::ObserverResult observer, bo
     }
 }
 
-auto ObserveProcessCpuTime(opentelemetry::metrics::ObserverResult observer, void * /* state */) noexcept -> void
+auto observeProcessCpuTime(opentelemetry::metrics::ObserverResult observer, void * /* state */) noexcept -> void
 {
     using DoubleObserver = opentelemetry::nostd::shared_ptr<opentelemetry::metrics::ObserverResultT<double>>;
     if (!opentelemetry::nostd::holds_alternative<DoubleObserver>(observer)) {
@@ -125,7 +125,7 @@ auto ObserveProcessCpuTime(opentelemetry::metrics::ObserverResult observer, void
 
     auto measurements = std::vector<ProcessUsageMeasurement> {};
     {
-        auto &state = State();
+        auto &state = runtimeState();
         std::scoped_lock lock{state.mutex};
         measurements = state.exportingProcessUsageMeasurements;
     }
@@ -143,7 +143,7 @@ auto ObserveProcessCpuTime(opentelemetry::metrics::ObserverResult observer, void
     }
 }
 
-auto ObserveProcessCpuUtilization(opentelemetry::metrics::ObserverResult observer, void * /* state */) noexcept
+auto observeProcessCpuUtilization(opentelemetry::metrics::ObserverResult observer, void * /* state */) noexcept
 -> void
 {
     using DoubleObserver = opentelemetry::nostd::shared_ptr<opentelemetry::metrics::ObserverResultT<double>>;
@@ -158,7 +158,7 @@ auto ObserveProcessCpuUtilization(opentelemetry::metrics::ObserverResult observe
 
     auto measurements = std::vector<ProcessUsageMeasurement> {};
     {
-        auto &state = State();
+        auto &state = runtimeState();
         std::scoped_lock lock{state.mutex};
         measurements = state.exportingProcessUsageMeasurements;
     }
@@ -170,7 +170,7 @@ auto ObserveProcessCpuUtilization(opentelemetry::metrics::ObserverResult observe
     }
 }
 
-auto ObserveProcessMemoryUsage(opentelemetry::metrics::ObserverResult observer, void * /* state */) noexcept -> void
+auto observeProcessMemoryUsage(opentelemetry::metrics::ObserverResult observer, void * /* state */) noexcept -> void
 {
     using DoubleObserver = opentelemetry::nostd::shared_ptr<opentelemetry::metrics::ObserverResultT<double>>;
     if (!opentelemetry::nostd::holds_alternative<DoubleObserver>(observer)) {
@@ -184,7 +184,7 @@ auto ObserveProcessMemoryUsage(opentelemetry::metrics::ObserverResult observer, 
 
     auto measurements = std::vector<ProcessUsageMeasurement> {};
     {
-        auto &state = State();
+        auto &state = runtimeState();
         std::scoped_lock lock{state.mutex};
         measurements = state.exportingProcessUsageMeasurements;
     }
@@ -194,7 +194,7 @@ auto ObserveProcessMemoryUsage(opentelemetry::metrics::ObserverResult observer, 
     }
 }
 
-auto ObserveUserDoubleGauge(opentelemetry::metrics::ObserverResult observer, void *state) noexcept -> void
+auto observeUserDoubleGauge(opentelemetry::metrics::ObserverResult observer, void *state) noexcept -> void
 {
     using DoubleObserver = opentelemetry::nostd::shared_ptr<opentelemetry::metrics::ObserverResultT<double>>;
     if (!opentelemetry::nostd::holds_alternative<DoubleObserver>(observer) || state == nullptr) {
@@ -209,7 +209,7 @@ auto ObserveUserDoubleGauge(opentelemetry::metrics::ObserverResult observer, voi
     const auto *metric = static_cast<const MetricKey *>(state);
     auto measurements = std::vector<GaugeMeasurement> {};
     {
-        auto &runtime = State();
+        auto &runtime = runtimeState();
         std::scoped_lock lock{runtime.mutex};
         for (const auto &[sample, value] : runtime.doubleGaugeMeasurements) {
             if (sample.metric == *metric) {
@@ -249,7 +249,7 @@ auto ObserveUserDoubleGauge(opentelemetry::metrics::ObserverResult observer, voi
     }
 }
 
-auto ObserveFairMQState(opentelemetry::metrics::ObserverResult observer, void * /* state */) noexcept -> void
+auto observeFairMQState(opentelemetry::metrics::ObserverResult observer, void * /* state */) noexcept -> void
 {
     using DoubleObserver = opentelemetry::nostd::shared_ptr<opentelemetry::metrics::ObserverResultT<double>>;
     if (!opentelemetry::nostd::holds_alternative<DoubleObserver>(observer)) {
@@ -263,7 +263,7 @@ auto ObserveFairMQState(opentelemetry::metrics::ObserverResult observer, void * 
 
     auto measurements = std::vector<FairMQStateMeasurement>{};
     {
-        auto &state = State();
+        auto &state = runtimeState();
         std::scoped_lock lock{state.mutex};
         measurements = state.exportingFairMQStateMeasurements;
     }
@@ -276,13 +276,13 @@ auto ObserveFairMQState(opentelemetry::metrics::ObserverResult observer, void * 
     }
 }
 
-auto ReadAvailableCpuCount() noexcept -> double
+auto readAvailableCpuCount() noexcept -> double
 {
-    const auto cpuCount = sysconf(_SC_NPROCESSORS_ONLN);
-    return cpuCount > 0 ? static_cast<double>(cpuCount) : 0.0;
+    const auto cpu_count = sysconf(_SC_NPROCESSORS_ONLN);
+    return cpu_count > 0 ? static_cast<double>(cpu_count) : 0.0;
 }
 
-auto ReadProcessCpuUsage() noexcept -> std::optional<ProcessCpuUsageSample>
+auto readProcessCpuUsage() noexcept -> std::optional<ProcessCpuUsageSample>
 {
     auto usage = rusage{};
     if (getrusage(RUSAGE_SELF, &usage) != 0) {
@@ -290,14 +290,14 @@ auto ReadProcessCpuUsage() noexcept -> std::optional<ProcessCpuUsageSample>
     }
     return ProcessCpuUsageSample{
         .timestamp = std::chrono::steady_clock::now(),
-        .userSeconds = TimevalToSeconds(usage.ru_utime),
-        .systemSeconds = TimevalToSeconds(usage.ru_stime),
+        .userSeconds = timevalToSeconds(usage.ru_utime),
+        .systemSeconds = timevalToSeconds(usage.ru_stime),
     };
 }
 
-auto ReadProcessMemoryUsageBytes(long pageSize) -> std::optional<double>
+auto readProcessMemoryUsageBytes(long page_size) -> std::optional<double>
 {
-    if (pageSize <= 0) {
+    if (page_size <= 0) {
         return std::nullopt;
     }
 
@@ -308,17 +308,17 @@ auto ReadProcessMemoryUsageBytes(long pageSize) -> std::optional<double>
         return std::nullopt;
     }
 
-    return static_cast<double>(residentPages) * static_cast<double>(pageSize);
+    return static_cast<double>(residentPages) * static_cast<double>(page_size);
 }
 
-auto TimevalToSeconds(const timeval &value) noexcept -> double
+auto timevalToSeconds(const timeval &value) noexcept -> double
 {
     return static_cast<double>(value.tv_sec) + (static_cast<double>(value.tv_usec) / 1'000'000.0);
 }
 
 } // namespace
 
-auto ConfigureFairMQThroughputMetrics(RuntimeState &state) -> void
+auto configureFairMQThroughputMetrics(RuntimeState &state) -> void
 {
     if (!state.frameworkMeter) {
         return;
@@ -329,7 +329,7 @@ auto ConfigureFairMQThroughputMetrics(RuntimeState &state) -> void
             "FairMQ channel message rate parsed from Device throughput logs",
             "{message}/s");
     if (state.fairmqMessagesPerSecondGauge) {
-        state.fairmqMessagesPerSecondGauge->AddCallback(ObserveFairMQMessagesPerSecond, nullptr);
+        state.fairmqMessagesPerSecondGauge->AddCallback(observeFairMQMessagesPerSecond, nullptr);
     }
 
     state.fairmqMegabytesPerSecondGauge = state.frameworkMeter->CreateDoubleObservableGauge(
@@ -337,26 +337,26 @@ auto ConfigureFairMQThroughputMetrics(RuntimeState &state) -> void
             "FairMQ channel throughput parsed from Device throughput logs",
             "MB/s");
     if (state.fairmqMegabytesPerSecondGauge) {
-        state.fairmqMegabytesPerSecondGauge->AddCallback(ObserveFairMQMegabytesPerSecond, nullptr);
+        state.fairmqMegabytesPerSecondGauge->AddCallback(observeFairMQMegabytesPerSecond, nullptr);
     }
 }
 
-auto ConfigureProcessMetrics(RuntimeState &state) -> void
+auto configureProcessMetrics(RuntimeState &state) -> void
 {
     if (!state.frameworkMeter) {
         return;
     }
 
     state.pageSize = sysconf(_SC_PAGESIZE);
-    state.availableCpuCount = ReadAvailableCpuCount();
-    state.processCpuUsageSample = ReadProcessCpuUsage();
+    state.availableCpuCount = readAvailableCpuCount();
+    state.processCpuUsageSample = readProcessCpuUsage();
 
     state.processCpuTimeCounter = state.frameworkMeter->CreateDoubleObservableCounter(
                                       "process.cpu.time",
                                       "Total CPU seconds broken down by mode",
                                       "s");
     if (state.processCpuTimeCounter) {
-        state.processCpuTimeCounter->AddCallback(ObserveProcessCpuTime, nullptr);
+        state.processCpuTimeCounter->AddCallback(observeProcessCpuTime, nullptr);
     }
 
     if (state.availableCpuCount > 0.0) {
@@ -365,7 +365,7 @@ auto ConfigureProcessMetrics(RuntimeState &state) -> void
                                                "Process CPU utilization normalized by available CPU count",
                                                "1");
         if (state.processCpuUtilizationGauge) {
-            state.processCpuUtilizationGauge->AddCallback(ObserveProcessCpuUtilization, nullptr);
+            state.processCpuUtilizationGauge->AddCallback(observeProcessCpuUtilization, nullptr);
         }
     }
 
@@ -374,11 +374,11 @@ auto ConfigureProcessMetrics(RuntimeState &state) -> void
                                           "Physical memory in use by the process",
                                           "By");
     if (state.processMemoryUsageCounter) {
-        state.processMemoryUsageCounter->AddCallback(ObserveProcessMemoryUsage, nullptr);
+        state.processMemoryUsageCounter->AddCallback(observeProcessMemoryUsage, nullptr);
     }
 }
 
-auto ConfigureFairMQStateMetrics(RuntimeState &state) -> void
+auto configureFairMQStateMetrics(RuntimeState &state) -> void
 {
     if (!state.frameworkMeter) {
         return;
@@ -389,11 +389,11 @@ auto ConfigureFairMQStateMetrics(RuntimeState &state) -> void
                                  "FairMQ device state numeric id",
                                  "1");
     if (state.fairmqStateGauge) {
-        state.fairmqStateGauge->AddCallback(ObserveFairMQState, nullptr);
+        state.fairmqStateGauge->AddCallback(observeFairMQState, nullptr);
     }
 }
 
-auto ConfigureFrameworkMetricsProvider(RuntimeState &state) -> void
+auto configureFrameworkMetricsProvider(RuntimeState &state) -> void
 {
     if (!state.frameworkMetricResource || state.frameworkMetricProtocols.empty()) {
         return;
@@ -407,16 +407,16 @@ auto ConfigureFrameworkMetricsProvider(RuntimeState &state) -> void
     auto config = state.frameworkMetricConfig.ToConfig();
     config.metric_export_interval_ms = kFrameworkMetricReaderIntervalMs;
     for (const auto protocol : state.frameworkMetricProtocols) {
-        state.frameworkMeterProvider->AddMetricReader(CreateMetricReader(CreateMetricExporter(config, protocol), config));
+        state.frameworkMeterProvider->AddMetricReader(createMetricReader(createMetricExporter(config, protocol), config));
     }
 
     state.frameworkMeter = state.frameworkMeterProvider->GetMeter("nestdaq.framework", std::string{NESTDAQ_VERSION});
-    ConfigureProcessMetrics(state);
-    ConfigureFairMQThroughputMetrics(state);
-    ConfigureFairMQStateMetrics(state);
+    configureProcessMetrics(state);
+    configureFairMQThroughputMetrics(state);
+    configureFairMQStateMetrics(state);
 }
 
-auto CreateMetricExporter(const nestdaq_otel_config &config, Protocol protocol)
+auto createMetricExporter(const nestdaq_otel_config &config, Protocol protocol)
 -> std::unique_ptr<opentelemetry::sdk::metrics::PushMetricExporter>
 {
     switch (protocol) {
@@ -424,26 +424,26 @@ auto CreateMetricExporter(const nestdaq_otel_config &config, Protocol protocol)
         return opentelemetry::exporter::metrics::OStreamMetricExporterFactory::Create();
     case Protocol::OtlpHttp: {
         auto options = opentelemetry::exporter::otlp::OtlpHttpMetricExporterOptions{};
-        options.url = MetricEndpointHttp(config);
-        options.http_headers = ParseHeaders(config.metrics.headers);
+        options.url = metricEndpointHttp(config);
+        options.http_headers = parseHeaders(config.metrics.headers);
         options.content_type = config.metrics.otlp_http_json == 0
                                ? opentelemetry::exporter::otlp::HttpRequestContentType::kBinary
                                : opentelemetry::exporter::otlp::HttpRequestContentType::kJson;
-        options.timeout = TimeoutFromMs(config.timeout_ms);
+        options.timeout = timeoutFromMs(config.timeout_ms);
         return opentelemetry::exporter::otlp::OtlpHttpMetricExporterFactory::Create(options);
     }
     case Protocol::OtlpGrpc: {
         auto options = opentelemetry::exporter::otlp::OtlpGrpcMetricExporterOptions{};
-        options.endpoint = MetricEndpointGrpc(config);
-        options.metadata = ParseHeaders(config.metrics.headers);
-        options.timeout = TimeoutFromMs(config.timeout_ms);
+        options.endpoint = metricEndpointGrpc(config);
+        options.metadata = parseHeaders(config.metrics.headers);
+        options.timeout = timeoutFromMs(config.timeout_ms);
         return opentelemetry::exporter::otlp::OtlpGrpcMetricExporterFactory::Create(options);
     }
     }
     return nullptr;
 }
 
-auto CreateMetricReader(std::unique_ptr<opentelemetry::sdk::metrics::PushMetricExporter> exporter,
+auto createMetricReader(std::unique_ptr<opentelemetry::sdk::metrics::PushMetricExporter> exporter,
                         const nestdaq_otel_config &config)
 -> std::unique_ptr<opentelemetry::sdk::metrics::MetricReader>
 {
@@ -454,10 +454,10 @@ auto CreateMetricReader(std::unique_ptr<opentelemetry::sdk::metrics::PushMetricE
     return opentelemetry::sdk::metrics::PeriodicExportingMetricReaderFactory::Create(std::move(exporter), options);
 }
 
-auto StartProcessMetricsThread(uint32_t intervalMs) -> void
+auto startProcessMetricsThread(uint32_t intervalMs) -> void
 {
-    StopProcessMetricsThread();
-    auto &state = State();
+    stopProcessMetricsThread();
+    auto &state = runtimeState();
     {
         std::scoped_lock lock{state.mutex};
         state.stopProcessMetricsThread = false;
@@ -471,7 +471,7 @@ auto StartProcessMetricsThread(uint32_t intervalMs) -> void
             while (true) {
                 auto interval = std::chrono::milliseconds{kDefaultMetricExportIntervalMs};
                 {
-                    auto &runtime = State();
+                    auto &runtime = runtimeState();
                     std::scoped_lock lock{runtime.mutex};
                     if (runtime.stopProcessMetricsThread) {
                         return;
@@ -482,52 +482,52 @@ auto StartProcessMetricsThread(uint32_t intervalMs) -> void
                 std::this_thread::sleep_for(interval);
 
                 auto previousCpu = std::optional<ProcessCpuUsageSample> {};
-                auto pageSize = 0L;
+                auto page_size = 0L;
                 auto availableCpuCount = 0.0;
                 {
-                    auto &runtime = State();
+                    auto &runtime = runtimeState();
                     std::scoped_lock lock{runtime.mutex};
                     if (runtime.stopProcessMetricsThread) {
                         return;
                     }
                     previousCpu = runtime.processCpuUsageSample;
-                    pageSize = runtime.pageSize;
+                    page_size = runtime.pageSize;
                     availableCpuCount = runtime.availableCpuCount;
                 }
 
-                const auto currentCpu = ReadProcessCpuUsage();
-                const auto currentMemoryUsage = ReadProcessMemoryUsageBytes(pageSize);
-                if (!currentCpu || !currentMemoryUsage) {
+                const auto current_cpu = readProcessCpuUsage();
+                const auto current_memory_usage = readProcessMemoryUsageBytes(page_size);
+                if (!current_cpu || !current_memory_usage) {
                     continue;
                 }
 
                 auto cpuUtilization = std::optional<double> {};
                 if (previousCpu && availableCpuCount > 0.0) {
                     const auto elapsedSeconds =
-                        std::chrono::duration<double> {currentCpu->timestamp - previousCpu->timestamp}.count();
+                        std::chrono::duration<double> {current_cpu->timestamp - previousCpu->timestamp}.count();
                     if (elapsedSeconds > 0.0) {
                         const auto cpuSeconds =
-                            (currentCpu->userSeconds + currentCpu->systemSeconds) -
+                            (current_cpu->userSeconds + current_cpu->systemSeconds) -
                             (previousCpu->userSeconds + previousCpu->systemSeconds);
                         cpuUtilization = cpuSeconds / elapsedSeconds / availableCpuCount;
                     }
                 }
                 {
-                    auto &runtime = State();
+                    auto &runtime = runtimeState();
                     std::scoped_lock lock{runtime.mutex};
-                    runtime.processCpuUsageSample = currentCpu;
+                    runtime.processCpuUsageSample = current_cpu;
                 }
-                nestdaq::OpenTelemetryInitializer::RecordFrameworkProcessUsage(currentCpu->userSeconds,
-                        currentCpu->systemSeconds,
+                nestdaq::OpenTelemetryInitializer::RecordFrameworkProcessUsage(current_cpu->userSeconds,
+                        current_cpu->systemSeconds,
                         cpuUtilization,
-                        *currentMemoryUsage);
+                        *current_memory_usage);
             }
         }};
 }
 
-auto StopProcessMetricsThread() -> void
+auto stopProcessMetricsThread() -> void
 {
-    auto &state = State();
+    auto &state = runtimeState();
     {
         std::scoped_lock lock{state.mutex};
         state.stopProcessMetricsThread = true;
@@ -549,11 +549,11 @@ auto OpenTelemetryInitializer::MetricAddDoubleCounter(const char *name,
         uint64_t attribute_count) -> int
 {
     using namespace otel_detail;
-    if (IsEmpty(name)) {
-        return SetLastError("metric counter name is empty");
+    if (isEmpty(name)) {
+        return setLastError("metric counter name is empty");
     }
-    auto attrs = BuildAttributes(attributes, attribute_count);
-    auto &state = State();
+    auto attrs = buildAttributes(attributes, attribute_count);
+    auto &state = runtimeState();
     std::scoped_lock lock{state.mutex};
     if (!state.meter) {
         state.lastError.clear();
@@ -561,8 +561,8 @@ auto OpenTelemetryInitializer::MetricAddDoubleCounter(const char *name,
     }
     auto key = MetricKey{.kind = MetricKind::DoubleCounter,
                          .name = name,
-                         .unit = IsEmpty(unit) ? "" : unit,
-                         .description = IsEmpty(description) ? "" : description};
+                         .unit = isEmpty(unit) ? "" : unit,
+                         .description = isEmpty(description) ? "" : description};
     auto &counter = state.doubleCounters[key];
     if (!counter) {
         counter = state.meter->CreateDoubleCounter(key.name, key.description, key.unit);
@@ -581,11 +581,11 @@ auto OpenTelemetryInitializer::MetricRecordDoubleHistogram(const char *name,
         uint64_t attribute_count) -> int
 {
     using namespace otel_detail;
-    if (IsEmpty(name)) {
-        return SetLastError("metric histogram name is empty");
+    if (isEmpty(name)) {
+        return setLastError("metric histogram name is empty");
     }
-    auto attrs = BuildAttributes(attributes, attribute_count);
-    auto &state = State();
+    auto attrs = buildAttributes(attributes, attribute_count);
+    auto &state = runtimeState();
     std::scoped_lock lock{state.mutex};
     if (!state.meter) {
         state.lastError.clear();
@@ -593,8 +593,8 @@ auto OpenTelemetryInitializer::MetricRecordDoubleHistogram(const char *name,
     }
     auto key = MetricKey{.kind = MetricKind::DoubleHistogram,
                          .name = name,
-                         .unit = IsEmpty(unit) ? "" : unit,
-                         .description = IsEmpty(description) ? "" : description};
+                         .unit = isEmpty(unit) ? "" : unit,
+                         .description = isEmpty(description) ? "" : description};
     auto &histogram = state.doubleHistograms[key];
     if (!histogram) {
         histogram = state.meter->CreateDoubleHistogram(key.name, key.description, key.unit);
@@ -613,19 +613,19 @@ auto OpenTelemetryInitializer::MetricRecordDoubleGauge(const char *name,
         uint64_t attribute_count) -> int
 {
     using namespace otel_detail;
-    if (IsEmpty(name)) {
-        return SetLastError("metric gauge name is empty");
+    if (isEmpty(name)) {
+        return setLastError("metric gauge name is empty");
     }
-    auto gaugeAttributes = BuildGaugeAttributes(attributes, attribute_count);
+    auto gauge_attributes = buildGaugeAttributes(attributes, attribute_count);
     auto key = MetricKey{.kind = MetricKind::DoubleGauge,
                          .name = name,
-                         .unit = IsEmpty(unit) ? "" : unit,
-                         .description = IsEmpty(description) ? "" : description};
+                         .unit = isEmpty(unit) ? "" : unit,
+                         .description = isEmpty(description) ? "" : description};
 
     opentelemetry::nostd::shared_ptr<opentelemetry::metrics::ObservableInstrument> newGauge;
     MetricKey *callbackKey = nullptr;
     {
-        auto &state = State();
+        auto &state = runtimeState();
         std::scoped_lock lock{state.mutex};
         if (!state.meter) {
             state.lastError.clear();
@@ -643,11 +643,11 @@ auto OpenTelemetryInitializer::MetricRecordDoubleGauge(const char *name,
         }
 
         state.doubleGaugeMeasurements[GaugeSampleKey{.metric = std::move(key),
-                                      .attributes = std::move(gaugeAttributes)}] = value;
+                                      .attributes = std::move(gauge_attributes)}] = value;
         state.lastError.clear();
     }
     if (newGauge) {
-        newGauge->AddCallback(ObserveUserDoubleGauge, callbackKey);
+        newGauge->AddCallback(observeUserDoubleGauge, callbackKey);
     }
     return NESTDAQ_OTEL_OK;
 }
@@ -663,7 +663,7 @@ auto OpenTelemetryInitializer::RecordFrameworkFairMQThroughput(const telemetry::
 {
     try {
         {
-            auto &state = otel_detail::State();
+            auto &state = otel_detail::runtimeState();
             std::scoped_lock reconfigureLock{state.frameworkReconfigureMutex};
             std::scoped_lock lock{state.mutex};
             if (!state.frameworkMeterProvider) {
@@ -698,7 +698,7 @@ auto OpenTelemetryInitializer::RecordFrameworkProcessUsage(double cpu_user_secon
 {
     try {
         {
-            auto &state = otel_detail::State();
+            auto &state = otel_detail::runtimeState();
             std::scoped_lock reconfigureLock{state.frameworkReconfigureMutex};
             std::scoped_lock lock{state.mutex};
             if (!state.frameworkMeterProvider) {
@@ -720,7 +720,7 @@ auto OpenTelemetryInitializer::RecordFrameworkFairMQState(int64_t state_id, cons
 {
     try {
         {
-            auto &state = otel_detail::State();
+            auto &state = otel_detail::runtimeState();
             std::scoped_lock reconfigureLock{state.frameworkReconfigureMutex};
             std::scoped_lock lock{state.mutex};
             if (!state.frameworkMeterProvider) {
@@ -728,7 +728,7 @@ auto OpenTelemetryInitializer::RecordFrameworkFairMQState(int64_t state_id, cons
             }
             state.pendingFairMQStateMeasurements.emplace_back(otel_detail::FairMQStateMeasurement{
                 .stateId = state_id,
-                .stateName = otel_detail::IsEmpty(state_name) ? "" : state_name,
+                .stateName = otel_detail::isEmpty(state_name) ? "" : state_name,
             });
         }
         static_cast<void>(otel_detail::FlushFrameworkMetricsIfDirty(otel_detail::kDefaultMetricExportIntervalMs));

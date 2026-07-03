@@ -15,49 +15,49 @@
 namespace nestdaq::telemetry {
 namespace {
 
-auto StartsWith(std::string_view input, std::string_view literal) noexcept -> bool
+auto startsWith(std::string_view input, std::string_view literal) noexcept -> bool
 {
     return input.size() >= literal.size() && input.substr(0, literal.size()) == literal;
 }
 
-auto EndsWith(std::string_view input, char suffix) noexcept -> bool
+auto endsWith(std::string_view input, char suffix) noexcept -> bool
 {
     return !input.empty() && input.back() == suffix;
 }
 
-auto ConsumeLiteral(std::string_view &input, std::string_view literal) noexcept -> bool
+auto consumeLiteral(std::string_view &input, std::string_view literal) noexcept -> bool
 {
-    if (!StartsWith(input, literal)) {
+    if (!startsWith(input, literal)) {
         return false;
     }
     input.remove_prefix(literal.size());
     return true;
 }
 
-auto ConsumeSpaces(std::string_view &input) noexcept -> void
+auto consumeSpaces(std::string_view &input) noexcept -> void
 {
     while (!input.empty() && std::isspace(static_cast<unsigned char>(input.front())) != 0) {
         input.remove_prefix(1);
     }
 }
 
-auto ParseDoubleToken(std::string_view &input, double &value) -> bool
+auto parseDoubleToken(std::string_view &input, double &value) -> bool
 {
-    ConsumeSpaces(input);
-    const auto tokenEnd = input.find_first_of(" )");
-    if (tokenEnd == 0 || tokenEnd == std::string_view::npos) {
+    consumeSpaces(input);
+    const auto token_end = input.find_first_of(" )");
+    if (token_end == 0 || token_end == std::string_view::npos) {
         return false;
     }
 
-    const auto token = input.substr(0, tokenEnd);
+    const auto token = input.substr(0, token_end);
     if (!compat::ParseDouble(token, value) || value < 0.0) {
         return false;
     }
-    input.remove_prefix(tokenEnd);
+    input.remove_prefix(token_end);
     return true;
 }
 
-auto Trim(std::string_view value) noexcept -> std::string_view
+auto trim(std::string_view value) noexcept -> std::string_view
 {
     while (!value.empty() && std::isspace(static_cast<unsigned char>(value.front())) != 0) {
         value.remove_prefix(1);
@@ -68,37 +68,37 @@ auto Trim(std::string_view value) noexcept -> std::string_view
     return value;
 }
 
-auto ParseChannel(std::string_view value, FairMQThroughputSample &sample) -> bool
+auto parseChannel(std::string_view value, FairMQThroughputSample &sample) -> bool
 {
-    value = Trim(value);
+    value = trim(value);
     if (value.empty()) {
         return false;
     }
 
     sample.subChannelName = std::string{value};
 
-    if (!EndsWith(value, ']')) {
+    if (!endsWith(value, ']')) {
         sample.channelName = std::string{value};
         return true;
     }
 
-    const auto openBracket = value.rfind('[');
-    if (openBracket == std::string_view::npos || openBracket == 0 || openBracket + 1 >= value.size() - 1) {
+    const auto open_bracket = value.rfind('[');
+    if (open_bracket == std::string_view::npos || open_bracket == 0 || open_bracket + 1 >= value.size() - 1) {
         return false;
     }
 
-    const auto channelName = Trim(value.substr(0, openBracket));
-    if (channelName.empty()) {
+    const auto channel_name = trim(value.substr(0, open_bracket));
+    if (channel_name.empty()) {
         return false;
     }
 
-    const auto indexToken = value.substr(openBracket + 1, value.size() - openBracket - 2);
+    const auto index_token = value.substr(open_bracket + 1, value.size() - open_bracket - 2);
     uint64_t index = 0;
-    if (!compat::ParseInteger(indexToken, index)) {
+    if (!compat::ParseInteger(index_token, index)) {
         return false;
     }
 
-    sample.channelName = std::string{channelName};
+    sample.channelName = std::string{channel_name};
     sample.subChannelIndex = index;
     return true;
 }
@@ -107,43 +107,43 @@ auto ParseChannel(std::string_view value, FairMQThroughputSample &sample) -> boo
 
 auto ParseFairMQThroughputLog(std::string_view line) -> std::optional<FairMQThroughputSample>
 {
-    line = Trim(line);
-    const auto channelDelimiter = line.find(": in:");
-    if (channelDelimiter == std::string_view::npos) {
+    line = trim(line);
+    const auto channel_delimiter = line.find(": in:");
+    if (channel_delimiter == std::string_view::npos) {
         return std::nullopt;
     }
 
-    auto input = line.substr(channelDelimiter + 2);
+    auto input = line.substr(channel_delimiter + 2);
     auto sample = FairMQThroughputSample{};
-    if (!ParseChannel(line.substr(0, channelDelimiter), sample)) {
+    if (!parseChannel(line.substr(0, channel_delimiter), sample)) {
         return std::nullopt;
     }
 
-    if (!ConsumeLiteral(input, "in:") ||
-            !ParseDoubleToken(input, sample.messagesPerSecondIn)) {
+    if (!consumeLiteral(input, "in:") ||
+            !parseDoubleToken(input, sample.messagesPerSecondIn)) {
         return std::nullopt;
     }
-    ConsumeSpaces(input);
-    if (!ConsumeLiteral(input, "(") ||
-            !ParseDoubleToken(input, sample.megabytesPerSecondIn)) {
+    consumeSpaces(input);
+    if (!consumeLiteral(input, "(") ||
+            !parseDoubleToken(input, sample.megabytesPerSecondIn)) {
         return std::nullopt;
     }
-    ConsumeSpaces(input);
-    if (!ConsumeLiteral(input, "MB)")) {
+    consumeSpaces(input);
+    if (!consumeLiteral(input, "MB)")) {
         return std::nullopt;
     }
-    ConsumeSpaces(input);
-    if (!ConsumeLiteral(input, "out:") ||
-            !ParseDoubleToken(input, sample.messagesPerSecondOut)) {
+    consumeSpaces(input);
+    if (!consumeLiteral(input, "out:") ||
+            !parseDoubleToken(input, sample.messagesPerSecondOut)) {
         return std::nullopt;
     }
-    ConsumeSpaces(input);
-    if (!ConsumeLiteral(input, "(") ||
-            !ParseDoubleToken(input, sample.megabytesPerSecondOut)) {
+    consumeSpaces(input);
+    if (!consumeLiteral(input, "(") ||
+            !parseDoubleToken(input, sample.megabytesPerSecondOut)) {
         return std::nullopt;
     }
-    ConsumeSpaces(input);
-    if (!ConsumeLiteral(input, "MB)") || !Trim(input).empty()) {
+    consumeSpaces(input);
+    if (!consumeLiteral(input, "MB)") || !trim(input).empty()) {
         return std::nullopt;
     }
 

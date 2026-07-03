@@ -41,11 +41,11 @@ constexpr std::string_view kSchemaUrl;
 #undef NESTDAQ_STRINGIFY
 #undef NESTDAQ_STRINGIFY_IMPL
 
-auto ConvertSeverity(spdlog::level::level_enum level) noexcept -> opentelemetry::logs::Severity;
+auto convertSeverity(spdlog::level::level_enum level) noexcept -> opentelemetry::logs::Severity;
 template<typename StringView>
-auto ToStringView(StringView value) noexcept -> opentelemetry::nostd::string_view;
+auto toStringView(StringView value) noexcept -> opentelemetry::nostd::string_view;
 
-auto ConvertSeverity(spdlog::level::level_enum level) noexcept -> opentelemetry::logs::Severity
+auto convertSeverity(spdlog::level::level_enum level) noexcept -> opentelemetry::logs::Severity
 {
     using opentelemetry::logs::Severity;
     switch (level) {
@@ -69,7 +69,7 @@ auto ConvertSeverity(spdlog::level::level_enum level) noexcept -> opentelemetry:
 }
 
 template<typename StringView>
-auto ToStringView(StringView value) noexcept -> opentelemetry::nostd::string_view
+auto toStringView(StringView value) noexcept -> opentelemetry::nostd::string_view
 {
     return {value.data(), value.size()};
 }
@@ -80,38 +80,38 @@ protected:
     {
         try {
             auto provider = opentelemetry::logs::Provider::GetLoggerProvider();
-            auto logger = provider->GetLogger(ToStringView(kLoggerName),
-                                              ToStringView(kLibraryName),
-                                              ToStringView(kLibraryVersion),
-                                              ToStringView(kSchemaUrl));
-            auto logRecord = logger->CreateLogRecord();
-            if (!logRecord) {
+            auto logger = provider->GetLogger(toStringView(kLoggerName),
+                                              toStringView(kLibraryName),
+                                              toStringView(kLibraryVersion),
+                                              toStringView(kSchemaUrl));
+            auto log_record = logger->CreateLogRecord();
+            if (!log_record) {
                 return;
             }
 
-            logRecord->SetTimestamp(opentelemetry::common::SystemTimestamp{msg.time});
-            logRecord->SetObservedTimestamp(opentelemetry::common::SystemTimestamp{std::chrono::system_clock::now()});
-            logRecord->SetSeverity(ConvertSeverity(msg.level));
-            logRecord->SetBody(ToStringView(msg.payload));
+            log_record->SetTimestamp(opentelemetry::common::SystemTimestamp{msg.time});
+            log_record->SetObservedTimestamp(opentelemetry::common::SystemTimestamp{std::chrono::system_clock::now()});
+            log_record->SetSeverity(convertSeverity(msg.level));
+            log_record->SetBody(toStringView(msg.payload));
 
-            logRecord->SetAttribute("spdlog.logger.name", ToStringView(msg.logger_name));
-            logRecord->SetAttribute("spdlog.level", ToStringView(spdlog::level::to_string_view(msg.level)));
-            logRecord->SetAttribute(opentelemetry::semconv::thread::kThreadId, static_cast<int64_t>(msg.thread_id));
+            log_record->SetAttribute("spdlog.logger.name", toStringView(msg.logger_name));
+            log_record->SetAttribute("spdlog.level", toStringView(spdlog::level::to_string_view(msg.level)));
+            log_record->SetAttribute(opentelemetry::semconv::thread::kThreadId, static_cast<int64_t>(msg.thread_id));
 
             if (msg.source.filename != nullptr && !std::string_view{msg.source.filename}.empty()) {
-                logRecord->SetAttribute(opentelemetry::semconv::code::kCodeFilePath,
-                                        ToStringView(std::string_view{msg.source.filename}));
+                log_record->SetAttribute(opentelemetry::semconv::code::kCodeFilePath,
+                                         toStringView(std::string_view{msg.source.filename}));
             }
             if (msg.source.line > 0) {
-                logRecord->SetAttribute(opentelemetry::semconv::code::kCodeLineNumber,
-                                        static_cast<int64_t>(msg.source.line));
+                log_record->SetAttribute(opentelemetry::semconv::code::kCodeLineNumber,
+                                         static_cast<int64_t>(msg.source.line));
             }
             if (msg.source.funcname != nullptr && !std::string_view{msg.source.funcname}.empty()) {
-                logRecord->SetAttribute(opentelemetry::semconv::code::kCodeFunctionName,
-                                        ToStringView(std::string_view{msg.source.funcname}));
+                log_record->SetAttribute(opentelemetry::semconv::code::kCodeFunctionName,
+                                         toStringView(std::string_view{msg.source.funcname}));
             }
 
-            logger->EmitLogRecord(std::move(logRecord));
+            logger->EmitLogRecord(std::move(log_record));
         } catch (const std::exception& ex) {
             std::cerr << "SpdlogOpenTelemetrySink: failed to emit log record: " << ex.what() << '\n';
         } catch (...) {
@@ -132,8 +132,8 @@ auto CreateSpdlogOpenTelemetrySink() -> std::shared_ptr<spdlog::sinks::sink>
 } // namespace nestdaq::telemetry
 
 extern "C" {
-NESTDAQ_OTEL_EXPORT auto nestdaq_otel_create_spdlog_sink() -> std::shared_ptr<spdlog::sinks::sink>
-{
-    return nestdaq::telemetry::CreateSpdlogOpenTelemetrySink();
-}
+    NESTDAQ_OTEL_EXPORT auto nestdaq_otel_create_spdlog_sink() -> std::shared_ptr<spdlog::sinks::sink>
+    {
+        return nestdaq::telemetry::CreateSpdlogOpenTelemetrySink();
+    }
 }

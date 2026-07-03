@@ -66,20 +66,20 @@ constexpr auto kSeverityMap = std::array{
     opentelemetry::logs::Severity::kFatal,
 };
 
-constexpr auto ConvertSeverity(fair::Severity severity) noexcept -> opentelemetry::logs::Severity;
-auto CurrentThreadId() noexcept -> uint64_t;
-auto EmitLogRecord(const std::string &content, const fair::LogMetaData &metadata) noexcept -> void;
-auto FairLoggerSeverityName(fair::Severity severity) noexcept -> std::string_view;
-auto InstanceId() -> std::string &;
-auto InstanceIdMutex() -> std::mutex &;
-auto MinSeverity() -> std::atomic<int32_t>&;
-auto ParseInstanceIndex(std::string_view instanceId) -> std::optional<std::pair<std::string_view, int64_t>>;
-auto ParseLine(std::string_view line) -> int64_t;
-auto ShouldEmit(fair::Severity severity) noexcept -> bool;
-auto SinkRegistered() -> std::atomic<bool>&;
-auto ToStringView(std::string_view value) noexcept -> opentelemetry::nostd::string_view;
+constexpr auto convertSeverity(fair::Severity severity) noexcept -> opentelemetry::logs::Severity;
+auto currentThreadId() noexcept -> uint64_t;
+auto emitLogRecord(const std::string &content, const fair::LogMetaData &metadata) noexcept -> void;
+auto fairLoggerSeverityName(fair::Severity severity) noexcept -> std::string_view;
+auto instanceIdStorage() -> std::string &;
+auto instanceIdMutex() -> std::mutex &;
+auto minSeverity() -> std::atomic<int32_t>&;
+auto parseInstanceIndex(std::string_view instance_id) -> std::optional<std::pair<std::string_view, int64_t>>;
+auto parseLine(std::string_view line) -> int64_t;
+auto shouldEmit(fair::Severity severity) noexcept -> bool;
+auto sinkRegistered() -> std::atomic<bool>&;
+auto toStringView(std::string_view value) noexcept -> opentelemetry::nostd::string_view;
 
-constexpr auto ConvertSeverity(fair::Severity severity) noexcept -> opentelemetry::logs::Severity
+constexpr auto convertSeverity(fair::Severity severity) noexcept -> opentelemetry::logs::Severity
 {
     using opentelemetry::logs::Severity;
     const auto value = static_cast<int32_t>(severity);
@@ -94,27 +94,27 @@ constexpr auto ConvertSeverity(fair::Severity severity) noexcept -> opentelemetr
 }
 
 static_assert(kSeverityMap.size() == fair::Logger::fSeverityNames.size());
-static_assert(ConvertSeverity(fair::Severity::nolog) == opentelemetry::logs::Severity::kInvalid);
-static_assert(ConvertSeverity(fair::Severity::trace) == opentelemetry::logs::Severity::kTrace);
-static_assert(ConvertSeverity(fair::Severity::debug4) == opentelemetry::logs::Severity::kTrace2);
-static_assert(ConvertSeverity(fair::Severity::debug3) == opentelemetry::logs::Severity::kTrace2);
-static_assert(ConvertSeverity(fair::Severity::debug2) == opentelemetry::logs::Severity::kTrace3);
-static_assert(ConvertSeverity(fair::Severity::debug1) == opentelemetry::logs::Severity::kTrace4);
-static_assert(ConvertSeverity(fair::Severity::debug) == opentelemetry::logs::Severity::kDebug);
-static_assert(ConvertSeverity(fair::Severity::detail) == opentelemetry::logs::Severity::kDebug2);
-static_assert(ConvertSeverity(fair::Severity::info) == opentelemetry::logs::Severity::kInfo);
-static_assert(ConvertSeverity(fair::Severity::state) == opentelemetry::logs::Severity::kInfo2);
-static_assert(ConvertSeverity(fair::Severity::warn) == opentelemetry::logs::Severity::kWarn);
-static_assert(ConvertSeverity(fair::Severity::important) == opentelemetry::logs::Severity::kWarn2);
-static_assert(ConvertSeverity(fair::Severity::alarm) == opentelemetry::logs::Severity::kWarn3);
-static_assert(ConvertSeverity(fair::Severity::error) == opentelemetry::logs::Severity::kError);
-static_assert(ConvertSeverity(fair::Severity::critical) == opentelemetry::logs::Severity::kError2);
-static_assert(ConvertSeverity(fair::Severity::fatal) == opentelemetry::logs::Severity::kFatal);
-static_assert(ConvertSeverity(static_cast<fair::Severity>(-1)) == opentelemetry::logs::Severity::kInvalid);
-static_assert(ConvertSeverity(static_cast<fair::Severity>(fair::Logger::fSeverityNames.size())) ==
+static_assert(convertSeverity(fair::Severity::nolog) == opentelemetry::logs::Severity::kInvalid);
+static_assert(convertSeverity(fair::Severity::trace) == opentelemetry::logs::Severity::kTrace);
+static_assert(convertSeverity(fair::Severity::debug4) == opentelemetry::logs::Severity::kTrace2);
+static_assert(convertSeverity(fair::Severity::debug3) == opentelemetry::logs::Severity::kTrace2);
+static_assert(convertSeverity(fair::Severity::debug2) == opentelemetry::logs::Severity::kTrace3);
+static_assert(convertSeverity(fair::Severity::debug1) == opentelemetry::logs::Severity::kTrace4);
+static_assert(convertSeverity(fair::Severity::debug) == opentelemetry::logs::Severity::kDebug);
+static_assert(convertSeverity(fair::Severity::detail) == opentelemetry::logs::Severity::kDebug2);
+static_assert(convertSeverity(fair::Severity::info) == opentelemetry::logs::Severity::kInfo);
+static_assert(convertSeverity(fair::Severity::state) == opentelemetry::logs::Severity::kInfo2);
+static_assert(convertSeverity(fair::Severity::warn) == opentelemetry::logs::Severity::kWarn);
+static_assert(convertSeverity(fair::Severity::important) == opentelemetry::logs::Severity::kWarn2);
+static_assert(convertSeverity(fair::Severity::alarm) == opentelemetry::logs::Severity::kWarn3);
+static_assert(convertSeverity(fair::Severity::error) == opentelemetry::logs::Severity::kError);
+static_assert(convertSeverity(fair::Severity::critical) == opentelemetry::logs::Severity::kError2);
+static_assert(convertSeverity(fair::Severity::fatal) == opentelemetry::logs::Severity::kFatal);
+static_assert(convertSeverity(static_cast<fair::Severity>(-1)) == opentelemetry::logs::Severity::kInvalid);
+static_assert(convertSeverity(static_cast<fair::Severity>(fair::Logger::fSeverityNames.size())) ==
               opentelemetry::logs::Severity::kInvalid);
 
-auto CurrentThreadId() noexcept -> uint64_t
+auto currentThreadId() noexcept -> uint64_t
 {
 #ifdef __linux__
     // Use the native Linux TID instead of std::this_thread::get_id() so logs can be correlated
@@ -129,72 +129,72 @@ auto CurrentThreadId() noexcept -> uint64_t
 #endif
 }
 
-auto EmitLogRecord(const std::string &content, const fair::LogMetaData &metadata) noexcept -> void
+auto emitLogRecord(const std::string &content, const fair::LogMetaData &metadata) noexcept -> void
 {
     if (auto sample = telemetry::ParseFairMQThroughputLog(content)) {
         OpenTelemetryInitializer::RecordFairMQThroughput(*sample);
     }
 
-    if (!ShouldEmit(metadata.severity)) {
+    if (!shouldEmit(metadata.severity)) {
         return;
     }
 
     try {
         auto provider = opentelemetry::logs::Provider::GetLoggerProvider();
-        auto logger = provider->GetLogger(ToStringView(kLoggerName),
-                                          ToStringView(kLibraryName),
-                                          ToStringView(kLibraryVersion),
-                                          ToStringView(kSchemaUrl));
-        auto logRecord = logger->CreateLogRecord();
-        if (!logRecord) {
+        auto logger = provider->GetLogger(toStringView(kLoggerName),
+                                          toStringView(kLibraryName),
+                                          toStringView(kLibraryVersion),
+                                          toStringView(kSchemaUrl));
+        auto log_record = logger->CreateLogRecord();
+        if (!log_record) {
             return;
         }
 
         const auto timestamp = std::chrono::system_clock::time_point{
             std::chrono::seconds{metadata.timestamp} + metadata.us};
-        logRecord->SetTimestamp(opentelemetry::common::SystemTimestamp{timestamp});
-        logRecord->SetObservedTimestamp(opentelemetry::common::SystemTimestamp{std::chrono::system_clock::now()});
+        log_record->SetTimestamp(opentelemetry::common::SystemTimestamp{timestamp});
+        log_record->SetObservedTimestamp(opentelemetry::common::SystemTimestamp{std::chrono::system_clock::now()});
         // SetSeverity records the OpenTelemetry-defined SeverityNumber and SeverityText.
         // The FairLogger original level is kept below as fairlogger.severity.* attributes.
-        logRecord->SetSeverity(ConvertSeverity(metadata.severity));
-        logRecord->SetBody(ToStringView(content));
+        log_record->SetSeverity(convertSeverity(metadata.severity));
+        log_record->SetBody(toStringView(content));
 
-        auto severityName = std::string_view{metadata.severity_name};
-        if (severityName.empty()) {
-            severityName = FairLoggerSeverityName(metadata.severity);
+        auto severity_name = std::string_view{metadata.severity_name};
+        if (severity_name.empty()) {
+            severity_name = fairLoggerSeverityName(metadata.severity);
         }
-        logRecord->SetAttribute("fairlogger.severity.number", static_cast<int64_t>(metadata.severity));
-        if (!severityName.empty()) {
-            logRecord->SetAttribute("fairlogger.severity.text", ToStringView(severityName));
+        log_record->SetAttribute("fairlogger.severity.number", static_cast<int64_t>(metadata.severity));
+        if (!severity_name.empty()) {
+            log_record->SetAttribute("fairlogger.severity.text", toStringView(severity_name));
         }
-        auto instanceId = std::string{};
+        auto instance_id = std::string{};
         {
-            std::scoped_lock lock{InstanceIdMutex()};
-            instanceId = InstanceId();
+            std::scoped_lock lock{instanceIdMutex()};
+            instance_id = instanceIdStorage();
         }
-        if (!instanceId.empty()) {
-            logRecord->SetAttribute("nestdaq.instance.id", ToStringView(instanceId));
-            if (const auto parsed = ParseInstanceIndex(instanceId)) {
-                logRecord->SetAttribute("nestdaq.instance.name", ToStringView(parsed->first));
-                logRecord->SetAttribute("nestdaq.instance.index", parsed->second);
+        if (!instance_id.empty()) {
+            log_record->SetAttribute("nestdaq.instance.id", toStringView(instance_id));
+            if (const auto parsed = parseInstanceIndex(instance_id)) {
+                log_record->SetAttribute("nestdaq.instance.name", toStringView(parsed->first));
+                log_record->SetAttribute("nestdaq.instance.index", parsed->second);
             }
         }
         if (!metadata.process_name.empty()) {
-            logRecord->SetAttribute("process.name", ToStringView(metadata.process_name));
+            log_record->SetAttribute("process.name", toStringView(metadata.process_name));
         }
         if (!metadata.file.empty()) {
-            logRecord->SetAttribute(opentelemetry::semconv::code::kCodeFilePath, ToStringView(metadata.file));
+            log_record->SetAttribute(opentelemetry::semconv::code::kCodeFilePath, toStringView(metadata.file));
         }
-        const auto line = ParseLine(metadata.line);
+        const auto line = parseLine(metadata.line);
         if (line > 0) {
-            logRecord->SetAttribute(opentelemetry::semconv::code::kCodeLineNumber, line);
+            log_record->SetAttribute(opentelemetry::semconv::code::kCodeLineNumber, line);
         }
         if (!metadata.func.empty()) {
-            logRecord->SetAttribute(opentelemetry::semconv::code::kCodeFunctionName, ToStringView(metadata.func));
+            log_record->SetAttribute(opentelemetry::semconv::code::kCodeFunctionName, toStringView(metadata.func));
         }
-        logRecord->SetAttribute(opentelemetry::semconv::thread::kThreadId, CurrentThreadId());
+        log_record->SetAttribute(opentelemetry::semconv::thread::kThreadId, currentThreadId());
 
-        logger->EmitLogRecord(std::move(logRecord));
+        logger->EmitLogRecord(std::move(log_record));
     } catch (const std::exception &ex) {
         std::cerr << "FairLoggerOpenTelemetrySink: failed to emit log record: " << ex.what() << '\n';
     } catch (...) {
@@ -202,7 +202,7 @@ auto EmitLogRecord(const std::string &content, const fair::LogMetaData &metadata
     }
 }
 
-auto FairLoggerSeverityName(fair::Severity severity) noexcept -> std::string_view
+auto fairLoggerSeverityName(fair::Severity severity) noexcept -> std::string_view
 {
     const auto value = static_cast<int32_t>(severity);
     if (value < 0) {
@@ -214,40 +214,40 @@ auto FairLoggerSeverityName(fair::Severity severity) noexcept -> std::string_vie
     return fair::Logger::SeverityName(severity);
 }
 
-auto InstanceId() -> std::string &
+auto instanceIdStorage() -> std::string &
 {
     static auto value = std::string{};
     return value;
 }
 
-auto InstanceIdMutex() -> std::mutex &
+auto instanceIdMutex() -> std::mutex &
 {
     static auto value = std::mutex{};
     return value;
 }
 
-auto MinSeverity() -> std::atomic<int32_t>&
+auto minSeverity() -> std::atomic<int32_t>&
 {
     static std::atomic<int32_t> value{static_cast<int32_t>(fair::Severity::trace)};
     return value;
 }
 
-auto ParseInstanceIndex(std::string_view instanceId) -> std::optional<std::pair<std::string_view, int64_t>>
+auto parseInstanceIndex(std::string_view instance_id) -> std::optional<std::pair<std::string_view, int64_t>>
 {
-    const auto separator = instanceId.rfind('-');
-    if (separator == std::string_view::npos || separator == 0 || separator + 1 == instanceId.size()) {
+    const auto separator = instance_id.rfind('-');
+    if (separator == std::string_view::npos || separator == 0 || separator + 1 == instance_id.size()) {
         return std::nullopt;
     }
 
     auto index = int64_t{0};
-    const auto suffix = instanceId.substr(separator + 1);
+    const auto suffix = instance_id.substr(separator + 1);
     if (!telemetry::compat::ParseInteger(suffix, index)) {
         return std::nullopt;
     }
-    return std::pair{instanceId.substr(0, separator), index};
+    return std::pair{instance_id.substr(0, separator), index};
 }
 
-auto ParseLine(std::string_view line) -> int64_t
+auto parseLine(std::string_view line) -> int64_t
 {
     int64_t value = 0;
     if (!telemetry::compat::ParseInteger(line, value)) {
@@ -256,19 +256,19 @@ auto ParseLine(std::string_view line) -> int64_t
     return value;
 }
 
-auto ShouldEmit(fair::Severity severity) noexcept -> bool
+auto shouldEmit(fair::Severity severity) noexcept -> bool
 {
-    const auto minSeverity = static_cast<fair::Severity>(MinSeverity().load(std::memory_order_relaxed));
-    return minSeverity != fair::Severity::nolog && severity >= minSeverity;
+    const auto min_severity = static_cast<fair::Severity>(minSeverity().load(std::memory_order_relaxed));
+    return min_severity != fair::Severity::nolog && severity >= min_severity;
 }
 
-auto SinkRegistered() -> std::atomic<bool>&
+auto sinkRegistered() -> std::atomic<bool>&
 {
     static std::atomic<bool> value{false};
     return value;
 }
 
-auto ToStringView(std::string_view value) noexcept -> opentelemetry::nostd::string_view
+auto toStringView(std::string_view value) noexcept -> opentelemetry::nostd::string_view
 {
     return {value.data(), value.size()};
 }
@@ -277,13 +277,13 @@ auto ToStringView(std::string_view value) noexcept -> opentelemetry::nostd::stri
 
 auto FairLoggerOpenTelemetrySink::GetMinSeverity() noexcept -> int32_t
 {
-    return MinSeverity().load(std::memory_order_acquire);
+    return minSeverity().load(std::memory_order_acquire);
 }
 
 auto FairLoggerOpenTelemetrySink::Initialize() -> void
 {
     bool expected = false;
-    if (!SinkRegistered().compare_exchange_strong(expected, true, std::memory_order_acq_rel)) {
+    if (!sinkRegistered().compare_exchange_strong(expected, true, std::memory_order_acq_rel)) {
         return;
     }
 
@@ -291,23 +291,23 @@ auto FairLoggerOpenTelemetrySink::Initialize() -> void
         fair::Logger::AddCustomSink(std::string{kSinkKey},
                                     fair::Severity::trace,
         [](const std::string &content, const fair::LogMetaData &metadata) {
-            EmitLogRecord(content, metadata);
+            emitLogRecord(content, metadata);
         });
     } catch (...) {
-        SinkRegistered().store(false, std::memory_order_release);
+        sinkRegistered().store(false, std::memory_order_release);
         throw;
     }
 }
 
 auto FairLoggerOpenTelemetrySink::SetNestdaqInstanceId(std::string_view instanceId) -> void
 {
-    std::scoped_lock lock{InstanceIdMutex()};
-    InstanceId() = instanceId;
+    std::scoped_lock lock{instanceIdMutex()};
+    instanceIdStorage() = instanceId;
 }
 
 auto FairLoggerOpenTelemetrySink::SetMinSeverity(int32_t severity) noexcept -> void
 {
-    MinSeverity().store(severity, std::memory_order_release);
+    minSeverity().store(severity, std::memory_order_release);
 }
 
 auto FairLoggerOpenTelemetrySink::Shutdown() noexcept -> void
@@ -315,7 +315,7 @@ auto FairLoggerOpenTelemetrySink::Shutdown() noexcept -> void
     SetNestdaqInstanceId({});
 
     bool expected = true;
-    if (!SinkRegistered().compare_exchange_strong(expected, false, std::memory_order_acq_rel)) {
+    if (!sinkRegistered().compare_exchange_strong(expected, false, std::memory_order_acq_rel)) {
         return;
     }
 

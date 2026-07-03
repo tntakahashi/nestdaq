@@ -96,7 +96,7 @@ struct SeverityParseResult {
  * @brief Add command-line options that configure the optional telemetry plugin.
  */
 auto AddTelemetryOptions(boost::program_options::options_description& options,
-                         std::string_view defaultServiceName = "nestdaq") -> void;
+                         std::string_view default_service_name = "nestdaq") -> void;
 /**
  * @brief Apply `NESTDAQ_OTEL_*` environment variables to @p options.
  */
@@ -133,10 +133,10 @@ auto MakeConfig(const TelemetryOptions& options) -> nestdaq_otel_config;
  * The returned struct borrows the supplied string_view storage.
  */
 auto MakeSignalConfig(std::string_view protocol,
-                      std::string_view endpointHttp,
-                      std::string_view endpointGrpc,
+                      std::string_view endpoint_http,
+                      std::string_view endpoint_grpc,
                       std::string_view headers,
-                      uint32_t otlpHttpJson) -> nestdaq_otel_signal_config;
+                      uint32_t otlp_http_json) -> nestdaq_otel_signal_config;
 /** @brief Parse common true values such as `1`, `true`, `on`, and `yes`. */
 auto ParseBool(std::string_view value) -> bool;
 /**
@@ -147,7 +147,7 @@ auto ParseBool(std::string_view value) -> bool;
  * device identity by default.
  */
 auto ParseTelemetryOptions(int argc, char* argv[], // NOLINT(cppcoreguidelines-avoid-c-arrays)
-                           std::string_view defaultServiceName = "nestdaq") -> TelemetryOptions;
+                           std::string_view default_service_name = "nestdaq") -> TelemetryOptions;
 /** @brief Convert a FairLogger severity name to its numeric value. */
 auto ParseFairLoggerSeverity(std::string_view severity) -> SeverityParseResult;
 /** @brief Parse an unsigned integer option with a fallback on invalid input. */
@@ -156,7 +156,7 @@ auto ParseUInt32(std::string_view value, uint32_t fallback) -> uint32_t;
  * @brief Read telemetry options from a Boost variables_map after option parsing.
  */
 auto ReadTelemetryOptions(const boost::program_options::variables_map& vm,
-                          std::string_view defaultServiceName) -> TelemetryOptions;
+                          std::string_view default_service_name) -> TelemetryOptions;
 /** @brief Emit a warning when an unknown severity name falls back to info. */
 auto WarnUnknownSeverityFallback(std::string_view severity) -> void;
 /** @brief Return the numeric FairLogger severity value for @p severity. */
@@ -236,9 +236,9 @@ public:
      */
     auto Load(const std::string& library) -> bool;
     /** @brief End a span handle previously returned by @ref SpanStart. */
-    auto SpanEnd(uint64_t spanHandle) -> bool;
+    auto SpanEnd(uint64_t span_handle) -> bool;
     /** @brief Set one attribute on an active span handle. */
-    auto SpanSetAttribute(uint64_t spanHandle, const nestdaq_otel_attribute& attribute) -> bool;
+    auto SpanSetAttribute(uint64_t span_handle, const nestdaq_otel_attribute& attribute) -> bool;
     /** @brief Update the NestDAQ instance id attached to exported log records. */
     auto SetNestdaqInstanceId(std::string_view instanceId) -> bool;
     /** @brief Start a span and return its opaque plugin-owned handle. */

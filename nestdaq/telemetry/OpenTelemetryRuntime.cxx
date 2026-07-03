@@ -43,13 +43,13 @@ static constexpr uint64_t NESTDAQ_VERSION_PATCH = 0;
 namespace nestdaq::otel_detail {
 namespace {
 
-auto ParseProtocolToken(std::string_view protocol, Protocol &out) -> bool;
-auto ToLower(std::string_view value) -> std::string;
-auto Trim(std::string_view value) -> std::string_view;
+auto parseProtocolToken(std::string_view protocol, Protocol &out) -> bool;
+auto toLower(std::string_view value) -> std::string;
+auto trim(std::string_view value) -> std::string_view;
 
-auto ParseProtocolToken(std::string_view protocol, Protocol &out) -> bool
+auto parseProtocolToken(std::string_view protocol, Protocol &out) -> bool
 {
-    const auto normalized = ToLower(protocol);
+    const auto normalized = toLower(protocol);
     if (normalized == "console") {
         out = Protocol::Console;
         return true;
@@ -65,7 +65,7 @@ auto ParseProtocolToken(std::string_view protocol, Protocol &out) -> bool
     return false;
 }
 
-auto ToLower(std::string_view value) -> std::string
+auto toLower(std::string_view value) -> std::string
 {
     auto out = std::string{value};
     std::transform(out.begin(), out.end(), out.begin(), [](unsigned char c) {
@@ -74,7 +74,7 @@ auto ToLower(std::string_view value) -> std::string
     return out;
 }
 
-auto Trim(std::string_view value) -> std::string_view
+auto trim(std::string_view value) -> std::string_view
 {
     while (!value.empty() && std::isspace(static_cast<unsigned char>(value.front())) != 0) {
         value.remove_prefix(1);
@@ -87,18 +87,18 @@ auto Trim(std::string_view value) -> std::string_view
 
 } // namespace
 
-auto AddStringAttribute(opentelemetry::sdk::resource::ResourceAttributes &attributes,
+auto addStringAttribute(opentelemetry::sdk::resource::ResourceAttributes &attributes,
                         const char *key,
                         const char *value) -> void
 {
-    if (!IsEmpty(value)) {
+    if (!isEmpty(value)) {
         attributes.emplace(key, std::string{value});
     }
 }
 
-auto AppendAttribute(AttributeStorage &storage, const nestdaq_otel_attribute &attribute) -> void
+auto appendAttribute(AttributeStorage &storage, const nestdaq_otel_attribute &attribute) -> void
 {
-    if (!ValidateAttribute(&attribute)) {
+    if (!validateAttribute(&attribute)) {
         return;
     }
 
@@ -106,7 +106,7 @@ auto AppendAttribute(AttributeStorage &storage, const nestdaq_otel_attribute &at
     auto key = opentelemetry::nostd::string_view{storage.keys.back()};
     switch (attribute.type) {
     case NESTDAQ_OTEL_ATTRIBUTE_STRING:
-        storage.values.emplace_back(key, IsEmpty(attribute.string_value) ? "" : attribute.string_value);
+        storage.values.emplace_back(key, isEmpty(attribute.string_value) ? "" : attribute.string_value);
         break;
     case NESTDAQ_OTEL_ATTRIBUTE_INT64:
         storage.values.emplace_back(key, attribute.int_value);
@@ -123,7 +123,7 @@ auto AppendAttribute(AttributeStorage &storage, const nestdaq_otel_attribute &at
     }
 }
 
-auto BuildAttributes(const nestdaq_otel_attribute *attributes, uint64_t attributeCount) -> AttributeStorage
+auto buildAttributes(const nestdaq_otel_attribute *attributes, uint64_t attributeCount) -> AttributeStorage
 {
     auto storage = AttributeStorage{};
     storage.keys.reserve(attributeCount);
@@ -132,12 +132,12 @@ auto BuildAttributes(const nestdaq_otel_attribute *attributes, uint64_t attribut
         return storage;
     }
     for (uint64_t i = 0; i < attributeCount; ++i) {
-        AppendAttribute(storage, attributes[i]); // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+        appendAttribute(storage, attributes[i]); // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
     }
     return storage;
 }
 
-auto BuildGaugeAttributes(const nestdaq_otel_attribute *attributes, uint64_t attributeCount) -> std::vector<GaugeAttribute>
+auto buildGaugeAttributes(const nestdaq_otel_attribute *attributes, uint64_t attributeCount) -> std::vector<GaugeAttribute>
 {
     auto values = std::vector<GaugeAttribute> {};
     values.reserve(attributeCount);
@@ -147,7 +147,7 @@ auto BuildGaugeAttributes(const nestdaq_otel_attribute *attributes, uint64_t att
 
     for (uint64_t i = 0; i < attributeCount; ++i) {
         const auto &attribute = attributes[i]; // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
-        if (!ValidateAttribute(&attribute)) {
+        if (!validateAttribute(&attribute)) {
             continue;
         }
 
@@ -156,7 +156,7 @@ auto BuildGaugeAttributes(const nestdaq_otel_attribute *attributes, uint64_t att
         value.type = attribute.type;
         switch (attribute.type) {
         case NESTDAQ_OTEL_ATTRIBUTE_STRING:
-            value.stringValue = IsEmpty(attribute.string_value) ? "" : attribute.string_value;
+            value.stringValue = isEmpty(attribute.string_value) ? "" : attribute.string_value;
             break;
         case NESTDAQ_OTEL_ATTRIBUTE_INT64:
             value.intValue = attribute.int_value;
@@ -177,9 +177,9 @@ auto BuildGaugeAttributes(const nestdaq_otel_attribute *attributes, uint64_t att
     return values;
 }
 
-auto ClearLastError() -> void
+auto clearLastError() -> void
 {
-    auto &state = State();
+    auto &state = runtimeState();
     std::scoped_lock lock{state.mutex};
     state.lastError.clear();
 }
@@ -191,7 +191,7 @@ auto FlushFrameworkMetricsIfDirty(uint64_t timeoutMs) -> int
     auto processCount = std::size_t{0};
     auto stateCount = std::size_t{0};
     {
-        auto &state = State();
+        auto &state = runtimeState();
         std::scoped_lock lock{state.mutex};
         if (state.pendingFairMQThroughputMeasurements.empty() &&
                 state.pendingProcessUsageMeasurements.empty() &&
@@ -215,9 +215,9 @@ auto FlushFrameworkMetricsIfDirty(uint64_t timeoutMs) -> int
     // Export a snapshot of pending framework samples. Successful flushes erase
     // only the exported prefix and recreate observable instruments so already
     // exported one-shot samples cannot be observed again.
-    const auto ok = frameworkMeterProvider->ForceFlush(TimeoutFromMs(timeoutMs));
+    const auto ok = frameworkMeterProvider->ForceFlush(timeoutFromMs(timeoutMs));
     auto shouldRecreateProvider = false;
-    auto &state = State();
+    auto &state = runtimeState();
     if (ok) {
         std::scoped_lock reconfigureLock{state.frameworkReconfigureMutex};
         {
@@ -251,7 +251,7 @@ auto FlushFrameworkMetricsIfDirty(uint64_t timeoutMs) -> int
             state.lastError.clear();
         }
         if (shouldRecreateProvider) {
-            ConfigureFrameworkMetricsProvider(state);
+            configureFrameworkMetricsProvider(state);
         }
         return NESTDAQ_OTEL_OK;
     }
@@ -261,10 +261,10 @@ auto FlushFrameworkMetricsIfDirty(uint64_t timeoutMs) -> int
         state.exportingProcessUsageMeasurements.clear();
         state.exportingFairMQStateMeasurements.clear();
     }
-    return SetLastError("OpenTelemetry framework metrics force flush failed");
+    return setLastError("OpenTelemetry framework metrics force flush failed");
 }
 
-auto DefaultConfig() -> nestdaq_otel_config
+auto defaultConfig() -> nestdaq_otel_config
 {
     auto config = nestdaq_otel_config{};
     config.size = sizeof(config);
@@ -286,35 +286,35 @@ auto DefaultConfig() -> nestdaq_otel_config
     return config;
 }
 
-auto FairMQMetadataLogBody(const nestdaq_otel_config &config) -> std::string
+auto fairMQMetadataLogBody(const nestdaq_otel_config &config) -> std::string
 {
     const auto body = nlohmann::json{
         {   "fairmq", {
                 {   "version", {
-                        {"string", MetadataValue(FAIRMQ_VERSION)},
+                        {"string", metadataValue(FAIRMQ_VERSION)},
                         {"major", FAIRMQ_VERSION_MAJOR},
                         {"minor", FAIRMQ_VERSION_MINOR},
                         {"patch", FAIRMQ_VERSION_PATCH},
-                        {"git", MetadataValue(config.fairmq_git_version)},
+                        {"git", metadataValue(config.fairmq_git_version)},
                     }
                 },
                 {   "build", {
-                        {"type", MetadataValue(config.fairmq_build_type)},
+                        {"type", metadataValue(config.fairmq_build_type)},
                     }
                 },
                 {   "source", {
-                        {"repo_url", MetadataValue(config.fairmq_repo_url)},
+                        {"repo_url", metadataValue(config.fairmq_repo_url)},
                     }
                 },
-                {"license", MetadataValue(config.fairmq_license)},
-                {"copyright", MetadataValue(config.fairmq_copyright)},
+                {"license", metadataValue(config.fairmq_license)},
+                {"copyright", metadataValue(config.fairmq_copyright)},
             }
         },
     };
     return body.dump();
 }
 
-auto InstallNoopProviders() -> void
+auto installNoopProviders() -> void
 {
     opentelemetry::logs::Provider::SetLoggerProvider(
     opentelemetry::nostd::shared_ptr<opentelemetry::logs::LoggerProvider> {
@@ -330,46 +330,46 @@ auto InstallNoopProviders() -> void
     });
 }
 
-auto IsEmpty(const char *value) noexcept -> bool
+auto isEmpty(const char *value) noexcept -> bool
 {
     return value == nullptr || *value == '\0';
 }
 
-auto MakeResource(const nestdaq_otel_config &config) -> opentelemetry::sdk::resource::Resource
+auto makeResource(const nestdaq_otel_config &config) -> opentelemetry::sdk::resource::Resource
 {
     auto attributes = opentelemetry::sdk::resource::ResourceAttributes{};
-    attributes.emplace("service.name", std::string{IsEmpty(config.service_name) ? "nestdaq" : config.service_name});
+    attributes.emplace("service.name", std::string{isEmpty(config.service_name) ? "nestdaq" : config.service_name});
     attributes.emplace("service.version", std::string{NESTDAQ_VERSION});
-    AddStringAttribute(attributes, "service.namespace", config.service_namespace);
-    AddStringAttribute(attributes, "service.instance.id", config.service_instance_id);
-    AddStringAttribute(attributes, "host.name", config.host_name);
-    AddStringAttribute(attributes, "nestdaq.instance.id", config.nestdaq_instance_id);
-    AddStringAttribute(attributes, "nestdaq.instance.id.status", config.nestdaq_instance_id_status);
-    AddStringAttribute(attributes, "fairmq.id", config.fairmq_id);
-    AddStringAttribute(attributes, "fairmq.device", config.fairmq_device);
-    AddStringAttribute(attributes, "fairmq.session", config.fairmq_session);
-    AddStringAttribute(attributes, "fairmq.transport", config.fairmq_transport);
+    addStringAttribute(attributes, "service.namespace", config.service_namespace);
+    addStringAttribute(attributes, "service.instance.id", config.service_instance_id);
+    addStringAttribute(attributes, "host.name", config.host_name);
+    addStringAttribute(attributes, "nestdaq.instance.id", config.nestdaq_instance_id);
+    addStringAttribute(attributes, "nestdaq.instance.id.status", config.nestdaq_instance_id_status);
+    addStringAttribute(attributes, "fairmq.id", config.fairmq_id);
+    addStringAttribute(attributes, "fairmq.device", config.fairmq_device);
+    addStringAttribute(attributes, "fairmq.session", config.fairmq_session);
+    addStringAttribute(attributes, "fairmq.transport", config.fairmq_transport);
     return opentelemetry::sdk::resource::Resource::Create(attributes);
 }
 
-auto MetadataValue(const char *value) -> std::string
+auto metadataValue(const char *value) -> std::string
 {
-    return IsEmpty(value) ? std::string{"unknown"} :
+    return isEmpty(value) ? std::string{"unknown"} :
            std::string{value};
 }
 
-auto MetadataValue(std::string_view value) -> std::string
+auto metadataValue(std::string_view value) -> std::string
 {
     return value.empty() ? std::string{"unknown"} :
            std::string{value};
 }
 
-auto NestDAQMetadataLogBody() -> std::string
+auto nestDAQMetadataLogBody() -> std::string
 {
     const auto body = nlohmann::json{
         {   "nestdaq", {
                 {   "version", {
-                        {"string", MetadataValue(NESTDAQ_VERSION)},
+                        {"string", metadataValue(NESTDAQ_VERSION)},
                         {"major", NESTDAQ_VERSION_MAJOR},
                         {"minor", NESTDAQ_VERSION_MINOR},
                         {"patch", NESTDAQ_VERSION_PATCH},
@@ -377,15 +377,15 @@ auto NestDAQMetadataLogBody() -> std::string
                     }
                 },
                 {   "build", {
-                        {"type", MetadataValue(NESTDAQ_BUILD_TYPE)},
+                        {"type", metadataValue(NESTDAQ_BUILD_TYPE)},
                     }
                 },
                 {   "git", {
                         {"commit_count", NESTDAQ_GIT_COMMIT_COUNT},
-                        {"commit_hash", MetadataValue(NESTDAQ_GIT_COMMIT_HASH_STRING)},
-                        {"branch", MetadataValue(NESTDAQ_GIT_BRANCH)},
-                        {"remote_url", MetadataValue(NESTDAQ_GIT_REMOTE_URL)},
-                        {"commit_date", MetadataValue(NESTDAQ_GIT_COMMIT_DATE)},
+                        {"commit_hash", metadataValue(NESTDAQ_GIT_COMMIT_HASH_STRING)},
+                        {"branch", metadataValue(NESTDAQ_GIT_BRANCH)},
+                        {"remote_url", metadataValue(NESTDAQ_GIT_REMOTE_URL)},
+                        {"commit_date", metadataValue(NESTDAQ_GIT_COMMIT_DATE)},
                     }
                 },
             }
@@ -394,10 +394,10 @@ auto NestDAQMetadataLogBody() -> std::string
     return body.dump();
 }
 
-auto ParseHeaders(const char *headers) -> opentelemetry::exporter::otlp::OtlpHeaders
+auto parseHeaders(const char *headers) -> opentelemetry::exporter::otlp::OtlpHeaders
 {
     auto parsed = opentelemetry::exporter::otlp::OtlpHeaders{};
-    if (IsEmpty(headers)) {
+    if (isEmpty(headers)) {
         return parsed;
     }
     auto input = std::string_view{headers};
@@ -410,8 +410,8 @@ auto ParseHeaders(const char *headers) -> opentelemetry::exporter::otlp::OtlpHea
         if (equals == std::string_view::npos || equals == 0) {
             continue;
         }
-        auto key = Trim(item.substr(0, equals));
-        auto value = Trim(item.substr(equals + 1));
+        auto key = trim(item.substr(0, equals));
+        auto value = trim(item.substr(equals + 1));
         if (!key.empty()) {
             parsed.emplace(std::string{key}, std::string{value});
         }
@@ -419,7 +419,7 @@ auto ParseHeaders(const char *headers) -> opentelemetry::exporter::otlp::OtlpHea
     return parsed;
 }
 
-auto ParseProtocols(const char *protocols, std::vector<Protocol> &out) -> bool
+auto parseProtocols(const char *protocols, std::vector<Protocol> &out) -> bool
 {
     if (protocols == nullptr) {
         return true;
@@ -427,14 +427,14 @@ auto ParseProtocols(const char *protocols, std::vector<Protocol> &out) -> bool
     auto input = std::string_view{protocols};
     while (!input.empty()) {
         const auto comma = input.find(',');
-        auto token = Trim(input.substr(0, comma));
+        auto token = trim(input.substr(0, comma));
         input = comma == std::string_view::npos ? std::string_view{} :
                 input.substr(comma + 1);
         if (token.empty()) {
             continue;
         }
         auto protocol = Protocol::Console;
-        if (!ParseProtocolToken(token, protocol)) {
+        if (!parseProtocolToken(token, protocol)) {
             return false;
         }
         out.emplace_back(protocol);
@@ -442,44 +442,44 @@ auto ParseProtocols(const char *protocols, std::vector<Protocol> &out) -> bool
     return true;
 }
 
-auto SetLastError(std::string message) -> int
+auto setLastError(std::string message) -> int
 {
-    auto &state = State();
+    auto &state = runtimeState();
     std::scoped_lock lock{state.mutex};
     state.lastError = std::move(message);
     return NESTDAQ_OTEL_ERROR;
 }
 
-auto SignalEnabled(const nestdaq_otel_signal_config &config) noexcept -> bool
+auto signalEnabled(const nestdaq_otel_signal_config &config) noexcept -> bool
 {
-    return !IsEmpty(config.protocol);
+    return !isEmpty(config.protocol);
 }
 
-auto StoreFrameworkMetricConfig(RuntimeState &state,
+auto storeFrameworkMetricConfig(RuntimeState &state,
                                 const nestdaq_otel_config &config,
                                 const std::vector<Protocol> &protocols,
                                 opentelemetry::sdk::resource::Resource resource) -> void
 {
     state.frameworkMetricProtocols.assign(protocols.begin(), protocols.end());
-    state.frameworkMetricConfig.metrics.protocol = IsEmpty(config.metrics.protocol) ? "" : config.metrics.protocol;
+    state.frameworkMetricConfig.metrics.protocol = isEmpty(config.metrics.protocol) ? "" : config.metrics.protocol;
     state.frameworkMetricConfig.metrics.endpointHttp =
-        IsEmpty(config.metrics.endpoint_http) ? "" : config.metrics.endpoint_http;
+        isEmpty(config.metrics.endpoint_http) ? "" : config.metrics.endpoint_http;
     state.frameworkMetricConfig.metrics.endpointGrpc =
-        IsEmpty(config.metrics.endpoint_grpc) ? "" : config.metrics.endpoint_grpc;
-    state.frameworkMetricConfig.metrics.headers = IsEmpty(config.metrics.headers) ? "" : config.metrics.headers;
+        isEmpty(config.metrics.endpoint_grpc) ? "" : config.metrics.endpoint_grpc;
+    state.frameworkMetricConfig.metrics.headers = isEmpty(config.metrics.headers) ? "" : config.metrics.headers;
     state.frameworkMetricConfig.metrics.otlpHttpJson = config.metrics.otlp_http_json;
     state.frameworkMetricConfig.timeoutMs = config.timeout_ms;
     state.frameworkMetricConfig.metricExportIntervalMs = config.metric_export_interval_ms;
     state.frameworkMetricResource = std::move(resource);
 }
 
-auto State() -> RuntimeState &
+auto runtimeState() -> RuntimeState &
 {
     static auto state = RuntimeState{};
     return state;
 }
 
-auto TimeoutFromMs(uint64_t timeoutMs) noexcept -> std::chrono::microseconds
+auto timeoutFromMs(uint64_t timeoutMs) noexcept -> std::chrono::microseconds
 {
     if (timeoutMs == 0) {
         return (std::chrono::microseconds::max)();
@@ -487,12 +487,12 @@ auto TimeoutFromMs(uint64_t timeoutMs) noexcept -> std::chrono::microseconds
     return std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::milliseconds{timeoutMs});
 }
 
-auto ValidateAttribute(const nestdaq_otel_attribute *attribute) noexcept -> bool
+auto validateAttribute(const nestdaq_otel_attribute *attribute) noexcept -> bool
 {
-    return attribute != nullptr && !IsEmpty(attribute->key);
+    return attribute != nullptr && !isEmpty(attribute->key);
 }
 
-auto ValidateSeverity(int32_t severity) noexcept -> bool
+auto validateSeverity(int32_t severity) noexcept -> bool
 {
     return severity >= static_cast<int32_t>(fair::Severity::nolog) &&
            static_cast<size_t>(severity) < fair::Logger::fSeverityNames.size();

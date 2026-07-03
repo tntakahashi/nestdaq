@@ -65,72 +65,72 @@ auto MakeOtelAttributes(std::span<const Attribute> attributes) -> std::vector<ne
 #endif
 
 namespace {
-auto SpdlogConsolePatternMutex() -> std::mutex& {
+auto spdlogConsolePatternMutex() -> std::mutex& {
     static auto value = std::mutex{};
     return value;
 }
 
-auto SpdlogConsolePatternStorage() -> std::string& {
+auto spdlogConsolePatternStorage() -> std::string& {
     static auto value = std::string{kDefaultSpdlogConsolePattern};
     return value;
 }
 
-auto SpdlogNativeConsoleEnabledStorage() -> bool& {
+auto spdlogNativeConsoleEnabledStorage() -> bool& {
     static auto value = true;
     return value;
 }
 
-auto IsValidSpdlogAsyncOverflowPolicy(std::string_view value) -> bool {
+auto isValidSpdlogAsyncOverflowPolicy(std::string_view value) -> bool {
     return value == "block" || value == "overrun_oldest" || value == "discard_new";
 }
 
-auto NormalizeSpdlogAsyncOptions(SpdlogAsyncOptions options) -> SpdlogAsyncOptions {
+auto normalizeSpdlogAsyncOptions(SpdlogAsyncOptions options) -> SpdlogAsyncOptions {
     if (options.queueSize == 0) {
         options.queueSize = kDefaultSpdlogAsyncQueueSize;
     }
     if (options.threadCount == 0) {
         options.threadCount = kDefaultSpdlogAsyncThreadCount;
     }
-    if (!IsValidSpdlogAsyncOverflowPolicy(options.overflowPolicy)) {
+    if (!isValidSpdlogAsyncOverflowPolicy(options.overflowPolicy)) {
         options.overflowPolicy = kDefaultSpdlogAsyncOverflowPolicy;
     }
     return options;
 }
 
-auto SpdlogAsyncOptionsStorage() -> SpdlogAsyncOptions& {
+auto spdlogAsyncOptionsStorage() -> SpdlogAsyncOptions& {
     static auto value = SpdlogAsyncOptions{};
     return value;
 }
 } // namespace
 
 auto SetSpdlogConsolePattern(std::string_view pattern) -> void {
-    const auto lock = std::scoped_lock{SpdlogConsolePatternMutex()};
-    SpdlogConsolePatternStorage() = pattern;
+    const auto lock = std::scoped_lock{spdlogConsolePatternMutex()};
+    spdlogConsolePatternStorage() = pattern;
 }
 
 auto GetSpdlogConsolePattern() -> std::string {
-    const auto lock = std::scoped_lock{SpdlogConsolePatternMutex()};
-    return SpdlogConsolePatternStorage();
+    const auto lock = std::scoped_lock{spdlogConsolePatternMutex()};
+    return spdlogConsolePatternStorage();
 }
 
 auto SetSpdlogNativeConsoleEnabled(bool enabled) -> void {
-    const auto lock = std::scoped_lock{SpdlogConsolePatternMutex()};
-    SpdlogNativeConsoleEnabledStorage() = enabled;
+    const auto lock = std::scoped_lock{spdlogConsolePatternMutex()};
+    spdlogNativeConsoleEnabledStorage() = enabled;
 }
 
 auto GetSpdlogNativeConsoleEnabled() -> bool {
-    const auto lock = std::scoped_lock{SpdlogConsolePatternMutex()};
-    return SpdlogNativeConsoleEnabledStorage();
+    const auto lock = std::scoped_lock{spdlogConsolePatternMutex()};
+    return spdlogNativeConsoleEnabledStorage();
 }
 
 auto SetSpdlogAsyncOptions(const SpdlogAsyncOptions& options) -> void {
-    const auto lock = std::scoped_lock{SpdlogConsolePatternMutex()};
-    SpdlogAsyncOptionsStorage() = NormalizeSpdlogAsyncOptions(options);
+    const auto lock = std::scoped_lock{spdlogConsolePatternMutex()};
+    spdlogAsyncOptionsStorage() = normalizeSpdlogAsyncOptions(options);
 }
 
 auto GetSpdlogAsyncOptions() -> SpdlogAsyncOptions {
-    const auto lock = std::scoped_lock{SpdlogConsolePatternMutex()};
-    return SpdlogAsyncOptionsStorage();
+    const auto lock = std::scoped_lock{spdlogConsolePatternMutex()};
+    return spdlogAsyncOptionsStorage();
 }
 
 TelemetrySpan::TelemetrySpan(TelemetryLibrary& telemetry, uint64_t handle) noexcept
@@ -176,8 +176,8 @@ auto TelemetrySpan::SetAttribute(const nestdaq_otel_attribute& attribute) -> boo
 }
 
 auto TelemetrySpan::SetAttribute(const Attribute& attribute) -> bool {
-    const auto otelAttribute = attribute.ToOtelAttribute();
-    return SetAttribute(otelAttribute);
+    const auto otel_attribute = attribute.ToOtelAttribute();
+    return SetAttribute(otel_attribute);
 }
 
 Counter::Counter(TelemetryLibrary* library, std::string_view name, std::string_view unit, std::string_view description)
@@ -318,18 +318,18 @@ namespace {
  * access lets FairMQ callbacks and user code read the active backend without
  * taking locks.
  */
-auto ActiveTelemetryLibrary() noexcept -> std::atomic<TelemetryLibrary*>& {
+auto activeTelemetryLibrary() noexcept -> std::atomic<TelemetryLibrary*>& {
     static auto value = std::atomic<TelemetryLibrary*> {nullptr};
     return value;
 }
 } // namespace
 
 auto SetActiveTelemetryLibrary(TelemetryLibrary* library) noexcept -> void {
-    ActiveTelemetryLibrary().store(library, std::memory_order_release);
+    activeTelemetryLibrary().store(library, std::memory_order_release);
 }
 
 auto CreateActiveSpdlogSink() -> std::shared_ptr<spdlog::sinks::sink> {
-    auto* library = ActiveTelemetryLibrary().load(std::memory_order_acquire);
+    auto* library = activeTelemetryLibrary().load(std::memory_order_acquire);
     if (library == nullptr) {
         return {};
     }
@@ -337,7 +337,7 @@ auto CreateActiveSpdlogSink() -> std::shared_ptr<spdlog::sinks::sink> {
 }
 
 auto GetTelemetry() noexcept -> Telemetry {
-    return Telemetry{ActiveTelemetryLibrary().load(std::memory_order_acquire)};
+    return Telemetry{activeTelemetryLibrary().load(std::memory_order_acquire)};
 }
 
 } // namespace nestdaq::telemetry

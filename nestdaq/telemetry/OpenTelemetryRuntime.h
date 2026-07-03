@@ -288,86 +288,86 @@ struct RuntimeState {
 };
 
 /** @brief Add a non-empty string resource attribute. */
-auto AddStringAttribute(opentelemetry::sdk::resource::ResourceAttributes &attributes,
+auto addStringAttribute(opentelemetry::sdk::resource::ResourceAttributes &attributes,
                         const char *key,
                         const char *value) -> void;
 /** @brief Append one validated C ABI attribute to owned iterable storage. */
-auto AppendAttribute(AttributeStorage &storage, const nestdaq_otel_attribute &attribute) -> void;
+auto appendAttribute(AttributeStorage &storage, const nestdaq_otel_attribute &attribute) -> void;
 /** @brief Build owned iterable storage from a C ABI attribute array. */
-auto BuildAttributes(const nestdaq_otel_attribute *attributes, uint64_t attributeCount) -> AttributeStorage;
+auto buildAttributes(const nestdaq_otel_attribute *attributes, uint64_t attributeCount) -> AttributeStorage;
 /** @brief Build comparable gauge attributes from a C ABI attribute array. */
-auto BuildGaugeAttributes(const nestdaq_otel_attribute *attributes, uint64_t attributeCount) -> std::vector<GaugeAttribute>;
+auto buildGaugeAttributes(const nestdaq_otel_attribute *attributes, uint64_t attributeCount) -> std::vector<GaugeAttribute>;
 /** @brief Clear the process-wide last-error string. */
-auto ClearLastError() -> void;
+auto clearLastError() -> void;
 /** @brief Create the log exporter selected by @p protocol. */
-auto CreateLogExporter(const nestdaq_otel_config &config, Protocol protocol)
+auto createLogExporter(const nestdaq_otel_config &config, Protocol protocol)
 -> std::unique_ptr<opentelemetry::sdk::logs::LogRecordExporter>;
 /** @brief Wrap a log exporter in the processor appropriate for @p protocol. */
-auto CreateLogProcessor(std::unique_ptr<opentelemetry::sdk::logs::LogRecordExporter> exporter,
+auto createLogProcessor(std::unique_ptr<opentelemetry::sdk::logs::LogRecordExporter> exporter,
                         Protocol protocol) -> std::unique_ptr<opentelemetry::sdk::logs::LogRecordProcessor>;
 /** @brief Create the metric exporter selected by @p protocol. */
-auto CreateMetricExporter(const nestdaq_otel_config &config, Protocol protocol)
+auto createMetricExporter(const nestdaq_otel_config &config, Protocol protocol)
 -> std::unique_ptr<opentelemetry::sdk::metrics::PushMetricExporter>;
 /** @brief Create a periodic metric reader for one metric exporter. */
-auto CreateMetricReader(std::unique_ptr<opentelemetry::sdk::metrics::PushMetricExporter> exporter,
+auto createMetricReader(std::unique_ptr<opentelemetry::sdk::metrics::PushMetricExporter> exporter,
                         const nestdaq_otel_config &config)
 -> std::unique_ptr<opentelemetry::sdk::metrics::MetricReader>;
 /** @brief Create the span exporter selected by @p protocol. */
-auto CreateSpanExporter(const nestdaq_otel_config &config, Protocol protocol)
+auto createSpanExporter(const nestdaq_otel_config &config, Protocol protocol)
 -> std::unique_ptr<opentelemetry::sdk::trace::SpanExporter>;
 /** @brief Wrap a span exporter in the processor appropriate for @p protocol. */
-auto CreateSpanProcessor(std::unique_ptr<opentelemetry::sdk::trace::SpanExporter> exporter,
+auto createSpanProcessor(std::unique_ptr<opentelemetry::sdk::trace::SpanExporter> exporter,
                          Protocol protocol) -> std::unique_ptr<opentelemetry::sdk::trace::SpanProcessor>;
 /** @brief Register FairMQ throughput observable instruments on the framework meter. */
-auto ConfigureFairMQThroughputMetrics(RuntimeState &state) -> void;
+auto configureFairMQThroughputMetrics(RuntimeState &state) -> void;
 /** @brief Register process CPU/RSS observable instruments on the framework meter. */
-auto ConfigureProcessMetrics(RuntimeState &state) -> void;
+auto configureProcessMetrics(RuntimeState &state) -> void;
 /** @brief Register FairMQ state observable instruments on the framework meter. */
-auto ConfigureFairMQStateMetrics(RuntimeState &state) -> void;
+auto configureFairMQStateMetrics(RuntimeState &state) -> void;
 /** @brief Recreate the framework metrics provider and its observable instruments. */
-auto ConfigureFrameworkMetricsProvider(RuntimeState &state) -> void;
+auto configureFrameworkMetricsProvider(RuntimeState &state) -> void;
 /** @brief Return the plugin defaults used when no C ABI config is supplied. */
-auto DefaultConfig() -> nestdaq_otel_config;
+auto defaultConfig() -> nestdaq_otel_config;
 /** @brief Export and clear pending framework metric samples only when dirty. */
 auto FlushFrameworkMetricsIfDirty(uint64_t timeoutMs) -> int;
 /** @brief Build the structured FairMQ metadata log body emitted at initialization. */
-auto FairMQMetadataLogBody(const nestdaq_otel_config &config) -> std::string;
+auto fairMQMetadataLogBody(const nestdaq_otel_config &config) -> std::string;
 /** @brief Install OpenTelemetry no-op providers after shutdown. */
-auto InstallNoopProviders() -> void;
+auto installNoopProviders() -> void;
 /** @brief Return true for null or empty C strings. */
-auto IsEmpty(const char *value) noexcept -> bool;
+auto isEmpty(const char *value) noexcept -> bool;
 /** @brief Build OpenTelemetry resource attributes from the C ABI config. */
-auto MakeResource(const nestdaq_otel_config &config) -> opentelemetry::sdk::resource::Resource;
+auto makeResource(const nestdaq_otel_config &config) -> opentelemetry::sdk::resource::Resource;
 /** @brief Convert optional metadata C strings to a printable value. */
-auto MetadataValue(const char *value) -> std::string;
+auto metadataValue(const char *value) -> std::string;
 /** @brief Convert optional metadata string_views to a printable value. */
-auto MetadataValue(std::string_view value) -> std::string;
+auto metadataValue(std::string_view value) -> std::string;
 /** @brief Build the structured NestDAQ metadata log body emitted at initialization. */
-auto NestDAQMetadataLogBody() -> std::string;
+auto nestDAQMetadataLogBody() -> std::string;
 /** @brief Parse comma-separated OTLP headers into exporter options. */
-auto ParseHeaders(const char *headers) -> opentelemetry::exporter::otlp::OtlpHeaders;
+auto parseHeaders(const char *headers) -> opentelemetry::exporter::otlp::OtlpHeaders;
 /** @brief Parse a comma-separated protocol list for one signal. */
-auto ParseProtocols(const char *protocols, std::vector<Protocol> &out) -> bool;
+auto parseProtocols(const char *protocols, std::vector<Protocol> &out) -> bool;
 /** @brief Store @p message as last error and return `NESTDAQ_OTEL_ERROR`. */
-auto SetLastError(std::string message) -> int;
+auto setLastError(std::string message) -> int;
 /** @brief Return true when a signal config names at least one protocol. */
-auto SignalEnabled(const nestdaq_otel_signal_config &config) noexcept -> bool;
+auto signalEnabled(const nestdaq_otel_signal_config &config) noexcept -> bool;
 /** @brief Start the background CPU/RSS sampler for framework metrics. */
-auto StartProcessMetricsThread(uint32_t intervalMs) -> void;
+auto startProcessMetricsThread(uint32_t intervalMs) -> void;
 /** @brief Return the process-wide telemetry plugin state. */
-auto State() -> RuntimeState &;
+auto runtimeState() -> RuntimeState &;
 /** @brief Copy framework metric configuration and resource for future reconfiguration. */
-auto StoreFrameworkMetricConfig(RuntimeState &state,
+auto storeFrameworkMetricConfig(RuntimeState &state,
                                 const nestdaq_otel_config &config,
                                 const std::vector<Protocol> &protocols,
                                 opentelemetry::sdk::resource::Resource resource) -> void;
 /** @brief Stop and join the background CPU/RSS sampler if it is running. */
-auto StopProcessMetricsThread() -> void;
+auto stopProcessMetricsThread() -> void;
 /** @brief Convert a millisecond timeout to the SDK duration type. */
-auto TimeoutFromMs(uint64_t timeoutMs) noexcept -> std::chrono::microseconds;
+auto timeoutFromMs(uint64_t timeoutMs) noexcept -> std::chrono::microseconds;
 /** @brief Validate a C ABI attribute before converting it to SDK storage. */
-auto ValidateAttribute(const nestdaq_otel_attribute *attribute) noexcept -> bool;
+auto validateAttribute(const nestdaq_otel_attribute *attribute) noexcept -> bool;
 /** @brief Validate that a numeric severity is in the FairLogger range. */
-auto ValidateSeverity(int32_t severity) noexcept -> bool;
+auto validateSeverity(int32_t severity) noexcept -> bool;
 
 } // namespace nestdaq::otel_detail

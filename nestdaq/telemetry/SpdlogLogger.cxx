@@ -20,22 +20,22 @@
 namespace nestdaq::telemetry {
 namespace {
 struct ThreadPoolEntry {
-    uint32_t queueSize{};
-    uint32_t threadCount{};
+    uint32_t queue_size{};
+    uint32_t thread_count{};
     std::shared_ptr<spdlog::details::thread_pool> pool;
 };
 
-auto ThreadPoolMutex() -> std::mutex& {
+auto threadPoolMutex() -> std::mutex& {
     static auto value = std::mutex{};
     return value;
 }
 
-auto ThreadPools() -> std::vector<ThreadPoolEntry>& {
+auto threadPools() -> std::vector<ThreadPoolEntry>& {
     static auto value = std::vector<ThreadPoolEntry> {};
     return value;
 }
 
-auto MakeOverflowPolicy(std::string_view value) -> spdlog::async_overflow_policy {
+auto makeOverflowPolicy(std::string_view value) -> spdlog::async_overflow_policy {
     if (value == "overrun_oldest") {
         return spdlog::async_overflow_policy::overrun_oldest;
     }
@@ -45,18 +45,18 @@ auto MakeOverflowPolicy(std::string_view value) -> spdlog::async_overflow_policy
     return spdlog::async_overflow_policy::block;
 }
 
-auto GetOrCreateThreadPool(const SpdlogAsyncOptions& options) -> std::shared_ptr<spdlog::details::thread_pool> {
-    const auto lock = std::scoped_lock{ThreadPoolMutex()};
-    for (const auto& entry : ThreadPools()) {
-        if (entry.queueSize == options.queueSize && entry.threadCount == options.threadCount) {
+auto getOrCreateThreadPool(const SpdlogAsyncOptions& options) -> std::shared_ptr<spdlog::details::thread_pool> {
+    const auto lock = std::scoped_lock{threadPoolMutex()};
+    for (const auto& entry : threadPools()) {
+        if (entry.queue_size == options.queueSize && entry.thread_count == options.threadCount) {
             return entry.pool;
         }
     }
 
     auto pool = std::make_shared<spdlog::details::thread_pool>(options.queueSize, options.threadCount);
-    ThreadPools().push_back(ThreadPoolEntry{
-        .queueSize = options.queueSize,
-        .threadCount = options.threadCount,
+    threadPools().push_back(ThreadPoolEntry{
+        .queue_size = options.queueSize,
+        .thread_count = options.threadCount,
         .pool = pool,
     });
     return pool;
@@ -66,21 +66,21 @@ auto GetOrCreateThreadPool(const SpdlogAsyncOptions& options) -> std::shared_ptr
 auto CreateSpdlogLogger(std::string_view name) -> std::shared_ptr<spdlog::logger> {
     auto sinks = std::vector<spdlog::sink_ptr> {};
     if (GetSpdlogNativeConsoleEnabled()) {
-        auto consoleSink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
-        consoleSink->set_pattern(GetSpdlogConsolePattern());
-        sinks.emplace_back(std::move(consoleSink));
+        auto console_sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
+        console_sink->set_pattern(GetSpdlogConsolePattern());
+        sinks.emplace_back(std::move(console_sink));
     }
-    if (auto otelSink = CreateActiveSpdlogSink()) {
-        sinks.emplace_back(std::move(otelSink));
+    if (auto otel_sink = CreateActiveSpdlogSink()) {
+        sinks.emplace_back(std::move(otel_sink));
     }
-    const auto asyncOptions = GetSpdlogAsyncOptions();
-    if (asyncOptions.enabled) {
+    const auto async_options = GetSpdlogAsyncOptions();
+    if (async_options.enabled) {
         return std::make_shared<spdlog::async_logger>(
                    std::string{name},
                    sinks.begin(),
                    sinks.end(),
-                   GetOrCreateThreadPool(asyncOptions),
-                   MakeOverflowPolicy(asyncOptions.overflowPolicy));
+                   getOrCreateThreadPool(async_options),
+                   makeOverflowPolicy(async_options.overflowPolicy));
     }
     return std::make_shared<spdlog::logger>(std::string{name}, sinks.begin(), sinks.end());
 }
