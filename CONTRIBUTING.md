@@ -52,6 +52,8 @@ to NestDAQ.
   `PascalCase` / `UpperCamelCase` is allowed for existing-style consistency.
 - Variables: prefer `snake_case`; lower camel case / `camelCase` is allowed for
   existing-style consistency.
+- `using` alias names are outside the naming rule scope. They may follow local
+  readability, external library conventions, or common short forms.
 - Public `struct` data fields: `snake_case`.
 - Private and protected class data members: `fPascalCase`.
 - Static data members: start with `fg`, for example `fgPascalCase`.
