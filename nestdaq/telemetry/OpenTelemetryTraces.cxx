@@ -17,12 +17,12 @@
 namespace nestdaq::otel_detail {
 namespace {
 
-auto trace_endpoint_grpc(const nestdaq_otel_config &config) -> const char *
+auto traceEndpointGrpc(const nestdaq_otel_config &config) -> const char *
 {
     return isEmpty(config.traces.endpoint_grpc) ? kDefaultGrpcEndpoint.data() : config.traces.endpoint_grpc;
 }
 
-auto trace_endpoint_http(const nestdaq_otel_config &config) -> const char *
+auto traceEndpointHttp(const nestdaq_otel_config &config) -> const char *
 {
     return isEmpty(config.traces.endpoint_http) ? kDefaultTraceHttpEndpoint.data() : config.traces.endpoint_http;
 }
@@ -37,7 +37,7 @@ auto createSpanExporter(const nestdaq_otel_config &config, Protocol protocol)
         return opentelemetry::exporter::trace::OStreamSpanExporterFactory::Create();
     case Protocol::OtlpHttp: {
         auto options = opentelemetry::exporter::otlp::OtlpHttpExporterOptions{};
-        options.url = trace_endpoint_http(config);
+        options.url = traceEndpointHttp(config);
         options.http_headers = parseHeaders(config.traces.headers);
         options.content_type = config.traces.otlp_http_json == 0
                                ? opentelemetry::exporter::otlp::HttpRequestContentType::kBinary
@@ -47,7 +47,7 @@ auto createSpanExporter(const nestdaq_otel_config &config, Protocol protocol)
     }
     case Protocol::OtlpGrpc: {
         auto options = opentelemetry::exporter::otlp::OtlpGrpcExporterOptions{};
-        options.endpoint = trace_endpoint_grpc(config);
+        options.endpoint = traceEndpointGrpc(config);
         options.metadata = parseHeaders(config.traces.headers);
         options.timeout = timeoutFromMs(config.timeout_ms);
         return opentelemetry::exporter::otlp::OtlpGrpcExporterFactory::Create(options);

@@ -362,7 +362,7 @@ auto storeFrameworkMetricConfig(RuntimeState &state,
                                 const std::vector<Protocol> &protocols,
                                 opentelemetry::sdk::resource::Resource resource) -> void;
 /** @brief Stop and join the background CPU/RSS sampler if it is running. */
-auto stop_process_metrics_thread() -> void;
+auto stopProcessMetricsThread() -> void;
 /** @brief Convert a millisecond timeout to the SDK duration type. */
 auto timeoutFromMs(uint64_t timeout_ms) noexcept -> std::chrono::microseconds;
 /** @brief Validate a C ABI attribute before converting it to SDK storage. */

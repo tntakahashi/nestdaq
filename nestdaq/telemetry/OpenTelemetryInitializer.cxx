@@ -213,7 +213,7 @@ auto OpenTelemetryInitializer::setMinSeverity(int32_t severity) -> int
 auto OpenTelemetryInitializer::shutdown(uint64_t timeout_ms) -> int
 {
     try {
-        stop_process_metrics_thread();
+        stopProcessMetricsThread();
         auto &runtime_state = runtimeState();
         std::scoped_lock reconfigure_lock{runtime_state.framework_reconfigure_mutex};
         std::shared_ptr<opentelemetry::sdk::logs::LoggerProvider> logger_provider;

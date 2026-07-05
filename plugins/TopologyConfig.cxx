@@ -228,21 +228,21 @@ void daq::service::TopologyConfig::configConnect()
             return ""s;
         }
 
-        const auto& chFull = join({service, id, topology::kSocketPrefix.data(), "chans."s+channel+"."s+sub_channel_index}, fSeparator);
-        std::string key = join({fTopPrefix, chFull}, fSeparator);
+        const auto& ch_full = join({service, id, topology::kSocketPrefix.data(), "chans."s+channel+"."s+sub_channel_index}, fSeparator);
+        std::string key = join({fTopPrefix, ch_full}, fSeparator);
         // check whether peer address exists
         std::string address;
         int n_retry = 0;
         while (true) {
             auto a = getClient()->hget(key, "address"s);
             if (a) {
-                LOG(warn) << " ch = " << chFull << " : address found " << *a;
+                LOG(warn) << " ch = " << ch_full << " : address found " << *a;
                 address = *a;
                 break;
             }
-            LOG(warn) << " ch = " << chFull << " : address not found";
+            LOG(warn) << " ch = " << ch_full << " : address not found";
             if (isCanceled() || n_retry>fMaxRetryToResolveAddress) {
-                LOG(warn) << " find address of peer channel = " << chFull << " -> canceled";
+                LOG(warn) << " find address of peer channel = " << ch_full << " -> canceled";
                 return ""s;
             }
             std::this_thread::sleep_for(1000ms);

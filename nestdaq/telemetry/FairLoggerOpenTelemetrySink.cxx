@@ -120,12 +120,12 @@ auto currentThreadId() noexcept -> uint64_t
     // Use the native Linux TID instead of std::this_thread::get_id() so logs can be correlated
     // with /proc, top -H, debuggers, and profilers. This matches spdlog's Linux thread id behavior.
     // NOLINTNEXTLINE(cppcoreguidelines-pro-type-vararg)
-    static thread_local const auto tid = static_cast<uint64_t>(::syscall(SYS_gettid));
-    return tid;
+    static thread_local const auto gTid = static_cast<uint64_t>(::syscall(SYS_gettid));
+    return gTid;
 #else
-    static thread_local const auto tid =
+    static thread_local const auto gTid =
         static_cast<uint64_t>(std::hash<std::thread::id> {}(std::this_thread::get_id()));
-    return tid;
+    return gTid;
 #endif
 }
 

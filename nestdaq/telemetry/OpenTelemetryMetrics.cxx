@@ -42,12 +42,12 @@ namespace {
 
 constexpr auto kFrameworkMetricReaderIntervalMs = uint32_t{24U * 60U * 60U * 1000U};
 
-auto metric_endpoint_grpc(const nestdaq_otel_config &config) -> const char *
+auto metricEndpointGrpc(const nestdaq_otel_config &config) -> const char *
 {
     return isEmpty(config.metrics.endpoint_grpc) ? kDefaultGrpcEndpoint.data() : config.metrics.endpoint_grpc;
 }
 
-auto metric_endpoint_http(const nestdaq_otel_config &config) -> const char *
+auto metricEndpointHttp(const nestdaq_otel_config &config) -> const char *
 {
     return isEmpty(config.metrics.endpoint_http) ? kDefaultMetricHttpEndpoint.data() : config.metrics.endpoint_http;
 }
@@ -352,27 +352,27 @@ auto configureProcessMetrics(RuntimeState &state) -> void
     state.process_cpu_usage_sample = readProcessCpuUsage();
 
     state.process_cpu_time_counter = state.framework_meter->CreateDoubleObservableCounter(
-                                      "process.cpu.time",
-                                      "Total CPU seconds broken down by mode",
-                                      "s");
+                                         "process.cpu.time",
+                                         "Total CPU seconds broken down by mode",
+                                         "s");
     if (state.process_cpu_time_counter) {
         state.process_cpu_time_counter->AddCallback(observeProcessCpuTime, nullptr);
     }
 
     if (state.available_cpu_count > 0.0) {
         state.process_cpu_utilization_gauge = state.framework_meter->CreateDoubleObservableGauge(
-                                               "process.cpu.utilization",
-                                               "Process CPU utilization normalized by available CPU count",
-                                               "1");
+                "process.cpu.utilization",
+                "Process CPU utilization normalized by available CPU count",
+                "1");
         if (state.process_cpu_utilization_gauge) {
             state.process_cpu_utilization_gauge->AddCallback(observeProcessCpuUtilization, nullptr);
         }
     }
 
     state.process_memory_usage_counter = state.framework_meter->CreateDoubleObservableUpDownCounter(
-                                          "process.memory.usage",
-                                          "Physical memory in use by the process",
-                                          "By");
+            "process.memory.usage",
+            "Physical memory in use by the process",
+            "By");
     if (state.process_memory_usage_counter) {
         state.process_memory_usage_counter->AddCallback(observeProcessMemoryUsage, nullptr);
     }
@@ -385,9 +385,9 @@ auto configureFairMQStateMetrics(RuntimeState &state) -> void
     }
 
     state.fairmq_state_gauge = state.framework_meter->CreateDoubleObservableGauge(
-                                 "fairmq.state.id",
-                                 "FairMQ device state numeric id",
-                                 "1");
+                                   "fairmq.state.id",
+                                   "FairMQ device state numeric id",
+                                   "1");
     if (state.fairmq_state_gauge) {
         state.fairmq_state_gauge->AddCallback(observeFairMQState, nullptr);
     }
@@ -424,7 +424,7 @@ auto createMetricExporter(const nestdaq_otel_config &config, Protocol protocol)
         return opentelemetry::exporter::metrics::OStreamMetricExporterFactory::Create();
     case Protocol::OtlpHttp: {
         auto options = opentelemetry::exporter::otlp::OtlpHttpMetricExporterOptions{};
-        options.url = metric_endpoint_http(config);
+        options.url = metricEndpointHttp(config);
         options.http_headers = parseHeaders(config.metrics.headers);
         options.content_type = config.metrics.otlp_http_json == 0
                                ? opentelemetry::exporter::otlp::HttpRequestContentType::kBinary
@@ -434,7 +434,7 @@ auto createMetricExporter(const nestdaq_otel_config &config, Protocol protocol)
     }
     case Protocol::OtlpGrpc: {
         auto options = opentelemetry::exporter::otlp::OtlpGrpcMetricExporterOptions{};
-        options.endpoint = metric_endpoint_grpc(config);
+        options.endpoint = metricEndpointGrpc(config);
         options.metadata = parseHeaders(config.metrics.headers);
         options.timeout = timeoutFromMs(config.timeout_ms);
         return opentelemetry::exporter::otlp::OtlpGrpcMetricExporterFactory::Create(options);
@@ -456,7 +456,7 @@ auto createMetricReader(std::unique_ptr<opentelemetry::sdk::metrics::PushMetricE
 
 auto startProcessMetricsThread(uint32_t interval_ms) -> void
 {
-    stop_process_metrics_thread();
+    stopProcessMetricsThread();
     auto &state = runtimeState();
     {
         std::scoped_lock lock{state.mutex};
@@ -525,7 +525,7 @@ auto startProcessMetricsThread(uint32_t interval_ms) -> void
         }};
 }
 
-auto stop_process_metrics_thread() -> void
+auto stopProcessMetricsThread() -> void
 {
     auto &state = runtimeState();
     {
@@ -643,7 +643,7 @@ auto OpenTelemetryInitializer::metricRecordDoubleGauge(const char *name,
         }
 
         state.double_gauge_measurements[GaugeSampleKey{.metric = std::move(key),
-                                      .attributes = std::move(gauge_attributes)}] = value;
+                                        .attributes = std::move(gauge_attributes)}] = value;
         state.last_error.clear();
     }
     if (new_gauge) {
