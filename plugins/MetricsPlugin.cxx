@@ -28,7 +28,7 @@
 #include "plugins/MetricsPlugin.h"
 #include "nestdaq/telemetry/FairMQThroughputLogParser.h"
 
-static constexpr std::string_view kMyClass{"daq::service::MetricsPlugin"};
+static constexpr std::string_view kMyClass{"nestdaq::daq::service::MetricsPlugin"};
 
 using namespace std::string_literals;
 
@@ -42,7 +42,7 @@ auto timevalToSeconds(const timeval &value) -> double
 
 } // namespace
 
-namespace daq::service {
+namespace nestdaq::daq::service {
 
 ProcessStatKey append(const ProcessStatKey& input, std::string_view s, std::string_view separator)
 {
@@ -100,13 +100,12 @@ SocketMetricsKey replaceAll(const SocketMetricsKey& input, std::string_view sear
     ret.bytes_out = boost::replace_all_copy(input.bytes_out, search.data(), format.data());
     return ret;
 }
-} // namespace daq::service
 
-auto daq::service::metricsPluginProgramOptions() -> fair::mq::Plugin::ProgOptions
+auto metricsPluginProgramOptions() -> fair::mq::Plugin::ProgOptions
 {
     namespace bpo = boost::program_options;
-    using opt = daq::service::MetricsPlugin::OptionKey;
-    LOG(debug) << "daq::service::metricsPluginProgramOptions: add_options";
+    using opt = MetricsPlugin::OptionKey;
+    LOG(debug) << "nestdaq::daq::service::metricsPluginProgramOptions: add_options";
 
     auto options = bpo::options_description(kMyClass.data());
     options.add_options()
@@ -118,11 +117,11 @@ auto daq::service::metricsPluginProgramOptions() -> fair::mq::Plugin::ProgOption
     return options;
 }
 
-daq::service::MetricsPlugin::MetricsPlugin(std::string_view name,
-        const fair::mq::Plugin::Version &version,
-        std::string_view maintainer,
-        std::string_view homepage,
-        fair::mq::PluginServices *pluginServices)
+MetricsPlugin::MetricsPlugin(std::string_view name,
+                             const fair::mq::Plugin::Version &version,
+                             std::string_view maintainer,
+                             std::string_view homepage,
+                             fair::mq::PluginServices *pluginServices)
     : fair::mq::Plugin(name.data(), version, maintainer.data(), homepage.data(), pluginServices)
 {
     using opt = OptionKey;
@@ -317,7 +316,7 @@ daq::service::MetricsPlugin::MetricsPlugin(std::string_view name,
 
 }
 
-daq::service::MetricsPlugin::~MetricsPlugin()
+MetricsPlugin::~MetricsPlugin()
 {
 
     UnsubscribeFromDeviceStateChange();
@@ -338,11 +337,11 @@ daq::service::MetricsPlugin::~MetricsPlugin()
 /**
  * @brief Create RedisTimeSeries keys for one socket direction and its sum.
  */
-bool daq::service::MetricsPlugin::createSocketTs(std::string_view key_msg,
-        std::string_view key_bytes,
-        std::string_view label_msg,
-        std::string_view label_bytes,
-        const std::unordered_map<std::string, std::string>& labels)
+bool MetricsPlugin::createSocketTs(std::string_view key_msg,
+                                   std::string_view key_bytes,
+                                   std::string_view label_msg,
+                                   std::string_view label_bytes,
+                                   const std::unordered_map<std::string, std::string>& labels)
 {
     //LOG(warn) << __func__ << ":" << __LINE__;
     bool pipeline_used=false;
@@ -377,7 +376,7 @@ bool daq::service::MetricsPlugin::createSocketTs(std::string_view key_msg,
 /**
  * @brief Create RedisTimeSeries keys for all configured FairMQ sockets.
  */
-bool daq::service::MetricsPlugin::createSocketTs()
+bool MetricsPlugin::createSocketTs()
 {
     //LOG(warn) << __func__ << ":" << __LINE__;
     bool pipeline_used=false;
@@ -416,8 +415,8 @@ bool daq::service::MetricsPlugin::createSocketTs()
 /**
  * @brief Queue creation of one RedisTimeSeries key with standard labels.
  */
-bool daq::service::MetricsPlugin::createTimeseries(std::string_view key,
-        const std::unordered_map<std::string, std::string> &labels)
+bool MetricsPlugin::createTimeseries(std::string_view key,
+                                     const std::unordered_map<std::string, std::string> &labels)
 {
     //LOG(warn) << __func__ << ":" << __LINE__;
     if (fClient->exists(key.data())>0) {
@@ -454,7 +453,7 @@ bool daq::service::MetricsPlugin::createTimeseries(std::string_view key,
 /**
  * @brief Delete stale Redis hash fields for service instances past the metrics TTL.
  */
-void daq::service::MetricsPlugin::deleteExpiredFields()
+void MetricsPlugin::deleteExpiredFields()
 {
     while (true) {
         try {
@@ -516,7 +515,7 @@ void daq::service::MetricsPlugin::deleteExpiredFields()
 /**
  * @brief Delete RedisTimeSeries keys created by this plugin instance.
  */
-void daq::service::MetricsPlugin::deleteTsKeys()
+void MetricsPlugin::deleteTsKeys()
 {
     if (!fRegisteredTsKeys.empty()) {
         auto ndeleted = fClient->del(fRegisteredTsKeys.cbegin(), fRegisteredTsKeys.cend());
@@ -528,7 +527,7 @@ void daq::service::MetricsPlugin::deleteTsKeys()
 /**
  * @brief Read FairMQ channel properties and cache per-socket metadata.
  */
-void daq::service::MetricsPlugin::initializeSocketProperties()
+void MetricsPlugin::initializeSocketProperties()
 {
     // Get parameters of channel configuration as std::map<sstd::tring, std::1string>
     const auto properties = GetPropertiesAsStringStartingWith("chans.");
@@ -579,7 +578,7 @@ void daq::service::MetricsPlugin::initializeSocketProperties()
 /**
  * @brief Check whether time-series keys should be recreated when running starts.
  */
-bool daq::service::MetricsPlugin::isRecreateTs()
+bool MetricsPlugin::isRecreateTs()
 {
     //LOG(warn) << __func__ << ":" << __LINE__;
     using opt = OptionKey;
@@ -595,7 +594,7 @@ bool daq::service::MetricsPlugin::isRecreateTs()
 /**
  * @brief Read cumulative CPU time consumed by this process.
  */
-auto daq::service::MetricsPlugin::readProcessUsage() const -> ProcessUsageSample
+auto MetricsPlugin::readProcessUsage() const -> ProcessUsageSample
 {
     rusage usage{};
     if (getrusage(RUSAGE_SELF, &usage) != 0) {
@@ -613,7 +612,7 @@ auto daq::service::MetricsPlugin::readProcessUsage() const -> ProcessUsageSample
 /**
  * @brief Read resident memory usage of this process in MiB.
  */
-auto daq::service::MetricsPlugin::readResidentMemoryMiB() const -> double
+auto MetricsPlugin::readResidentMemoryMiB() const -> double
 {
     std::ifstream input{"/proc/self/statm"};
     uint64_t total_pages = 0;
@@ -630,7 +629,7 @@ auto daq::service::MetricsPlugin::readResidentMemoryMiB() const -> double
 /**
  * @brief Record CPU, memory, state, and last-update metrics.
  */
-void daq::service::MetricsPlugin::sendProcessMetrics()
+void MetricsPlugin::sendProcessMetrics()
 {
     //std::cout << kMyClass << " " << __FUNCTION__;
 
@@ -678,7 +677,7 @@ void daq::service::MetricsPlugin::sendProcessMetrics()
 /**
  * @brief Parse a FairMQ throughput log line and record socket metrics.
  */
-void daq::service::MetricsPlugin::sendSocketMetrics(const std::string &content)
+void MetricsPlugin::sendSocketMetrics(const std::string &content)
 {
     //LOG(debug) << kMyClass << " " << __FUNCTION__;
     //return;
@@ -798,3 +797,5 @@ void daq::service::MetricsPlugin::sendSocketMetrics(const std::string &content)
         LOG(error) << kMyClass << " " << __FUNCTION__ << " exception : unknown";
     }
 }
+
+} // namespace nestdaq::daq::service

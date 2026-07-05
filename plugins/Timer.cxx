@@ -11,7 +11,9 @@
 
 #include "plugins/Timer.h"
 
-daq::service::Timer::~Timer() noexcept
+namespace nestdaq::daq::service {
+
+Timer::~Timer() noexcept
 {
     if (fTimer) {
         boost::system::error_code ec;
@@ -19,10 +21,10 @@ daq::service::Timer::~Timer() noexcept
     }
 }
 
-void daq::service::Timer::start(const std::shared_ptr<net::io_context> &ctx,
-                                //const std::shared_ptr<strand_t> &strand,
-                                unsigned int timeout_ms,
-                                std::function<bool(const std::error_code &)> f)
+void Timer::start(const std::shared_ptr<net::io_context> &ctx,
+                  //const std::shared_ptr<strand_t> &strand,
+                  unsigned int timeout_ms,
+                  std::function<bool(const std::error_code &)> f)
 {
     // std::cout << " timer start " << timeout_ms << " msec" << std::endl;
     fContext   = ctx;
@@ -33,7 +35,7 @@ void daq::service::Timer::start(const std::shared_ptr<net::io_context> &ctx,
     start();
 }
 
-void daq::service::Timer::start()
+void Timer::start()
 {
     fTimer->expires_after(std::chrono::milliseconds(fTimeoutMs));
     fTimer->async_wait( //
@@ -53,3 +55,5 @@ void daq::service::Timer::start()
         }
     });
 }
+
+} // namespace nestdaq::daq::service

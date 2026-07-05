@@ -9,7 +9,7 @@
 #include <string>
 #include <vector>
 
-namespace daq::service {
+namespace nestdaq::daq::service {
 
 /** @brief Default FairMQ socket buffer size used when topology omits one. */
 static constexpr int kDefaultSocketBufferSize{1000};
@@ -61,4 +61,4 @@ struct LinkProperty {
 
 using MQChannel = std::map<std::string, SocketProperty>;
 
-} // namespae daq::service
+} // namespace nestdaq::daq::service

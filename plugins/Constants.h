@@ -7,7 +7,7 @@
 
 #include <string_view>
 
-namespace daq::service {
+namespace nestdaq::daq::service {
 
 /** @brief Top-level Redis namespace for DAQ service data. */
 static constexpr std::string_view kTopPrefix{"daq_service"};
@@ -44,7 +44,7 @@ static constexpr std::string_view kCommandChannelName{"daqctl"}; // daq command 
 static constexpr std::string_view kStateChannelName{"daqstate"}; // daq command pubsub channel (controller <- FairMQ Deivce)
 }
 
-namespace fairmq::command {
+namespace nestdaq::fairmq::command {
 /** @brief FairMQ command string constants accepted by the service plugin. */
 static constexpr std::string_view kBind{"BIND"};
 static constexpr std::string_view kCompleteInit{"COMPLETE INIT"};
@@ -59,7 +59,7 @@ static constexpr std::string_view kStop{"STOP"};
 
 }
 
-namespace daq::command {
+namespace nestdaq::daq::command {
 /** @brief Redis pub/sub channel used for DAQ control commands. */
 static constexpr std::string_view kChannel{"daqctl"};
 static constexpr std::string_view kExit{"exit"};

@@ -20,7 +20,7 @@ namespace sw::redis {
 class Redis;
 }
 
-namespace daq::service {
+namespace nestdaq::daq::service {
 
 /** @brief Redis key prefix that stores parameter configuration. */
 static constexpr std::string_view kParametersPrefix{"parameters"};
@@ -140,7 +140,7 @@ REGISTER_FAIRMQ_PLUGIN(
 (fair::mq::Plugin::Version{0, 0, 0}),
 "ParameterConfig <maintainer@daq.service.net>",
 "https://github.com/spadi-alliance/nestdaq",
-daq::service::parameterConfigPluginProgramOptions
+nestdaq::daq::service::parameterConfigPluginProgramOptions
 ) // end of macro: REGISTER_FAIRMQ_PLUGIN
 
-} // namespace daq::service
+} // namespace nestdaq::daq::service

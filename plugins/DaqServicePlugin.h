@@ -34,7 +34,7 @@ namespace sw::redis {
 class Redis;
 }
 
-namespace daq::service {
+namespace nestdaq::daq::service {
 
 /**
  * @brief Redis key used to advertise that a DAQ service instance is alive.
@@ -191,8 +191,8 @@ REGISTER_FAIRMQ_PLUGIN(
 (fair::mq::Plugin::Version{0, 0, 0}),        // Version
 "DAQService <maintainer@daq.service.net>",   // Maintainer
 "https://github.com/spadi-alliance/nestdaq", // Homepage
-daq::service::pluginProgramOptions           // Free function which declares custom program options for the plugin
+nestdaq::daq::service::pluginProgramOptions           // Free function which declares custom program options for the plugin
 //    signature: () -> boost::optional<boost::program_options::options_decription>
 ) // end of macro: REGISTER_FAIRMQ_PLUGIN
 
-} // namespace daq::service
+} // namespace nestdaq::daq::service

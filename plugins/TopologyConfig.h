@@ -28,7 +28,7 @@ class PipelineImpl;
 using Pipeline = QueuedRedis<PipelineImpl>;
 }
 
-namespace daq::service {
+namespace nestdaq::daq::service {
 
 /**
  * @brief Resolves Redis topology definitions into FairMQ channel properties.
@@ -41,7 +41,7 @@ class TopologyConfig {
 public:
     using DeviceState = fair::mq::Plugin::DeviceState;
     /** @brief Bind topology configuration to the owning DAQ service plugin. */
-    explicit TopologyConfig(daq::service::Plugin &plugin);
+    explicit TopologyConfig(nestdaq::daq::service::Plugin &plugin);
     TopologyConfig(const TopologyConfig&) = delete;
     TopologyConfig& operator=(const TopologyConfig&) = delete;
     TopologyConfig(TopologyConfig&&) = delete;
@@ -139,7 +139,7 @@ private:
     /** @brief Publish resolved connect channel addresses to FairMQ properties. */
     void writeConnectAddress();
 
-    daq::service::Plugin &fPlugin;
+    nestdaq::daq::service::Plugin &fPlugin;
     std::string fServiceName;
     std::string fId;
     std::string fSeparator;
@@ -162,4 +162,4 @@ private:
     std::vector<std::string> fRegisteredKeys;
 };
 
-} // namespace daq::service
+} // namespace nestdaq::daq::service

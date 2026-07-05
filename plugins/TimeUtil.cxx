@@ -9,7 +9,9 @@
 
 #include "plugins/TimeUtil.h"
 
-const std::string daq::service::toDate(const std::chrono::system_clock::time_point &p)
+namespace nestdaq::daq::service {
+
+const std::string toDate(const std::chrono::system_clock::time_point &p)
 {
     std::time_t t = std::chrono::system_clock::to_time_t(p);
     std::tm lt{};
@@ -24,10 +26,12 @@ const std::string daq::service::toDate(const std::chrono::system_clock::time_poi
     return ret.str();
 }
 
-auto daq::service::updateDate(const std::chrono::system_clock::time_point &s,
-                              const std::chrono::steady_clock::time_point &t)
+auto updateDate(const std::chrono::system_clock::time_point &s,
+                const std::chrono::steady_clock::time_point &t)
 -> const std::pair<std::chrono::nanoseconds, std::chrono::system_clock::time_point>
 {
     auto uptime_nsec = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - t);
     return {uptime_nsec, (s + std::chrono::duration_cast<std::chrono::nanoseconds>(uptime_nsec))};
 }
+
+} // namespace nestdaq::daq::service

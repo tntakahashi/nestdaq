@@ -20,9 +20,9 @@
 #include "plugins/tools.h"
 #include "plugins/TopologyConfig.h"
 
-static constexpr std::string_view kMyClass{"daq::service::TopologyConfig"};
+static constexpr std::string_view kMyClass{"nestdaq::daq::service::TopologyConfig"};
 
-namespace topology {
+namespace nestdaq::topology {
 static constexpr std::string_view kPrefix{"topology"};
 static constexpr std::string_view kEndpointPrefix{"endpoint"};
 static constexpr std::string_view kLinkPrefix{"link"};
@@ -66,7 +66,7 @@ std::string makeAddress(const std::string &address, std::string_view peer_ip)
 }
 
 // convert a socket property to format of command line option of FairMQ
-const std::string toChannelConfig(const daq::service::SocketProperty& p)
+const std::string toChannelConfig(const nestdaq::daq::service::SocketProperty& p)
 {
     using namespace std::string_literals;
     std::string ret;
@@ -121,9 +121,9 @@ const std::string toChannelConfig(const daq::service::SocketProperty& p)
 
 // convert hash in redis to struct
 template <typename Container>
-const daq::service::SocketProperty toSocketProperty(const Container& c)
+const nestdaq::daq::service::SocketProperty toSocketProperty(const Container& c)
 {
-    daq::service::SocketProperty sp;
+    nestdaq::daq::service::SocketProperty sp;
     for (const auto &[field, value] : c) {
         //ss << ", " << field << " = " << value;
         if (field=="name") {
@@ -174,7 +174,9 @@ const daq::service::SocketProperty toSocketProperty(const Container& c)
     return sp;
 }
 
-daq::service::TopologyConfig::TopologyConfig(daq::service::Plugin& plugin)
+namespace nestdaq::daq::service {
+
+TopologyConfig::TopologyConfig(Plugin& plugin)
     : fPlugin(plugin)
 {
     try {
@@ -197,7 +199,7 @@ daq::service::TopologyConfig::TopologyConfig(daq::service::Plugin& plugin)
     }
 }
 
-daq::service::TopologyConfig::~TopologyConfig()
+TopologyConfig::~TopologyConfig()
 {
 }
 
@@ -207,7 +209,7 @@ daq::service::TopologyConfig::~TopologyConfig()
  * Peer references are resolved through Redis, converted into FairMQ
  * channel-config options, and written back to the device properties.
  */
-void daq::service::TopologyConfig::configConnect()
+void TopologyConfig::configConnect()
 {
     auto find_peer_ip = [this](const auto& service, const auto& id) {
         const auto &id_full = join({service, id}, fSeparator);
@@ -228,7 +230,7 @@ void daq::service::TopologyConfig::configConnect()
             return ""s;
         }
 
-        const auto& ch_full = join({service, id, topology::kSocketPrefix.data(), "chans."s+channel+"."s+sub_channel_index}, fSeparator);
+        const auto& ch_full = join({service, id, nestdaq::topology::kSocketPrefix.data(), "chans."s+channel+"."s+sub_channel_index}, fSeparator);
         std::string key = join({fTopPrefix, ch_full}, fSeparator);
         // check whether peer address exists
         std::string address;
@@ -258,7 +260,7 @@ void daq::service::TopologyConfig::configConnect()
             return ret;
         }
 
-        const auto &socket_key_pattern = join({fTopPrefix, service, id, topology::kSocketPrefix.data(), channel}, fSeparator);
+        const auto &socket_key_pattern = join({fTopPrefix, service, id, nestdaq::topology::kSocketPrefix.data(), channel}, fSeparator);
         const auto &socket_keys = scan(*getClient(), socket_key_pattern);
         for (const auto &socket_key : socket_keys) {
             int n_retry = 0;
@@ -513,7 +515,7 @@ void daq::service::TopologyConfig::configConnect()
 /**
  * @brief Read FairMQ states for peers connected to the given channels.
  */
-auto daq::service::TopologyConfig::getPeerState(const MQChannel & channels) -> std::map<std::string, std::string>
+auto TopologyConfig::getPeerState(const MQChannel & channels) -> std::map<std::string, std::string>
 {
     std::unordered_set<std::string> peer_keys;
     for (const auto &[name, sp] : channels) {
@@ -536,7 +538,7 @@ auto daq::service::TopologyConfig::getPeerState(const MQChannel & channels) -> s
     auto client = getClient();
     for (const auto &k : peer_keys) {
         //LOG(debug) << " peer key = " << k;
-        auto s = daq::service::scan(*client, {k, daq::service::kFairMQStatePrefix.data()}, fSeparator);
+        auto s = nestdaq::daq::service::scan(*client, {k, nestdaq::daq::service::kFairMQStatePrefix.data()}, fSeparator);
         state_keys.merge(s);
     }
 
@@ -568,7 +570,7 @@ auto daq::service::TopologyConfig::getPeerState(const MQChannel & channels) -> s
 /**
  * @brief Load topology endpoint/link definitions and install channel properties.
  */
-void daq::service::TopologyConfig::initialize()
+void TopologyConfig::initialize()
 {
 //  fNSubscribed = -1;
     if (fDefaultChannelProperties.empty()) {
@@ -654,7 +656,7 @@ void daq::service::TopologyConfig::initialize()
             LOG(debug) << kMyClass << " " << __FUNCTION__ << " scan-service : peer name = " << peer_service << ", n peers " << keys.size();
             for (const auto &a: keys) {
                 auto k = a.substr(0, a.find_last_of(fSeparator));
-                k = join({k, topology::kChannelPrefix.data(), peer_channel}, fSeparator);
+                k = join({k, nestdaq::topology::kChannelPrefix.data(), peer_channel}, fSeparator);
                 LOG(debug) << " " << k;
                 peers.push_back(k);
             }
@@ -702,7 +704,7 @@ void daq::service::TopologyConfig::initialize()
 /**
  * @brief Capture existing FairMQ channel properties as defaults.
  */
-void daq::service::TopologyConfig::initializeDefaultChannelProperties()
+void TopologyConfig::initializeDefaultChannelProperties()
 {
     //printConfig(getPropertiesAsStringStartingWith("channel-config"), "(default) channel-config"); // available in InitializingDevice
     //printConfig(getPropertiesAsStringStartingWith("mq-config"), "(default) mq-config"); // available in InitializingDevice
@@ -741,7 +743,7 @@ void daq::service::TopologyConfig::initializeDefaultChannelProperties()
 /**
  * @brief Check whether all peers are on the same host IP and can use UDS.
  */
-bool daq::service::TopologyConfig::isUdsAvailable(const std::vector<std::string> &peers)
+bool TopologyConfig::isUdsAvailable(const std::vector<std::string> &peers)
 {
     const auto& my_ip = fPlugin.getHealth().ip_address;
     for (const auto& x : peers) {
@@ -758,7 +760,7 @@ bool daq::service::TopologyConfig::isUdsAvailable(const std::vector<std::string>
 /**
  * @brief React to FairMQ lifecycle states that require topology synchronization.
  */
-void daq::service::TopologyConfig::onDeviceStateChange(DeviceState newState)
+void TopologyConfig::onDeviceStateChange(DeviceState newState)
 {
     try {
         switch (newState) {
@@ -795,9 +797,9 @@ void daq::service::TopologyConfig::onDeviceStateChange(DeviceState newState)
 /**
  * @brief Read one endpoint definition from Redis.
  */
-const daq::service::SocketProperty daq::service::TopologyConfig::readEndpointProperty(std::string_view key)
+const SocketProperty TopologyConfig::readEndpointProperty(std::string_view key)
 {
-    const auto& prefix = join({fTopPrefix, topology::kPrefix.data(), topology::kEndpointPrefix.data(), fServiceName, ""}, fSeparator);
+    const auto& prefix = join({fTopPrefix, nestdaq::topology::kPrefix.data(), nestdaq::topology::kEndpointPrefix.data(), fServiceName, ""}, fSeparator);
     LOG(debug) << __FUNCTION__ << " prefix = " << prefix;
     const auto& channel_name = key.substr(prefix.size());
     std::unordered_map<std::string, std::string> h;
@@ -812,10 +814,10 @@ const daq::service::SocketProperty daq::service::TopologyConfig::readEndpointPro
 /**
  * @brief Scan Redis for endpoint definitions for this service.
  */
-std::unordered_set<std::string> daq::service::TopologyConfig::readEndpoints()
+std::unordered_set<std::string> TopologyConfig::readEndpoints()
 {
     // scan keys by a pattern = "daq_service:topology:endpoint:service:*"
-    auto keys = scan(*getClient(), {fTopPrefix, topology::kPrefix.data(), topology::kEndpointPrefix.data(), fServiceName, "*"}, fSeparator);
+    auto keys = scan(*getClient(), {fTopPrefix, nestdaq::topology::kPrefix.data(), nestdaq::topology::kEndpointPrefix.data(), fServiceName, "*"}, fSeparator);
 
     auto n = keys.size();
     std::ostringstream ss;
@@ -835,13 +837,13 @@ std::unordered_set<std::string> daq::service::TopologyConfig::readEndpoints()
 /**
  * @brief Read and normalize one topology link definition from Redis.
  */
-const daq::service::LinkProperty daq::service::TopologyConfig::readLinkProperty(std::string_view key)
+const LinkProperty TopologyConfig::readLinkProperty(std::string_view key)
 {
     // key = ...:link:service0:channel0,service1:channel1
 
     auto val = getClient()->get(key);
 
-    const auto& prefix = join({fTopPrefix, topology::kPrefix.data(), topology::kLinkPrefix.data(), ""}, fSeparator);
+    const auto& prefix = join({fTopPrefix, nestdaq::topology::kPrefix.data(), nestdaq::topology::kLinkPrefix.data(), ""}, fSeparator);
     // LOG(debug) << " readLinkProperty prefix = " << prefix;
 
     // socket_pair_name = service0:channel0,service1:channel1
@@ -891,14 +893,14 @@ const daq::service::LinkProperty daq::service::TopologyConfig::readLinkProperty(
 /**
  * @brief Scan Redis for topology links involving this service.
  */
-std::unordered_set<std::string> daq::service::TopologyConfig::readLinks()
+std::unordered_set<std::string> TopologyConfig::readLinks()
 {
     auto &r         = *getClient();
     // scan keys by a pattern = "daq_service:topology:link:service:*,*:*"
-    auto keys = scan(r, {fTopPrefix, topology::kPrefix.data(), topology::kLinkPrefix.data(), fServiceName + "*,*", "*"}, fSeparator);
+    auto keys = scan(r, {fTopPrefix, nestdaq::topology::kPrefix.data(), nestdaq::topology::kLinkPrefix.data(), fServiceName + "*,*", "*"}, fSeparator);
 
     // scan keys by a pattern = "daq_service:topology:link:*:*,service:*"
-    keys.merge(scan(r, {fTopPrefix, topology::kPrefix.data(), topology::kLinkPrefix.data(), "*", "*,"+fServiceName, "*"}, fSeparator));
+    keys.merge(scan(r, {fTopPrefix, nestdaq::topology::kPrefix.data(), nestdaq::topology::kLinkPrefix.data(), "*", "*,"+fServiceName, "*"}, fSeparator));
 
     auto n = keys.size();
     std::ostringstream ss;
@@ -918,9 +920,9 @@ std::unordered_set<std::string> daq::service::TopologyConfig::readLinks()
 /**
  * @brief Read bound socket addresses published by a peer channel.
  */
-const std::vector<std::string> daq::service::TopologyConfig::readPeerAddress(const std::string& peer)
+const std::vector<std::string> TopologyConfig::readPeerAddress(const std::string& peer)
 {
-    const auto &peer_instance_key = peer.substr(0, peer.find(fSeparator+topology::kChannelPrefix.data()));
+    const auto &peer_instance_key = peer.substr(0, peer.find(fSeparator+nestdaq::topology::kChannelPrefix.data()));
     const auto &peer_health_key   = join({peer_instance_key, kHealthPrefix.data()}, fSeparator);
     const auto &peer_channel     = peer.substr(peer.find_last_of(fSeparator)+1);
     auto &r = *getClient();
@@ -933,7 +935,7 @@ const std::vector<std::string> daq::service::TopologyConfig::readPeerAddress(con
         LOG(warn) << "id = " << fId << " hostIp found " << peer_ip.value();
     }
 
-    auto scan_pattern = join({peer_instance_key.data(), topology::kSocketPrefix.data(), "chans."s + peer_channel.data() + ".*"s}, fSeparator);
+    auto scan_pattern = join({peer_instance_key.data(), nestdaq::topology::kSocketPrefix.data(), "chans."s + peer_channel.data() + ".*"s}, fSeparator);
     LOG(debug) << kMyClass << " " << __FUNCTION__ << " id = " << fId<<  " scan_pattern = " << scan_pattern;
     auto sub_socket_keys = scan(r, scan_pattern);
     LOG(debug) << kMyClass << " " << __FUNCTION__ << " id = " << fId << " subSokectKeys = " << sub_socket_keys.size();
@@ -968,9 +970,9 @@ const std::vector<std::string> daq::service::TopologyConfig::readPeerAddress(con
 /**
  * @brief Read the host IP of a peer service instance.
  */
-const std::string daq::service::TopologyConfig::readPeerIp(const std::string& peer)
+const std::string TopologyConfig::readPeerIp(const std::string& peer)
 {
-    const auto &peer_instance_key = peer.substr(0, peer.find(fSeparator+topology::kChannelPrefix.data()));
+    const auto &peer_instance_key = peer.substr(0, peer.find(fSeparator+nestdaq::topology::kChannelPrefix.data()));
     const auto &peer_health_key   = join({peer_instance_key, kHealthPrefix.data()}, fSeparator);
     auto &r = *getClient();
     LOG(debug4) << "peer_instance_key = " << peer_instance_key << ", peer_health_key =  " << peer_health_key;
@@ -988,7 +990,7 @@ const std::string daq::service::TopologyConfig::readPeerIp(const std::string& pe
 /**
  * @brief Clear installed channel properties and remove topology registry keys.
  */
-void daq::service::TopologyConfig::reset()
+void TopologyConfig::reset()
 {
     LOG(debug) << kMyClass << " " << __FUNCTION__;
     fBindChannels.clear();
@@ -1003,7 +1005,7 @@ void daq::service::TopologyConfig::reset()
 /**
  * @brief Queue TTL refreshes for topology keys owned by this instance.
  */
-void daq::service::TopologyConfig::resetTtl(sw::redis::Pipeline& pipe)
+void TopologyConfig::resetTtl(sw::redis::Pipeline& pipe)
 {
     //LOG(debug) << kMyClass << " " << __FUNCTION__ << " num registered = " << fRegisteredKeys.size();
     std::for_each(fRegisteredKeys.cbegin(), fRegisteredKeys.cend(),
@@ -1015,7 +1017,7 @@ void daq::service::TopologyConfig::resetTtl(sw::redis::Pipeline& pipe)
 /**
  * @brief Resolve connect socket addresses from peer bind channel registry data.
  */
-void daq::service::TopologyConfig::resolveConnectAddress()
+void TopologyConfig::resolveConnectAddress()
 {
     //LOG(debug) << __PRETTY_FUNCTION__;
     if (fConnectChannels.empty()) {
@@ -1049,17 +1051,17 @@ void daq::service::TopologyConfig::resolveConnectAddress()
         }
         LOG(debug) << kMyClass << " " << __FUNCTION__ << " id = " << fId << " find peer of " << sp.name << " num_sockets = " << sp.num_sockets;
         const auto &my_instance_key = join({fTopPrefix, fServiceName, fId}, fSeparator);
-        const auto &my_channel_key  = join({my_instance_key, topology::kChannelPrefix.data(), sp.name}, fSeparator);
+        const auto &my_channel_key  = join({my_instance_key, nestdaq::topology::kChannelPrefix.data(), sp.name}, fSeparator);
 
         std::vector<std::string> peers;
-        const auto &my_peer_key = join({my_channel_key, topology::kPeerPrefix.data()}, fSeparator);
+        const auto &my_peer_key = join({my_channel_key, nestdaq::topology::kPeerPrefix.data()}, fSeparator);
         r.lrange(my_peer_key, 0, -1, std::back_inserter(peers));
         int peer_index{0};
         SocketProperty res(sp);
         bool is1to1{false};
         for (const auto& p : peers) {
             LOG(debug) << kMyClass << " " << __FUNCTION__ << " id = " << fId << " peer of " << name << " : " << p;
-            const auto &k = join({p, topology::kPeerPrefix.data()}, fSeparator);
+            const auto &k = join({p, nestdaq::topology::kPeerPrefix.data()}, fSeparator);
             std::vector<std::string> neighbors;
             r.lrange(k, 0, -1, std::back_inserter(neighbors));
             LOG(debug) << kMyClass << " " << __FUNCTION__ << ":" << __LINE__ << " id = " << fId << " n neighbors " << neighbors.size();
@@ -1151,7 +1153,7 @@ void daq::service::TopologyConfig::resolveConnectAddress()
 /**
  * @brief Remove topology registry keys owned by this instance.
  */
-void daq::service::TopologyConfig::unregisterService()
+void TopologyConfig::unregisterService()
 {
     if (!fRegisteredKeys.empty()) {
         auto ndeleted = getClient()->del(fRegisteredKeys.cbegin(), fRegisteredKeys.cend());
@@ -1163,7 +1165,7 @@ void daq::service::TopologyConfig::unregisterService()
 /**
  * @brief Wait until peer bind channels have published their bound addresses.
  */
-void daq::service::TopologyConfig::waitBindAddress()
+void TopologyConfig::waitBindAddress()
 {
     //LOG(debug) << __PRETTY_FUNCTION__;
     if (fConnectChannels.empty()) {
@@ -1186,7 +1188,7 @@ void daq::service::TopologyConfig::waitBindAddress()
                 for (auto &a : presence_keys) {
                     auto c =  a.substr(0, a.find_last_of(fSeparator));
                     // e.g.: daq_service:peer-service:peer-instance-id:endpoint:peer-chanenl
-                    channels.emplace(join({c, topology::kChannelPrefix.data(), lp.peer_channel}, fSeparator));
+                    channels.emplace(join({c, nestdaq::topology::kChannelPrefix.data(), lp.peer_channel}, fSeparator));
                 }
             } else if ((fServiceName == lp.peer_service) && (sp.name == lp.peer_channel)) {
                 auto k = join({fTopPrefix, lp.my_service, "*", kPresencePrefix.data()}, fSeparator);
@@ -1195,7 +1197,7 @@ void daq::service::TopologyConfig::waitBindAddress()
                 LOG(debug) << __LINE__ << ": n presence: " << presence_keys.size();
                 for (auto &a : presence_keys) {
                     auto c = a.substr(0, a.find_last_of(fSeparator));
-                    channels.emplace(join({c, topology::kChannelPrefix.data(), lp.my_channel}, fSeparator));
+                    channels.emplace(join({c, nestdaq::topology::kChannelPrefix.data(), lp.my_channel}, fSeparator));
                 }
             }
         }
@@ -1222,7 +1224,7 @@ void daq::service::TopologyConfig::waitBindAddress()
 /**
  * @brief Wait for configured peer devices to reach a connection-ready state.
  */
-void daq::service::TopologyConfig::waitForPeerConnection()
+void TopologyConfig::waitForPeerConnection()
 {
     LOG(debug) << __FUNCTION__ << " ...";
     std::unordered_set<std::string> peer_keys;
@@ -1251,7 +1253,7 @@ void daq::service::TopologyConfig::waitForPeerConnection()
     while (!done && !isCanceled()) {
         std::unordered_set<std::string> state_keys;
         for (const auto &k : peer_keys) {
-            auto s = daq::service::scan(*client, {k, daq::service::kFairMQStatePrefix.data()}, fSeparator);
+            auto s = nestdaq::daq::service::scan(*client, {k, nestdaq::daq::service::kFairMQStatePrefix.data()}, fSeparator);
             state_keys.merge(s);
         }
 
@@ -1286,7 +1288,7 @@ void daq::service::TopologyConfig::waitForPeerConnection()
         //      LOG(debug) << " states = " << s;
         // }
 
-        for (const auto &w : topology::kWaitDeviceReadyTargets) {
+        for (const auto &w : nestdaq::topology::kWaitDeviceReadyTargets) {
             if (std::all_of(states.begin(), states.end(), [&w](const auto &x) {
             return x == w;
         })) {
@@ -1302,7 +1304,7 @@ void daq::service::TopologyConfig::waitForPeerConnection()
 /**
  * @brief Publish current FairMQ socket addresses for a channel set.
  */
-void daq::service::TopologyConfig::writeAddress(MQChannel &channels, std::function<void (sw::redis::Pipeline&, std::string_view)> f)
+void TopologyConfig::writeAddress(MQChannel &channels, std::function<void (sw::redis::Pipeline&, std::string_view)> f)
 {
     auto &r    = *getClient();
     auto pipe  = r.pipeline();
@@ -1317,7 +1319,7 @@ void daq::service::TopologyConfig::writeAddress(MQChannel &channels, std::functi
                 if (chans.empty()) {
                     break;
                 }
-                const auto &key = join({fTopPrefix, fServiceName, fId, topology::kSocketPrefix.data(), local_key}, fSeparator);
+                const auto &key = join({fTopPrefix, fServiceName, fId, nestdaq::topology::kSocketPrefix.data(), local_key}, fSeparator);
                 std::ostringstream ss;
                 ss << kMyClass << " " << __FUNCTION__ << ":" << __LINE__ << " key = " << key << " :\n";
                 std::map<std::string, std::string> h;
@@ -1351,7 +1353,7 @@ void daq::service::TopologyConfig::writeAddress(MQChannel &channels, std::functi
 /**
  * @brief Publish bind socket addresses and mark channels as bound.
  */
-void daq::service::TopologyConfig::writeBindAddress()
+void TopologyConfig::writeBindAddress()
 {
     //LOG(debug) << __PRETTY_FUNCTION__;
     if (fBindChannels.empty()) {
@@ -1360,7 +1362,7 @@ void daq::service::TopologyConfig::writeBindAddress()
 
     LOG(debug) << kMyClass << " write bind address to the registry. (n =  " << fBindChannels.size() << ")";
     writeAddress(fBindChannels, [this](auto &pipe, auto name) {
-        auto channel = join({fTopPrefix, fServiceName, fId, topology::kChannelPrefix.data(), name.data()}, fSeparator);
+        auto channel = join({fTopPrefix, fServiceName, fId, nestdaq::topology::kChannelPrefix.data(), name.data()}, fSeparator);
         pipe.hset(channel, "bound", "1");
         LOG(warn) << kMyClass << " " << __FUNCTION__ << " bound channel: " << channel;
     });
@@ -1371,13 +1373,13 @@ void daq::service::TopologyConfig::writeBindAddress()
 /**
  * @brief Publish one logical channel and its peer list to Redis.
  */
-void daq::service::TopologyConfig::writeChannel(SocketProperty &sp, const std::vector<std::string> &peers)
+void TopologyConfig::writeChannel(SocketProperty &sp, const std::vector<std::string> &peers)
 {
     if (peers.empty()) {
         //LOG(debug) << " empty peers";
         return;
     }
-    const auto &key = join({fTopPrefix, fServiceName, fId, topology::kChannelPrefix.data(), sp.name}, fSeparator);
+    const auto &key = join({fTopPrefix, fServiceName, fId, nestdaq::topology::kChannelPrefix.data(), sp.name}, fSeparator);
 
     LOG(debug) << kMyClass << " " << __FUNCTION__ << " channel : " << sp.name << " : n peers = " << peers.size();
     fPlugin.SetProperty("n-peers:"s+sp.name, std::to_string(peers.size()));
@@ -1405,7 +1407,7 @@ void daq::service::TopologyConfig::writeChannel(SocketProperty &sp, const std::v
     });
     pipe.expire(key, fMaxTtl);
 
-    auto list_key = join({key, topology::kPeerPrefix.data()}, fSeparator);
+    auto list_key = join({key, nestdaq::topology::kPeerPrefix.data()}, fSeparator);
     pipe.rpush(list_key, peers.cbegin(), peers.cend());
     pipe.expire(list_key, fMaxTtl);
 
@@ -1419,7 +1421,7 @@ void daq::service::TopologyConfig::writeChannel(SocketProperty &sp, const std::v
 /**
  * @brief Publish connect socket addresses to Redis.
  */
-void daq::service::TopologyConfig::writeConnectAddress()
+void TopologyConfig::writeConnectAddress()
 {
     // LOG(debug) << __PRETTY_FUNCTION__;
     if (fConnectChannels.empty()) {
@@ -1430,3 +1432,5 @@ void daq::service::TopologyConfig::writeConnectAddress()
     writeAddress(fConnectChannels);
     //LOG(debug) << __PRETTY_FUNCTION__ << " done";
 }
+
+} // namespace nestdaq::daq::service

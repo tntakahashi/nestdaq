@@ -14,7 +14,7 @@
 
 #include <sw/redis++/redis++.h>
 
-namespace daq::service {
+namespace nestdaq::daq::service {
 
 /**
  * @brief Join Redis key components with the configured separator.
@@ -52,4 +52,4 @@ inline std::unordered_set<std::string> scan(sw::redis::Redis &r,
     return scan(r, boost::join(v, separator.data()), cursor);
 }
 
-} // namespace daq::service
+} // namespace nestdaq::daq::service

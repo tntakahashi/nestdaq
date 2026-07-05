@@ -29,7 +29,7 @@ constexpr int kNumberOfStates = static_cast<int>(fair::mq::State::Exiting) + 1;
 using namespace std::string_literals;
 using namespace std::chrono_literals;
 
-namespace run_info {
+namespace nestdaq::run_info {
 static constexpr std::string_view kPrefix{"run_info"};
 static constexpr std::string_view kLatestRunNumber{"latest_run_number"};
 static constexpr std::string_view kRunNumber{"run_number"};
@@ -43,20 +43,20 @@ static const std::unordered_set<std::string_view> kKnownRunInfoList{
 }
 
 static const std::unordered_set<std::string_view> kKnownCommandList{
-    fairmq::command::kBind,
-    fairmq::command::kCompleteInit,
-    fairmq::command::kConnect,
-    fairmq::command::kEnd,
-    fairmq::command::kInitDevice,
-    fairmq::command::kInitTask,
-    fairmq::command::kResetDevice,
-    fairmq::command::kResetTask,
-    fairmq::command::kRun,
-    fairmq::command::kStop,
-    daq::command::kExit,
-    daq::command::kQuit,
-    daq::command::kReset,
-    daq::command::kStart,
+    nestdaq::fairmq::command::kBind,
+    nestdaq::fairmq::command::kCompleteInit,
+    nestdaq::fairmq::command::kConnect,
+    nestdaq::fairmq::command::kEnd,
+    nestdaq::fairmq::command::kInitDevice,
+    nestdaq::fairmq::command::kInitTask,
+    nestdaq::fairmq::command::kResetDevice,
+    nestdaq::fairmq::command::kResetTask,
+    nestdaq::fairmq::command::kRun,
+    nestdaq::fairmq::command::kStop,
+    nestdaq::daq::command::kExit,
+    nestdaq::daq::command::kQuit,
+    nestdaq::daq::command::kReset,
+    nestdaq::daq::command::kStart,
 };
 
 static const std::vector<std::string> kWaitDeviceReadyTargets {
@@ -127,13 +127,13 @@ bool WebGui::connectToRedis(std::string_view redis_uri,
 void WebGui::copyLatestRunNumber(unsigned int conn_id)
 {
     LOG(debug) << __func__ << " websocket conn_id = " << conn_id << std::endl;
-    std::string name{run_info::kPrefix.data() + fSeparator + run_info::kRunNumber.data()};
+    std::string name{nestdaq::run_info::kPrefix.data() + fSeparator + nestdaq::run_info::kRunNumber.data()};
     auto ret = fClient->get(name);
     if (!ret) {
         send(conn_id, {R"({ "type": "error", "value": "could not get run number from redis." })"});
         return;
     }
-    name = run_info::kPrefix.data() + fSeparator + run_info::kLatestRunNumber.data();
+    name = nestdaq::run_info::kPrefix.data() + fSeparator + nestdaq::run_info::kLatestRunNumber.data();
     fClient->set(name, *ret);
 
     boost::property_tree::ptree obj;
@@ -147,7 +147,7 @@ void WebGui::copyLatestRunNumber(unsigned int conn_id)
 void WebGui::incrementRunNumber(unsigned int conn_id)
 {
     LOG(debug) << __func__ << " websocket conn_id = " << conn_id << std::endl;
-    std::string name{run_info::kPrefix.data() + fSeparator + run_info::kRunNumber.data()};
+    std::string name{nestdaq::run_info::kPrefix.data() + fSeparator + nestdaq::run_info::kRunNumber.data()};
 
     auto new_value = fClient->incr(name);
 
@@ -215,7 +215,7 @@ void WebGui::pollState()
         t_prev = t_now;
 
         std::map<std::string, ServiceState> summary_table;
-        const auto &state_keys = daq::service::scan(*fClient, {daq::service::kTopPrefix.data(), "*", "*", daq::service::kFairMQStatePrefix.data()}, fSeparator);
+        const auto &state_keys = nestdaq::daq::service::scan(*fClient, {nestdaq::daq::service::kTopPrefix.data(), "*", "*", nestdaq::daq::service::kFairMQStatePrefix.data()}, fSeparator);
         if (state_keys.empty()) {
             sendStateSummary(summary_table);
             continue;
@@ -223,7 +223,7 @@ void WebGui::pollState()
         std::vector<sw::redis::OptionalString> state_values;
         fClient->mget(state_keys.begin(), state_keys.end(), std::back_inserter(state_values));
 
-        const auto &update_time_keys = daq::service::scan(*fClient, {daq::service::kTopPrefix.data(), "*", "*", daq::service::kUpdateTimePrefix.data()}, fSeparator);
+        const auto &update_time_keys = nestdaq::daq::service::scan(*fClient, {nestdaq::daq::service::kTopPrefix.data(), "*", "*", nestdaq::daq::service::kUpdateTimePrefix.data()}, fSeparator);
         std::vector<sw::redis::OptionalString> update_time_values;
         if (!update_time_keys.empty()) {
             fClient->mget(update_time_keys.begin(), update_time_keys.end(), std::back_inserter(update_time_values));
@@ -330,7 +330,7 @@ void WebGui::processExpiredKey(std::string_view key)
             }
             const auto inst_index   = std::string{inst_name.substr(index_begin + 1)};
             {
-                const auto& instance_index_key = daq::service::join({daq::service::kTopPrefix.data(), daq::service::kServiceInstanceIndexPrefix.data(), service_name}, fSeparator);
+                const auto& instance_index_key = nestdaq::daq::service::join({nestdaq::daq::service::kTopPrefix.data(), nestdaq::daq::service::kServiceInstanceIndexPrefix.data(), service_name}, fSeparator);
                 fClient->hdel(instance_index_key, inst_index);
                 LOG(warn) << " delete instance index: key = " << instance_index_key << ", field = " << inst_index;
             }
@@ -346,7 +346,7 @@ void WebGui::processExpiredKey(std::string_view key)
 void WebGui::readLatestRunNumber(unsigned int conn_id)
 {
     LOG(debug) << __func__ << " websocket conn_id = " << conn_id;
-    std::string name{run_info::kPrefix.data() + fSeparator + run_info::kLatestRunNumber.data()};
+    std::string name{nestdaq::run_info::kPrefix.data() + fSeparator + nestdaq::run_info::kLatestRunNumber.data()};
     auto ret = fClient->get(name);
     if (!ret) {
         send(conn_id, {R"({ "type": "error", "value": "could not get latest run number from redis." })"});
@@ -363,7 +363,7 @@ void WebGui::readLatestRunNumber(unsigned int conn_id)
 void WebGui::readRunNumber(unsigned int conn_id)
 {
     LOG(debug) << __func__ << " websocket conn_id = " << conn_id;
-    std::string name{run_info::kPrefix.data() + fSeparator + run_info::kRunNumber.data()};
+    std::string name{nestdaq::run_info::kPrefix.data() + fSeparator + nestdaq::run_info::kRunNumber.data()};
     auto ret = fClient->get(name);
     if (!ret) {
         send(conn_id, {R"({ "type": "error", "value": "could not get run number from redis." })"});
@@ -402,7 +402,7 @@ void WebGui::redisIncr(unsigned int conn_id, const boost::property_tree::ptree &
 void WebGui::redisPublishDaqCommand(unsigned int conn_id, const boost::property_tree::ptree& arg)
 {
     auto is_wait_flag_set = [this](const auto &s) {
-        auto w = fClient->get(run_info::kPrefix.data() + fSeparator + s);
+        auto w = fClient->get(nestdaq::run_info::kPrefix.data() + fSeparator + s);
         if (!w) {
             return false;
         }
@@ -429,7 +429,7 @@ void WebGui::redisPublishDaqCommand(unsigned int conn_id, const boost::property_
     }
 
     const auto& v= *val;
-    if (v == fairmq::command::kRun.data()) {
+    if (v == nestdaq::fairmq::command::kRun.data()) {
         copyLatestRunNumber(conn_id);
     }
     if (kKnownCommandList.count(v)>0) {
@@ -437,8 +437,8 @@ void WebGui::redisPublishDaqCommand(unsigned int conn_id, const boost::property_
 
         try {
 
-            bool wait_device_ready_flag = is_wait_flag_set(run_info::kWaitDeviceReady.data());
-            bool wait_ready_flag       = is_wait_flag_set(run_info::kWaitReady.data());
+            bool wait_device_ready_flag = is_wait_flag_set(nestdaq::run_info::kWaitDeviceReady.data());
+            bool wait_ready_flag       = is_wait_flag_set(nestdaq::run_info::kWaitReady.data());
             std::unordered_set<std::string> services;
             for (const auto& x : arg.get_child("services")) {
                 services.emplace(x.second. template get_value<std::string>());
@@ -449,41 +449,41 @@ void WebGui::redisPublishDaqCommand(unsigned int conn_id, const boost::property_
             }
 
             // use boost::iequals for case insensitive compare
-            if (boost::iequals(v, fairmq::command::kConnect)) {
-                fClient->publish(fChannelName, to_message(fairmq::command::kConnect));
+            if (boost::iequals(v, nestdaq::fairmq::command::kConnect)) {
+                fClient->publish(fChannelName, to_message(nestdaq::fairmq::command::kConnect));
                 if (wait_device_ready_flag) {
                     wait(services, instances, kWaitDeviceReadyTargets);
                 }
 
-            } else if (boost::iequals(v, fairmq::command::kInitTask)) {
+            } else if (boost::iequals(v, nestdaq::fairmq::command::kInitTask)) {
                 if (wait_device_ready_flag) {
-                    fClient->publish(fChannelName, to_message(fairmq::command::kConnect));
+                    fClient->publish(fChannelName, to_message(nestdaq::fairmq::command::kConnect));
                     wait(services, instances, kWaitDeviceReadyTargets);
                 }
-                fClient->publish(fChannelName, to_message(fairmq::command::kInitTask));
+                fClient->publish(fChannelName, to_message(nestdaq::fairmq::command::kInitTask));
                 if (wait_ready_flag) {
                     wait(services, instances, kWaitReadyTargets);
                 }
 
-            } else if (boost::iequals(v, fairmq::command::kRun)) {
+            } else if (boost::iequals(v, nestdaq::fairmq::command::kRun)) {
                 if (wait_device_ready_flag) {
-                    fClient->publish(fChannelName, to_message(fairmq::command::kConnect));
+                    fClient->publish(fChannelName, to_message(nestdaq::fairmq::command::kConnect));
                     wait(services, instances, kWaitDeviceReadyTargets);
                 }
                 if (wait_ready_flag) {
-                    fClient->publish(fChannelName, to_message(fairmq::command::kInitTask));
+                    fClient->publish(fChannelName, to_message(nestdaq::fairmq::command::kInitTask));
                     wait(services, instances, kWaitReadyTargets);
                 }
                 LOG(debug) << " pre-run = " << fPreRunCommand;
                 boost::process::system(fPreRunCommand.data(), boost::process::std_out > stdout, boost::process::std_err > stderr, boost::process::std_in < stdin);
-                fClient->publish(fChannelName, to_message(fairmq::command::kRun));
+                fClient->publish(fChannelName, to_message(nestdaq::fairmq::command::kRun));
                 LOG(debug) << " post-run = " << fPostRunCommand;
                 boost::process::system(fPostRunCommand.data(), boost::process::std_out > stdout, boost::process::std_err > stderr, boost::process::std_in < stdin);
 
-            } else if (boost::iequals(v,  fairmq::command::kStop)) {
+            } else if (boost::iequals(v,  nestdaq::fairmq::command::kStop)) {
                 LOG(debug) << " pre-stop = " << fPreStopCommand;
                 boost::process::system(fPreStopCommand.data(), boost::process::std_out > stdout, boost::process::std_err > stderr, boost::process::std_in < stdin);
-                fClient->publish(fChannelName, to_message(fairmq::command::kStop));
+                fClient->publish(fChannelName, to_message(nestdaq::fairmq::command::kStop));
                 LOG(debug) << " post-stop = " << fPostStopCommand;
                 boost::process::system(fPostStopCommand.data(), boost::process::std_out > stdout, boost::process::std_err > stderr, boost::process::std_in < stdin);
 
@@ -504,14 +504,14 @@ void WebGui::redisSet(unsigned int conn_id, const boost::property_tree::ptree &a
     LOG(debug) <<  __func__ << " " << conn_id;
     const auto &name = arg.get_optional<std::string>("name");
     if (name) {
-        if (run_info::kKnownRunInfoList.count(*name)>0) {
+        if (nestdaq::run_info::kKnownRunInfoList.count(*name)>0) {
 
             auto val = arg.get_optional<std::string>("value");
             if (!val) {
                 LOG(error) << kMyClass << " " << __func__ << " parse error ";
                 return;
             }
-            std::string key{run_info::kPrefix.data() + fSeparator + *name};
+            std::string key{nestdaq::run_info::kPrefix.data() + fSeparator + *name};
             fClient->set(key, *val);
         }
     }
@@ -616,7 +616,7 @@ void WebGui::subscribeToRedisPubSub()
 
     sub.on_message([this](auto channel, auto msg) {
         //std::cout << kMyClass << " on_message(MESSAGE): channel = " << channel << ", msg = " << msg << std::endl;
-        if (daq::service::kStateChannelName.data() == channel) {
+        if (nestdaq::daq::service::kStateChannelName.data() == channel) {
             const auto& obj = toJson(msg) ;
             const auto& cmd_value = obj. template get_optional<std::string>("value");
             if (!cmd_value) {
@@ -632,9 +632,9 @@ void WebGui::subscribeToRedisPubSub()
         }
     });
 
-    LOG(info) << "subscribe to redis pub/sub channel for DAQ state transition command: " << daq::service::kStateChannelName.data();
+    LOG(info) << "subscribe to redis pub/sub channel for DAQ state transition command: " << nestdaq::daq::service::kStateChannelName.data();
     LOG(info) << "subscribe to redis key-event : " << fRedisKeyEventChannelName;
-    sub.subscribe({std::string(daq::service::kStateChannelName.data()), fRedisKeyEventChannelName});
+    sub.subscribe({std::string(nestdaq::daq::service::kStateChannelName.data()), fRedisKeyEventChannelName});
 
     while (true) {
         try {
@@ -661,7 +661,7 @@ void WebGui::wait(const std::vector<std::string> &keys, const std::vector<std::s
     while (!done) {
         std::unordered_set<std::string> state_keys;
         for (const auto &k : keys) {
-            auto s = daq::service::scan(*fClient, {daq::service::kTopPrefix.data(), k, daq::service::kFairMQStatePrefix.data()}, fSeparator);
+            auto s = nestdaq::daq::service::scan(*fClient, {nestdaq::daq::service::kTopPrefix.data(), k, nestdaq::daq::service::kFairMQStatePrefix.data()}, fSeparator);
             state_keys.merge(s);
         }
 
@@ -712,10 +712,10 @@ void WebGui::wait(const std::unordered_set<std::string> &services, const std::un
 {
 
     if (services.count("all")>0) {
-        wait({daq::service::join({"*", "*"}, fSeparator)}, wait_state_targets);
+        wait({nestdaq::daq::service::join({"*", "*"}, fSeparator)}, wait_state_targets);
     } else if (instances.count("all")>0) {
         for (const auto &service : services) {
-            wait({daq::service::join({service, "*"}, fSeparator)}, wait_state_targets);
+            wait({nestdaq::daq::service::join({service, "*"}, fSeparator)}, wait_state_targets);
         }
     } else {
         std::vector<std::string> keys;

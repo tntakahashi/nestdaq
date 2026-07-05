@@ -36,7 +36,7 @@
 //extern char *program_invocation_short_name;
 //extern char *__progname; // same as program_invocation_short_name
 
-static constexpr std::string_view kMyClass{"daq::service::Plugin"};
+static constexpr std::string_view kMyClass{"nestdaq::daq::service::Plugin"};
 
 static constexpr std::string_view kStartupState{"startup-state"};
 
@@ -50,20 +50,20 @@ static constexpr std::size_t kCwdBufferSize{512};
 static constexpr std::chrono::milliseconds kRedLockRetryInterval{100};
 
 static const std::unordered_set<std::string_view> kKnownCommandList{
-    fairmq::command::kBind,
-    fairmq::command::kCompleteInit,
-    fairmq::command::kConnect,
-    fairmq::command::kEnd,
-    fairmq::command::kInitDevice,
-    fairmq::command::kInitTask,
-    fairmq::command::kResetDevice,
-    fairmq::command::kResetTask,
-    fairmq::command::kRun,
-    fairmq::command::kStop,
-    daq::command::kExit,
-    daq::command::kQuit,
-    daq::command::kReset,
-    daq::command::kStart,
+    nestdaq::fairmq::command::kBind,
+    nestdaq::fairmq::command::kCompleteInit,
+    nestdaq::fairmq::command::kConnect,
+    nestdaq::fairmq::command::kEnd,
+    nestdaq::fairmq::command::kInitDevice,
+    nestdaq::fairmq::command::kInitTask,
+    nestdaq::fairmq::command::kResetDevice,
+    nestdaq::fairmq::command::kResetTask,
+    nestdaq::fairmq::command::kRun,
+    nestdaq::fairmq::command::kStop,
+    nestdaq::daq::command::kExit,
+    nestdaq::daq::command::kQuit,
+    nestdaq::daq::command::kReset,
+    nestdaq::daq::command::kStart,
 };
 
 using namespace std::string_literals;
@@ -74,52 +74,52 @@ bool endsWith(const std::string& s, const std::string& suffix)
     return std::equal(std::rbegin(suffix), std::rend(suffix), std::rbegin(s));
 }
 
-namespace daq::service {
+namespace nestdaq::daq::service {
 
 auto pluginProgramOptions() -> fair::mq::Plugin::ProgOptions
 {
     namespace bpo = boost::program_options;
 
-    LOG(debug) << "daq::service::pluginProgramOptions: add_options";
+    LOG(debug) << "nestdaq::daq::service::pluginProgramOptions: add_options";
     auto plugin_options = bpo::options_description(std::string{kMyClass});
     plugin_options.add_options() //
-                 (std::string{kServiceName}.data(),        bpo::value<std::string>(),  "name of this service")
-                 //
-                 (std::string{kUuid}.data(),               bpo::value<std::string>(),  "uuid of this service")
-                 //
-                 (std::string{kHostIpAddress}.data(),      bpo::value<std::string>(),  "IP address or hostname of this service")
-                 //
-                 (std::string{kHostname}.data(),           bpo::value<std::string>(),  "hostname of this service")
-                 //
-                 (std::string{kServiceRegistryUri}.data(), bpo::value<std::string>()->default_value("tcp://127.0.0.1:6379/0"), "DAQ service registry's URI")
-                 //
-                 (std::string{kSeparator}.data(),          bpo::value<std::string>()->default_value(":"), "separator character for key space name")
-                 //
-                 (std::string{kMaxTtl}.data(),             bpo::value<long long>()->default_value(kDefaultMaxTtl), "max TTL (time-to-live) in second for keys")
-                 //
-                 (std::string{kTtlUpdateInterval}.data(),  bpo::value<long long>()->default_value(kDefaultTtlUpdateInterval), "TTL update interval in second for keys")
-                 //
-                 (std::string{kStartupState}.data(),       bpo::value<std::string>()->default_value("idle"),
-                  "state on startup. (idle, initializing-device, initialized, bound, device-ready, ready, running)")
-                 //
-                 (std::string{kEnableUds}.data(),          bpo::value<std::string>()->default_value("true"),
-                  "Use Unix Domain Socket for the local IPC if available (bool)")
-                 //
-                 (std::string{kConnectConfig}.data(),          bpo::value<std::string>(),
-                  "MQ channel parameters of JSON string for temporary connection with method=connect\n"
-                  " '{ \"my-channel-a\": { parameters-a }, \"my-channel-b\":  { parameters-b } }'\n\n"
-                  " NOTE: When using start_device.sh, the JSON string must be enclosed in \\' (backslash + single quote)\n"
-                  " \\''{ \"my-channel-a\": { parameters-a }, \"my-channel-b\":  { parameters-b } }'\\'\n\n"
-                  " e.g. 1 \n"
-                  " '{ \"in\": { \"type\": \"pull\", \"peer\": \"Sampler:out\" } }'\n"
-                  " e.g. 2 \n"
-                  " '{ \"in\": { \"type\": \"pill\",  \"peer\": \"Sampler-0:out\" } }'\n"
-                  " e.g. 3 \n"
-                  " '{ \"in\": {\"type\": \"sub\", \"peer\": [ \"Sampler:Sampler-0:out[0]\", \"Sampler:Sampler-1:out[1]\" ] } }'\n"
-                  " e.g. 4 \n"
-                  " '{ \"in\": {\"type\": \"sub\", \"peer\": \"Sampler:Sampler-0:out[0]\" }, \"out\": { \"type\": \"pub\",  \"peer\": \"Sink:Sink-2:in[1]\" } }'\n")
-                 //
-                 (std::string{kMaxRetryToResolveAddress}.data(), bpo::value<std::string>()->default_value("10"), "max retry to resolve connect address");
+                  (std::string{kServiceName}.data(),        bpo::value<std::string>(),  "name of this service")
+                  //
+                  (std::string{kUuid}.data(),               bpo::value<std::string>(),  "uuid of this service")
+                  //
+                  (std::string{kHostIpAddress}.data(),      bpo::value<std::string>(),  "IP address or hostname of this service")
+                  //
+                  (std::string{kHostname}.data(),           bpo::value<std::string>(),  "hostname of this service")
+                  //
+                  (std::string{kServiceRegistryUri}.data(), bpo::value<std::string>()->default_value("tcp://127.0.0.1:6379/0"), "DAQ service registry's URI")
+                  //
+                  (std::string{kSeparator}.data(),          bpo::value<std::string>()->default_value(":"), "separator character for key space name")
+                  //
+                  (std::string{kMaxTtl}.data(),             bpo::value<long long>()->default_value(kDefaultMaxTtl), "max TTL (time-to-live) in second for keys")
+                  //
+                  (std::string{kTtlUpdateInterval}.data(),  bpo::value<long long>()->default_value(kDefaultTtlUpdateInterval), "TTL update interval in second for keys")
+                  //
+                  (std::string{kStartupState}.data(),       bpo::value<std::string>()->default_value("idle"),
+                   "state on startup. (idle, initializing-device, initialized, bound, device-ready, ready, running)")
+                  //
+                  (std::string{kEnableUds}.data(),          bpo::value<std::string>()->default_value("true"),
+                   "Use Unix Domain Socket for the local IPC if available (bool)")
+                  //
+                  (std::string{kConnectConfig}.data(),          bpo::value<std::string>(),
+                   "MQ channel parameters of JSON string for temporary connection with method=connect\n"
+                   " '{ \"my-channel-a\": { parameters-a }, \"my-channel-b\":  { parameters-b } }'\n\n"
+                   " NOTE: When using start_device.sh, the JSON string must be enclosed in \\' (backslash + single quote)\n"
+                   " \\''{ \"my-channel-a\": { parameters-a }, \"my-channel-b\":  { parameters-b } }'\\'\n\n"
+                   " e.g. 1 \n"
+                   " '{ \"in\": { \"type\": \"pull\", \"peer\": \"Sampler:out\" } }'\n"
+                   " e.g. 2 \n"
+                   " '{ \"in\": { \"type\": \"pill\",  \"peer\": \"Sampler-0:out\" } }'\n"
+                   " e.g. 3 \n"
+                   " '{ \"in\": {\"type\": \"sub\", \"peer\": [ \"Sampler:Sampler-0:out[0]\", \"Sampler:Sampler-1:out[1]\" ] } }'\n"
+                   " e.g. 4 \n"
+                   " '{ \"in\": {\"type\": \"sub\", \"peer\": \"Sampler:Sampler-0:out[0]\" }, \"out\": { \"type\": \"pub\",  \"peer\": \"Sink:Sink-2:in[1]\" } }'\n")
+                  //
+                  (std::string{kMaxRetryToResolveAddress}.data(), bpo::value<std::string>()->default_value("10"), "max retry to resolve connect address");
 
     return plugin_options;
 }
@@ -343,43 +343,43 @@ void Plugin::changeDeviceStateByMultiCommand(std::string_view cmd)
     // ---------- state transition from Idle ----------
     case DeviceState::Idle:
         // Idle -> InitialzingDevice -> Initialized
-        if ((cmd==fairmq::command::kInitDevice) || (cmd==fairmq::command::kCompleteInit)) {
-            changeDeviceStateBySingleCommand(fairmq::command::kInitDevice);
-            changeDeviceStateBySingleCommand(fairmq::command::kCompleteInit);
+        if ((cmd==nestdaq::fairmq::command::kInitDevice) || (cmd==nestdaq::fairmq::command::kCompleteInit)) {
+            changeDeviceStateBySingleCommand(nestdaq::fairmq::command::kInitDevice);
+            changeDeviceStateBySingleCommand(nestdaq::fairmq::command::kCompleteInit);
             break;
         }
         // Idle -> ... -> Bound
-        if (cmd==fairmq::command::kBind) {
-            changeDeviceStateBySingleCommand(fairmq::command::kInitDevice);
-            changeDeviceStateBySingleCommand(fairmq::command::kCompleteInit);
-            changeDeviceStateBySingleCommand(fairmq::command::kBind);
+        if (cmd==nestdaq::fairmq::command::kBind) {
+            changeDeviceStateBySingleCommand(nestdaq::fairmq::command::kInitDevice);
+            changeDeviceStateBySingleCommand(nestdaq::fairmq::command::kCompleteInit);
+            changeDeviceStateBySingleCommand(nestdaq::fairmq::command::kBind);
             break;
         }
         // Idle -> ... -> Bound -> Connecting -> DeviceReady
-        if (cmd==fairmq::command::kConnect) {
-            changeDeviceStateBySingleCommand(fairmq::command::kInitDevice);
-            changeDeviceStateBySingleCommand(fairmq::command::kCompleteInit);
-            changeDeviceStateBySingleCommand(fairmq::command::kBind);
-            changeDeviceStateBySingleCommand(fairmq::command::kConnect);
+        if (cmd==nestdaq::fairmq::command::kConnect) {
+            changeDeviceStateBySingleCommand(nestdaq::fairmq::command::kInitDevice);
+            changeDeviceStateBySingleCommand(nestdaq::fairmq::command::kCompleteInit);
+            changeDeviceStateBySingleCommand(nestdaq::fairmq::command::kBind);
+            changeDeviceStateBySingleCommand(nestdaq::fairmq::command::kConnect);
             break;
         }
         // Idle -> ... -> DeviceReady -> InitializingTask -> Ready
-        if (cmd==fairmq::command::kInitTask) {
-            changeDeviceStateBySingleCommand(fairmq::command::kInitDevice);
-            changeDeviceStateBySingleCommand(fairmq::command::kCompleteInit);
-            changeDeviceStateBySingleCommand(fairmq::command::kBind);
-            changeDeviceStateBySingleCommand(fairmq::command::kConnect);
-            changeDeviceStateBySingleCommand(fairmq::command::kInitTask);
+        if (cmd==nestdaq::fairmq::command::kInitTask) {
+            changeDeviceStateBySingleCommand(nestdaq::fairmq::command::kInitDevice);
+            changeDeviceStateBySingleCommand(nestdaq::fairmq::command::kCompleteInit);
+            changeDeviceStateBySingleCommand(nestdaq::fairmq::command::kBind);
+            changeDeviceStateBySingleCommand(nestdaq::fairmq::command::kConnect);
+            changeDeviceStateBySingleCommand(nestdaq::fairmq::command::kInitTask);
             break;
         }
         // Idle -> ... -> Ready -> Running I
-        if ((cmd==fairmq::command::kRun) || (cmd==daq::command::kStart)) {
-            changeDeviceStateBySingleCommand(fairmq::command::kInitDevice);
-            changeDeviceStateBySingleCommand(fairmq::command::kCompleteInit);
-            changeDeviceStateBySingleCommand(fairmq::command::kBind);
-            changeDeviceStateBySingleCommand(fairmq::command::kConnect);
-            changeDeviceStateBySingleCommand(fairmq::command::kInitTask);
-            changeDeviceStateBySingleCommand(fairmq::command::kRun);
+        if ((cmd==nestdaq::fairmq::command::kRun) || (cmd==nestdaq::daq::command::kStart)) {
+            changeDeviceStateBySingleCommand(nestdaq::fairmq::command::kInitDevice);
+            changeDeviceStateBySingleCommand(nestdaq::fairmq::command::kCompleteInit);
+            changeDeviceStateBySingleCommand(nestdaq::fairmq::command::kBind);
+            changeDeviceStateBySingleCommand(nestdaq::fairmq::command::kConnect);
+            changeDeviceStateBySingleCommand(nestdaq::fairmq::command::kInitTask);
+            changeDeviceStateBySingleCommand(nestdaq::fairmq::command::kRun);
             break;
         }
         break;
@@ -387,38 +387,38 @@ void Plugin::changeDeviceStateByMultiCommand(std::string_view cmd)
     // ---------- state transition from InitializingDevice ----------
     case DeviceState::InitializingDevice:
         // InitializingDevice -> Initialized
-        if (cmd==fairmq::command::kCompleteInit) {
-            changeDeviceStateBySingleCommand(fairmq::command::kCompleteInit);
+        if (cmd==nestdaq::fairmq::command::kCompleteInit) {
+            changeDeviceStateBySingleCommand(nestdaq::fairmq::command::kCompleteInit);
             break;
         }
         // InitializingDevice -> ... -> Bound
-        if (cmd==fairmq::command::kBind) {
-            changeDeviceStateBySingleCommand(fairmq::command::kCompleteInit);
-            changeDeviceStateBySingleCommand(fairmq::command::kBind);
+        if (cmd==nestdaq::fairmq::command::kBind) {
+            changeDeviceStateBySingleCommand(nestdaq::fairmq::command::kCompleteInit);
+            changeDeviceStateBySingleCommand(nestdaq::fairmq::command::kBind);
             break;
         }
         // InitializingDevice -> ... -> Bound -> Connecting -> DeviceReady
-        if (cmd==fairmq::command::kConnect) {
-            changeDeviceStateBySingleCommand(fairmq::command::kCompleteInit);
-            changeDeviceStateBySingleCommand(fairmq::command::kBind);
-            changeDeviceStateBySingleCommand(fairmq::command::kConnect);
+        if (cmd==nestdaq::fairmq::command::kConnect) {
+            changeDeviceStateBySingleCommand(nestdaq::fairmq::command::kCompleteInit);
+            changeDeviceStateBySingleCommand(nestdaq::fairmq::command::kBind);
+            changeDeviceStateBySingleCommand(nestdaq::fairmq::command::kConnect);
             break;
         }
         // InitializingDevice -> ... -> DeviceReady -> InitializingTask -> Ready
-        if (cmd==fairmq::command::kInitTask) {
-            changeDeviceStateBySingleCommand(fairmq::command::kCompleteInit);
-            changeDeviceStateBySingleCommand(fairmq::command::kBind);
-            changeDeviceStateBySingleCommand(fairmq::command::kConnect);
-            changeDeviceStateBySingleCommand(fairmq::command::kInitTask);
+        if (cmd==nestdaq::fairmq::command::kInitTask) {
+            changeDeviceStateBySingleCommand(nestdaq::fairmq::command::kCompleteInit);
+            changeDeviceStateBySingleCommand(nestdaq::fairmq::command::kBind);
+            changeDeviceStateBySingleCommand(nestdaq::fairmq::command::kConnect);
+            changeDeviceStateBySingleCommand(nestdaq::fairmq::command::kInitTask);
             break;
         }
         // InitializingDevice -> ... -> Ready -> Running
-        if ((cmd==fairmq::command::kRun) || (cmd==daq::command::kStart)) {
-            changeDeviceStateBySingleCommand(fairmq::command::kCompleteInit);
-            changeDeviceStateBySingleCommand(fairmq::command::kBind);
-            changeDeviceStateBySingleCommand(fairmq::command::kConnect);
-            changeDeviceStateBySingleCommand(fairmq::command::kInitTask);
-            changeDeviceStateBySingleCommand(fairmq::command::kRun);
+        if ((cmd==nestdaq::fairmq::command::kRun) || (cmd==nestdaq::daq::command::kStart)) {
+            changeDeviceStateBySingleCommand(nestdaq::fairmq::command::kCompleteInit);
+            changeDeviceStateBySingleCommand(nestdaq::fairmq::command::kBind);
+            changeDeviceStateBySingleCommand(nestdaq::fairmq::command::kConnect);
+            changeDeviceStateBySingleCommand(nestdaq::fairmq::command::kInitTask);
+            changeDeviceStateBySingleCommand(nestdaq::fairmq::command::kRun);
             break;
         }
         break;
@@ -426,35 +426,35 @@ void Plugin::changeDeviceStateByMultiCommand(std::string_view cmd)
     // ---------- state transition from Initialized ----------
     case DeviceState::Initialized:
         // Initialized -> ... -> Bound
-        if (cmd==fairmq::command::kBind) {
-            changeDeviceStateBySingleCommand(fairmq::command::kBind);
+        if (cmd==nestdaq::fairmq::command::kBind) {
+            changeDeviceStateBySingleCommand(nestdaq::fairmq::command::kBind);
             break;
         }
         // Initialized -> ... -> Bound -> Connecting -> DeviceReady
-        if (cmd==fairmq::command::kConnect) {
-            changeDeviceStateBySingleCommand(fairmq::command::kBind);
-            changeDeviceStateBySingleCommand(fairmq::command::kConnect);
+        if (cmd==nestdaq::fairmq::command::kConnect) {
+            changeDeviceStateBySingleCommand(nestdaq::fairmq::command::kBind);
+            changeDeviceStateBySingleCommand(nestdaq::fairmq::command::kConnect);
             break;
         }
         // Initialized -> ... -> DeviceReady -> InitializingTask -> Ready
-        if (cmd==fairmq::command::kInitTask) {
-            changeDeviceStateBySingleCommand(fairmq::command::kBind);
-            changeDeviceStateBySingleCommand(fairmq::command::kConnect);
-            changeDeviceStateBySingleCommand(fairmq::command::kInitTask);
+        if (cmd==nestdaq::fairmq::command::kInitTask) {
+            changeDeviceStateBySingleCommand(nestdaq::fairmq::command::kBind);
+            changeDeviceStateBySingleCommand(nestdaq::fairmq::command::kConnect);
+            changeDeviceStateBySingleCommand(nestdaq::fairmq::command::kInitTask);
             break;
         }
         // Initialized -> ... -> Ready -> Running
-        if ((cmd==fairmq::command::kRun) || (cmd==daq::command::kStart)) {
-            changeDeviceStateBySingleCommand(fairmq::command::kBind);
-            changeDeviceStateBySingleCommand(fairmq::command::kConnect);
-            changeDeviceStateBySingleCommand(fairmq::command::kInitTask);
-            changeDeviceStateBySingleCommand(fairmq::command::kRun);
+        if ((cmd==nestdaq::fairmq::command::kRun) || (cmd==nestdaq::daq::command::kStart)) {
+            changeDeviceStateBySingleCommand(nestdaq::fairmq::command::kBind);
+            changeDeviceStateBySingleCommand(nestdaq::fairmq::command::kConnect);
+            changeDeviceStateBySingleCommand(nestdaq::fairmq::command::kInitTask);
+            changeDeviceStateBySingleCommand(nestdaq::fairmq::command::kRun);
             break;
         }
 
         // Initialized -> ResettingDevice -> Idle
-        if ((cmd==fairmq::command::kResetDevice) || (cmd==daq::command::kReset)) {
-            changeDeviceStateBySingleCommand(fairmq::command::kResetDevice);
+        if ((cmd==nestdaq::fairmq::command::kResetDevice) || (cmd==nestdaq::daq::command::kReset)) {
+            changeDeviceStateBySingleCommand(nestdaq::fairmq::command::kResetDevice);
             break;
         }
         break;
@@ -462,27 +462,27 @@ void Plugin::changeDeviceStateByMultiCommand(std::string_view cmd)
     // ---------- state transition from Bound ----------
     case DeviceState::Bound:
         // Bound -> Connecting -> DeviceReady
-        if (cmd==fairmq::command::kConnect) {
-            changeDeviceStateBySingleCommand(fairmq::command::kConnect);
+        if (cmd==nestdaq::fairmq::command::kConnect) {
+            changeDeviceStateBySingleCommand(nestdaq::fairmq::command::kConnect);
             break;
         }
         // Bound -> ... -> DeviceReady -> InitializingTask -> Ready
-        if (cmd==fairmq::command::kInitTask) {
-            changeDeviceStateBySingleCommand(fairmq::command::kConnect);
-            changeDeviceStateBySingleCommand(fairmq::command::kInitTask);
+        if (cmd==nestdaq::fairmq::command::kInitTask) {
+            changeDeviceStateBySingleCommand(nestdaq::fairmq::command::kConnect);
+            changeDeviceStateBySingleCommand(nestdaq::fairmq::command::kInitTask);
             break;
         }
         // Bound -> ... -> Ready -> Running
-        if ((cmd==fairmq::command::kRun) || (cmd==daq::command::kStart)) {
-            changeDeviceStateBySingleCommand(fairmq::command::kConnect);
-            changeDeviceStateBySingleCommand(fairmq::command::kInitTask);
-            changeDeviceStateBySingleCommand(fairmq::command::kRun);
+        if ((cmd==nestdaq::fairmq::command::kRun) || (cmd==nestdaq::daq::command::kStart)) {
+            changeDeviceStateBySingleCommand(nestdaq::fairmq::command::kConnect);
+            changeDeviceStateBySingleCommand(nestdaq::fairmq::command::kInitTask);
+            changeDeviceStateBySingleCommand(nestdaq::fairmq::command::kRun);
             break;
         }
 
         // Bound -> ResettingDevice -> Idle
-        if ((cmd==fairmq::command::kResetDevice) || (cmd==daq::command::kReset)) {
-            changeDeviceStateBySingleCommand(fairmq::command::kResetDevice);
+        if ((cmd==nestdaq::fairmq::command::kResetDevice) || (cmd==nestdaq::daq::command::kReset)) {
+            changeDeviceStateBySingleCommand(nestdaq::fairmq::command::kResetDevice);
             break;
         }
         break;
@@ -490,20 +490,20 @@ void Plugin::changeDeviceStateByMultiCommand(std::string_view cmd)
     // ---------- state transition from DeviceReady ----------
     case DeviceState::DeviceReady:
         // DeviceReady -> InitializingTask -> Ready
-        if (cmd==fairmq::command::kInitTask) {
-            changeDeviceStateBySingleCommand(fairmq::command::kInitTask);
+        if (cmd==nestdaq::fairmq::command::kInitTask) {
+            changeDeviceStateBySingleCommand(nestdaq::fairmq::command::kInitTask);
             break;
         }
         // DeviceReady -> ... -> Ready -> Running
-        if ((cmd==fairmq::command::kRun) || (cmd==daq::command::kStart)) {
-            changeDeviceStateBySingleCommand(fairmq::command::kInitTask);
-            changeDeviceStateBySingleCommand(fairmq::command::kRun);
+        if ((cmd==nestdaq::fairmq::command::kRun) || (cmd==nestdaq::daq::command::kStart)) {
+            changeDeviceStateBySingleCommand(nestdaq::fairmq::command::kInitTask);
+            changeDeviceStateBySingleCommand(nestdaq::fairmq::command::kRun);
             break;
         }
 
         // DeviceReady -> ResettingDevice -> Idle
-        if ((cmd==fairmq::command::kResetDevice) || (cmd==daq::command::kReset)) {
-            changeDeviceStateBySingleCommand(fairmq::command::kResetDevice);
+        if ((cmd==nestdaq::fairmq::command::kResetDevice) || (cmd==nestdaq::daq::command::kReset)) {
+            changeDeviceStateBySingleCommand(nestdaq::fairmq::command::kResetDevice);
             break;
         }
         break;
@@ -511,20 +511,20 @@ void Plugin::changeDeviceStateByMultiCommand(std::string_view cmd)
     // ---------- state transition from Ready ----------
     case DeviceState::Ready:
         // Ready -> Running
-        if ((cmd==fairmq::command::kRun) || (cmd==daq::command::kStart)) {
-            changeDeviceStateBySingleCommand(fairmq::command::kRun);
+        if ((cmd==nestdaq::fairmq::command::kRun) || (cmd==nestdaq::daq::command::kStart)) {
+            changeDeviceStateBySingleCommand(nestdaq::fairmq::command::kRun);
             break;
         }
 
         // Ready -> ResettingDevice -> DeviceReady
-        if (cmd==fairmq::command::kResetTask) {
-            changeDeviceStateBySingleCommand(fairmq::command::kResetTask);
+        if (cmd==nestdaq::fairmq::command::kResetTask) {
+            changeDeviceStateBySingleCommand(nestdaq::fairmq::command::kResetTask);
             break;
         }
         // Ready -> ResettingTask -> DeviceReady -> ResettingDevice -> Idle
-        if ((cmd==fairmq::command::kResetDevice) || (cmd==daq::command::kReset)) {
-            changeDeviceStateBySingleCommand(fairmq::command::kResetTask);
-            changeDeviceStateBySingleCommand(fairmq::command::kResetDevice);
+        if ((cmd==nestdaq::fairmq::command::kResetDevice) || (cmd==nestdaq::daq::command::kReset)) {
+            changeDeviceStateBySingleCommand(nestdaq::fairmq::command::kResetTask);
+            changeDeviceStateBySingleCommand(nestdaq::fairmq::command::kResetDevice);
             break;
         }
         break;
@@ -532,22 +532,22 @@ void Plugin::changeDeviceStateByMultiCommand(std::string_view cmd)
     // ---------- state transition from Running ----------
     case DeviceState::Running:
         // Running -> Ready
-        if (cmd==fairmq::command::kStop) {
-            changeDeviceStateBySingleCommand(fairmq::command::kStop);
+        if (cmd==nestdaq::fairmq::command::kStop) {
+            changeDeviceStateBySingleCommand(nestdaq::fairmq::command::kStop);
             break;
         }
 
         // Running -> Ready -> ResettingTask -> DeviceReady
-        if (cmd==fairmq::command::kResetTask) {
-            changeDeviceStateBySingleCommand(fairmq::command::kStop);
-            changeDeviceStateBySingleCommand(fairmq::command::kResetTask);
+        if (cmd==nestdaq::fairmq::command::kResetTask) {
+            changeDeviceStateBySingleCommand(nestdaq::fairmq::command::kStop);
+            changeDeviceStateBySingleCommand(nestdaq::fairmq::command::kResetTask);
             break;
         }
         // Running -> ... -> ResettingDevice -> Idle
-        if ((cmd==fairmq::command::kResetDevice) || (cmd==daq::command::kReset)) {
-            changeDeviceStateBySingleCommand(fairmq::command::kStop);
-            changeDeviceStateBySingleCommand(fairmq::command::kResetTask);
-            changeDeviceStateBySingleCommand(fairmq::command::kResetDevice);
+        if ((cmd==nestdaq::fairmq::command::kResetDevice) || (cmd==nestdaq::daq::command::kReset)) {
+            changeDeviceStateBySingleCommand(nestdaq::fairmq::command::kStop);
+            changeDeviceStateBySingleCommand(nestdaq::fairmq::command::kResetTask);
+            changeDeviceStateBySingleCommand(nestdaq::fairmq::command::kResetDevice);
             break;
         }
         break;
@@ -568,26 +568,26 @@ void Plugin::changeDeviceStateBySingleCommand(std::string_view cmd)
     switch (state) {
     case DeviceState::Idle:
         // Idle -> InitializingDevice
-        if (cmd==fairmq::command::kInitDevice) {
+        if (cmd==nestdaq::fairmq::command::kInitDevice) {
             ChangeDeviceState(DeviceStateTransition::InitDevice);
             while (fStateQueue.WaitForNext() != DeviceState::InitializingDevice) {}
         }
         break;
     case DeviceState::InitializingDevice:
         // InitializingDevice -> Initialized
-        if (cmd==fairmq::command::kCompleteInit) {
+        if (cmd==nestdaq::fairmq::command::kCompleteInit) {
             ChangeDeviceState(DeviceStateTransition::CompleteInit);
             while (fStateQueue.WaitForNext() != DeviceState::Initialized) {}
         }
         break;
     case DeviceState::Initialized:
         // Initialized -> Binding -> Bound
-        if (cmd==fairmq::command::kBind) {
+        if (cmd==nestdaq::fairmq::command::kBind) {
             ChangeDeviceState(DeviceStateTransition::Bind);
             while (fStateQueue.WaitForNext() != DeviceState::Bound) {}
         }
         // Initialized -> RessetingDevice -> Idle
-        if (cmd==fairmq::command::kResetDevice) {
+        if (cmd==nestdaq::fairmq::command::kResetDevice) {
             fResetDeviceRequested = true;
             ChangeDeviceState(DeviceStateTransition::ResetDevice);
             while (fStateQueue.WaitForNext() != DeviceState::Idle) {}
@@ -595,30 +595,30 @@ void Plugin::changeDeviceStateBySingleCommand(std::string_view cmd)
         break;
     case DeviceState::Bound:
         // Bound -> Connecting -> DeviceReady
-        if (cmd==fairmq::command::kConnect) {
+        if (cmd==nestdaq::fairmq::command::kConnect) {
             ChangeDeviceState(DeviceStateTransition::Connect);
             while (fStateQueue.WaitForNext() != DeviceState::DeviceReady) {}
         }
         // Bound -> RessetingDevice -> Idle
-        if (cmd==fairmq::command::kResetDevice) {
+        if (cmd==nestdaq::fairmq::command::kResetDevice) {
             fResetDeviceRequested = true;
             ChangeDeviceState(DeviceStateTransition::ResetDevice);
             while (fStateQueue.WaitForNext() != DeviceState::Idle) {}
         }
         break;
     case DeviceState::Connecting:
-        if (cmd==fairmq::command::kResetDevice) {
+        if (cmd==nestdaq::fairmq::command::kResetDevice) {
             fResetDeviceRequested = true;
         }
         break;
     case DeviceState::DeviceReady:
         // DeviceReady -> InitializingTask -> Ready
-        if (cmd==fairmq::command::kInitTask) {
+        if (cmd==nestdaq::fairmq::command::kInitTask) {
             ChangeDeviceState(DeviceStateTransition::InitTask);
             while (fStateQueue.WaitForNext() != DeviceState::Ready) {}
         }
         // DeviceReady -> RessetingDevice -> Idle
-        if (cmd==fairmq::command::kResetDevice) {
+        if (cmd==nestdaq::fairmq::command::kResetDevice) {
             fResetDeviceRequested = true;
             ChangeDeviceState(DeviceStateTransition::ResetDevice);
             while (fStateQueue.WaitForNext() != DeviceState::Idle) {}
@@ -626,19 +626,19 @@ void Plugin::changeDeviceStateBySingleCommand(std::string_view cmd)
         break;
     case DeviceState::Ready:
         // Ready -> Running
-        if (cmd==fairmq::command::kRun) {
+        if (cmd==nestdaq::fairmq::command::kRun) {
             ChangeDeviceState(DeviceStateTransition::Run);
             while (fStateQueue.WaitForNext() != DeviceState::Running) {}
             writeStartTime();
         }
         // Ready -> ResettingTask -> DeviceReady
-        if (cmd==fairmq::command::kResetTask) {
+        if (cmd==nestdaq::fairmq::command::kResetTask) {
             ChangeDeviceState(DeviceStateTransition::ResetTask);
             while (fStateQueue.WaitForNext() != DeviceState::DeviceReady) {}
         }
         break;
     case DeviceState::Running:
-        if (cmd==fairmq::command::kStop) {
+        if (cmd==nestdaq::fairmq::command::kStop) {
             ChangeDeviceState(DeviceStateTransition::Stop);
             while (fStateQueue.WaitForNext() != DeviceState::Ready) {}
             writeStopTime();
@@ -807,22 +807,22 @@ void Plugin::runStartupSequence()
 
     if (s=="idle") return;
 
-    changeDeviceStateBySingleCommand(fairmq::command::kInitDevice);
+    changeDeviceStateBySingleCommand(nestdaq::fairmq::command::kInitDevice);
     if (s=="initialingdevice" || s=="initializing-device") return;
 
-    changeDeviceStateBySingleCommand(fairmq::command::kCompleteInit);
+    changeDeviceStateBySingleCommand(nestdaq::fairmq::command::kCompleteInit);
     if (s=="initialized") return;
 
-    changeDeviceStateBySingleCommand(fairmq::command::kBind);
+    changeDeviceStateBySingleCommand(nestdaq::fairmq::command::kBind);
     if (s=="bound") return;
 
-    changeDeviceStateBySingleCommand(fairmq::command::kConnect);
+    changeDeviceStateBySingleCommand(nestdaq::fairmq::command::kConnect);
     if (s=="deviceready" || s=="device-ready") return;
 
-    changeDeviceStateBySingleCommand(fairmq::command::kInitTask);
+    changeDeviceStateBySingleCommand(nestdaq::fairmq::command::kInitTask);
     if (s=="ready") return;
 
-    changeDeviceStateBySingleCommand(fairmq::command::kRun);
+    changeDeviceStateBySingleCommand(nestdaq::fairmq::command::kRun);
     if (s=="running") return;
 
     LOG(debug) << kMyClass << " runStartupSequence() done";
@@ -1035,7 +1035,7 @@ void Plugin::subscribeToDaqCommand()
                 return;
             }
             bool is_single_command = false; // TO DO
-            const std::string long_instance_id = daq::service::join({fServiceName, fId}, fSeparator);
+            const std::string long_instance_id = nestdaq::daq::service::join({fServiceName, fId}, fSeparator);
             if ((services.count("all")>0) ||
                     ((services.count(fServiceName)>0) && ((instances.count("all")>0) || (instances.count(long_instance_id)>0)))) {
                 if (is_single_command) {
@@ -1045,9 +1045,9 @@ void Plugin::subscribeToDaqCommand()
                 }
 
                 // any state Exiting by exiting subscribeToDaqCommand() and calling runShutdownSequence() in the state control thread
-                if ((*val==daq::command::kExit) ||
-                        (*val==daq::command::kQuit) ||
-                        (*val==fairmq::command::kEnd)) {
+                if ((*val==nestdaq::daq::command::kExit) ||
+                        (*val==nestdaq::daq::command::kQuit) ||
+                        (*val==nestdaq::fairmq::command::kEnd)) {
                     fPluginShutdownRequested = true;
                 }
             }
@@ -1163,4 +1163,4 @@ void Plugin::writeStopTime()
     SetProperty(std::string{kStopTimeNs}, t_ns);
 }
 
-} // namespace daq::service
+} // namespace nestdaq::daq::service

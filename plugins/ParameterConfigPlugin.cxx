@@ -19,7 +19,7 @@
 
 using namespace std::literals::string_literals;
 
-static constexpr std::string_view kMyClass{"daq::service::ParameterConfigPlugin"};
+static constexpr std::string_view kMyClass{"nestdaq::daq::service::ParameterConfigPlugin"};
 
 static constexpr std::string_view kRedisKeySpacePrefix{"__keyspace@"};
 
@@ -66,7 +66,7 @@ const std::unordered_set<std::string_view> kReservedOptionsFloat
 const std::unordered_set<std::string_view> kReservedOptionsVectorString
 {   "channel-config", //
 };
-namespace daq::service {
+namespace nestdaq::daq::service {
 
 /**
  * @brief Return command-line options provided by the parameter configuration plugin.
@@ -485,4 +485,4 @@ void ParameterConfigPlugin::toMap(std::string_view name, std::string line)
     SetProperty(name.data(), m);
 }
 
-} // namespace daq::service
+} // namespace nestdaq::daq::service

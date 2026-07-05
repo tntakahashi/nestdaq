@@ -30,7 +30,7 @@ class PipelineImpl;
 using Pipeline = QueuedRedis<PipelineImpl>;
 }
 
-namespace daq::service {
+namespace nestdaq::daq::service {
 
 static constexpr std::string_view kMetricsPrefix{"metrics"};
 static constexpr std::string_view kStatePrefix{"state"};
@@ -230,7 +230,7 @@ REGISTER_FAIRMQ_PLUGIN(
 (fair::mq::Plugin::Version{0, 0, 0}),
 "Metrics <maintainer@daq.service.net>",
 "https://github.com/spadi-alliance/nestdaq",
-daq::service::metricsPluginProgramOptions
+nestdaq::daq::service::metricsPluginProgramOptions
 ) // end of macro: REGISTER_FAIRMQ_PLUGIN
 
-} // namespace daq::service
+} // namespace nestdaq::daq::service
