@@ -404,7 +404,7 @@ auto configureFrameworkMetricsProvider(RuntimeState &state) -> void
         opentelemetry::sdk::metrics::MeterProviderFactory::Create(std::move(views), *state.frameworkMetricResource)
     };
 
-    auto config = state.frameworkMetricConfig.ToConfig();
+    auto config = state.frameworkMetricConfig.toConfig();
     config.metric_export_interval_ms = kFrameworkMetricReaderIntervalMs;
     for (const auto protocol : state.frameworkMetricProtocols) {
         state.frameworkMeterProvider->AddMetricReader(createMetricReader(createMetricExporter(config, protocol), config));

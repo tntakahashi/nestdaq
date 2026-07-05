@@ -224,7 +224,7 @@ struct FrameworkMetricConfigStorage {
     uint32_t timeoutMs = 5000;
     uint32_t metricExportIntervalMs = kDefaultMetricExportIntervalMs;
 
-    auto ToConfig() const -> nestdaq_otel_config
+    auto toConfig() const -> nestdaq_otel_config
     {
         auto config = nestdaq_otel_config{};
         config.size = sizeof(config);
