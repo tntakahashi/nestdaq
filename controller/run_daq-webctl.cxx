@@ -148,13 +148,13 @@ int main(int argc, char* argv[]) { // NOLINT(bugprone-exception-escape)
     }
 
     const auto telemetry_options = nestdaq::telemetry::readTelemetryOptions(vm, "daq-webctl");
-    nestdaq::telemetry::setSpdlogConsolePattern(telemetry_options.spdlogConsolePattern);
-    nestdaq::telemetry::setSpdlogNativeConsoleEnabled(telemetry_options.spdlogNativeConsole);
+    nestdaq::telemetry::setSpdlogConsolePattern(telemetry_options.spdlog_console_pattern);
+    nestdaq::telemetry::setSpdlogNativeConsoleEnabled(telemetry_options.spdlog_native_console);
     nestdaq::telemetry::setSpdlogAsyncOptions({
-        .enabled = telemetry_options.spdlogAsync,
-        .queueSize = telemetry_options.spdlogAsyncQueueSize,
-        .threadCount = telemetry_options.spdlogAsyncThreadCount,
-        .overflowPolicy = telemetry_options.spdlogAsyncOverflowPolicy,
+        .enabled = telemetry_options.spdlog_async,
+        .queue_size = telemetry_options.spdlog_async_queue_size,
+        .thread_count = telemetry_options.spdlog_async_thread_count,
+        .overflow_policy = telemetry_options.spdlog_async_overflow_policy,
     });
     auto telemetry = std::make_unique<nestdaq::telemetry::TelemetryLibrary>();
     auto telemetry_loaded = false;
@@ -237,7 +237,7 @@ int main(int argc, char* argv[]) { // NOLINT(bugprone-exception-escape)
     HttpWebSocketServer server(static_cast<int>(n_threads));
     server.run(http_scheme, http_address, http_port, doc_root);
     if (telemetry_loaded) {
-        telemetry->shutdownTelemetry(telemetry_options.timeoutMs);
+        telemetry->shutdownTelemetry(telemetry_options.timeout_ms);
     }
     return ret;
 }

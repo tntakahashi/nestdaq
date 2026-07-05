@@ -85,14 +85,14 @@ auto isValidSpdlogAsyncOverflowPolicy(std::string_view value) -> bool {
 }
 
 auto normalizeSpdlogAsyncOptions(SpdlogAsyncOptions options) -> SpdlogAsyncOptions {
-    if (options.queueSize == 0) {
-        options.queueSize = kDefaultSpdlogAsyncQueueSize;
+    if (options.queue_size == 0) {
+        options.queue_size = kDefaultSpdlogAsyncQueueSize;
     }
-    if (options.threadCount == 0) {
-        options.threadCount = kDefaultSpdlogAsyncThreadCount;
+    if (options.thread_count == 0) {
+        options.thread_count = kDefaultSpdlogAsyncThreadCount;
     }
-    if (!isValidSpdlogAsyncOverflowPolicy(options.overflowPolicy)) {
-        options.overflowPolicy = kDefaultSpdlogAsyncOverflowPolicy;
+    if (!isValidSpdlogAsyncOverflowPolicy(options.overflow_policy)) {
+        options.overflow_policy = kDefaultSpdlogAsyncOverflowPolicy;
     }
     return options;
 }

@@ -16,12 +16,12 @@
 namespace nestdaq::otel_detail {
 namespace {
 
-auto logEndpointGrpc(const nestdaq_otel_config &config) -> const char *
+auto log_endpoint_grpc(const nestdaq_otel_config &config) -> const char *
 {
     return isEmpty(config.logs.endpoint_grpc) ? kDefaultGrpcEndpoint.data() : config.logs.endpoint_grpc;
 }
 
-auto logEndpointHttp(const nestdaq_otel_config &config) -> const char *
+auto log_endpoint_http(const nestdaq_otel_config &config) -> const char *
 {
     return isEmpty(config.logs.endpoint_http) ? kDefaultLogHttpEndpoint.data() : config.logs.endpoint_http;
 }
@@ -36,7 +36,7 @@ auto createLogExporter(const nestdaq_otel_config &config, Protocol protocol)
         return opentelemetry::exporter::logs::OStreamLogRecordExporterFactory::Create();
     case Protocol::OtlpHttp: {
         auto options = opentelemetry::exporter::otlp::OtlpHttpLogRecordExporterOptions{};
-        options.url = logEndpointHttp(config);
+        options.url = log_endpoint_http(config);
         options.http_headers = parseHeaders(config.logs.headers);
         options.content_type = config.logs.otlp_http_json == 0
                                ? opentelemetry::exporter::otlp::HttpRequestContentType::kBinary
@@ -46,7 +46,7 @@ auto createLogExporter(const nestdaq_otel_config &config, Protocol protocol)
     }
     case Protocol::OtlpGrpc: {
         auto options = opentelemetry::exporter::otlp::OtlpGrpcLogRecordExporterOptions{};
-        options.endpoint = logEndpointGrpc(config);
+        options.endpoint = log_endpoint_grpc(config);
         options.metadata = parseHeaders(config.logs.headers);
         options.timeout = timeoutFromMs(config.timeout_ms);
         return opentelemetry::exporter::otlp::OtlpGrpcLogRecordExporterFactory::Create(options);

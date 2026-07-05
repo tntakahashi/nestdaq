@@ -52,7 +52,8 @@ to NestDAQ.
   `PascalCase` / `UpperCamelCase` is allowed for existing-style consistency.
 - Variables: prefer `snake_case`; lower camel case / `camelCase` is allowed for
   existing-style consistency.
-- Data members: `fPascalCase`.
+- Public `struct` data fields: `snake_case`.
+- Private and protected class data members: `fPascalCase`.
 - Static data members: start with `fg`, for example `fgPascalCase`.
 - Static variables: start with `g`, for example `gPascalCase`.
 - Constants: start with `k`, for example `kPascalCase`, or use

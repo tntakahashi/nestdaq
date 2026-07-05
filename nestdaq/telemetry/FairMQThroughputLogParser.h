@@ -14,13 +14,13 @@ namespace nestdaq::telemetry {
  * this value type so FairMQ rate log interpretation stays consistent.
  */
 struct FairMQThroughputSample {
-    std::string channelName;
-    std::string subChannelName;
-    std::optional<uint64_t> subChannelIndex;
-    double messagesPerSecondIn = 0.0;
-    double megabytesPerSecondIn = 0.0;
-    double messagesPerSecondOut = 0.0;
-    double megabytesPerSecondOut = 0.0;
+    std::string channel_name;
+    std::string sub_channel_name;
+    std::optional<uint64_t> sub_channel_index;
+    double messages_per_second_in = 0.0;
+    double megabytes_per_second_in = 0.0;
+    double messages_per_second_out = 0.0;
+    double megabytes_per_second_out = 0.0;
 };
 
 /**

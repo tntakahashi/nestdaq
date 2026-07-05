@@ -42,12 +42,12 @@ namespace {
 
 constexpr auto kFrameworkMetricReaderIntervalMs = uint32_t{24U * 60U * 60U * 1000U};
 
-auto metricEndpointGrpc(const nestdaq_otel_config &config) -> const char *
+auto metric_endpoint_grpc(const nestdaq_otel_config &config) -> const char *
 {
     return isEmpty(config.metrics.endpoint_grpc) ? kDefaultGrpcEndpoint.data() : config.metrics.endpoint_grpc;
 }
 
-auto metricEndpointHttp(const nestdaq_otel_config &config) -> const char *
+auto metric_endpoint_http(const nestdaq_otel_config &config) -> const char *
 {
     return isEmpty(config.metrics.endpoint_http) ? kDefaultMetricHttpEndpoint.data() : config.metrics.endpoint_http;
 }
@@ -424,7 +424,7 @@ auto createMetricExporter(const nestdaq_otel_config &config, Protocol protocol)
         return opentelemetry::exporter::metrics::OStreamMetricExporterFactory::Create();
     case Protocol::OtlpHttp: {
         auto options = opentelemetry::exporter::otlp::OtlpHttpMetricExporterOptions{};
-        options.url = metricEndpointHttp(config);
+        options.url = metric_endpoint_http(config);
         options.http_headers = parseHeaders(config.metrics.headers);
         options.content_type = config.metrics.otlp_http_json == 0
                                ? opentelemetry::exporter::otlp::HttpRequestContentType::kBinary
@@ -434,7 +434,7 @@ auto createMetricExporter(const nestdaq_otel_config &config, Protocol protocol)
     }
     case Protocol::OtlpGrpc: {
         auto options = opentelemetry::exporter::otlp::OtlpGrpcMetricExporterOptions{};
-        options.endpoint = metricEndpointGrpc(config);
+        options.endpoint = metric_endpoint_grpc(config);
         options.metadata = parseHeaders(config.metrics.headers);
         options.timeout = timeoutFromMs(config.timeout_ms);
         return opentelemetry::exporter::otlp::OtlpGrpcMetricExporterFactory::Create(options);
@@ -670,20 +670,20 @@ auto OpenTelemetryInitializer::recordFrameworkFairMQThroughput(const telemetry::
                 return;
             }
             state.pending_fairmq_throughput_measurements.emplace_back(otel_detail::FairMQThroughputMeasurement{
-                .channel_name = sample.channelName,
-                .sub_channel_name = sample.subChannelName,
+                .channel_name = sample.channel_name,
+                .sub_channel_name = sample.sub_channel_name,
                 .direction = "in",
-                .sub_channel_index = sample.subChannelIndex,
-                .messages_per_second = sample.messagesPerSecondIn,
-                .megabytes_per_second = sample.megabytesPerSecondIn,
+                .sub_channel_index = sample.sub_channel_index,
+                .messages_per_second = sample.messages_per_second_in,
+                .megabytes_per_second = sample.megabytes_per_second_in,
             });
             state.pending_fairmq_throughput_measurements.emplace_back(otel_detail::FairMQThroughputMeasurement{
-                .channel_name = sample.channelName,
-                .sub_channel_name = sample.subChannelName,
+                .channel_name = sample.channel_name,
+                .sub_channel_name = sample.sub_channel_name,
                 .direction = "out",
-                .sub_channel_index = sample.subChannelIndex,
-                .messages_per_second = sample.messagesPerSecondOut,
-                .megabytes_per_second = sample.megabytesPerSecondOut,
+                .sub_channel_index = sample.sub_channel_index,
+                .messages_per_second = sample.messages_per_second_out,
+                .megabytes_per_second = sample.megabytes_per_second_out,
             });
         }
         static_cast<void>(otel_detail::flushFrameworkMetricsIfDirty(otel_detail::kDefaultMetricExportIntervalMs));

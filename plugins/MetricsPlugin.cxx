@@ -684,22 +684,22 @@ void daq::service::MetricsPlugin::sendSocketMetrics(const std::string &content)
     //return;
     //std::cout << kMyClass << " content = \n" << content << "\n length = " << content.size() << std::endl;
     const auto sample = nestdaq::telemetry::parseFairMQThroughputLog(content);
-    if (!sample || !sample->subChannelIndex) {
+    if (!sample || !sample->sub_channel_index) {
         return;
     }
     //std::cout << kMyClass << " " << __FUNCTION__ << " (passed) content = \n" << content << std::endl;
 
-    const auto &channel_name = sample->channelName;
-    const auto sub_channel_index = std::to_string(*sample->subChannelIndex);
-    const auto &sub_channel_name = sample->subChannelName;
+    const auto &channel_name = sample->channel_name;
+    const auto sub_channel_index = std::to_string(*sample->sub_channel_index);
+    const auto &sub_channel_name = sample->sub_channel_name;
     auto channel_id       = join({fId, sub_channel_name}, fSeparator);
 
     SocketMetrics now;
-    now.msg_in    = sample->messagesPerSecondIn;
-    now.msg_out   = sample->messagesPerSecondOut;
+    now.msg_in    = sample->messages_per_second_in;
+    now.msg_out   = sample->messages_per_second_out;
     // mega bytes
-    now.bytes_in  = sample->megabytesPerSecondIn;
-    now.bytes_out = sample->megabytesPerSecondOut;
+    now.bytes_in  = sample->megabytes_per_second_in;
+    now.bytes_out = sample->megabytes_per_second_out;
 
     auto& sum = fSocketMetrics[sub_channel_name];
     sum.msg_in    += now.msg_in;

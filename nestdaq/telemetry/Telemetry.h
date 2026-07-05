@@ -33,9 +33,9 @@ class TelemetryLibrary;
  */
 struct SpdlogAsyncOptions {
     bool enabled{false};
-    uint32_t queueSize{kDefaultSpdlogAsyncQueueSize};
-    uint32_t threadCount{kDefaultSpdlogAsyncThreadCount};
-    std::string overflowPolicy{kDefaultSpdlogAsyncOverflowPolicy};
+    uint32_t queue_size{kDefaultSpdlogAsyncQueueSize};
+    uint32_t thread_count{kDefaultSpdlogAsyncThreadCount};
+    std::string overflow_policy{kDefaultSpdlogAsyncOverflowPolicy};
 };
 
 namespace detail {

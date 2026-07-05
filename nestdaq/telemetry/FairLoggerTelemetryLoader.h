@@ -46,42 +46,42 @@ inline constexpr std::string_view kDefaultServiceNamespace{"nestdaq"};
  */
 struct TelemetryOptions {
     std::string library{kDefaultTelemetryLibrary};
-    std::string logProtocol{kDefaultProtocol};
-    std::string metricProtocol;
-    std::string traceProtocol;
-    std::string logEndpointHttp{kDefaultLogHttpEndpoint};
-    std::string logEndpointGrpc{kDefaultGrpcEndpoint};
-    std::string metricEndpointHttp{kDefaultMetricHttpEndpoint};
-    std::string metricEndpointGrpc{kDefaultGrpcEndpoint};
-    std::string traceEndpointHttp{kDefaultTraceHttpEndpoint};
-    std::string traceEndpointGrpc{kDefaultGrpcEndpoint};
-    std::string logHeaders;
-    std::string metricHeaders;
-    std::string traceHeaders;
-    std::string spdlogConsolePattern{kDefaultSpdlogConsolePattern};
-    bool spdlogNativeConsole{true};
-    bool spdlogAsync{false};
-    uint32_t spdlogAsyncQueueSize{kDefaultSpdlogAsyncQueueSize};
-    uint32_t spdlogAsyncThreadCount{kDefaultSpdlogAsyncThreadCount};
-    std::string spdlogAsyncOverflowPolicy{kDefaultSpdlogAsyncOverflowPolicy};
+    std::string log_protocol{kDefaultProtocol};
+    std::string metric_protocol;
+    std::string trace_protocol;
+    std::string log_endpoint_http{kDefaultLogHttpEndpoint};
+    std::string log_endpoint_grpc{kDefaultGrpcEndpoint};
+    std::string metric_endpoint_http{kDefaultMetricHttpEndpoint};
+    std::string metric_endpoint_grpc{kDefaultGrpcEndpoint};
+    std::string trace_endpoint_http{kDefaultTraceHttpEndpoint};
+    std::string trace_endpoint_grpc{kDefaultGrpcEndpoint};
+    std::string log_headers;
+    std::string metric_headers;
+    std::string trace_headers;
+    std::string spdlog_console_pattern{kDefaultSpdlogConsolePattern};
+    bool spdlog_native_console{true};
+    bool spdlog_async{false};
+    uint32_t spdlog_async_queue_size{kDefaultSpdlogAsyncQueueSize};
+    uint32_t spdlog_async_thread_count{kDefaultSpdlogAsyncThreadCount};
+    std::string spdlog_async_overflow_policy{kDefaultSpdlogAsyncOverflowPolicy};
     std::string severity{"info"};
-    std::string serviceName{"nestdaq"};
-    std::string serviceNamespace{kDefaultServiceNamespace};
-    std::string serviceInstanceId;
-    std::string hostName;
-    std::string nestdaqInstanceId;
-    std::string nestdaqInstanceIdStatus{"unresolved"};
-    std::string fairmqId;
-    std::string fairmqDevice;
-    std::string fairmqSession;
-    std::string fairmqTransport;
-    uint32_t timeoutMs{kDefaultTimeoutMs};
-    uint32_t metricExportIntervalMs{kDefaultMetricExportIntervalMs};
-    uint32_t logOtlpHttpJson{1};
-    uint32_t metricOtlpHttpJson{1};
-    uint32_t traceOtlpHttpJson{1};
+    std::string service_name{"nestdaq"};
+    std::string service_namespace{kDefaultServiceNamespace};
+    std::string service_instance_id;
+    std::string host_name;
+    std::string nestdaq_instance_id;
+    std::string nestdaq_instance_id_status{"unresolved"};
+    std::string fairmq_id;
+    std::string fairmq_device;
+    std::string fairmq_session;
+    std::string fairmq_transport;
+    uint32_t timeout_ms{kDefaultTimeoutMs};
+    uint32_t metric_export_interval_ms{kDefaultMetricExportIntervalMs};
+    uint32_t log_otlp_http_json{1};
+    uint32_t metric_otlp_http_json{1};
+    uint32_t trace_otlp_http_json{1};
     bool required{false};
-    bool generatedServiceInstanceId{false};
+    bool generated_service_instance_id{false};
 };
 
 /**
@@ -89,7 +89,7 @@ struct TelemetryOptions {
  */
 struct SeverityParseResult {
     int32_t value{};
-    bool usedFallback{false};
+    bool used_fallback{false};
 };
 
 /**

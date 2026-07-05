@@ -75,10 +75,10 @@ auto parseChannel(std::string_view value, FairMQThroughputSample &sample) -> boo
         return false;
     }
 
-    sample.subChannelName = std::string{value};
+    sample.sub_channel_name = std::string{value};
 
     if (!endsWith(value, ']')) {
-        sample.channelName = std::string{value};
+        sample.channel_name = std::string{value};
         return true;
     }
 
@@ -98,8 +98,8 @@ auto parseChannel(std::string_view value, FairMQThroughputSample &sample) -> boo
         return false;
     }
 
-    sample.channelName = std::string{channel_name};
-    sample.subChannelIndex = index;
+    sample.channel_name = std::string{channel_name};
+    sample.sub_channel_index = index;
     return true;
 }
 
@@ -120,12 +120,12 @@ auto parseFairMQThroughputLog(std::string_view line) -> std::optional<FairMQThro
     }
 
     if (!consumeLiteral(input, "in:") ||
-            !parseDoubleToken(input, sample.messagesPerSecondIn)) {
+            !parseDoubleToken(input, sample.messages_per_second_in)) {
         return std::nullopt;
     }
     consumeSpaces(input);
     if (!consumeLiteral(input, "(") ||
-            !parseDoubleToken(input, sample.megabytesPerSecondIn)) {
+            !parseDoubleToken(input, sample.megabytes_per_second_in)) {
         return std::nullopt;
     }
     consumeSpaces(input);
@@ -134,12 +134,12 @@ auto parseFairMQThroughputLog(std::string_view line) -> std::optional<FairMQThro
     }
     consumeSpaces(input);
     if (!consumeLiteral(input, "out:") ||
-            !parseDoubleToken(input, sample.messagesPerSecondOut)) {
+            !parseDoubleToken(input, sample.messages_per_second_out)) {
         return std::nullopt;
     }
     consumeSpaces(input);
     if (!consumeLiteral(input, "(") ||
-            !parseDoubleToken(input, sample.megabytesPerSecondOut)) {
+            !parseDoubleToken(input, sample.megabytes_per_second_out)) {
         return std::nullopt;
     }
     consumeSpaces(input);

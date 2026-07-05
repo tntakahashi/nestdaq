@@ -323,8 +323,8 @@ if (!library.Load("libnestdaq_otel.so")) {
 }
 
 auto options = nestdaq::telemetry::TelemetryOptions{};
-options.logProtocol = "console";
-options.metricProtocol = "otlp-http";
+options.log_protocol = "console";
+options.metric_protocol = "otlp-http";
 
 const auto config = nestdaq::telemetry::MakeConfig(options);
 if (!library.InitializeWith(config)) {

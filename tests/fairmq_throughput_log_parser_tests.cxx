@@ -14,13 +14,13 @@ TEST_CASE("FairMQ throughput parser accepts the Device rate log format", "[telem
                             "data: in: 1234.5 (6.75 MB) out: 8.25 (0.5 MB)");
 
     REQUIRE(sample.has_value());
-    CHECK(sample->channelName == "data");
-    CHECK(sample->subChannelName == "data");
-    CHECK_FALSE(sample->subChannelIndex.has_value());
-    CHECK(sample->messagesPerSecondIn == Catch::Approx{1234.5});
-    CHECK(sample->megabytesPerSecondIn == Catch::Approx{6.75});
-    CHECK(sample->messagesPerSecondOut == Catch::Approx{8.25});
-    CHECK(sample->megabytesPerSecondOut == Catch::Approx{0.5});
+    CHECK(sample->channel_name == "data");
+    CHECK(sample->sub_channel_name == "data");
+    CHECK_FALSE(sample->sub_channel_index.has_value());
+    CHECK(sample->messages_per_second_in == Catch::Approx{1234.5});
+    CHECK(sample->megabytes_per_second_in == Catch::Approx{6.75});
+    CHECK(sample->messages_per_second_out == Catch::Approx{8.25});
+    CHECK(sample->megabytes_per_second_out == Catch::Approx{0.5});
 }
 
 TEST_CASE("FairMQ throughput parser trims padded channel names", "[telemetry][fairmq]")
@@ -29,9 +29,9 @@ TEST_CASE("FairMQ throughput parser trims padded channel names", "[telemetry][fa
                             "       pull: in: 1 (2 MB) out: 3 (4 MB)");
 
     REQUIRE(sample.has_value());
-    CHECK(sample->channelName == "pull");
-    CHECK(sample->subChannelName == "pull");
-    CHECK_FALSE(sample->subChannelIndex.has_value());
+    CHECK(sample->channel_name == "pull");
+    CHECK(sample->sub_channel_name == "pull");
+    CHECK_FALSE(sample->sub_channel_index.has_value());
 }
 
 TEST_CASE("FairMQ throughput parser splits indexed subchannels", "[telemetry][fairmq]")
@@ -40,10 +40,10 @@ TEST_CASE("FairMQ throughput parser splits indexed subchannels", "[telemetry][fa
                             "       data[12]: in: 1 (2 MB) out: 3 (4 MB)");
 
     REQUIRE(sample.has_value());
-    CHECK(sample->channelName == "data");
-    CHECK(sample->subChannelName == "data[12]");
-    REQUIRE(sample->subChannelIndex.has_value());
-    CHECK(*sample->subChannelIndex == 12);
+    CHECK(sample->channel_name == "data");
+    CHECK(sample->sub_channel_name == "data[12]");
+    REQUIRE(sample->sub_channel_index.has_value());
+    CHECK(*sample->sub_channel_index == 12);
 }
 
 TEST_CASE("FairMQ throughput parser accepts exponent notation", "[telemetry][fairmq]")
@@ -52,10 +52,10 @@ TEST_CASE("FairMQ throughput parser accepts exponent notation", "[telemetry][fai
                             "push: in: 1.5e+03 (2.5e-01 MB) out: 0 (0 MB)");
 
     REQUIRE(sample.has_value());
-    CHECK(sample->messagesPerSecondIn == Catch::Approx{1500.0});
-    CHECK(sample->megabytesPerSecondIn == Catch::Approx{0.25});
-    CHECK(sample->messagesPerSecondOut == Catch::Approx{0.0});
-    CHECK(sample->megabytesPerSecondOut == Catch::Approx{0.0});
+    CHECK(sample->messages_per_second_in == Catch::Approx{1500.0});
+    CHECK(sample->megabytes_per_second_in == Catch::Approx{0.25});
+    CHECK(sample->messages_per_second_out == Catch::Approx{0.0});
+    CHECK(sample->megabytes_per_second_out == Catch::Approx{0.0});
 }
 
 TEST_CASE("FairMQ throughput parser rejects unrelated logs", "[telemetry][fairmq]")
