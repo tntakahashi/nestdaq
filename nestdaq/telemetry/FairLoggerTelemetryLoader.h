@@ -138,7 +138,7 @@ auto MakeSignalConfig(std::string_view protocol,
                       std::string_view headers,
                       uint32_t otlp_http_json) -> nestdaq_otel_signal_config;
 /** @brief Parse common true values such as `1`, `true`, `on`, and `yes`. */
-auto ParseBool(std::string_view value) -> bool;
+auto parseBool(std::string_view value) -> bool;
 /**
  * @brief Parse process arguments into telemetry options.
  *
@@ -151,7 +151,7 @@ auto ParseTelemetryOptions(int argc, char* argv[], // NOLINT(cppcoreguidelines-a
 /** @brief Convert a FairLogger severity name to its numeric value. */
 auto ParseFairLoggerSeverity(std::string_view severity) -> SeverityParseResult;
 /** @brief Parse an unsigned integer option with a fallback on invalid input. */
-auto ParseUInt32(std::string_view value, uint32_t fallback) -> uint32_t;
+auto parseUInt32(std::string_view value, uint32_t fallback) -> uint32_t;
 /**
  * @brief Read telemetry options from a Boost variables_map after option parsing.
  */

@@ -136,22 +136,22 @@ auto ApplyEnvironment(TelemetryOptions& options) -> void {
         options.severity = value;
     }
     if (const auto* value = Env("NESTDAQ_OTEL_LOG_REQUIRED")) {
-        options.required = ParseBool(value);
+        options.required = parseBool(value);
     }
     if (const auto* value = Env("NESTDAQ_SPDLOG_CONSOLE_PATTERN")) {
         options.spdlogConsolePattern = value;
     }
     if (const auto* value = Env("NESTDAQ_SPDLOG_NATIVE_CONSOLE")) {
-        options.spdlogNativeConsole = ParseBool(value);
+        options.spdlogNativeConsole = parseBool(value);
     }
     if (const auto* value = Env("NESTDAQ_SPDLOG_ASYNC")) {
-        options.spdlogAsync = ParseBool(value);
+        options.spdlogAsync = parseBool(value);
     }
     if (const auto* value = Env("NESTDAQ_SPDLOG_ASYNC_QUEUE_SIZE")) {
-        options.spdlogAsyncQueueSize = ParseUInt32(value, options.spdlogAsyncQueueSize);
+        options.spdlogAsyncQueueSize = parseUInt32(value, options.spdlogAsyncQueueSize);
     }
     if (const auto* value = Env("NESTDAQ_SPDLOG_ASYNC_THREAD_COUNT")) {
-        options.spdlogAsyncThreadCount = ParseUInt32(value, options.spdlogAsyncThreadCount);
+        options.spdlogAsyncThreadCount = parseUInt32(value, options.spdlogAsyncThreadCount);
     }
     if (const auto* value = Env("NESTDAQ_SPDLOG_ASYNC_OVERFLOW_POLICY")) {
         options.spdlogAsyncOverflowPolicy = value;
@@ -188,17 +188,17 @@ auto AssignOption(TelemetryOptions& options, std::string_view key, std::string_v
     } else if (key == "otel-log-severity") {
         options.severity = value;
     } else if (key == "otel-log-required") {
-        options.required = ParseBool(value);
+        options.required = parseBool(value);
     } else if (key == "otel-timeout-ms") {
-        options.timeoutMs = ParseUInt32(value, options.timeoutMs);
+        options.timeoutMs = parseUInt32(value, options.timeoutMs);
     } else if (key == "otel-metric-export-interval-ms") {
-        options.metricExportIntervalMs = ParseUInt32(value, options.metricExportIntervalMs);
+        options.metricExportIntervalMs = parseUInt32(value, options.metricExportIntervalMs);
     } else if (key == "otel-log-http-json") {
-        options.logOtlpHttpJson = ParseBool(value) ? 1U : 0U;
+        options.logOtlpHttpJson = parseBool(value) ? 1U : 0U;
     } else if (key == "otel-metric-http-json") {
-        options.metricOtlpHttpJson = ParseBool(value) ? 1U : 0U;
+        options.metricOtlpHttpJson = parseBool(value) ? 1U : 0U;
     } else if (key == "otel-trace-http-json") {
-        options.traceOtlpHttpJson = ParseBool(value) ? 1U : 0U;
+        options.traceOtlpHttpJson = parseBool(value) ? 1U : 0U;
     } else if (key == "otel-service-name") {
         options.serviceName = value;
     } else if (key == "otel-service-namespace") {
@@ -216,13 +216,13 @@ auto AssignOption(TelemetryOptions& options, std::string_view key, std::string_v
     } else if (key == "spdlog-console-pattern") {
         options.spdlogConsolePattern = value;
     } else if (key == "spdlog-native-console") {
-        options.spdlogNativeConsole = ParseBool(value);
+        options.spdlogNativeConsole = parseBool(value);
     } else if (key == "spdlog-async") {
-        options.spdlogAsync = ParseBool(value);
+        options.spdlogAsync = parseBool(value);
     } else if (key == "spdlog-async-queue-size") {
-        options.spdlogAsyncQueueSize = ParseUInt32(value, options.spdlogAsyncQueueSize);
+        options.spdlogAsyncQueueSize = parseUInt32(value, options.spdlogAsyncQueueSize);
     } else if (key == "spdlog-async-thread-count") {
-        options.spdlogAsyncThreadCount = ParseUInt32(value, options.spdlogAsyncThreadCount);
+        options.spdlogAsyncThreadCount = parseUInt32(value, options.spdlogAsyncThreadCount);
     } else if (key == "spdlog-async-overflow-policy") {
         options.spdlogAsyncOverflowPolicy = value;
     }
@@ -338,7 +338,7 @@ auto MakeSignalConfig(std::string_view protocol,
     return config;
 }
 
-auto ParseBool(std::string_view value) -> bool {
+auto parseBool(std::string_view value) -> bool {
     return value == "1" || value == "true" || value == "TRUE" ||
            value == "on" || value == "ON" || value == "yes" || value == "YES";
 }
@@ -425,7 +425,7 @@ auto ParseFairLoggerSeverity(std::string_view severity) -> SeverityParseResult {
     };
 }
 
-auto ParseUInt32(std::string_view value, uint32_t fallback) -> uint32_t {
+auto parseUInt32(std::string_view value, uint32_t fallback) -> uint32_t {
     try {
         return static_cast<uint32_t>(std::stoul(std::string{value}));
     } catch (...) {
