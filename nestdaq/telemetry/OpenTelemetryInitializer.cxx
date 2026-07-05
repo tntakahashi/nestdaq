@@ -35,25 +35,25 @@ using namespace otel_detail;
 auto OpenTelemetryInitializer::forceFlush(uint64_t timeout_ms) -> int
 {
     try {
-        std::shared_ptr<opentelemetry::sdk::logs::LoggerProvider> loggerProvider;
-        std::shared_ptr<opentelemetry::sdk::metrics::MeterProvider> meterProvider;
-        std::shared_ptr<opentelemetry::sdk::trace::TracerProvider> tracerProvider;
+        std::shared_ptr<opentelemetry::sdk::logs::LoggerProvider> logger_provider;
+        std::shared_ptr<opentelemetry::sdk::metrics::MeterProvider> meter_provider;
+        std::shared_ptr<opentelemetry::sdk::trace::TracerProvider> tracer_provider;
         {
             auto &state = runtimeState();
             std::scoped_lock lock{state.mutex};
-            loggerProvider = state.loggerProvider;
-            meterProvider = state.meterProvider;
-            tracerProvider = state.tracerProvider;
+            logger_provider = state.logger_provider;
+            meter_provider = state.meter_provider;
+            tracer_provider = state.tracer_provider;
         }
         auto ok = true;
-        if (loggerProvider) {
-            ok = loggerProvider->ForceFlush(timeoutFromMs(timeout_ms)) && ok;
+        if (logger_provider) {
+            ok = logger_provider->ForceFlush(timeoutFromMs(timeout_ms)) && ok;
         }
-        if (meterProvider) {
-            ok = meterProvider->ForceFlush(timeoutFromMs(timeout_ms)) && ok;
+        if (meter_provider) {
+            ok = meter_provider->ForceFlush(timeoutFromMs(timeout_ms)) && ok;
         }
-        if (tracerProvider) {
-            ok = tracerProvider->ForceFlush(timeoutFromMs(timeout_ms)) && ok;
+        if (tracer_provider) {
+            ok = tracer_provider->ForceFlush(timeoutFromMs(timeout_ms)) && ok;
         }
         if (!ok) {
             return setLastError("OpenTelemetry force flush failed");
@@ -96,27 +96,27 @@ auto OpenTelemetryInitializer::initialize(const nestdaq_otel_config *config) -> 
 
     try {
         auto resource = makeResource(localConfig);
-        std::shared_ptr<opentelemetry::sdk::logs::LoggerProvider> loggerProvider;
-        std::shared_ptr<opentelemetry::sdk::metrics::MeterProvider> meterProvider;
-        std::shared_ptr<opentelemetry::sdk::trace::TracerProvider> tracerProvider;
+        std::shared_ptr<opentelemetry::sdk::logs::LoggerProvider> logger_provider;
+        std::shared_ptr<opentelemetry::sdk::metrics::MeterProvider> meter_provider;
+        std::shared_ptr<opentelemetry::sdk::trace::TracerProvider> tracer_provider;
 
         if (!logProtocols.empty()) {
             auto processors = std::vector<std::unique_ptr<opentelemetry::sdk::logs::LogRecordProcessor>> {};
             for (const auto protocol : logProtocols) {
                 processors.emplace_back(createLogProcessor(createLogExporter(localConfig, protocol), protocol));
             }
-            loggerProvider = std::shared_ptr<opentelemetry::sdk::logs::LoggerProvider> {
+            logger_provider = std::shared_ptr<opentelemetry::sdk::logs::LoggerProvider> {
                 opentelemetry::sdk::logs::LoggerProviderFactory::Create(std::move(processors), resource)
             };
         }
 
         if (!metricProtocols.empty()) {
             auto views = opentelemetry::sdk::metrics::ViewRegistryFactory::Create();
-            meterProvider = std::shared_ptr<opentelemetry::sdk::metrics::MeterProvider> {
+            meter_provider = std::shared_ptr<opentelemetry::sdk::metrics::MeterProvider> {
                 opentelemetry::sdk::metrics::MeterProviderFactory::Create(std::move(views), resource)
             };
             for (const auto protocol : metricProtocols) {
-                meterProvider->AddMetricReader(createMetricReader(createMetricExporter(localConfig, protocol), localConfig));
+                meter_provider->AddMetricReader(createMetricReader(createMetricExporter(localConfig, protocol), localConfig));
             }
         }
 
@@ -125,7 +125,7 @@ auto OpenTelemetryInitializer::initialize(const nestdaq_otel_config *config) -> 
             for (const auto protocol : traceProtocols) {
                 processors.emplace_back(createSpanProcessor(createSpanExporter(localConfig, protocol), protocol));
             }
-            tracerProvider = std::shared_ptr<opentelemetry::sdk::trace::TracerProvider> {
+            tracer_provider = std::shared_ptr<opentelemetry::sdk::trace::TracerProvider> {
                 opentelemetry::sdk::trace::TracerProviderFactory::Create(std::move(processors), resource)
             };
         }
@@ -134,48 +134,48 @@ auto OpenTelemetryInitializer::initialize(const nestdaq_otel_config *config) -> 
         {
             auto &state = runtimeState();
             std::scoped_lock lock{state.mutex};
-            state.loggerProvider = loggerProvider;
-            state.meterProvider = meterProvider;
-            state.tracerProvider = tracerProvider;
+            state.logger_provider = logger_provider;
+            state.meter_provider = meter_provider;
+            state.tracer_provider = tracer_provider;
             state.meter = {};
-            state.frameworkMeter = {};
+            state.framework_meter = {};
             state.tracer = {};
-            if (meterProvider) {
-                state.meter = meterProvider->GetMeter("nestdaq", std::string{NESTDAQ_VERSION});
+            if (meter_provider) {
+                state.meter = meter_provider->GetMeter("nestdaq", std::string{NESTDAQ_VERSION});
             }
             if (!metricProtocols.empty()) {
                 storeFrameworkMetricConfig(state, localConfig, metricProtocols, resource);
                 configureFrameworkMetricsProvider(state);
             }
-            if (tracerProvider) {
-                state.tracer = tracerProvider->GetTracer("nestdaq", std::string{NESTDAQ_VERSION});
+            if (tracer_provider) {
+                state.tracer = tracer_provider->GetTracer("nestdaq", std::string{NESTDAQ_VERSION});
             }
-            state.lastError.clear();
+            state.last_error.clear();
         }
         if (!metricProtocols.empty()) {
             startProcessMetricsThread(localConfig.metric_export_interval_ms);
         }
 
-        if (loggerProvider) {
+        if (logger_provider) {
             opentelemetry::logs::Provider::SetLoggerProvider(
             opentelemetry::nostd::shared_ptr<opentelemetry::logs::LoggerProvider> {
-                std::shared_ptr<opentelemetry::logs::LoggerProvider>{loggerProvider}
+                std::shared_ptr<opentelemetry::logs::LoggerProvider>{logger_provider}
             });
             FairLoggerOpenTelemetrySink::setMinSeverity(localConfig.min_severity);
             FairLoggerOpenTelemetrySink::initialize();
             LOG(info) << nestDAQMetadataLogBody();
             LOG(info) << fairMQMetadataLogBody(localConfig);
         }
-        if (meterProvider) {
+        if (meter_provider) {
             opentelemetry::metrics::Provider::SetMeterProvider(
             opentelemetry::nostd::shared_ptr<opentelemetry::metrics::MeterProvider> {
-                std::shared_ptr<opentelemetry::metrics::MeterProvider>{meterProvider}
+                std::shared_ptr<opentelemetry::metrics::MeterProvider>{meter_provider}
             });
         }
-        if (tracerProvider) {
+        if (tracer_provider) {
             opentelemetry::trace::Provider::SetTracerProvider(
             opentelemetry::nostd::shared_ptr<opentelemetry::trace::TracerProvider> {
-                std::shared_ptr<opentelemetry::trace::TracerProvider>{tracerProvider}
+                std::shared_ptr<opentelemetry::trace::TracerProvider>{tracer_provider}
             });
         }
         return NESTDAQ_OTEL_OK;
@@ -190,7 +190,7 @@ auto OpenTelemetryInitializer::lastError() noexcept -> const char *
 {
     auto &state = runtimeState();
     std::scoped_lock lock{state.mutex};
-    return state.lastError.data();
+    return state.last_error.data();
 }
 
 auto OpenTelemetryInitializer::setNestdaqInstanceId(const char *instance_id) -> int
@@ -213,64 +213,64 @@ auto OpenTelemetryInitializer::setMinSeverity(int32_t severity) -> int
 auto OpenTelemetryInitializer::shutdown(uint64_t timeout_ms) -> int
 {
     try {
-        stopProcessMetricsThread();
+        stop_process_metrics_thread();
         auto &runtime_state = runtimeState();
-        std::scoped_lock reconfigureLock{runtime_state.frameworkReconfigureMutex};
-        std::shared_ptr<opentelemetry::sdk::logs::LoggerProvider> loggerProvider;
-        std::shared_ptr<opentelemetry::sdk::metrics::MeterProvider> meterProvider;
-        std::shared_ptr<opentelemetry::sdk::metrics::MeterProvider> frameworkMeterProvider;
-        std::shared_ptr<opentelemetry::sdk::trace::TracerProvider> tracerProvider;
+        std::scoped_lock reconfigureLock{runtime_state.framework_reconfigure_mutex};
+        std::shared_ptr<opentelemetry::sdk::logs::LoggerProvider> logger_provider;
+        std::shared_ptr<opentelemetry::sdk::metrics::MeterProvider> meter_provider;
+        std::shared_ptr<opentelemetry::sdk::metrics::MeterProvider> framework_meter_provider;
+        std::shared_ptr<opentelemetry::sdk::trace::TracerProvider> tracer_provider;
         {
             auto &state = runtime_state;
             std::scoped_lock lock{state.mutex};
-            loggerProvider = std::move(state.loggerProvider);
-            meterProvider = std::move(state.meterProvider);
-            frameworkMeterProvider = std::move(state.frameworkMeterProvider);
-            tracerProvider = std::move(state.tracerProvider);
-            state.loggerProvider.reset();
-            state.meterProvider.reset();
-            state.frameworkMeterProvider.reset();
-            state.tracerProvider.reset();
+            logger_provider = std::move(state.logger_provider);
+            meter_provider = std::move(state.meter_provider);
+            framework_meter_provider = std::move(state.framework_meter_provider);
+            tracer_provider = std::move(state.tracer_provider);
+            state.logger_provider.reset();
+            state.meter_provider.reset();
+            state.framework_meter_provider.reset();
+            state.tracer_provider.reset();
             state.meter = {};
-            state.frameworkMeter = {};
+            state.framework_meter = {};
             state.tracer = {};
-            state.doubleCounters.clear();
-            state.doubleHistograms.clear();
-            state.doubleGauges.clear();
-            state.doubleGaugeMeasurements.clear();
-            state.fairmqMessagesPerSecondGauge = {};
-            state.fairmqMegabytesPerSecondGauge = {};
-            state.processCpuTimeCounter = {};
-            state.processCpuUtilizationGauge = {};
-            state.processMemoryUsageCounter = {};
-            state.fairmqStateGauge = {};
-            state.pendingFairMQThroughputMeasurements.clear();
-            state.exportingFairMQThroughputMeasurements.clear();
-            state.pendingProcessUsageMeasurements.clear();
-            state.exportingProcessUsageMeasurements.clear();
-            state.pendingFairMQStateMeasurements.clear();
-            state.exportingFairMQStateMeasurements.clear();
-            state.processCpuUsageSample = std::nullopt;
-            state.pageSize = 0;
-            state.availableCpuCount = 0.0;
+            state.double_counters.clear();
+            state.double_histograms.clear();
+            state.double_gauges.clear();
+            state.double_gauge_measurements.clear();
+            state.fairmq_messages_per_second_gauge = {};
+            state.fairmq_megabytes_per_second_gauge = {};
+            state.process_cpu_time_counter = {};
+            state.process_cpu_utilization_gauge = {};
+            state.process_memory_usage_counter = {};
+            state.fairmq_state_gauge = {};
+            state.pending_fairmq_throughput_measurements.clear();
+            state.exporting_fairmq_throughput_measurements.clear();
+            state.pending_process_usage_measurements.clear();
+            state.exporting_process_usage_measurements.clear();
+            state.pending_fairmq_state_measurements.clear();
+            state.exporting_fairmq_state_measurements.clear();
+            state.process_cpu_usage_sample = std::nullopt;
+            state.page_size = 0;
+            state.available_cpu_count = 0.0;
             state.spans.clear();
         }
         FairLoggerOpenTelemetrySink::shutdown();
-        if (loggerProvider) {
-            loggerProvider->ForceFlush(timeoutFromMs(timeout_ms));
-            loggerProvider->Shutdown(timeoutFromMs(timeout_ms));
+        if (logger_provider) {
+            logger_provider->ForceFlush(timeoutFromMs(timeout_ms));
+            logger_provider->Shutdown(timeoutFromMs(timeout_ms));
         }
-        if (meterProvider) {
-            meterProvider->ForceFlush(timeoutFromMs(timeout_ms));
-            meterProvider->Shutdown(timeoutFromMs(timeout_ms));
+        if (meter_provider) {
+            meter_provider->ForceFlush(timeoutFromMs(timeout_ms));
+            meter_provider->Shutdown(timeoutFromMs(timeout_ms));
         }
-        if (frameworkMeterProvider) {
-            frameworkMeterProvider->ForceFlush(timeoutFromMs(timeout_ms));
-            frameworkMeterProvider->Shutdown(timeoutFromMs(timeout_ms));
+        if (framework_meter_provider) {
+            framework_meter_provider->ForceFlush(timeoutFromMs(timeout_ms));
+            framework_meter_provider->Shutdown(timeoutFromMs(timeout_ms));
         }
-        if (tracerProvider) {
-            tracerProvider->ForceFlush(timeoutFromMs(timeout_ms));
-            tracerProvider->Shutdown(timeoutFromMs(timeout_ms));
+        if (tracer_provider) {
+            tracer_provider->ForceFlush(timeoutFromMs(timeout_ms));
+            tracer_provider->Shutdown(timeoutFromMs(timeout_ms));
         }
         installNoopProviders();
         clearLastError();

@@ -112,34 +112,34 @@ struct MetricKey {
 struct GaugeAttribute {
     std::string key;
     nestdaq_otel_attribute_type type{NESTDAQ_OTEL_ATTRIBUTE_STRING};
-    std::string stringValue;
-    int64_t intValue{0};
-    uint64_t uintValue{0};
-    double doubleValue{0.0};
-    bool boolValue{false};
+    std::string string_value;
+    int64_t int_value{0};
+    uint64_t uint_value{0};
+    double double_value{0.0};
+    bool bool_value{false};
 
     auto operator<(const GaugeAttribute &other) const -> bool
     {
-        return std::tie(key, type, stringValue, intValue, uintValue, doubleValue, boolValue) <
+        return std::tie(key, type, string_value, int_value, uint_value, double_value, bool_value) <
         std::tie(other.key,
                  other.type,
-                 other.stringValue,
-                 other.intValue,
-                 other.uintValue,
-                 other.doubleValue,
-                 other.boolValue);
+                 other.string_value,
+                 other.int_value,
+                 other.uint_value,
+                 other.double_value,
+                 other.bool_value);
     }
 
     auto operator==(const GaugeAttribute &other) const -> bool
     {
-        return std::tie(key, type, stringValue, intValue, uintValue, doubleValue, boolValue) ==
+        return std::tie(key, type, string_value, int_value, uint_value, double_value, bool_value) ==
         std::tie(other.key,
                  other.type,
-                 other.stringValue,
-                 other.intValue,
-                 other.uintValue,
-                 other.doubleValue,
-                 other.boolValue);
+                 other.string_value,
+                 other.int_value,
+                 other.uint_value,
+                 other.double_value,
+                 other.bool_value);
     }
 };
 
@@ -169,40 +169,40 @@ struct GaugeMeasurement {
  */
 struct GaugeInstrument {
     opentelemetry::nostd::shared_ptr<opentelemetry::metrics::ObservableInstrument> instrument;
-    MetricKey callbackKey;
+    MetricKey callback_key;
 };
 
 /**
  * @brief One pending FairMQ throughput sample for framework metrics export.
  */
 struct FairMQThroughputMeasurement {
-    std::string channelName;
-    std::string subChannelName;
+    std::string channel_name;
+    std::string sub_channel_name;
     std::string direction;
-    std::optional<uint64_t> subChannelIndex;
-    double messagesPerSecond = 0.0;
-    double megabytesPerSecond = 0.0;
+    std::optional<uint64_t> sub_channel_index;
+    double messages_per_second = 0.0;
+    double megabytes_per_second = 0.0;
 };
 
 /** @brief One pending process metrics sample for framework metrics export. */
 struct ProcessUsageMeasurement {
-    double cpuUserSeconds = 0.0;
-    double cpuSystemSeconds = 0.0;
-    std::optional<double> cpuUtilization;
-    double memoryUsageBytes = 0.0;
+    double cpu_user_seconds = 0.0;
+    double cpu_system_seconds = 0.0;
+    std::optional<double> cpu_utilization;
+    double memory_usage_bytes = 0.0;
 };
 
 /** @brief Previous process CPU sample used to compute usage deltas. */
 struct ProcessCpuUsageSample {
     std::chrono::steady_clock::time_point timestamp;
-    double userSeconds = 0.0;
-    double systemSeconds = 0.0;
+    double user_seconds = 0.0;
+    double system_seconds = 0.0;
 };
 
 /** @brief One pending FairMQ state transition for framework metrics export. */
 struct FairMQStateMeasurement {
-    int64_t stateId = 0;
-    std::string stateName;
+    int64_t state_id = 0;
+    std::string state_name;
 };
 
 /**
@@ -210,10 +210,10 @@ struct FairMQStateMeasurement {
  */
 struct SignalConfigStorage {
     std::string protocol;
-    std::string endpointHttp;
-    std::string endpointGrpc;
+    std::string endpoint_http;
+    std::string endpoint_grpc;
     std::string headers;
-    uint32_t otlpHttpJson = 1U;
+    uint32_t otlp_http_json = 1U;
 };
 
 /**
@@ -221,20 +221,20 @@ struct SignalConfigStorage {
  */
 struct FrameworkMetricConfigStorage {
     SignalConfigStorage metrics;
-    uint32_t timeoutMs = 5000;
-    uint32_t metricExportIntervalMs = kDefaultMetricExportIntervalMs;
+    uint32_t timeout_ms = 5000;
+    uint32_t metric_export_interval_ms = kDefaultMetricExportIntervalMs;
 
     auto toConfig() const -> nestdaq_otel_config
     {
         auto config = nestdaq_otel_config{};
         config.size = sizeof(config);
         config.metrics.protocol = metrics.protocol.data();
-        config.metrics.endpoint_http = metrics.endpointHttp.data();
-        config.metrics.endpoint_grpc = metrics.endpointGrpc.data();
+        config.metrics.endpoint_http = metrics.endpoint_http.data();
+        config.metrics.endpoint_grpc = metrics.endpoint_grpc.data();
         config.metrics.headers = metrics.headers.data();
-        config.metrics.otlp_http_json = metrics.otlpHttpJson;
-        config.timeout_ms = timeoutMs;
-        config.metric_export_interval_ms = metricExportIntervalMs;
+        config.metrics.otlp_http_json = metrics.otlp_http_json;
+        config.timeout_ms = timeout_ms;
+        config.metric_export_interval_ms = metric_export_interval_ms;
         return config;
     }
 };
@@ -249,42 +249,42 @@ struct FrameworkMetricConfigStorage {
  */
 struct RuntimeState {
     std::recursive_mutex mutex;
-    std::mutex frameworkReconfigureMutex;
-    std::shared_ptr<opentelemetry::sdk::logs::LoggerProvider> loggerProvider;
-    std::shared_ptr<opentelemetry::sdk::metrics::MeterProvider> meterProvider;
-    std::shared_ptr<opentelemetry::sdk::metrics::MeterProvider> frameworkMeterProvider;
-    std::shared_ptr<opentelemetry::sdk::trace::TracerProvider> tracerProvider;
+    std::mutex framework_reconfigure_mutex;
+    std::shared_ptr<opentelemetry::sdk::logs::LoggerProvider> logger_provider;
+    std::shared_ptr<opentelemetry::sdk::metrics::MeterProvider> meter_provider;
+    std::shared_ptr<opentelemetry::sdk::metrics::MeterProvider> framework_meter_provider;
+    std::shared_ptr<opentelemetry::sdk::trace::TracerProvider> tracer_provider;
     opentelemetry::nostd::shared_ptr<opentelemetry::metrics::Meter> meter;
-    opentelemetry::nostd::shared_ptr<opentelemetry::metrics::Meter> frameworkMeter;
+    opentelemetry::nostd::shared_ptr<opentelemetry::metrics::Meter> framework_meter;
     opentelemetry::nostd::shared_ptr<opentelemetry::trace::Tracer> tracer;
-    std::map<MetricKey, opentelemetry::nostd::unique_ptr<opentelemetry::metrics::Counter<double>>> doubleCounters;
-    std::map<MetricKey, opentelemetry::nostd::unique_ptr<opentelemetry::metrics::Histogram<double>>> doubleHistograms;
-    std::map<MetricKey, GaugeInstrument> doubleGauges;
-    std::map<GaugeSampleKey, double> doubleGaugeMeasurements;
-    opentelemetry::nostd::shared_ptr<opentelemetry::metrics::ObservableInstrument> fairmqMessagesPerSecondGauge;
-    opentelemetry::nostd::shared_ptr<opentelemetry::metrics::ObservableInstrument> fairmqMegabytesPerSecondGauge;
-    opentelemetry::nostd::shared_ptr<opentelemetry::metrics::ObservableInstrument> processCpuTimeCounter;
-    opentelemetry::nostd::shared_ptr<opentelemetry::metrics::ObservableInstrument> processCpuUtilizationGauge;
-    opentelemetry::nostd::shared_ptr<opentelemetry::metrics::ObservableInstrument> processMemoryUsageCounter;
-    opentelemetry::nostd::shared_ptr<opentelemetry::metrics::ObservableInstrument> fairmqStateGauge;
-    std::vector<FairMQThroughputMeasurement> pendingFairMQThroughputMeasurements;
-    std::vector<FairMQThroughputMeasurement> exportingFairMQThroughputMeasurements;
-    std::vector<ProcessUsageMeasurement> pendingProcessUsageMeasurements;
-    std::vector<ProcessUsageMeasurement> exportingProcessUsageMeasurements;
-    std::vector<FairMQStateMeasurement> pendingFairMQStateMeasurements;
-    std::vector<FairMQStateMeasurement> exportingFairMQStateMeasurements;
-    std::optional<ProcessCpuUsageSample> processCpuUsageSample;
-    long pageSize = 0;
-    double availableCpuCount = 0.0;
-    std::thread processMetricsThread;
-    std::atomic<bool> stopProcessMetricsThread{false};
-    std::chrono::milliseconds processMetricsInterval{kDefaultMetricExportIntervalMs};
-    std::vector<Protocol> frameworkMetricProtocols;
-    FrameworkMetricConfigStorage frameworkMetricConfig;
-    std::optional<opentelemetry::sdk::resource::Resource> frameworkMetricResource;
+    std::map<MetricKey, opentelemetry::nostd::unique_ptr<opentelemetry::metrics::Counter<double>>> double_counters;
+    std::map<MetricKey, opentelemetry::nostd::unique_ptr<opentelemetry::metrics::Histogram<double>>> double_histograms;
+    std::map<MetricKey, GaugeInstrument> double_gauges;
+    std::map<GaugeSampleKey, double> double_gauge_measurements;
+    opentelemetry::nostd::shared_ptr<opentelemetry::metrics::ObservableInstrument> fairmq_messages_per_second_gauge;
+    opentelemetry::nostd::shared_ptr<opentelemetry::metrics::ObservableInstrument> fairmq_megabytes_per_second_gauge;
+    opentelemetry::nostd::shared_ptr<opentelemetry::metrics::ObservableInstrument> process_cpu_time_counter;
+    opentelemetry::nostd::shared_ptr<opentelemetry::metrics::ObservableInstrument> process_cpu_utilization_gauge;
+    opentelemetry::nostd::shared_ptr<opentelemetry::metrics::ObservableInstrument> process_memory_usage_counter;
+    opentelemetry::nostd::shared_ptr<opentelemetry::metrics::ObservableInstrument> fairmq_state_gauge;
+    std::vector<FairMQThroughputMeasurement> pending_fairmq_throughput_measurements;
+    std::vector<FairMQThroughputMeasurement> exporting_fairmq_throughput_measurements;
+    std::vector<ProcessUsageMeasurement> pending_process_usage_measurements;
+    std::vector<ProcessUsageMeasurement> exporting_process_usage_measurements;
+    std::vector<FairMQStateMeasurement> pending_fairmq_state_measurements;
+    std::vector<FairMQStateMeasurement> exporting_fairmq_state_measurements;
+    std::optional<ProcessCpuUsageSample> process_cpu_usage_sample;
+    long page_size = 0;
+    double available_cpu_count = 0.0;
+    std::thread process_metrics_thread;
+    std::atomic<bool> stop_process_metrics_thread{false};
+    std::chrono::milliseconds process_metrics_interval{kDefaultMetricExportIntervalMs};
+    std::vector<Protocol> framework_metric_protocols;
+    FrameworkMetricConfigStorage framework_metric_config;
+    std::optional<opentelemetry::sdk::resource::Resource> framework_metric_resource;
     std::map<uint64_t, opentelemetry::nostd::shared_ptr<opentelemetry::trace::Span>> spans;
-    std::atomic<uint64_t> nextSpanHandle{1};
-    std::string lastError;
+    std::atomic<uint64_t> next_span_handle{1};
+    std::string last_error;
 };
 
 /** @brief Add a non-empty string resource attribute. */
@@ -329,7 +329,7 @@ auto configureFrameworkMetricsProvider(RuntimeState &state) -> void;
 /** @brief Return the plugin defaults used when no C ABI config is supplied. */
 auto defaultConfig() -> nestdaq_otel_config;
 /** @brief Export and clear pending framework metric samples only when dirty. */
-auto flushFrameworkMetricsIfDirty(uint64_t timeoutMs) -> int;
+auto flushFrameworkMetricsIfDirty(uint64_t timeout_ms) -> int;
 /** @brief Build the structured FairMQ metadata log body emitted at initialization. */
 auto fairMQMetadataLogBody(const nestdaq_otel_config &config) -> std::string;
 /** @brief Install OpenTelemetry no-op providers after shutdown. */
@@ -362,9 +362,9 @@ auto storeFrameworkMetricConfig(RuntimeState &state,
                                 const std::vector<Protocol> &protocols,
                                 opentelemetry::sdk::resource::Resource resource) -> void;
 /** @brief Stop and join the background CPU/RSS sampler if it is running. */
-auto stopProcessMetricsThread() -> void;
+auto stop_process_metrics_thread() -> void;
 /** @brief Convert a millisecond timeout to the SDK duration type. */
-auto timeoutFromMs(uint64_t timeoutMs) noexcept -> std::chrono::microseconds;
+auto timeoutFromMs(uint64_t timeout_ms) noexcept -> std::chrono::microseconds;
 /** @brief Validate a C ABI attribute before converting it to SDK storage. */
 auto validateAttribute(const nestdaq_otel_attribute *attribute) noexcept -> bool;
 /** @brief Validate that a numeric severity is in the FairLogger range. */

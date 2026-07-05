@@ -156,19 +156,19 @@ auto buildGaugeAttributes(const nestdaq_otel_attribute *attributes, uint64_t att
         value.type = attribute.type;
         switch (attribute.type) {
         case NESTDAQ_OTEL_ATTRIBUTE_STRING:
-            value.stringValue = isEmpty(attribute.string_value) ? "" : attribute.string_value;
+            value.string_value = isEmpty(attribute.string_value) ? "" : attribute.string_value;
             break;
         case NESTDAQ_OTEL_ATTRIBUTE_INT64:
-            value.intValue = attribute.int_value;
+            value.int_value = attribute.int_value;
             break;
         case NESTDAQ_OTEL_ATTRIBUTE_UINT64:
-            value.uintValue = attribute.uint_value;
+            value.uint_value = attribute.uint_value;
             break;
         case NESTDAQ_OTEL_ATTRIBUTE_DOUBLE:
-            value.doubleValue = attribute.double_value;
+            value.double_value = attribute.double_value;
             break;
         case NESTDAQ_OTEL_ATTRIBUTE_BOOL:
-            value.boolValue = attribute.bool_value != 0;
+            value.bool_value = attribute.bool_value != 0;
             break;
         }
         values.emplace_back(std::move(value));
@@ -181,74 +181,74 @@ auto clearLastError() -> void
 {
     auto &state = runtimeState();
     std::scoped_lock lock{state.mutex};
-    state.lastError.clear();
+    state.last_error.clear();
 }
 
-auto flushFrameworkMetricsIfDirty(uint64_t timeoutMs) -> int
+auto flushFrameworkMetricsIfDirty(uint64_t timeout_ms) -> int
 {
-    std::shared_ptr<opentelemetry::sdk::metrics::MeterProvider> frameworkMeterProvider;
+    std::shared_ptr<opentelemetry::sdk::metrics::MeterProvider> framework_meter_provider;
     auto throughputCount = std::size_t{0};
     auto processCount = std::size_t{0};
     auto stateCount = std::size_t{0};
     {
         auto &state = runtimeState();
         std::scoped_lock lock{state.mutex};
-        if (state.pendingFairMQThroughputMeasurements.empty() &&
-                state.pendingProcessUsageMeasurements.empty() &&
-                state.pendingFairMQStateMeasurements.empty()) {
-            state.lastError.clear();
+        if (state.pending_fairmq_throughput_measurements.empty() &&
+                state.pending_process_usage_measurements.empty() &&
+                state.pending_fairmq_state_measurements.empty()) {
+            state.last_error.clear();
             return NESTDAQ_OTEL_OK;
         }
-        frameworkMeterProvider = state.frameworkMeterProvider;
-        if (!frameworkMeterProvider) {
-            state.lastError.clear();
+        framework_meter_provider = state.framework_meter_provider;
+        if (!framework_meter_provider) {
+            state.last_error.clear();
             return NESTDAQ_OTEL_OK;
         }
-        state.exportingFairMQThroughputMeasurements = state.pendingFairMQThroughputMeasurements;
-        state.exportingProcessUsageMeasurements = state.pendingProcessUsageMeasurements;
-        state.exportingFairMQStateMeasurements = state.pendingFairMQStateMeasurements;
-        throughputCount = state.exportingFairMQThroughputMeasurements.size();
-        processCount = state.exportingProcessUsageMeasurements.size();
-        stateCount = state.exportingFairMQStateMeasurements.size();
+        state.exporting_fairmq_throughput_measurements = state.pending_fairmq_throughput_measurements;
+        state.exporting_process_usage_measurements = state.pending_process_usage_measurements;
+        state.exporting_fairmq_state_measurements = state.pending_fairmq_state_measurements;
+        throughputCount = state.exporting_fairmq_throughput_measurements.size();
+        processCount = state.exporting_process_usage_measurements.size();
+        stateCount = state.exporting_fairmq_state_measurements.size();
     }
 
     // Export a snapshot of pending framework samples. Successful flushes erase
     // only the exported prefix and recreate observable instruments so already
     // exported one-shot samples cannot be observed again.
-    const auto ok = frameworkMeterProvider->ForceFlush(timeoutFromMs(timeoutMs));
+    const auto ok = framework_meter_provider->ForceFlush(timeoutFromMs(timeout_ms));
     auto shouldRecreateProvider = false;
     auto &state = runtimeState();
     if (ok) {
-        std::scoped_lock reconfigureLock{state.frameworkReconfigureMutex};
+        std::scoped_lock reconfigureLock{state.framework_reconfigure_mutex};
         {
             std::scoped_lock lock{state.mutex};
-            state.exportingFairMQThroughputMeasurements.clear();
-            state.exportingProcessUsageMeasurements.clear();
-            state.exportingFairMQStateMeasurements.clear();
-            state.pendingFairMQThroughputMeasurements.erase(
-                state.pendingFairMQThroughputMeasurements.begin(),
-                state.pendingFairMQThroughputMeasurements.begin() +
-                std::min(throughputCount, state.pendingFairMQThroughputMeasurements.size()));
-            state.pendingProcessUsageMeasurements.erase(
-                state.pendingProcessUsageMeasurements.begin(),
-                state.pendingProcessUsageMeasurements.begin() +
-                std::min(processCount, state.pendingProcessUsageMeasurements.size()));
-            state.pendingFairMQStateMeasurements.erase(
-                state.pendingFairMQStateMeasurements.begin(),
-                state.pendingFairMQStateMeasurements.begin() +
-                std::min(stateCount, state.pendingFairMQStateMeasurements.size()));
-            if (state.frameworkMeterProvider == frameworkMeterProvider) {
-                state.frameworkMeterProvider.reset();
-                state.frameworkMeter = {};
-                state.fairmqMessagesPerSecondGauge = {};
-                state.fairmqMegabytesPerSecondGauge = {};
-                state.processCpuTimeCounter = {};
-                state.processCpuUtilizationGauge = {};
-                state.processMemoryUsageCounter = {};
-                state.fairmqStateGauge = {};
+            state.exporting_fairmq_throughput_measurements.clear();
+            state.exporting_process_usage_measurements.clear();
+            state.exporting_fairmq_state_measurements.clear();
+            state.pending_fairmq_throughput_measurements.erase(
+                state.pending_fairmq_throughput_measurements.begin(),
+                state.pending_fairmq_throughput_measurements.begin() +
+                std::min(throughputCount, state.pending_fairmq_throughput_measurements.size()));
+            state.pending_process_usage_measurements.erase(
+                state.pending_process_usage_measurements.begin(),
+                state.pending_process_usage_measurements.begin() +
+                std::min(processCount, state.pending_process_usage_measurements.size()));
+            state.pending_fairmq_state_measurements.erase(
+                state.pending_fairmq_state_measurements.begin(),
+                state.pending_fairmq_state_measurements.begin() +
+                std::min(stateCount, state.pending_fairmq_state_measurements.size()));
+            if (state.framework_meter_provider == framework_meter_provider) {
+                state.framework_meter_provider.reset();
+                state.framework_meter = {};
+                state.fairmq_messages_per_second_gauge = {};
+                state.fairmq_megabytes_per_second_gauge = {};
+                state.process_cpu_time_counter = {};
+                state.process_cpu_utilization_gauge = {};
+                state.process_memory_usage_counter = {};
+                state.fairmq_state_gauge = {};
                 shouldRecreateProvider = true;
             }
-            state.lastError.clear();
+            state.last_error.clear();
         }
         if (shouldRecreateProvider) {
             configureFrameworkMetricsProvider(state);
@@ -257,9 +257,9 @@ auto flushFrameworkMetricsIfDirty(uint64_t timeoutMs) -> int
     }
     {
         std::scoped_lock lock{state.mutex};
-        state.exportingFairMQThroughputMeasurements.clear();
-        state.exportingProcessUsageMeasurements.clear();
-        state.exportingFairMQStateMeasurements.clear();
+        state.exporting_fairmq_throughput_measurements.clear();
+        state.exporting_process_usage_measurements.clear();
+        state.exporting_fairmq_state_measurements.clear();
     }
     return setLastError("OpenTelemetry framework metrics force flush failed");
 }
@@ -446,7 +446,7 @@ auto setLastError(std::string message) -> int
 {
     auto &state = runtimeState();
     std::scoped_lock lock{state.mutex};
-    state.lastError = std::move(message);
+    state.last_error = std::move(message);
     return NESTDAQ_OTEL_ERROR;
 }
 
@@ -460,17 +460,17 @@ auto storeFrameworkMetricConfig(RuntimeState &state,
                                 const std::vector<Protocol> &protocols,
                                 opentelemetry::sdk::resource::Resource resource) -> void
 {
-    state.frameworkMetricProtocols.assign(protocols.begin(), protocols.end());
-    state.frameworkMetricConfig.metrics.protocol = isEmpty(config.metrics.protocol) ? "" : config.metrics.protocol;
-    state.frameworkMetricConfig.metrics.endpointHttp =
+    state.framework_metric_protocols.assign(protocols.begin(), protocols.end());
+    state.framework_metric_config.metrics.protocol = isEmpty(config.metrics.protocol) ? "" : config.metrics.protocol;
+    state.framework_metric_config.metrics.endpoint_http =
         isEmpty(config.metrics.endpoint_http) ? "" : config.metrics.endpoint_http;
-    state.frameworkMetricConfig.metrics.endpointGrpc =
+    state.framework_metric_config.metrics.endpoint_grpc =
         isEmpty(config.metrics.endpoint_grpc) ? "" : config.metrics.endpoint_grpc;
-    state.frameworkMetricConfig.metrics.headers = isEmpty(config.metrics.headers) ? "" : config.metrics.headers;
-    state.frameworkMetricConfig.metrics.otlpHttpJson = config.metrics.otlp_http_json;
-    state.frameworkMetricConfig.timeoutMs = config.timeout_ms;
-    state.frameworkMetricConfig.metricExportIntervalMs = config.metric_export_interval_ms;
-    state.frameworkMetricResource = std::move(resource);
+    state.framework_metric_config.metrics.headers = isEmpty(config.metrics.headers) ? "" : config.metrics.headers;
+    state.framework_metric_config.metrics.otlp_http_json = config.metrics.otlp_http_json;
+    state.framework_metric_config.timeout_ms = config.timeout_ms;
+    state.framework_metric_config.metric_export_interval_ms = config.metric_export_interval_ms;
+    state.framework_metric_resource = std::move(resource);
 }
 
 auto runtimeState() -> RuntimeState &
@@ -479,12 +479,12 @@ auto runtimeState() -> RuntimeState &
     return gRuntimeState;
 }
 
-auto timeoutFromMs(uint64_t timeoutMs) noexcept -> std::chrono::microseconds
+auto timeoutFromMs(uint64_t timeout_ms) noexcept -> std::chrono::microseconds
 {
-    if (timeoutMs == 0) {
+    if (timeout_ms == 0) {
         return (std::chrono::microseconds::max)();
     }
-    return std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::milliseconds{timeoutMs});
+    return std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::milliseconds{timeout_ms});
 }
 
 auto validateAttribute(const nestdaq_otel_attribute *attribute) noexcept -> bool

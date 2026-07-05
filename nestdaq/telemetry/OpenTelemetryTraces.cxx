@@ -82,7 +82,7 @@ auto OpenTelemetryInitializer::spanEnd(uint64_t span_handle) -> int
         }
         span = it->second;
         state.spans.erase(it);
-        state.lastError.clear();
+        state.last_error.clear();
     }
     span->End();
     return NESTDAQ_OTEL_OK;
@@ -102,7 +102,7 @@ auto OpenTelemetryInitializer::spanSetAttribute(uint64_t span_handle, const nest
             return otel_detail::setLastError("OpenTelemetry span handle is not active");
         }
         span = it->second;
-        state.lastError.clear();
+        state.last_error.clear();
     }
     auto storage = otel_detail::AttributeStorage{};
     storage.keys.reserve(1);
@@ -126,13 +126,13 @@ auto OpenTelemetryInitializer::spanStart(const char *name,
     auto &state = otel_detail::runtimeState();
     std::scoped_lock lock{state.mutex};
     if (!state.tracer) {
-        state.lastError.clear();
+        state.last_error.clear();
         return 0;
     }
     auto span = state.tracer->StartSpan(name, attrs.values);
-    const auto handle = state.nextSpanHandle.fetch_add(1, std::memory_order_relaxed);
+    const auto handle = state.next_span_handle.fetch_add(1, std::memory_order_relaxed);
     state.spans.emplace(handle, std::move(span));
-    state.lastError.clear();
+    state.last_error.clear();
     return handle;
 }
 
