@@ -70,7 +70,7 @@ auto createSpanProcessor(std::unique_ptr<opentelemetry::sdk::trace::SpanExporter
 
 namespace nestdaq {
 
-auto OpenTelemetryInitializer::SpanEnd(uint64_t span_handle) -> int
+auto OpenTelemetryInitializer::spanEnd(uint64_t span_handle) -> int
 {
     opentelemetry::nostd::shared_ptr<opentelemetry::trace::Span> span;
     {
@@ -88,7 +88,7 @@ auto OpenTelemetryInitializer::SpanEnd(uint64_t span_handle) -> int
     return NESTDAQ_OTEL_OK;
 }
 
-auto OpenTelemetryInitializer::SpanSetAttribute(uint64_t span_handle, const nestdaq_otel_attribute *attribute) -> int
+auto OpenTelemetryInitializer::spanSetAttribute(uint64_t span_handle, const nestdaq_otel_attribute *attribute) -> int
 {
     if (!otel_detail::validateAttribute(attribute)) {
         return otel_detail::setLastError("OpenTelemetry span attribute is invalid");
@@ -114,7 +114,7 @@ auto OpenTelemetryInitializer::SpanSetAttribute(uint64_t span_handle, const nest
     return NESTDAQ_OTEL_OK;
 }
 
-auto OpenTelemetryInitializer::SpanStart(const char *name,
+auto OpenTelemetryInitializer::spanStart(const char *name,
         const nestdaq_otel_attribute *attributes,
         uint64_t attribute_count) -> uint64_t
 {

@@ -17,6 +17,6 @@ namespace nestdaq::telemetry {
  * `spdlog::async_logger` through the same base `spdlog::logger` pointer type.
  * Native console and OTel sinks can be attached to the same logger.
  */
-auto CreateSpdlogLogger(std::string_view name) -> std::shared_ptr<spdlog::logger>;
+auto createSpdlogLogger(std::string_view name) -> std::shared_ptr<spdlog::logger>;
 
 } // namespace nestdaq::telemetry

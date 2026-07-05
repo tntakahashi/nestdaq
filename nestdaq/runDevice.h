@@ -90,10 +90,10 @@ int main(int argc, char* argv[]) {
     try {
         auto arguments = nestdaq::run_device_detail::normalizeArguments(argc, argv);
         const auto telemetry_options =
-            nestdaq::telemetry::ParseTelemetryOptions(arguments.argc(), arguments.argv.data(), "nestdaq");
-        nestdaq::telemetry::SetSpdlogConsolePattern(telemetry_options.spdlogConsolePattern);
-        nestdaq::telemetry::SetSpdlogNativeConsoleEnabled(telemetry_options.spdlogNativeConsole);
-        nestdaq::telemetry::SetSpdlogAsyncOptions({
+            nestdaq::telemetry::parseTelemetryOptions(arguments.argc(), arguments.argv.data(), "nestdaq");
+        nestdaq::telemetry::setSpdlogConsolePattern(telemetry_options.spdlogConsolePattern);
+        nestdaq::telemetry::setSpdlogNativeConsoleEnabled(telemetry_options.spdlogNativeConsole);
+        nestdaq::telemetry::setSpdlogAsyncOptions({
             .enabled = telemetry_options.spdlogAsync,
             .queueSize = telemetry_options.spdlogAsyncQueueSize,
             .threadCount = telemetry_options.spdlogAsyncThreadCount,
@@ -105,10 +105,10 @@ int main(int argc, char* argv[]) {
         auto telemetry_resolved = false;
 
         if (!telemetry_options.library.empty()) {
-            telemetry_loaded = telemetry->Load(telemetry_options.library);
+            telemetry_loaded = telemetry->load(telemetry_options.library);
             if (!telemetry_loaded) {
                 LOG(error) << "Failed to load telemetry library '" << telemetry_options.library
-                           << "': " << telemetry->GetLastError();
+                           << "': " << telemetry->getLastError();
                 if (telemetry_options.required) {
                     return EXIT_FAILURE;
                 }
@@ -118,16 +118,16 @@ int main(int argc, char* argv[]) {
                 unresolved_options.traceProtocol.clear();
                 unresolved_options.nestdaqInstanceId.clear();
                 unresolved_options.nestdaqInstanceIdStatus = "unresolved";
-                const auto config = nestdaq::telemetry::MakeConfig(unresolved_options);
-                if (!telemetry->InitializeWith(config)) {
+                const auto config = nestdaq::telemetry::makeConfig(unresolved_options);
+                if (!telemetry->initializeWith(config)) {
                     LOG(error) << "Failed to initialize telemetry library '" << telemetry_options.library
-                               << "': " << telemetry->GetLastError();
+                               << "': " << telemetry->getLastError();
                     if (telemetry_options.required) {
                         return EXIT_FAILURE;
                     }
                 } else {
                     telemetry_initialized = true;
-                    nestdaq::telemetry::WarnUnknownSeverityFallback(telemetry_options.severity);
+                    nestdaq::telemetry::warnUnknownSeverityFallback(telemetry_options.severity);
                 }
             }
         }
@@ -140,11 +140,11 @@ int main(int argc, char* argv[]) {
             r.fConfig.AddToCmdLineOptions(customOptions);
 
             boost::program_options::options_description otelOptions("OpenTelemetry options");
-            nestdaq::telemetry::AddTelemetryOptions(otelOptions, "nestdaq");
+            nestdaq::telemetry::addTelemetryOptions(otelOptions, "nestdaq");
             r.fConfig.AddToCmdLineOptions(otelOptions);
 
             if (telemetry_initialized) {
-                nestdaq::telemetry::SubscribeTelemetryOptionChanges(r.fConfig, *telemetry);
+                nestdaq::telemetry::subscribeTelemetryOptionChanges(r.fConfig, *telemetry);
             }
         });
 
@@ -152,30 +152,30 @@ int main(int argc, char* argv[]) {
                                            &telemetry_resolved,
                                            telemetry_initialized,
         telemetry = telemetry.get()](DeviceRunner& r) {
-            nestdaq::telemetry::SetGeneratedUuidProperty(r.fConfig, telemetry_options);
+            nestdaq::telemetry::setGeneratedUuidProperty(r.fConfig, telemetry_options);
             r.fDevice = getDevice(r.fConfig);
             if (telemetry_initialized && r.fConfig.Count("id") != 0) {
                 auto resolvedOptions = telemetry_options;
                 resolvedOptions.nestdaqInstanceId = r.fConfig.GetProperty<std::string>("id");
                 resolvedOptions.nestdaqInstanceIdStatus = "resolved";
-                const auto config = nestdaq::telemetry::MakeConfig(resolvedOptions);
-                if (!telemetry->InitializeWith(config)) {
+                const auto config = nestdaq::telemetry::makeConfig(resolvedOptions);
+                if (!telemetry->initializeWith(config)) {
                     LOG(error) << "Failed to reinitialize telemetry with NestDAQ instance id '"
-                               << resolvedOptions.nestdaqInstanceId << "': " << telemetry->GetLastError();
+                               << resolvedOptions.nestdaqInstanceId << "': " << telemetry->getLastError();
                     if (telemetry_options.required) {
                         throw std::runtime_error{"failed to reinitialize required telemetry"};
                     }
                 } else {
                     telemetry_resolved = true;
-                    nestdaq::telemetry::SetActiveTelemetryLibrary(telemetry);
-                    telemetry->SetNestdaqInstanceId(resolvedOptions.nestdaqInstanceId);
+                    nestdaq::telemetry::setActiveTelemetryLibrary(telemetry);
+                    telemetry->setNestdaqInstanceId(resolvedOptions.nestdaqInstanceId);
                 }
             }
             if (telemetry_initialized && telemetry_resolved && r.fDevice) {
                 r.fDevice->SubscribeToStateChange(
                     std::string{nestdaq::run_device_detail::kTelemetryStateSubscriber},
                 [telemetry](const fair::mq::State newState) {
-                    telemetry->RecordFrameworkFairMQState(
+                    telemetry->recordFrameworkFairMQState(
                         static_cast<int64_t>(newState),
                         fair::mq::GetStateName(newState));
                 });
@@ -188,11 +188,11 @@ int main(int argc, char* argv[]) {
                 std::string{nestdaq::run_device_detail::kTelemetryStateSubscriber});
         }
         if (telemetry_initialized) {
-            nestdaq::telemetry::UnsubscribeTelemetryOptionChanges(runner.fConfig);
+            nestdaq::telemetry::unsubscribeTelemetryOptionChanges(runner.fConfig);
         }
         if (telemetry_loaded) {
-            nestdaq::telemetry::SetActiveTelemetryLibrary(nullptr);
-            telemetry->ShutdownTelemetry(telemetry_options.timeoutMs);
+            nestdaq::telemetry::setActiveTelemetryLibrary(nullptr);
+            telemetry->shutdownTelemetry(telemetry_options.timeoutMs);
         }
         return rc;
     } catch (std::exception& e) {

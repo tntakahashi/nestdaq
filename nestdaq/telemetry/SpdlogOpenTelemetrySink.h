@@ -17,7 +17,7 @@ namespace nestdaq::telemetry {
  * Callers explicitly attach the returned sink to each spdlog logger they want
  * to export. NestDAQ does not modify spdlog's default logger or registry.
  */
-auto CreateSpdlogOpenTelemetrySink() -> std::shared_ptr<spdlog::sinks::sink>;
+auto createSpdlogOpenTelemetrySink() -> std::shared_ptr<spdlog::sinks::sink>;
 
 } // namespace nestdaq::telemetry
 

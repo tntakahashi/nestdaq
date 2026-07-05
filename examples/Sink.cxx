@@ -59,7 +59,7 @@ void printConfig(const fair::mq::ProgOptions* config, std::string_view name, std
 
 bool Sink::handleData(fair::mq::MessagePtr &msg, int index)
 {
-    auto span = nestdaq::telemetry::GetTelemetry().StartSpan("sink.receive",
+    auto span = nestdaq::telemetry::getTelemetry().startSpan("sink.receive",
     {   {"fairmq.channel.name", fInputChannelName},
         {"fairmq.channel.index", index},
         {"message.size", msg->GetSize()},
@@ -69,24 +69,24 @@ bool Sink::handleData(fair::mq::MessagePtr &msg, int index)
     const auto ptr = static_cast<char*>(msg->GetData());
     std::string payload(ptr, msg->GetSize());
     LOG(debug) << __FUNCTION__ << " received = " << payload << " [" << index << "] " << fNumMessages;
-    fMessagesReceived.Add(1, {{"fairmq.channel.name", fInputChannelName},
+    fMessagesReceived.add(1, {{"fairmq.channel.name", fInputChannelName},
         {"fairmq.channel.index", index},
         {"message.multipart", false}
     });
     // These receiver metrics demonstrate counting accepted messages, observing
     // payload sizes, and tracking the current total for a single-part stream.
-    fMessageSize.Record(msg->GetSize(), {{"fairmq.channel.name", fInputChannelName},
+    fMessageSize.record(msg->GetSize(), {{"fairmq.channel.name", fInputChannelName},
         {"fairmq.channel.index", index},
         {"message.multipart", false}
     });
     ++fNumMessages;
-    fMessagesTotal.Record(fNumMessages, {{"fairmq.channel.name", fInputChannelName}});
+    fMessagesTotal.record(fNumMessages, {{"fairmq.channel.name", fInputChannelName}});
     return true;
 }
 
 bool Sink::handleMultipartData(fair::mq::Parts &msg_parts, int index)
 {
-    auto multipart_span = nestdaq::telemetry::GetTelemetry().StartSpan("sink.receive.multipart",
+    auto multipart_span = nestdaq::telemetry::getTelemetry().startSpan("sink.receive.multipart",
     {   {"fairmq.channel.name", fInputChannelName},
         {"fairmq.channel.index", index},
         {"message.multipart", true},
@@ -94,7 +94,7 @@ bool Sink::handleMultipartData(fair::mq::Parts &msg_parts, int index)
     });
     static_cast<void>(multipart_span);
     for (const auto& msg : msg_parts) {
-        auto part_span = nestdaq::telemetry::GetTelemetry().StartSpan("sink.receive.part",
+        auto part_span = nestdaq::telemetry::getTelemetry().startSpan("sink.receive.part",
         {   {"fairmq.channel.name", fInputChannelName},
             {"fairmq.channel.index", index},
             {"message.size", msg->GetSize()},
@@ -105,18 +105,18 @@ bool Sink::handleMultipartData(fair::mq::Parts &msg_parts, int index)
         std::string payload(ptr, msg->GetSize());
         LOG(debug) << __FUNCTION__ << " received = " << payload << " [" << index << "] " << fNumMessages;
         LOG(debug) << payload;
-        fMessagesReceived.Add(1, {{"fairmq.channel.name", fInputChannelName},
+        fMessagesReceived.add(1, {{"fairmq.channel.name", fInputChannelName},
             {"fairmq.channel.index", index},
             {"message.multipart", true}
         });
         // The multipart path uses the same metric names with attributes that
         // distinguish multipart traffic from single-part traffic.
-        fMessageSize.Record(msg->GetSize(), {{"fairmq.channel.name", fInputChannelName},
+        fMessageSize.record(msg->GetSize(), {{"fairmq.channel.name", fInputChannelName},
             {"fairmq.channel.index", index},
             {"message.multipart", true}
         });
         ++fNumMessages;
-        fMessagesTotal.Record(fNumMessages, {{"fairmq.channel.name", fInputChannelName}});
+        fMessagesTotal.record(fNumMessages, {{"fairmq.channel.name", fInputChannelName}});
     }
     return true;
 }
@@ -125,14 +125,14 @@ void Sink::Init()
 {
 #if __has_include(<spdlog/spdlog.h>) && __has_include(<nestdaq/telemetry/SpdlogLogger.h>)
     if (!fLogger) {
-        fLogger = nestdaq::telemetry::CreateSpdlogLogger("Sink");
+        fLogger = nestdaq::telemetry::createSpdlogLogger("Sink");
     }
     fLogger->info("Sink example spdlog log");
 #elif __has_include(<spdlog/spdlog.h>)
     if (!fLogger) {
-        if (nestdaq::telemetry::GetSpdlogNativeConsoleEnabled()) {
+        if (nestdaq::telemetry::getSpdlogNativeConsoleEnabled()) {
             auto console_sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
-            console_sink->set_pattern(nestdaq::telemetry::GetSpdlogConsolePattern());
+            console_sink->set_pattern(nestdaq::telemetry::getSpdlogConsolePattern());
             fLogger = std::make_shared<spdlog::logger>(
                           "Sink",
                           spdlog::sinks_init_list{std::move(console_sink)});
@@ -161,10 +161,10 @@ void Sink::InitTask()
 
     // These instruments show the intended consumer metrics: received message
     // count, payload size distribution, and current total received messages.
-    auto telemetry = nestdaq::telemetry::GetTelemetry();
-    fMessagesReceived = telemetry.Counter("examples.sink.messages.received", "{message}", "Messages received by the Sink example");
-    fMessageSize = telemetry.Histogram("examples.sink.message.size", "By", "Sink example message size");
-    fMessagesTotal = telemetry.Gauge("examples.sink.messages.total", "{message}", "Total messages received by the Sink example");
+    auto telemetry = nestdaq::telemetry::getTelemetry();
+    fMessagesReceived = telemetry.counter("examples.sink.messages.received", "{message}", "Messages received by the Sink example");
+    fMessageSize = telemetry.histogram("examples.sink.message.size", "By", "Sink example message size");
+    fMessagesTotal = telemetry.gauge("examples.sink.messages.total", "{message}", "Total messages received by the Sink example");
 
     const auto &is_multipart = fConfig->GetProperty<std::string>(opt::kMultipart);
     if (is_multipart=="true" || is_multipart=="1") {

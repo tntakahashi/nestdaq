@@ -82,7 +82,7 @@ bpo::options_description makeOption() {
               ("color", bpo::value<bool>()->default_value(true), "FairLogger Log color (true/false)");
 
     bpo::options_description otelOptions("OpenTelemetry log options");
-    nestdaq::telemetry::AddTelemetryOptions(otelOptions, "daq-webctl");
+    nestdaq::telemetry::addTelemetryOptions(otelOptions, "daq-webctl");
 
     options.add_options()
            //
@@ -147,10 +147,10 @@ int main(int argc, char* argv[]) { // NOLINT(bugprone-exception-escape)
         }
     }
 
-    const auto telemetryOptions = nestdaq::telemetry::ReadTelemetryOptions(vm, "daq-webctl");
-    nestdaq::telemetry::SetSpdlogConsolePattern(telemetryOptions.spdlogConsolePattern);
-    nestdaq::telemetry::SetSpdlogNativeConsoleEnabled(telemetryOptions.spdlogNativeConsole);
-    nestdaq::telemetry::SetSpdlogAsyncOptions({
+    const auto telemetryOptions = nestdaq::telemetry::readTelemetryOptions(vm, "daq-webctl");
+    nestdaq::telemetry::setSpdlogConsolePattern(telemetryOptions.spdlogConsolePattern);
+    nestdaq::telemetry::setSpdlogNativeConsoleEnabled(telemetryOptions.spdlogNativeConsole);
+    nestdaq::telemetry::setSpdlogAsyncOptions({
         .enabled = telemetryOptions.spdlogAsync,
         .queueSize = telemetryOptions.spdlogAsyncQueueSize,
         .threadCount = telemetryOptions.spdlogAsyncThreadCount,
@@ -159,24 +159,24 @@ int main(int argc, char* argv[]) { // NOLINT(bugprone-exception-escape)
     auto telemetry = std::make_unique<nestdaq::telemetry::TelemetryLibrary>();
     auto telemetryLoaded = false;
     if (!telemetryOptions.library.empty()) {
-        telemetryLoaded = telemetry->Load(telemetryOptions.library);
+        telemetryLoaded = telemetry->load(telemetryOptions.library);
         if (!telemetryLoaded) {
             LOG(error) << "Failed to load telemetry library '" << telemetryOptions.library
-                       << "': " << telemetry->GetLastError();
+                       << "': " << telemetry->getLastError();
             if (telemetryOptions.required) {
                 return EXIT_FAILURE;
             }
         } else {
-            const auto telemetryConfig = nestdaq::telemetry::MakeConfig(telemetryOptions);
-            if (!telemetry->InitializeWith(telemetryConfig)) {
+            const auto telemetryConfig = nestdaq::telemetry::makeConfig(telemetryOptions);
+            if (!telemetry->initializeWith(telemetryConfig)) {
                 LOG(error) << "Failed to initialize telemetry library '" << telemetryOptions.library
-                           << "': " << telemetry->GetLastError();
+                           << "': " << telemetry->getLastError();
                 if (telemetryOptions.required) {
                     return EXIT_FAILURE;
                 }
                 telemetryLoaded = false;
             } else {
-                nestdaq::telemetry::WarnUnknownSeverityFallback(telemetryOptions.severity);
+                nestdaq::telemetry::warnUnknownSeverityFallback(telemetryOptions.severity);
             }
         }
     }
@@ -237,7 +237,7 @@ int main(int argc, char* argv[]) { // NOLINT(bugprone-exception-escape)
     HttpWebSocketServer server(static_cast<int>(nThreads));
     server.run(httpScheme, httpAddress, httpPort, docRoot);
     if (telemetryLoaded) {
-        telemetry->ShutdownTelemetry(telemetryOptions.timeoutMs);
+        telemetry->shutdownTelemetry(telemetryOptions.timeoutMs);
     }
     return ret;
 }

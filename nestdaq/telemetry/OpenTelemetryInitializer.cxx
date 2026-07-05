@@ -32,7 +32,7 @@ namespace nestdaq {
 
 using namespace otel_detail;
 
-auto OpenTelemetryInitializer::ForceFlush(uint64_t timeout_ms) -> int
+auto OpenTelemetryInitializer::forceFlush(uint64_t timeout_ms) -> int
 {
     try {
         std::shared_ptr<opentelemetry::sdk::logs::LoggerProvider> loggerProvider;
@@ -67,12 +67,12 @@ auto OpenTelemetryInitializer::ForceFlush(uint64_t timeout_ms) -> int
     }
 }
 
-auto OpenTelemetryInitializer::FlushFrameworkMetricsIfDirty(uint64_t timeout_ms) -> int
+auto OpenTelemetryInitializer::flushFrameworkMetricsIfDirty(uint64_t timeout_ms) -> int
 {
     return otel_detail::flushFrameworkMetricsIfDirty(timeout_ms);
 }
 
-auto OpenTelemetryInitializer::Initialize(const nestdaq_otel_config *config) -> int
+auto OpenTelemetryInitializer::initialize(const nestdaq_otel_config *config) -> int
 {
     auto localConfig = defaultConfig();
     if (config != nullptr) {
@@ -130,7 +130,7 @@ auto OpenTelemetryInitializer::Initialize(const nestdaq_otel_config *config) -> 
             };
         }
 
-        Shutdown(localConfig.timeout_ms);
+        shutdown(localConfig.timeout_ms);
         {
             auto &state = runtimeState();
             std::scoped_lock lock{state.mutex};
@@ -186,21 +186,21 @@ auto OpenTelemetryInitializer::Initialize(const nestdaq_otel_config *config) -> 
     }
 }
 
-auto OpenTelemetryInitializer::LastError() noexcept -> const char *
+auto OpenTelemetryInitializer::lastError() noexcept -> const char *
 {
     auto &state = runtimeState();
     std::scoped_lock lock{state.mutex};
     return state.lastError.data();
 }
 
-auto OpenTelemetryInitializer::SetNestdaqInstanceId(const char *instance_id) -> int
+auto OpenTelemetryInitializer::setNestdaqInstanceId(const char *instance_id) -> int
 {
     FairLoggerOpenTelemetrySink::setNestdaqInstanceId(isEmpty(instance_id) ? "" : instance_id);
     clearLastError();
     return NESTDAQ_OTEL_OK;
 }
 
-auto OpenTelemetryInitializer::SetMinSeverity(int32_t severity) -> int
+auto OpenTelemetryInitializer::setMinSeverity(int32_t severity) -> int
 {
     if (!validateSeverity(severity)) {
         return setLastError("severity must be a valid fair::Severity numeric value");
@@ -210,7 +210,7 @@ auto OpenTelemetryInitializer::SetMinSeverity(int32_t severity) -> int
     return NESTDAQ_OTEL_OK;
 }
 
-auto OpenTelemetryInitializer::Shutdown(uint64_t timeout_ms) -> int
+auto OpenTelemetryInitializer::shutdown(uint64_t timeout_ms) -> int
 {
     try {
         stopProcessMetricsThread();
@@ -288,23 +288,23 @@ extern "C" {
 
     NESTDAQ_OTEL_EXPORT int nestdaq_otel_force_flush(uint64_t timeout_ms)
     {
-        return nestdaq::OpenTelemetryInitializer::ForceFlush(timeout_ms);
+        return nestdaq::OpenTelemetryInitializer::forceFlush(timeout_ms);
     }
 
     NESTDAQ_OTEL_EXPORT void nestdaq_otel_framework_record_fairmq_state(int64_t state_id,
             const char *state_name)
     {
-        nestdaq::OpenTelemetryInitializer::RecordFrameworkFairMQState(state_id, state_name);
+        nestdaq::OpenTelemetryInitializer::recordFrameworkFairMQState(state_id, state_name);
     }
 
     NESTDAQ_OTEL_EXPORT int nestdaq_otel_init(const nestdaq_otel_config *config)
     {
-        return nestdaq::OpenTelemetryInitializer::Initialize(config);
+        return nestdaq::OpenTelemetryInitializer::initialize(config);
     }
 
     NESTDAQ_OTEL_EXPORT const char *nestdaq_otel_last_error(void)
     {
-        return nestdaq::OpenTelemetryInitializer::LastError();
+        return nestdaq::OpenTelemetryInitializer::lastError();
     }
 
     NESTDAQ_OTEL_EXPORT int nestdaq_otel_metric_add_double_counter(const char *name,
@@ -314,7 +314,7 @@ extern "C" {
             const nestdaq_otel_attribute *attributes,
             uint64_t attribute_count)
     {
-        return nestdaq::OpenTelemetryInitializer::MetricAddDoubleCounter(
+        return nestdaq::OpenTelemetryInitializer::metricAddDoubleCounter(
                    name, value, unit, description, attributes, attribute_count);
     }
 
@@ -325,7 +325,7 @@ extern "C" {
             const nestdaq_otel_attribute *attributes,
             uint64_t attribute_count)
     {
-        return nestdaq::OpenTelemetryInitializer::MetricRecordDoubleHistogram(
+        return nestdaq::OpenTelemetryInitializer::metricRecordDoubleHistogram(
                    name, value, unit, description, attributes, attribute_count);
     }
 
@@ -336,41 +336,41 @@ extern "C" {
             const nestdaq_otel_attribute *attributes,
             uint64_t attribute_count)
     {
-        return nestdaq::OpenTelemetryInitializer::MetricRecordDoubleGauge(
+        return nestdaq::OpenTelemetryInitializer::metricRecordDoubleGauge(
                    name, value, unit, description, attributes, attribute_count);
     }
 
     NESTDAQ_OTEL_EXPORT int nestdaq_otel_set_min_severity(int32_t severity)
     {
-        return nestdaq::OpenTelemetryInitializer::SetMinSeverity(severity);
+        return nestdaq::OpenTelemetryInitializer::setMinSeverity(severity);
     }
 
     NESTDAQ_OTEL_EXPORT int nestdaq_otel_set_nestdaq_instance_id(const char *instance_id)
     {
-        return nestdaq::OpenTelemetryInitializer::SetNestdaqInstanceId(instance_id);
+        return nestdaq::OpenTelemetryInitializer::setNestdaqInstanceId(instance_id);
     }
 
     NESTDAQ_OTEL_EXPORT int nestdaq_otel_shutdown(uint64_t timeout_ms)
     {
-        return nestdaq::OpenTelemetryInitializer::Shutdown(timeout_ms);
+        return nestdaq::OpenTelemetryInitializer::shutdown(timeout_ms);
     }
 
     NESTDAQ_OTEL_EXPORT int nestdaq_otel_span_end(uint64_t span_handle)
     {
-        return nestdaq::OpenTelemetryInitializer::SpanEnd(span_handle);
+        return nestdaq::OpenTelemetryInitializer::spanEnd(span_handle);
     }
 
     NESTDAQ_OTEL_EXPORT int nestdaq_otel_span_set_attribute(uint64_t span_handle,
             const nestdaq_otel_attribute *attribute)
     {
-        return nestdaq::OpenTelemetryInitializer::SpanSetAttribute(span_handle, attribute);
+        return nestdaq::OpenTelemetryInitializer::spanSetAttribute(span_handle, attribute);
     }
 
     NESTDAQ_OTEL_EXPORT uint64_t nestdaq_otel_span_start(const char *name,
             const nestdaq_otel_attribute *attributes,
             uint64_t attribute_count)
     {
-        return nestdaq::OpenTelemetryInitializer::SpanStart(name, attributes, attribute_count);
+        return nestdaq::OpenTelemetryInitializer::spanStart(name, attributes, attribute_count);
     }
 
 }

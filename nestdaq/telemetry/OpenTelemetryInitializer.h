@@ -130,7 +130,7 @@ NESTDAQ_OTEL_EXPORT int nestdaq_otel_force_flush(uint64_t timeout_ms);
 NESTDAQ_OTEL_EXPORT void nestdaq_otel_framework_record_fairmq_state(int64_t state_id,
         const char *state_name);
 /**
- * @brief Initialize process-wide OpenTelemetry providers and the FairLogger sink.
+ * @brief initialize process-wide OpenTelemetry providers and the FairLogger sink.
  *
  * Reinitialization shuts down the previous providers before installing the new
  * providers. Passing null uses defaults.
@@ -234,57 +234,57 @@ public:
     OpenTelemetryInitializer() = delete;
 
     /** @brief Implementation for @ref nestdaq_otel_force_flush. */
-    static auto ForceFlush(uint64_t timeout_ms) -> int;
+    static auto forceFlush(uint64_t timeout_ms) -> int;
     /** @brief Configure process-wide OpenTelemetry providers from the C ABI config. */
-    static auto Initialize(const nestdaq_otel_config *config) -> int;
+    static auto initialize(const nestdaq_otel_config *config) -> int;
     /** @brief Return the plugin-owned last-error string. */
-    static auto LastError() noexcept -> const char *;
+    static auto lastError() noexcept -> const char *;
     /** @brief Add to a user double counter instrument. */
-    static auto MetricAddDoubleCounter(const char *name,
+    static auto metricAddDoubleCounter(const char *name,
                                        double value,
                                        const char *unit,
                                        const char *description,
                                        const nestdaq_otel_attribute *attributes,
                                        uint64_t attribute_count) -> int;
     /** @brief Record a user double histogram measurement. */
-    static auto MetricRecordDoubleHistogram(const char *name,
+    static auto metricRecordDoubleHistogram(const char *name,
                                             double value,
                                             const char *unit,
                                             const char *description,
                                             const nestdaq_otel_attribute *attributes,
                                             uint64_t attribute_count) -> int;
     /** @brief Store the latest user double gauge measurement for collection. */
-    static auto MetricRecordDoubleGauge(const char *name,
+    static auto metricRecordDoubleGauge(const char *name,
                                         double value,
                                         const char *unit,
                                         const char *description,
                                         const nestdaq_otel_attribute *attributes,
                                         uint64_t attribute_count) -> int;
     /** @brief Export pending framework metric samples, if any are dirty. */
-    static auto FlushFrameworkMetricsIfDirty(uint64_t timeout_ms) -> int;
+    static auto flushFrameworkMetricsIfDirty(uint64_t timeout_ms) -> int;
     /** @brief Record a FairMQ state transition for the framework metrics pipeline. */
-    static auto RecordFrameworkFairMQState(int64_t state_id, const char *state_name) noexcept -> void;
+    static auto recordFrameworkFairMQState(int64_t state_id, const char *state_name) noexcept -> void;
     /** @brief Record parsed FairMQ throughput through the framework metrics pipeline. */
-    static auto RecordFrameworkFairMQThroughput(const telemetry::FairMQThroughputSample &sample) noexcept -> void;
+    static auto recordFrameworkFairMQThroughput(const telemetry::FairMQThroughputSample &sample) noexcept -> void;
     /** @brief Record one sampled process CPU/RSS pair through the framework metrics pipeline. */
-    static auto RecordFrameworkProcessUsage(double cpu_user_seconds,
+    static auto recordFrameworkProcessUsage(double cpu_user_seconds,
                                             double cpu_system_seconds,
                                             std::optional<double> cpu_utilization,
                                             double memory_usage_bytes) noexcept -> void;
     /** @brief Record parsed FairMQ throughput observed by the FairLogger sink. */
-    static auto RecordFairMQThroughput(const telemetry::FairMQThroughputSample &sample) noexcept -> void;
+    static auto recordFairMQThroughput(const telemetry::FairMQThroughputSample &sample) noexcept -> void;
     /** @brief Update log attributes derived from the NestDAQ instance id. */
-    static auto SetNestdaqInstanceId(const char *instance_id) -> int;
+    static auto setNestdaqInstanceId(const char *instance_id) -> int;
     /** @brief Update the minimum FairLogger severity exported to OpenTelemetry. */
-    static auto SetMinSeverity(int32_t severity) -> int;
+    static auto setMinSeverity(int32_t severity) -> int;
     /** @brief Stop background collection and shut down all active providers. */
-    static auto Shutdown(uint64_t timeout_ms) -> int;
+    static auto shutdown(uint64_t timeout_ms) -> int;
     /** @brief End and erase a plugin-owned span handle. */
-    static auto SpanEnd(uint64_t span_handle) -> int;
+    static auto spanEnd(uint64_t span_handle) -> int;
     /** @brief Set an attribute on a plugin-owned span handle. */
-    static auto SpanSetAttribute(uint64_t span_handle, const nestdaq_otel_attribute *attribute) -> int;
+    static auto spanSetAttribute(uint64_t span_handle, const nestdaq_otel_attribute *attribute) -> int;
     /** @brief Start a plugin-owned span and return its opaque handle. */
-    static auto SpanStart(const char *name,
+    static auto spanStart(const char *name,
                           const nestdaq_otel_attribute *attributes,
                           uint64_t attribute_count) -> uint64_t;
 };

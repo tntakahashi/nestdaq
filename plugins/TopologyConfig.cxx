@@ -51,7 +51,7 @@ void printConfig(const std::map<std::string, std::string> &p, std::string_view n
     LOG(debug) << ss.str();
 }
 
-std::string MakeAddress(const std::string &address, std::string_view peerIP)
+std::string makeAddress(const std::string &address, std::string_view peerIP)
 {
     // e.g. address = tcp://AAAA:XXXX
     auto posPort = address.find_last_of(":");
@@ -66,7 +66,7 @@ std::string MakeAddress(const std::string &address, std::string_view peerIP)
 }
 
 // convert a socket property to format of command line option of FairMQ
-const std::string ToChannelConfig(const daq::service::SocketProperty& p)
+const std::string toChannelConfig(const daq::service::SocketProperty& p)
 {
     using namespace std::string_literals;
     std::string ret;
@@ -121,7 +121,7 @@ const std::string ToChannelConfig(const daq::service::SocketProperty& p)
 
 // convert hash in redis to struct
 template <typename Container>
-const daq::service::SocketProperty ToSocketProperty(const Container& c)
+const daq::service::SocketProperty toSocketProperty(const Container& c)
 {
     daq::service::SocketProperty sp;
     for (const auto &[field, value] : c) {
@@ -248,7 +248,7 @@ void daq::service::TopologyConfig::configConnect()
             std::this_thread::sleep_for(1000ms);
             ++nRetry;
         }
-        return MakeAddress(address, peerIP);
+        return makeAddress(address, peerIP);
     };
 
     auto findAddresses = [this, findPeerIP](const auto& service, const auto& id, const auto& channel) {
@@ -266,7 +266,7 @@ void daq::service::TopologyConfig::configConnect()
                 auto a = getClient()->hget(socketKey, "address");
                 if (a) {
                     LOG(warn) << " ch = " << socketKey << " : address found " << *a;
-                    ret.push_back(MakeAddress(*a, peerIP));
+                    ret.push_back(makeAddress(*a, peerIP));
                     break;
                 }
                 LOG(warn) << " ch = " << socketKey << " : address not found";
@@ -475,7 +475,7 @@ void daq::service::TopologyConfig::configConnect()
             }
         }
 
-        channelConfigOptions.emplace_back(ToChannelConfig(sp));
+        channelConfigOptions.emplace_back(toChannelConfig(sp));
 
     }
 
@@ -592,7 +592,7 @@ void daq::service::TopologyConfig::initialize()
                     cont[k] = *v;
                 }
             }
-            auto sp = ToSocketProperty(cont);
+            auto sp = toSocketProperty(cont);
             sp.name = myChannelName;
             sp.method = "connect"s;
             fConnectChannels.emplace(sp.name, sp);
@@ -674,7 +674,7 @@ void daq::service::TopologyConfig::initialize()
             }
             //LOG(debug4) << " uds address =  " << sp.address;
         }
-        channelConfigOptions.emplace_back(ToChannelConfig(sp));
+        channelConfigOptions.emplace_back(toChannelConfig(sp));
 
         writeChannel(sp, peers);
     }
@@ -804,7 +804,7 @@ const daq::service::SocketProperty daq::service::TopologyConfig::readEndpointPro
     getClient()->hgetall(key, std::inserter(h, h.begin()));
     // std::ostringstream ss;
     // ss << " name = " << channelName;
-    SocketProperty sp = ToSocketProperty(h);
+    SocketProperty sp = toSocketProperty(h);
     sp.name = channelName;
     return sp;
 }
@@ -947,7 +947,7 @@ const std::vector<std::string> daq::service::TopologyConfig::readPeerAddress(con
         while (true) {
             auto a = getClient()->hget(k, "address");
             if (a) {
-                address = MakeAddress(*a, peerIP->data());
+                address = makeAddress(*a, peerIP->data());
                 break;
             }
             LOG(warn) << " address not found for " << k;
@@ -1082,7 +1082,7 @@ void daq::service::TopologyConfig::resolveConnectAddress()
             LOG(debug) << kMyClass << " " << __FUNCTION__ << ":" << __LINE__ << " id = " << fId << " myIndex = " << myIndex;
             std::unordered_map<std::string, std::string> h;
             r.hgetall(p, std::inserter(h, h.begin()));
-            const auto &peerProperty = ToSocketProperty(h);
+            const auto &peerProperty = toSocketProperty(h);
 
             LOG(debug) << "id = " << fId << " numSocket (me) = " << sp.numSockets << ", (peer) = " << peerProperty.numSockets;
             const auto address = readPeerAddress(p); //peerHealthKey, *peerIP, peerChannel);
@@ -1116,7 +1116,7 @@ void daq::service::TopologyConfig::resolveConnectAddress()
             ++peerIndex;
         }
         LOG(debug) << " id = " << fId << " add socket property : " << res.name << " " << res.address;
-        options[res.name].emplace_back(ToChannelConfig(res));
+        options[res.name].emplace_back(toChannelConfig(res));
     }
 
 //  LOG(debug) << " before update";

@@ -517,7 +517,7 @@ auto startProcessMetricsThread(uint32_t intervalMs) -> void
                     std::scoped_lock lock{runtime.mutex};
                     runtime.processCpuUsageSample = current_cpu;
                 }
-                nestdaq::OpenTelemetryInitializer::RecordFrameworkProcessUsage(current_cpu->userSeconds,
+                nestdaq::OpenTelemetryInitializer::recordFrameworkProcessUsage(current_cpu->userSeconds,
                         current_cpu->systemSeconds,
                         cpuUtilization,
                         *current_memory_usage);
@@ -541,7 +541,7 @@ auto stopProcessMetricsThread() -> void
 
 namespace nestdaq {
 
-auto OpenTelemetryInitializer::MetricAddDoubleCounter(const char *name,
+auto OpenTelemetryInitializer::metricAddDoubleCounter(const char *name,
         double value,
         const char *unit,
         const char *description,
@@ -573,7 +573,7 @@ auto OpenTelemetryInitializer::MetricAddDoubleCounter(const char *name,
     return NESTDAQ_OTEL_OK;
 }
 
-auto OpenTelemetryInitializer::MetricRecordDoubleHistogram(const char *name,
+auto OpenTelemetryInitializer::metricRecordDoubleHistogram(const char *name,
         double value,
         const char *unit,
         const char *description,
@@ -605,7 +605,7 @@ auto OpenTelemetryInitializer::MetricRecordDoubleHistogram(const char *name,
     return NESTDAQ_OTEL_OK;
 }
 
-auto OpenTelemetryInitializer::MetricRecordDoubleGauge(const char *name,
+auto OpenTelemetryInitializer::metricRecordDoubleGauge(const char *name,
         double value,
         const char *unit,
         const char *description,
@@ -652,13 +652,13 @@ auto OpenTelemetryInitializer::MetricRecordDoubleGauge(const char *name,
     return NESTDAQ_OTEL_OK;
 }
 
-auto OpenTelemetryInitializer::RecordFairMQThroughput(const telemetry::FairMQThroughputSample &sample) noexcept
+auto OpenTelemetryInitializer::recordFairMQThroughput(const telemetry::FairMQThroughputSample &sample) noexcept
 -> void
 {
-    RecordFrameworkFairMQThroughput(sample);
+    recordFrameworkFairMQThroughput(sample);
 }
 
-auto OpenTelemetryInitializer::RecordFrameworkFairMQThroughput(const telemetry::FairMQThroughputSample &sample) noexcept
+auto OpenTelemetryInitializer::recordFrameworkFairMQThroughput(const telemetry::FairMQThroughputSample &sample) noexcept
 -> void
 {
     try {
@@ -691,7 +691,7 @@ auto OpenTelemetryInitializer::RecordFrameworkFairMQThroughput(const telemetry::
     }
 }
 
-auto OpenTelemetryInitializer::RecordFrameworkProcessUsage(double cpu_user_seconds,
+auto OpenTelemetryInitializer::recordFrameworkProcessUsage(double cpu_user_seconds,
         double cpu_system_seconds,
         std::optional<double> cpu_utilization,
         double memory_usage_bytes) noexcept -> void
@@ -716,7 +716,7 @@ auto OpenTelemetryInitializer::RecordFrameworkProcessUsage(double cpu_user_secon
     }
 }
 
-auto OpenTelemetryInitializer::RecordFrameworkFairMQState(int64_t state_id, const char *state_name) noexcept -> void
+auto OpenTelemetryInitializer::recordFrameworkFairMQState(int64_t state_id, const char *state_name) noexcept -> void
 {
     try {
         {

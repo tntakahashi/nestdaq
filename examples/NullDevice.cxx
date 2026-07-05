@@ -54,14 +54,14 @@ void NullDevice::Init()
 {
 #if __has_include(<spdlog/spdlog.h>) && __has_include(<nestdaq/telemetry/SpdlogLogger.h>)
     if (!fLogger) {
-        fLogger = nestdaq::telemetry::CreateSpdlogLogger("NullDevice");
+        fLogger = nestdaq::telemetry::createSpdlogLogger("NullDevice");
     }
     fLogger->info("NullDevice example spdlog log");
 #elif __has_include(<spdlog/spdlog.h>)
     if (!fLogger) {
-        if (nestdaq::telemetry::GetSpdlogNativeConsoleEnabled()) {
+        if (nestdaq::telemetry::getSpdlogNativeConsoleEnabled()) {
             auto console_sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
-            console_sink->set_pattern(nestdaq::telemetry::GetSpdlogConsolePattern());
+            console_sink->set_pattern(nestdaq::telemetry::getSpdlogConsolePattern());
             fLogger = std::make_shared<spdlog::logger>(
                           "NullDevice",
                           spdlog::sinks_init_list{std::move(console_sink)});

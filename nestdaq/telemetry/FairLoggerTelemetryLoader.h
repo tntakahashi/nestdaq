@@ -40,9 +40,9 @@ inline constexpr std::string_view kDefaultServiceNamespace{"nestdaq"};
  * @brief Runtime options used to configure the telemetry plugin.
  *
  * Values are initialized from defaults, optionally overridden by environment
- * variables and command-line/FairMQ options. `MakeConfig()` returns borrowed
+ * variables and command-line/FairMQ options. `makeConfig()` returns borrowed
  * pointers into this object, so the object must outlive the call to
- * `TelemetryLibrary::InitializeWith()`.
+ * `TelemetryLibrary::initializeWith()`.
  */
 struct TelemetryOptions {
     std::string library{kDefaultTelemetryLibrary};
@@ -95,7 +95,7 @@ struct SeverityParseResult {
 /**
  * @brief Add command-line options that configure the optional telemetry plugin.
  */
-auto AddTelemetryOptions(boost::program_options::options_description& options,
+auto addTelemetryOptions(boost::program_options::options_description& options,
                          std::string_view default_service_name = "nestdaq") -> void;
 /**
  * @brief Apply `NESTDAQ_OTEL_*` environment variables to @p options.
@@ -112,7 +112,7 @@ auto basename(std::string_view path) -> std::string_view;
 /** @brief Read an environment variable as a nullable borrowed C string. */
 auto env(const char* name) -> const char*;
 /** @brief Detect the current host name for the OTel host.name resource attribute. */
-auto DetectHostName() -> std::string;
+auto detectHostName() -> std::string;
 /** @brief Detect and store host.name when it has not already been set. */
 auto ensureHostName(TelemetryOptions& options) -> void;
 /** @brief Generate and store a service instance id when the user did not set one. */
@@ -123,16 +123,16 @@ auto generateUuidString() -> std::string;
  * @brief Build the C ABI configuration consumed by `libnestdaq_otel.so`.
  *
  * The returned struct contains string pointers borrowed from @p options, so the
- * options object must outlive the immediate `TelemetryLibrary::InitializeWith()`
+ * options object must outlive the immediate `TelemetryLibrary::initializeWith()`
  * call that consumes the config.
  */
-auto MakeConfig(const TelemetryOptions& options) -> nestdaq_otel_config;
+auto makeConfig(const TelemetryOptions& options) -> nestdaq_otel_config;
 /**
  * @brief Build one signal-specific C ABI exporter configuration.
  *
  * The returned struct borrows the supplied string_view storage.
  */
-auto MakeSignalConfig(std::string_view protocol,
+auto makeSignalConfig(std::string_view protocol,
                       std::string_view endpoint_http,
                       std::string_view endpoint_grpc,
                       std::string_view headers,
@@ -146,27 +146,27 @@ auto parseBool(std::string_view value) -> bool;
  * `--service-name` and `--uuid` so telemetry resource attributes match FairMQ
  * device identity by default.
  */
-auto ParseTelemetryOptions(int argc, char* argv[], // NOLINT(cppcoreguidelines-avoid-c-arrays)
+auto parseTelemetryOptions(int argc, char* argv[], // NOLINT(cppcoreguidelines-avoid-c-arrays)
                            std::string_view default_service_name = "nestdaq") -> TelemetryOptions;
 /** @brief Convert a FairLogger severity name to its numeric value. */
-auto ParseFairLoggerSeverity(std::string_view severity) -> SeverityParseResult;
+auto parseFairLoggerSeverity(std::string_view severity) -> SeverityParseResult;
 /** @brief Parse an unsigned integer option with a fallback on invalid input. */
 auto parseUInt32(std::string_view value, uint32_t fallback) -> uint32_t;
 /**
  * @brief Read telemetry options from a Boost variables_map after option parsing.
  */
-auto ReadTelemetryOptions(const boost::program_options::variables_map& vm,
+auto readTelemetryOptions(const boost::program_options::variables_map& vm,
                           std::string_view default_service_name) -> TelemetryOptions;
 /** @brief Emit a warning when an unknown severity name falls back to info. */
-auto WarnUnknownSeverityFallback(std::string_view severity) -> void;
+auto warnUnknownSeverityFallback(std::string_view severity) -> void;
 /** @brief Return the numeric FairLogger severity value for @p severity. */
-auto SeverityToFairLoggerValue(std::string_view severity) -> int32_t;
+auto severityToFairLoggerValue(std::string_view severity) -> int32_t;
 /**
  * @brief Mirror a generated telemetry UUID into FairMQ ProgOptions.
  *
  * Explicit user-provided FairMQ UUID values are preserved.
  */
-auto SetGeneratedUuidProperty(fair::mq::ProgOptions& config,
+auto setGeneratedUuidProperty(fair::mq::ProgOptions& config,
                               const TelemetryOptions& options,
                               std::string_view key = "uuid") -> void;
 
@@ -188,41 +188,41 @@ public:
     ~TelemetryLibrary();
 
     /** @brief Return the last loader or plugin error message. */
-    auto GetLastError() const -> const std::string&;
+    auto getLastError() const -> const std::string&;
     /**
      * @brief Initialize the loaded plugin with a C ABI config.
      *
      * @p config may contain borrowed pointers because the plugin copies the
      * values it needs during initialization.
      */
-    auto InitializeWith(const nestdaq_otel_config& config) -> bool;
+    auto initializeWith(const nestdaq_otel_config& config) -> bool;
     /** @brief Force-flush initialized telemetry providers. */
-    auto ForceFlush(uint64_t timeoutMs) -> bool;
+    auto forceFlush(uint64_t timeoutMs) -> bool;
     /**
      * @brief Create the optional spdlog OpenTelemetry sink from the loaded plugin.
      *
      * Returns null when the plugin does not provide spdlog instrumentation or
      * when OTel log export is disabled.
      */
-    auto CreateSpdlogSink() const -> std::shared_ptr<spdlog::sinks::sink>;
+    auto createSpdlogSink() const -> std::shared_ptr<spdlog::sinks::sink>;
     /** @brief Record a FairMQ state transition as a framework metric sample. */
-    auto RecordFrameworkFairMQState(int64_t stateId, std::string_view stateName) -> void;
+    auto recordFrameworkFairMQState(int64_t stateId, std::string_view stateName) -> void;
     /** @brief Add to a user double counter through the plugin C ABI. */
-    auto MetricAddDoubleCounter(std::string_view name,
+    auto metricAddDoubleCounter(std::string_view name,
                                 double value,
                                 std::string_view unit = "",
                                 std::string_view description = "",
                                 const nestdaq_otel_attribute* attributes = nullptr,
                                 uint64_t attributeCount = 0) -> bool;
     /** @brief Record a user double histogram value through the plugin C ABI. */
-    auto MetricRecordDoubleHistogram(std::string_view name,
+    auto metricRecordDoubleHistogram(std::string_view name,
                                      double value,
                                      std::string_view unit = "",
                                      std::string_view description = "",
                                      const nestdaq_otel_attribute* attributes = nullptr,
                                      uint64_t attributeCount = 0) -> bool;
     /** @brief Record a user double gauge value through the plugin C ABI. */
-    auto MetricRecordDoubleGauge(std::string_view name,
+    auto metricRecordDoubleGauge(std::string_view name,
                                  double value,
                                  std::string_view unit = "",
                                  std::string_view description = "",
@@ -234,26 +234,26 @@ public:
      * The library is optional in normal NestDAQ startup; callers decide whether
      * a failed load is fatal based on their runtime options.
      */
-    auto Load(const std::string& library) -> bool;
-    /** @brief End a span handle previously returned by @ref SpanStart. */
-    auto SpanEnd(uint64_t span_handle) -> bool;
+    auto load(const std::string& library) -> bool;
+    /** @brief End a span handle previously returned by @ref spanStart. */
+    auto spanEnd(uint64_t span_handle) -> bool;
     /** @brief Set one attribute on an active span handle. */
-    auto SpanSetAttribute(uint64_t span_handle, const nestdaq_otel_attribute& attribute) -> bool;
+    auto spanSetAttribute(uint64_t span_handle, const nestdaq_otel_attribute& attribute) -> bool;
     /** @brief Update the NestDAQ instance id attached to exported log records. */
-    auto SetNestdaqInstanceId(std::string_view instanceId) -> bool;
+    auto setNestdaqInstanceId(std::string_view instanceId) -> bool;
     /** @brief Start a span and return its opaque plugin-owned handle. */
-    auto SpanStart(std::string_view name,
+    auto spanStart(std::string_view name,
                    const nestdaq_otel_attribute* attributes = nullptr,
                    uint64_t attributeCount = 0) -> uint64_t;
     /** @brief Update the FairLogger severity threshold by severity name. */
-    auto SetMinSeverity(std::string_view severity) -> bool;
+    auto setMinSeverity(std::string_view severity) -> bool;
     /** @brief Update the FairLogger severity threshold by numeric value. */
-    auto SetMinSeverity(int32_t severity) -> bool;
+    auto setMinSeverity(int32_t severity) -> bool;
     /** @brief Shut down the plugin once; subsequent calls are no-ops. */
-    auto ShutdownTelemetry(uint64_t timeoutMs) const -> void;
+    auto shutdownTelemetry(uint64_t timeoutMs) const -> void;
 
 private:
-    auto StoreResult(int rc) -> bool;
+    auto storeResult(int rc) -> bool;
 
     void* fHandle{nullptr};
     std::function<int(const nestdaq_otel_config*)> fInitialize;
@@ -278,9 +278,9 @@ private:
 /**
  * @brief Subscribe to FairMQ property changes that affect telemetry runtime state.
  */
-auto SubscribeTelemetryOptionChanges(const fair::mq::ProgOptions& config,
+auto subscribeTelemetryOptionChanges(const fair::mq::ProgOptions& config,
                                      TelemetryLibrary& telemetry) -> void;
 /** @brief Remove the telemetry property-change subscription from FairMQ options. */
-auto UnsubscribeTelemetryOptionChanges(const fair::mq::ProgOptions& config) -> void;
+auto unsubscribeTelemetryOptionChanges(const fair::mq::ProgOptions& config) -> void;
 
 } // namespace nestdaq::telemetry

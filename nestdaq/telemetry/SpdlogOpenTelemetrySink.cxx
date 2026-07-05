@@ -124,7 +124,7 @@ protected:
 
 } // namespace
 
-auto CreateSpdlogOpenTelemetrySink() -> std::shared_ptr<spdlog::sinks::sink>
+auto createSpdlogOpenTelemetrySink() -> std::shared_ptr<spdlog::sinks::sink>
 {
     return std::make_shared<SpdlogOpenTelemetrySink>();
 }
@@ -134,6 +134,6 @@ auto CreateSpdlogOpenTelemetrySink() -> std::shared_ptr<spdlog::sinks::sink>
 extern "C" {
     NESTDAQ_OTEL_EXPORT auto nestdaq_otel_create_spdlog_sink() -> std::shared_ptr<spdlog::sinks::sink>
     {
-        return nestdaq::telemetry::CreateSpdlogOpenTelemetrySink();
+        return nestdaq::telemetry::createSpdlogOpenTelemetrySink();
     }
 }

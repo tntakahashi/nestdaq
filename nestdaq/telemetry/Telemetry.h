@@ -115,7 +115,7 @@ public:
      * The returned pointers remain valid only while this @ref Attribute object
      * remains alive.
      */
-    auto ToOtelAttribute() const noexcept -> nestdaq_otel_attribute;
+    auto toOtelAttribute() const noexcept -> nestdaq_otel_attribute;
 
 private:
     std::string fKey;
@@ -133,34 +133,34 @@ private:
  * The returned array borrows string storage from @p attributes, so callers must
  * pass it to the telemetry backend before the input attributes are destroyed.
  */
-auto MakeOtelAttributes(const Attribute* attributes, std::size_t attributeCount) -> std::vector<nestdaq_otel_attribute>;
+auto makeOtelAttributes(const Attribute* attributes, std::size_t attributeCount) -> std::vector<nestdaq_otel_attribute>;
 
 /** @brief Convert an initializer list of attributes into the C ABI representation. */
-auto MakeOtelAttributes(std::initializer_list<Attribute> attributes) -> std::vector<nestdaq_otel_attribute>;
+auto makeOtelAttributes(std::initializer_list<Attribute> attributes) -> std::vector<nestdaq_otel_attribute>;
 
 #if __cplusplus >= 202002L
 /** @brief Convert a C++20 attribute span into the C ABI representation. */
-auto MakeOtelAttributes(std::span<const Attribute> attributes) -> std::vector<nestdaq_otel_attribute>;
+auto makeOtelAttributes(std::span<const Attribute> attributes) -> std::vector<nestdaq_otel_attribute>;
 #endif
 
 /** @brief Set the process-wide pattern used by native spdlog console fallback sinks. */
-auto SetSpdlogConsolePattern(std::string_view pattern) -> void;
+auto setSpdlogConsolePattern(std::string_view pattern) -> void;
 /** @brief Return the process-wide pattern used by native spdlog console fallback sinks. */
-auto GetSpdlogConsolePattern() -> std::string;
+auto getSpdlogConsolePattern() -> std::string;
 /** @brief Enable or disable the process-wide native spdlog console sink. */
-auto SetSpdlogNativeConsoleEnabled(bool enabled) -> void;
+auto setSpdlogNativeConsoleEnabled(bool enabled) -> void;
 /** @brief Return whether helper loggers attach the native spdlog console sink. */
-auto GetSpdlogNativeConsoleEnabled() -> bool;
+auto getSpdlogNativeConsoleEnabled() -> bool;
 /** @brief Set the process-wide spdlog async logger settings. */
-auto SetSpdlogAsyncOptions(const SpdlogAsyncOptions& options) -> void;
+auto setSpdlogAsyncOptions(const SpdlogAsyncOptions& options) -> void;
 /** @brief Return the process-wide spdlog async logger settings. */
-auto GetSpdlogAsyncOptions() -> SpdlogAsyncOptions;
+auto getSpdlogAsyncOptions() -> SpdlogAsyncOptions;
 
 /**
  * @brief Movable RAII wrapper for a span handle owned by the telemetry plugin.
  *
  * A default-constructed or disabled span is inactive. Destroying an active span
- * calls `End()` exactly once. This wrapper intentionally exposes no
+ * calls `end()` exactly once. This wrapper intentionally exposes no
  * OpenTelemetry C++ types so executables can avoid linking OpenTelemetry.
  */
 class TelemetrySpan {
@@ -175,11 +175,11 @@ public:
     ~TelemetrySpan();
 
     /** @brief End the span if it is active; safe to call more than once. */
-    auto End() noexcept -> void;
+    auto end() noexcept -> void;
     /** @brief Set an attribute on the active span handle. */
-    auto SetAttribute(const nestdaq_otel_attribute& attribute) -> bool;
+    auto setAttribute(const nestdaq_otel_attribute& attribute) -> bool;
     /** @brief Set an attribute on the active span using the C++ wrapper type. */
-    auto SetAttribute(const Attribute& attribute) -> bool;
+    auto setAttribute(const Attribute& attribute) -> bool;
 
 private:
     TelemetryLibrary* fTelemetry{nullptr};
@@ -200,12 +200,12 @@ public:
     Counter(TelemetryLibrary* library, std::string_view name, std::string_view unit, std::string_view description);
 
     /** @brief Add a double value with optional attributes. */
-    auto Add(double value, std::initializer_list<Attribute> attributes = {}) const -> bool;
+    auto add(double value, std::initializer_list<Attribute> attributes = {}) const -> bool;
 
     /** @brief Add an arithmetic value after converting it to double. */
     template<typename T, std::enable_if_t<detail::IsMetricValueV<T>, int> = 0>
-    auto Add(T value, std::initializer_list<Attribute> attributes = {}) const -> bool {
-        return Add(static_cast<double>(value), attributes);
+    auto add(T value, std::initializer_list<Attribute> attributes = {}) const -> bool {
+        return add(static_cast<double>(value), attributes);
     }
 
 private:
@@ -225,12 +225,12 @@ public:
     Histogram(TelemetryLibrary* library, std::string_view name, std::string_view unit, std::string_view description);
 
     /** @brief Record a double value with optional attributes. */
-    auto Record(double value, std::initializer_list<Attribute> attributes = {}) const -> bool;
+    auto record(double value, std::initializer_list<Attribute> attributes = {}) const -> bool;
 
     /** @brief Record an arithmetic value after converting it to double. */
     template<typename T, std::enable_if_t<detail::IsMetricValueV<T>, int> = 0>
-    auto Record(T value, std::initializer_list<Attribute> attributes = {}) const -> bool {
-        return Record(static_cast<double>(value), attributes);
+    auto record(T value, std::initializer_list<Attribute> attributes = {}) const -> bool {
+        return record(static_cast<double>(value), attributes);
     }
 
 private:
@@ -254,12 +254,12 @@ public:
     Gauge(TelemetryLibrary* library, std::string_view name, std::string_view unit, std::string_view description);
 
     /** @brief Record a double value with optional attributes. */
-    auto Record(double value, std::initializer_list<Attribute> attributes = {}) const -> bool;
+    auto record(double value, std::initializer_list<Attribute> attributes = {}) const -> bool;
 
     /** @brief Record an arithmetic value after converting it to double. */
     template<typename T, std::enable_if_t<detail::IsMetricValueV<T>, int> = 0>
-    auto Record(T value, std::initializer_list<Attribute> attributes = {}) const -> bool {
-        return Record(static_cast<double>(value), attributes);
+    auto record(T value, std::initializer_list<Attribute> attributes = {}) const -> bool {
+        return record(static_cast<double>(value), attributes);
     }
 
 private:
@@ -294,7 +294,7 @@ public:
      *
      * Returns true without exporting when no backend is active.
      */
-    auto AddDoubleCounter(std::string_view name,
+    auto addDoubleCounter(std::string_view name,
                           double value,
                           std::string_view unit = "",
                           std::string_view description = "",
@@ -303,35 +303,35 @@ public:
 
 #if __cplusplus >= 202002L
     /** @brief Add @p value to a double counter instrument with C++20 span attributes. */
-    auto AddDoubleCounter(std::string_view name,
+    auto addDoubleCounter(std::string_view name,
                           double value,
                           std::string_view unit,
                           std::string_view description,
                           std::span<const nestdaq_otel_attribute> attributes) -> bool {
-        return AddDoubleCounter(name, value, unit, description, attributes.data(), attributes.size());
+        return addDoubleCounter(name, value, unit, description, attributes.data(), attributes.size());
     }
 #endif
 
     /** @brief Add an arithmetic value to a counter after converting it to double. */
     template<typename T, std::enable_if_t<detail::IsMetricValueV<T>, int> = 0>
-    auto AddCounter(std::string_view name,
+    auto addCounter(std::string_view name,
                     T value,
                     std::string_view unit = "",
                     std::string_view description = "",
                     const nestdaq_otel_attribute* attributes = nullptr,
                     std::size_t attributeCount = 0) -> bool {
-        return AddDoubleCounter(name, static_cast<double>(value), unit, description, attributes, attributeCount);
+        return addDoubleCounter(name, static_cast<double>(value), unit, description, attributes, attributeCount);
     }
 
 #if __cplusplus >= 202002L
     /** @brief Add an arithmetic value to a counter with C++20 span attributes. */
     template<typename T, std::enable_if_t<detail::IsMetricValueV<T>, int> = 0>
-    auto AddCounter(std::string_view name,
+    auto addCounter(std::string_view name,
                     T value,
                     std::string_view unit,
                     std::string_view description,
                     std::span<const nestdaq_otel_attribute> attributes) -> bool {
-        return AddDoubleCounter(name, static_cast<double>(value), unit, description, attributes);
+        return addDoubleCounter(name, static_cast<double>(value), unit, description, attributes);
     }
 #endif
 
@@ -340,7 +340,7 @@ public:
      *
      * Returns true without exporting when no backend is active.
      */
-    auto RecordDoubleHistogram(std::string_view name,
+    auto recordDoubleHistogram(std::string_view name,
                                double value,
                                std::string_view unit = "",
                                std::string_view description = "",
@@ -349,35 +349,35 @@ public:
 
 #if __cplusplus >= 202002L
     /** @brief Record @p value in a double histogram instrument with C++20 span attributes. */
-    auto RecordDoubleHistogram(std::string_view name,
+    auto recordDoubleHistogram(std::string_view name,
                                double value,
                                std::string_view unit,
                                std::string_view description,
                                std::span<const nestdaq_otel_attribute> attributes) -> bool {
-        return RecordDoubleHistogram(name, value, unit, description, attributes.data(), attributes.size());
+        return recordDoubleHistogram(name, value, unit, description, attributes.data(), attributes.size());
     }
 #endif
 
     /** @brief Record an arithmetic histogram value after converting it to double. */
     template<typename T, std::enable_if_t<detail::IsMetricValueV<T>, int> = 0>
-    auto RecordHistogram(std::string_view name,
+    auto recordHistogram(std::string_view name,
                          T value,
                          std::string_view unit = "",
                          std::string_view description = "",
                          const nestdaq_otel_attribute* attributes = nullptr,
                          std::size_t attributeCount = 0) -> bool {
-        return RecordDoubleHistogram(name, static_cast<double>(value), unit, description, attributes, attributeCount);
+        return recordDoubleHistogram(name, static_cast<double>(value), unit, description, attributes, attributeCount);
     }
 
 #if __cplusplus >= 202002L
     /** @brief Record an arithmetic histogram value with C++20 span attributes. */
     template<typename T, std::enable_if_t<detail::IsMetricValueV<T>, int> = 0>
-    auto RecordHistogram(std::string_view name,
+    auto recordHistogram(std::string_view name,
                          T value,
                          std::string_view unit,
                          std::string_view description,
                          std::span<const nestdaq_otel_attribute> attributes) -> bool {
-        return RecordDoubleHistogram(name, static_cast<double>(value), unit, description, attributes);
+        return recordDoubleHistogram(name, static_cast<double>(value), unit, description, attributes);
     }
 #endif
 
@@ -386,7 +386,7 @@ public:
      *
      * Returns true without exporting when no backend is active.
      */
-    auto RecordDoubleGauge(std::string_view name,
+    auto recordDoubleGauge(std::string_view name,
                            double value,
                            std::string_view unit = "",
                            std::string_view description = "",
@@ -395,35 +395,35 @@ public:
 
 #if __cplusplus >= 202002L
     /** @brief Record the latest @p value for a double gauge instrument with C++20 span attributes. */
-    auto RecordDoubleGauge(std::string_view name,
+    auto recordDoubleGauge(std::string_view name,
                            double value,
                            std::string_view unit,
                            std::string_view description,
                            std::span<const nestdaq_otel_attribute> attributes) -> bool {
-        return RecordDoubleGauge(name, value, unit, description, attributes.data(), attributes.size());
+        return recordDoubleGauge(name, value, unit, description, attributes.data(), attributes.size());
     }
 #endif
 
     /** @brief Record an arithmetic gauge value after converting it to double. */
     template<typename T, std::enable_if_t<detail::IsMetricValueV<T>, int> = 0>
-    auto RecordGauge(std::string_view name,
+    auto recordGauge(std::string_view name,
                      T value,
                      std::string_view unit = "",
                      std::string_view description = "",
                      const nestdaq_otel_attribute* attributes = nullptr,
                      std::size_t attributeCount = 0) -> bool {
-        return RecordDoubleGauge(name, static_cast<double>(value), unit, description, attributes, attributeCount);
+        return recordDoubleGauge(name, static_cast<double>(value), unit, description, attributes, attributeCount);
     }
 
 #if __cplusplus >= 202002L
     /** @brief Record an arithmetic gauge value with C++20 span attributes. */
     template<typename T, std::enable_if_t<detail::IsMetricValueV<T>, int> = 0>
-    auto RecordGauge(std::string_view name,
+    auto recordGauge(std::string_view name,
                      T value,
                      std::string_view unit,
                      std::string_view description,
                      std::span<const nestdaq_otel_attribute> attributes) -> bool {
-        return RecordDoubleGauge(name, static_cast<double>(value), unit, description, attributes);
+        return recordDoubleGauge(name, static_cast<double>(value), unit, description, attributes);
     }
 #endif
 
@@ -432,33 +432,33 @@ public:
      *
      * Returns an inactive span when no backend is active or tracing is disabled.
      */
-    auto StartSpan(std::string_view name,
+    auto startSpan(std::string_view name,
                    const nestdaq_otel_attribute* attributes = nullptr,
                    std::size_t attributeCount = 0) -> TelemetrySpan;
 
 #if __cplusplus >= 202002L
     /** @brief Start a span through the active backend with C++20 span attributes. */
-    auto StartSpan(std::string_view name,
+    auto startSpan(std::string_view name,
                    std::span<const nestdaq_otel_attribute> attributes) -> TelemetrySpan {
-        return StartSpan(name, attributes.data(), attributes.size());
+        return startSpan(name, attributes.data(), attributes.size());
     }
 #endif
 
     /** @brief Create a reusable counter handle for one instrument identity. */
-    auto Counter(std::string_view name,
+    auto counter(std::string_view name,
                  std::string_view unit = "",
                  std::string_view description = "") const -> nestdaq::telemetry::Counter;
     /** @brief Create a reusable histogram handle for one instrument identity. */
-    auto Histogram(std::string_view name,
+    auto histogram(std::string_view name,
                    std::string_view unit = "",
                    std::string_view description = "") const -> nestdaq::telemetry::Histogram;
     /** @brief Create a reusable gauge handle for one instrument identity. */
-    auto Gauge(std::string_view name,
+    auto gauge(std::string_view name,
                std::string_view unit = "",
                std::string_view description = "") const -> nestdaq::telemetry::Gauge;
 
     /** @brief Start a span with C++ attribute wrappers. */
-    auto StartSpan(std::string_view name,
+    auto startSpan(std::string_view name,
                    std::initializer_list<Attribute> attributes) -> TelemetrySpan;
 
 private:
@@ -466,25 +466,25 @@ private:
 };
 
 /**
- * @brief Register the process-wide telemetry backend used by @ref GetTelemetry.
+ * @brief Register the process-wide telemetry backend used by @ref getTelemetry.
  *
  * Passing null disables user-facing telemetry calls. The caller owns the
  * library object and must unregister it before destroying the object.
  */
-auto SetActiveTelemetryLibrary(TelemetryLibrary* library) noexcept -> void;
+auto setActiveTelemetryLibrary(TelemetryLibrary* library) noexcept -> void;
 /**
  * @brief Create an OTel spdlog sink from the active runtime plugin.
  *
  * Returns null when OTel logging is disabled, the telemetry plugin is not
  * active, or the plugin was built without spdlog support.
  */
-auto CreateActiveSpdlogSink() -> std::shared_ptr<spdlog::sinks::sink>;
+auto createActiveSpdlogSink() -> std::shared_ptr<spdlog::sinks::sink>;
 /**
  * @brief Return a lightweight facade bound to the currently active backend.
  *
  * If no backend is active, the returned facade performs successful no-op metric
  * calls and returns inactive spans.
  */
-auto GetTelemetry() noexcept -> Telemetry;
+auto getTelemetry() noexcept -> Telemetry;
 
 } // namespace nestdaq::telemetry

@@ -63,17 +63,17 @@ auto getOrCreateThreadPool(const SpdlogAsyncOptions& options) -> std::shared_ptr
 }
 } // namespace
 
-auto CreateSpdlogLogger(std::string_view name) -> std::shared_ptr<spdlog::logger> {
+auto createSpdlogLogger(std::string_view name) -> std::shared_ptr<spdlog::logger> {
     auto sinks = std::vector<spdlog::sink_ptr> {};
-    if (GetSpdlogNativeConsoleEnabled()) {
+    if (getSpdlogNativeConsoleEnabled()) {
         auto console_sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
-        console_sink->set_pattern(GetSpdlogConsolePattern());
+        console_sink->set_pattern(getSpdlogConsolePattern());
         sinks.emplace_back(std::move(console_sink));
     }
-    if (auto otel_sink = CreateActiveSpdlogSink()) {
+    if (auto otel_sink = createActiveSpdlogSink()) {
         sinks.emplace_back(std::move(otel_sink));
     }
-    const auto async_options = GetSpdlogAsyncOptions();
+    const auto async_options = getSpdlogAsyncOptions();
     if (async_options.enabled) {
         return std::make_shared<spdlog::async_logger>(
                    std::string{name},
