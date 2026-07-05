@@ -683,7 +683,7 @@ void daq::service::MetricsPlugin::sendSocketMetrics(const std::string &content)
     //LOG(debug) << kMyClass << " " << __FUNCTION__;
     //return;
     //std::cout << kMyClass << " content = \n" << content << "\n length = " << content.size() << std::endl;
-    const auto sample = nestdaq::telemetry::ParseFairMQThroughputLog(content);
+    const auto sample = nestdaq::telemetry::parseFairMQThroughputLog(content);
     if (!sample || !sample->subChannelIndex) {
         return;
     }

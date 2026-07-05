@@ -10,7 +10,7 @@
 
 TEST_CASE("FairMQ throughput parser accepts the Device rate log format", "[telemetry][fairmq]")
 {
-    const auto sample = nestdaq::telemetry::ParseFairMQThroughputLog(
+    const auto sample = nestdaq::telemetry::parseFairMQThroughputLog(
                             "data: in: 1234.5 (6.75 MB) out: 8.25 (0.5 MB)");
 
     REQUIRE(sample.has_value());
@@ -25,7 +25,7 @@ TEST_CASE("FairMQ throughput parser accepts the Device rate log format", "[telem
 
 TEST_CASE("FairMQ throughput parser trims padded channel names", "[telemetry][fairmq]")
 {
-    const auto sample = nestdaq::telemetry::ParseFairMQThroughputLog(
+    const auto sample = nestdaq::telemetry::parseFairMQThroughputLog(
                             "       pull: in: 1 (2 MB) out: 3 (4 MB)");
 
     REQUIRE(sample.has_value());
@@ -36,7 +36,7 @@ TEST_CASE("FairMQ throughput parser trims padded channel names", "[telemetry][fa
 
 TEST_CASE("FairMQ throughput parser splits indexed subchannels", "[telemetry][fairmq]")
 {
-    const auto sample = nestdaq::telemetry::ParseFairMQThroughputLog(
+    const auto sample = nestdaq::telemetry::parseFairMQThroughputLog(
                             "       data[12]: in: 1 (2 MB) out: 3 (4 MB)");
 
     REQUIRE(sample.has_value());
@@ -48,7 +48,7 @@ TEST_CASE("FairMQ throughput parser splits indexed subchannels", "[telemetry][fa
 
 TEST_CASE("FairMQ throughput parser accepts exponent notation", "[telemetry][fairmq]")
 {
-    const auto sample = nestdaq::telemetry::ParseFairMQThroughputLog(
+    const auto sample = nestdaq::telemetry::parseFairMQThroughputLog(
                             "push: in: 1.5e+03 (2.5e-01 MB) out: 0 (0 MB)");
 
     REQUIRE(sample.has_value());
@@ -60,9 +60,9 @@ TEST_CASE("FairMQ throughput parser accepts exponent notation", "[telemetry][fai
 
 TEST_CASE("FairMQ throughput parser rejects unrelated logs", "[telemetry][fairmq]")
 {
-    CHECK_FALSE(nestdaq::telemetry::ParseFairMQThroughputLog("fair::mq::Device running...").has_value());
-    CHECK_FALSE(nestdaq::telemetry::ParseFairMQThroughputLog("data: in: text (1 MB) out: 2 (3 MB)").has_value());
-    CHECK_FALSE(nestdaq::telemetry::ParseFairMQThroughputLog(": in: 1 (2 MB) out: 3 (4 MB)").has_value());
-    CHECK_FALSE(nestdaq::telemetry::ParseFairMQThroughputLog("data[x]: in: 1 (2 MB) out: 3 (4 MB)").has_value());
-    CHECK_FALSE(nestdaq::telemetry::ParseFairMQThroughputLog("data[]: in: 1 (2 MB) out: 3 (4 MB)").has_value());
+    CHECK_FALSE(nestdaq::telemetry::parseFairMQThroughputLog("fair::mq::Device running...").has_value());
+    CHECK_FALSE(nestdaq::telemetry::parseFairMQThroughputLog("data: in: text (1 MB) out: 2 (3 MB)").has_value());
+    CHECK_FALSE(nestdaq::telemetry::parseFairMQThroughputLog(": in: 1 (2 MB) out: 3 (4 MB)").has_value());
+    CHECK_FALSE(nestdaq::telemetry::parseFairMQThroughputLog("data[x]: in: 1 (2 MB) out: 3 (4 MB)").has_value());
+    CHECK_FALSE(nestdaq::telemetry::parseFairMQThroughputLog("data[]: in: 1 (2 MB) out: 3 (4 MB)").has_value());
 }

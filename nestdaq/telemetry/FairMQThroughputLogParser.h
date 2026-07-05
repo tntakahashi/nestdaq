@@ -32,6 +32,6 @@ struct FairMQThroughputSample {
  *
  * The channel field is trimmed because FairMQ pads it with `std::setw()`.
  */
-auto ParseFairMQThroughputLog(std::string_view line) -> std::optional<FairMQThroughputSample>;
+auto parseFairMQThroughputLog(std::string_view line) -> std::optional<FairMQThroughputSample>;
 
 } // namespace nestdaq::telemetry

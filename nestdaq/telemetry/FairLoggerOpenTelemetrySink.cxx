@@ -131,7 +131,7 @@ auto currentThreadId() noexcept -> uint64_t
 
 auto emitLogRecord(const std::string &content, const fair::LogMetaData &metadata) noexcept -> void
 {
-    if (auto sample = telemetry::ParseFairMQThroughputLog(content)) {
+    if (auto sample = telemetry::parseFairMQThroughputLog(content)) {
         OpenTelemetryInitializer::RecordFairMQThroughput(*sample);
     }
 

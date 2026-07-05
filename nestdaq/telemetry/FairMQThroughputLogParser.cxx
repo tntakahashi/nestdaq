@@ -105,7 +105,7 @@ auto parseChannel(std::string_view value, FairMQThroughputSample &sample) -> boo
 
 } // namespace
 
-auto ParseFairMQThroughputLog(std::string_view line) -> std::optional<FairMQThroughputSample>
+auto parseFairMQThroughputLog(std::string_view line) -> std::optional<FairMQThroughputSample>
 {
     line = trim(line);
     const auto channel_delimiter = line.find(": in:");
