@@ -29,33 +29,33 @@ struct SocketProperty {
     std::string method; // bind or connect
     std::string address;
     std::string transport{"zeromq"};
-    int sndBufSize{kDefaultSocketBufferSize};
-    int rcvBufSize{kDefaultSocketBufferSize};
-    int sndKernelSize{0};
-    int rcvKernelSize{0};
+    int snd_buf_size{kDefaultSocketBufferSize};
+    int rcv_buf_size{kDefaultSocketBufferSize};
+    int snd_kernel_size{0};
+    int rcv_kernel_size{0};
     int linger{kDefaultSocketLinger};
-    int rateLogging{1};
-    int portRangeMin{kDefaultPortRangeMin};
-    int portRangeMax{kDefaultPortRangeMax};
-    bool autoBind{true};
-    int numSockets{0};
+    int rate_logging{1};
+    int port_range_min{kDefaultPortRangeMin};
+    int port_range_max{kDefaultPortRangeMax};
+    bool auto_bind{true};
+    int num_sockets{0};
 
     /** @brief True when TopologyConfig should derive subchannels automatically. */
-    bool autoSubChannel{false};
+    bool auto_sub_channel{false};
     /** @brief True after a bind address has been resolved and published. */
     bool bound{false};
     /** @brief True when connect setup must wait for peer state. */
-    bool waitForPeerConnection{true};
+    bool wait_for_peer_connection{true};
 };
 
 /**
  * @brief Current logical link between a local channel and a peer channel.
  */
 struct LinkProperty {
-    std::string myService; // near
-    std::string myChannel;
-    std::string peerService; // far
-    std::string peerChannel;
+    std::string my_service; // near
+    std::string my_channel;
+    std::string peer_service; // far
+    std::string peer_channel;
     std::string options;
 };
 

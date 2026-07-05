@@ -79,7 +79,7 @@ const std::string toChannelConfig(const daq::service::SocketProperty& p)
 
         if (address.empty() || address=="unspecified") {
             address="unspecified";
-            for (auto i=0; i<p.numSockets-1; ++i) {
+            for (auto i=0; i<p.num_sockets-1; ++i) {
                 address += ",address=unspecified";
             }
         }
@@ -88,7 +88,7 @@ const std::string toChannelConfig(const daq::service::SocketProperty& p)
     if (p.address.find(",")!=std::string::npos) {
         std::vector<std::string> res;
         boost::split(res, p.address, boost::is_any_of(","));
-        const auto numSockets = static_cast<std::vector<std::string>::size_type>(p.numSockets);
+        const auto numSockets = static_cast<std::vector<std::string>::size_type>(p.num_sockets);
         if (res.size()<numSockets) {
             auto n = numSockets - res.size();
             for (auto i=0u; i<n; ++i) {
@@ -104,15 +104,15 @@ const std::string toChannelConfig(const daq::service::SocketProperty& p)
           + ",method="s        + p.method                        //
           + ",address="s       + address                         //
           + ",transport="s     + p.transport                     //
-          + ",rcvBufSize="s    + std::to_string(p.rcvBufSize)    //
-          + ",sndBufSize="s    + std::to_string(p.sndBufSize)    //
-          + ",rcvKernelSize="s + std::to_string(p.rcvKernelSize) //
-          + ",sndKernelSize="s + std::to_string(p.sndKernelSize) //
+          + ",rcvBufSize="s    + std::to_string(p.rcv_buf_size)    //
+          + ",sndBufSize="s    + std::to_string(p.snd_buf_size)    //
+          + ",rcvKernelSize="s + std::to_string(p.rcv_kernel_size) //
+          + ",sndKernelSize="s + std::to_string(p.snd_kernel_size) //
           + ",linger="s        + std::to_string(p.linger)        //
-          + ",rateLogging="s   + std::to_string(p.rateLogging)   //
-          + ",portRangeMin="s  + std::to_string(p.portRangeMin)  //
-          + ",portRangeMax="s  + std::to_string(p.portRangeMax)  //
-          + ",autoBind="s      + std::to_string(p.autoBind);      //
+          + ",rateLogging="s   + std::to_string(p.rate_logging)   //
+          + ",portRangeMin="s  + std::to_string(p.port_range_min)  //
+          + ",portRangeMax="s  + std::to_string(p.port_range_max)  //
+          + ",autoBind="s      + std::to_string(p.auto_bind);      //
 
     LOG(debug) << __FUNCTION__ << " ret = " << ret;
     return ret;
@@ -137,39 +137,39 @@ const daq::service::SocketProperty toSocketProperty(const Container& c)
         } else if (field=="transport") {
             sp.transport = value;
         } else if (field=="sndBufSize") {
-            sp.sndBufSize = std::stoi(value);
+            sp.snd_buf_size = std::stoi(value);
         } else if (field=="rcvBufSize") {
-            sp.rcvBufSize = std::stoi(value);
+            sp.rcv_buf_size = std::stoi(value);
         } else if (field=="sndKernelSize") {
-            sp.sndKernelSize = std::stoi(value);
+            sp.snd_kernel_size = std::stoi(value);
         } else if (field=="rcvKernelSize") {
-            sp.rcvKernelSize = std::stoi(value);
+            sp.rcv_kernel_size = std::stoi(value);
         } else if (field=="linger") {
             sp.linger = std::stoi(value);
         } else if (field=="rateLogging") {
-            sp.rateLogging = std::stoi(value);
+            sp.rate_logging = std::stoi(value);
         } else if (field=="portRangeMin") {
-            sp.portRangeMin = std::stoi(value);
+            sp.port_range_min = std::stoi(value);
         } else if (field=="portRangeMax") {
-            sp.portRangeMax = std::stoi(value);
+            sp.port_range_max = std::stoi(value);
         } else if (field=="autoBind") {
             const auto& v = boost::to_lower_copy(value);
-            sp.autoBind = (v=="1") || (v=="true");
+            sp.auto_bind = (v=="1") || (v=="true");
         } else if (field=="numSockets") {
-            sp.numSockets = std::stoi(value);
+            sp.num_sockets = std::stoi(value);
         } else if (field=="autoSubChannel") {
             const auto& v = boost::to_lower_copy(value);
-            sp.autoSubChannel = (v=="1") || (v=="true");
+            sp.auto_sub_channel = (v=="1") || (v=="true");
         } else if (field=="bound") {
             const auto& v = boost::to_lower_copy(value);
             sp.bound = (v=="1") || (v=="true");
         } else if (field=="waitForPeerConnection") {
             const auto& v = boost::to_lower_copy(value);
-            sp.waitForPeerConnection = (v=="1") || (v=="true");
+            sp.wait_for_peer_connection = (v=="1") || (v=="true");
         }
     }
-//  if (sp.autoSubChannel) {
-//    sp.numSockets = 0;
+//  if (sp.auto_sub_channel) {
+//    sp.num_sockets = 0;
 //  }
     return sp;
 }
@@ -348,7 +348,7 @@ void daq::service::TopologyConfig::configConnect()
                     const auto& id      = matchResults[2].str() + "-"s + matchResults[3].str();
                     const auto& channel = matchResults[4].str();
 
-                    if (!sp.autoSubChannel) {
+                    if (!sp.auto_sub_channel) {
                         // infer subChannelIndex = 0
                         const auto& a = findAddress(service, id, channel, "0"s);
                         if (a.empty()) {
@@ -447,7 +447,7 @@ void daq::service::TopologyConfig::configConnect()
                         id = service + "-0"s;
                     }
 
-                    if (!sp.autoSubChannel) {
+                    if (!sp.auto_sub_channel) {
                         // infer subChannelIndex = 0
                         const auto &a = findAddress(service, id, channel, "0"s);
                         if (a.empty()) {
@@ -519,13 +519,13 @@ auto daq::service::TopologyConfig::getPeerState(const MQChannel & channels) -> s
     for (const auto &[name, sp] : channels) {
         for (const auto& [lk, lp] : fLinks) {
             //LOG(debug) << kMyClass << " " << __FUNCTION__ << ":" << __LINE__ << " bind endpoint = " << sp.name
-            //           << ", link property = " << lp.myService << ":" << lp.myChannel
-            //           << ", " << lp.peerService << ":" << lp.peerChannel;
-            if ((fServiceName == lp.myService) && (sp.name == lp.myChannel)) {
-                auto k = join({fTopPrefix, lp.peerService, "*"}, fSeparator);
+            //           << ", link property = " << lp.my_service << ":" << lp.my_channel
+            //           << ", " << lp.peer_service << ":" << lp.peer_channel;
+            if ((fServiceName == lp.my_service) && (sp.name == lp.my_channel)) {
+                auto k = join({fTopPrefix, lp.peer_service, "*"}, fSeparator);
                 peerKeys.emplace(k);
-            } else if ((fServiceName == lp.peerService) && (sp.name == lp.peerChannel)) {
-                auto k = join({fTopPrefix, lp.myService, "*"}, fSeparator);
+            } else if ((fServiceName == lp.peer_service) && (sp.name == lp.peer_channel)) {
+                auto k = join({fTopPrefix, lp.my_service, "*"}, fSeparator);
                 peerKeys.emplace(k);
             }
         }
@@ -615,7 +615,7 @@ void daq::service::TopologyConfig::initialize()
     auto links = readLinks();
     for (const auto& k : links) {
         const auto lp = readLinkProperty(k);
-        const auto kk = lp.myService + fSeparator + lp.myChannel + "," + lp.peerService + fSeparator + lp.peerChannel;
+        const auto kk = lp.my_service + fSeparator + lp.my_channel + "," + lp.peer_service + fSeparator + lp.peer_channel;
         LOG(debug) << " link = " << kk;
         if (fLinks.count(kk)) {
             fLinks[kk].options += "," + lp.options;
@@ -641,14 +641,14 @@ void daq::service::TopologyConfig::initialize()
         // check number of peer instances
         for (const auto& [pairName, l] : fLinks) {
             LOG(warn) << __FILE__ << ":" << __LINE__ << "\n"
-                      << pairName << " " << l.myService << ":" << l.myChannel << " " << l.peerService << ":" << l.peerChannel
+                      << pairName << " " << l.my_service << ":" << l.my_channel << " " << l.peer_service << ":" << l.peer_channel
                       << " " << sp.name;
-            if ((l.myService!=l.peerService) && (l.myChannel!=sp.name)) {
+            if ((l.my_service!=l.peer_service) && (l.my_channel!=sp.name)) {
                 continue;
             }
-            auto useL = ((l.myService==l.peerService) && (l.peerChannel==sp.name));
-            const auto &peerService = (useL) ? l.myService : l.peerService;
-            const auto &peerChannel = (useL) ? l.myChannel : l.peerChannel;
+            auto useL = ((l.my_service==l.peer_service) && (l.peer_channel==sp.name));
+            const auto &peerService = (useL) ? l.my_service : l.peer_service;
+            const auto &peerChannel = (useL) ? l.my_channel : l.peer_channel;
             // scan keys by a pattern = "daq_servie:service:*:presence"
             const auto &keys = scan(*getClient(), {fTopPrefix, peerService, "*", kPresencePrefix.data()}, fSeparator);
             LOG(debug) << kMyClass << " " << __FUNCTION__ << " scan-service : peer name = " << peerService << ", n peers " << keys.size();
@@ -658,18 +658,18 @@ void daq::service::TopologyConfig::initialize()
                 LOG(debug) << " " << k;
                 peers.push_back(k);
             }
-            if (sp.autoSubChannel) {
-                sp.numSockets += keys.size();
+            if (sp.auto_sub_channel) {
+                sp.num_sockets += keys.size();
             }
         }
         std::sort(peers.begin(), peers.end());
         peers.erase(std::unique(peers.begin(), peers.end()), peers.end());
 
-        LOG(debug) << " channel = " << sp.name << " autoSubChannel set numSockets = " << sp.numSockets;
+        LOG(debug) << " channel = " << sp.name << " autoSubChannel set numSockets = " << sp.num_sockets;
 
         if (isUdsAvailable(peers) && fEnableUds && (sp.method=="bind") && (sp.transport=="zeromq")) {
             sp.address += "ipc://@/tmp/nestdaq/"s + "/" + fServiceName + "/" + fId + "/" + sp.name + "[0]";
-            for (auto i=1; i<sp.numSockets; ++i) {
+            for (auto i=1; i<sp.num_sockets; ++i) {
                 sp.address += ",ipc://@/tmp/nestdaq/"s + "/" + fServiceName + "/" + fId + "/" + sp.name + "[" + std::to_string(i) + "]";
             }
             //LOG(debug4) << " uds address =  " << sp.address;
@@ -743,7 +743,7 @@ void daq::service::TopologyConfig::initializeDefaultChannelProperties()
  */
 bool daq::service::TopologyConfig::isUdsAvailable(const std::vector<std::string> &peers)
 {
-    const auto& myIP = fPlugin.getHealth().ipAddress;
+    const auto& myIP = fPlugin.getHealth().ip_address;
     for (const auto& x : peers) {
         const auto& ip = readPeerIp(x);
         if (myIP!=ip) {
@@ -861,27 +861,27 @@ const daq::service::LinkProperty daq::service::TopologyConfig::readLinkProperty(
     // LOG(debug) << " LinkProperty parse result = " << serviceL << " " << channelL << " " << serviceR << " " << channelR;
 
     if (serviceL==serviceR) {
-        lp.myService   = serviceL;
-        lp.peerService = serviceR;
+        lp.my_service   = serviceL;
+        lp.peer_service = serviceR;
         if (channelL < channelR) {
-            lp.myChannel   = channelL;
-            lp.peerChannel = channelR;
+            lp.my_channel   = channelL;
+            lp.peer_channel = channelR;
         } else {
-            lp.myChannel   = channelR;
-            lp.peerChannel = channelL;
+            lp.my_channel   = channelR;
+            lp.peer_channel = channelL;
         }
     }
 
     if (serviceL == fServiceName) {
-        lp.myService   = serviceL;
-        lp.myChannel   = channelL;
-        lp.peerService = serviceR;
-        lp.peerChannel = channelR;
+        lp.my_service   = serviceL;
+        lp.my_channel   = channelL;
+        lp.peer_service = serviceR;
+        lp.peer_channel = channelR;
     } else {
-        lp.myService   = serviceR;
-        lp.myChannel   = channelR;
-        lp.peerService = serviceL;
-        lp.peerChannel = channelL;
+        lp.my_service   = serviceR;
+        lp.my_channel   = channelR;
+        lp.peer_service = serviceL;
+        lp.peer_channel = channelL;
     }
     lp.options = *val;
 
@@ -1047,7 +1047,7 @@ void daq::service::TopologyConfig::resolveConnectAddress()
         if (!sp.address.empty() && sp.address!="unspecified") {
             continue;
         }
-        LOG(debug) << kMyClass << " " << __FUNCTION__ << " id = " << fId << " find peer of " << sp.name << " numSockets = " << sp.numSockets;
+        LOG(debug) << kMyClass << " " << __FUNCTION__ << " id = " << fId << " find peer of " << sp.name << " numSockets = " << sp.num_sockets;
         const auto &myInstanceKey = join({fTopPrefix, fServiceName, fId}, fSeparator);
         const auto &myChannelKey  = join({myInstanceKey, topology::kChannelPrefix.data(), sp.name}, fSeparator);
 
@@ -1084,10 +1084,10 @@ void daq::service::TopologyConfig::resolveConnectAddress()
             r.hgetall(p, std::inserter(h, h.begin()));
             const auto &peerProperty = toSocketProperty(h);
 
-            LOG(debug) << "id = " << fId << " numSocket (me) = " << sp.numSockets << ", (peer) = " << peerProperty.numSockets;
+            LOG(debug) << "id = " << fId << " numSocket (me) = " << sp.num_sockets << ", (peer) = " << peerProperty.num_sockets;
             const auto address = readPeerAddress(p); //peerHealthKey, *peerIP, peerChannel);
             const auto myAddressIndex = static_cast<decltype(address)::size_type>(myIndex);
-            if ((sp.numSockets<=1) && (peerProperty.numSockets<=1)) {
+            if ((sp.num_sockets<=1) && (peerProperty.num_sockets<=1)) {
                 is1to1 = true;
                 // 1:1 or fan-in/fan-out
                 LOG(debug) << kMyClass << " " << __FUNCTION__ << ":" << __LINE__ << " id = " << fId << " 1:1 or fan-in/fan-out ";
@@ -1098,16 +1098,16 @@ void daq::service::TopologyConfig::resolveConnectAddress()
                     res.address = address[0];
                     break;
                 }
-            } else if ((sp.numSockets<=1) && (peerProperty.numSockets>1)) {
+            } else if ((sp.num_sockets<=1) && (peerProperty.num_sockets>1)) {
                 // 1:m
                 LOG(debug) << kMyClass << " " << __FUNCTION__ << ":" << __LINE__ << " id = " << fId << " 1:m ";
                 res.address = address[myAddressIndex];
-            } else if ((sp.numSockets>1) && (peerProperty.numSockets<=1)) {
+            } else if ((sp.num_sockets>1) && (peerProperty.num_sockets<=1)) {
                 // n:1
                 LOG(debug) << kMyClass << " " << __FUNCTION__ << ":" << __LINE__ << " id = " << fId << " n:1 ";
                 assert(address.size()==1);
                 res.address += (res.address.empty()) ? address[0] : ("," + address[0]);
-            } else if ((sp.numSockets>1) && (peerProperty.numSockets>1)) {
+            } else if ((sp.num_sockets>1) && (peerProperty.num_sockets>1)) {
                 // n:m
                 LOG(debug) << kMyClass << " " << __FUNCTION__ << ":" << __LINE__ << " id = " << fId << " n:m ";
                 assert(address.size()>myAddressIndex);
@@ -1176,26 +1176,26 @@ void daq::service::TopologyConfig::waitBindAddress()
     for (const auto& [name, sp] : fConnectChannels) {
         for (const auto& [lk, lp] : fLinks) {
             LOG(debug) << kMyClass << " " << __FUNCTION__ << ":" << __LINE__ << " connect " << sp.name
-                       << ", " << lp.myService << ":" << lp.myChannel
-                       << ", " << lp.peerService << ":" << lp.peerChannel;
-            if ((fServiceName == lp.myService) && (sp.name == lp.myChannel)) {
-                auto k = join({fTopPrefix, lp.peerService, "*", kPresencePrefix.data()}, fSeparator);
+                       << ", " << lp.my_service << ":" << lp.my_channel
+                       << ", " << lp.peer_service << ":" << lp.peer_channel;
+            if ((fServiceName == lp.my_service) && (sp.name == lp.my_channel)) {
+                auto k = join({fTopPrefix, lp.peer_service, "*", kPresencePrefix.data()}, fSeparator);
                 LOG(debug) << kMyClass << " " << __FUNCTION__ << ":" << __LINE__ << " : k = " << k;
-                auto presenceKeys = scan(r, {fTopPrefix, lp.peerService, "*", kPresencePrefix.data()}, fSeparator);
+                auto presenceKeys = scan(r, {fTopPrefix, lp.peer_service, "*", kPresencePrefix.data()}, fSeparator);
                 LOG(debug) << __LINE__ << ": n presence: " << presenceKeys.size();
                 for (auto &a : presenceKeys) {
                     auto c =  a.substr(0, a.find_last_of(fSeparator));
                     // e.g.: daq_service:peer-service:peer-instance-id:endpoint:peer-chanenl
-                    channels.emplace(join({c, topology::kChannelPrefix.data(), lp.peerChannel}, fSeparator));
+                    channels.emplace(join({c, topology::kChannelPrefix.data(), lp.peer_channel}, fSeparator));
                 }
-            } else if ((fServiceName == lp.peerService) && (sp.name == lp.peerChannel)) {
-                auto k = join({fTopPrefix, lp.myService, "*", kPresencePrefix.data()}, fSeparator);
+            } else if ((fServiceName == lp.peer_service) && (sp.name == lp.peer_channel)) {
+                auto k = join({fTopPrefix, lp.my_service, "*", kPresencePrefix.data()}, fSeparator);
                 LOG(debug) << kMyClass << " " << __FUNCTION__ << ":" << __LINE__ << " : k = " << k;
-                auto presenceKeys = scan(r, {fTopPrefix, lp.myService, "*", kPresencePrefix.data()}, fSeparator);
+                auto presenceKeys = scan(r, {fTopPrefix, lp.my_service, "*", kPresencePrefix.data()}, fSeparator);
                 LOG(debug) << __LINE__ << ": n presence: " << presenceKeys.size();
                 for (auto &a : presenceKeys) {
                     auto c = a.substr(0, a.find_last_of(fSeparator));
-                    channels.emplace(join({c, topology::kChannelPrefix.data(), lp.myChannel}, fSeparator));
+                    channels.emplace(join({c, topology::kChannelPrefix.data(), lp.my_channel}, fSeparator));
                 }
             }
         }
@@ -1227,19 +1227,19 @@ void daq::service::TopologyConfig::waitForPeerConnection()
     LOG(debug) << __FUNCTION__ << " ...";
     std::unordered_set<std::string> peerKeys;
     for (const auto &[name, sp] : fBindChannels) {
-        //LOG(debug) << name << " waitForPeerConnection = " << sp.waitForPeerConnection;
-        if (!sp.waitForPeerConnection) {
+        //LOG(debug) << name << " waitForPeerConnection = " << sp.wait_for_peer_connection;
+        if (!sp.wait_for_peer_connection) {
             continue;
         }
         for (const auto& [lk, lp] : fLinks) {
             //LOG(debug) << kMyClass << " " << __FUNCTION__ << ":" << __LINE__ << " bind endpoint = " << sp.name
-            //           << ", link property = " << lp.myService << ":" << lp.myChannel
-            //           << ", " << lp.peerService << ":" << lp.peerChannel;
-            if ((fServiceName == lp.myService) && (sp.name == lp.myChannel)) {
-                auto k = join({fTopPrefix, lp.peerService, "*"}, fSeparator);
+            //           << ", link property = " << lp.my_service << ":" << lp.my_channel
+            //           << ", " << lp.peer_service << ":" << lp.peer_channel;
+            if ((fServiceName == lp.my_service) && (sp.name == lp.my_channel)) {
+                auto k = join({fTopPrefix, lp.peer_service, "*"}, fSeparator);
                 peerKeys.emplace(k);
-            } else if ((fServiceName == lp.peerService) && (sp.name == lp.peerChannel)) {
-                auto k = join({fTopPrefix, lp.myService, "*"}, fSeparator);
+            } else if ((fServiceName == lp.peer_service) && (sp.name == lp.peer_channel)) {
+                auto k = join({fTopPrefix, lp.my_service, "*"}, fSeparator);
                 peerKeys.emplace(k);
             }
         }
@@ -1328,8 +1328,8 @@ void daq::service::TopologyConfig::writeAddress(MQChannel &channels, std::functi
                 }
                 LOG(debug1) << ss.str();
 
-                h["numSockets"]     = std::to_string(sp.numSockets);
-                h["autoSubChannel"] = std::to_string(sp.autoSubChannel);
+                h["numSockets"]     = std::to_string(sp.num_sockets);
+                h["autoSubChannel"] = std::to_string(sp.auto_sub_channel);
 
                 pipe.hset(key, h.cbegin(), h.cend());
                 pipe.expire(key, fMaxTtl);
@@ -1389,19 +1389,19 @@ void daq::service::TopologyConfig::writeChannel(SocketProperty &sp, const std::v
         std::make_pair("method",                sp.method),
         std::make_pair("address",               sp.address),
         std::make_pair("transport",             sp.transport),
-        std::make_pair("sndBufSize",            std::to_string(sp.sndBufSize)),
-        std::make_pair("rcvBufSize",            std::to_string(sp.rcvBufSize)),
-        std::make_pair("sndKernelSize",         std::to_string(sp.sndKernelSize)),
-        std::make_pair("rcvKernelSize",         std::to_string(sp.rcvKernelSize)),
+        std::make_pair("sndBufSize",            std::to_string(sp.snd_buf_size)),
+        std::make_pair("rcvBufSize",            std::to_string(sp.rcv_buf_size)),
+        std::make_pair("sndKernelSize",         std::to_string(sp.snd_kernel_size)),
+        std::make_pair("rcvKernelSize",         std::to_string(sp.rcv_kernel_size)),
         std::make_pair("linger",                std::to_string(sp.linger)),
-        std::make_pair("rateLogging",           std::to_string(sp.rateLogging)),
-        std::make_pair("portRangeMin",          std::to_string(sp.portRangeMin)),
-        std::make_pair("portRangeMax",          std::to_string(sp.portRangeMax)),
-        std::make_pair("autoBind",              std::to_string(sp.autoBind)),
-        std::make_pair("numSockets",            std::to_string(sp.numSockets)),
-        std::make_pair("autoSubChannel",        std::to_string(sp.autoSubChannel)),
+        std::make_pair("rateLogging",           std::to_string(sp.rate_logging)),
+        std::make_pair("portRangeMin",          std::to_string(sp.port_range_min)),
+        std::make_pair("portRangeMax",          std::to_string(sp.port_range_max)),
+        std::make_pair("autoBind",              std::to_string(sp.auto_bind)),
+        std::make_pair("numSockets",            std::to_string(sp.num_sockets)),
+        std::make_pair("autoSubChannel",        std::to_string(sp.auto_sub_channel)),
         std::make_pair("bound",                 std::to_string(sp.bound)),
-        std::make_pair("waitForPeerConnection", std::to_string(sp.waitForPeerConnection)),
+        std::make_pair("waitForPeerConnection", std::to_string(sp.wait_for_peer_connection)),
     });
     pipe.expire(key, fMaxTtl);
 

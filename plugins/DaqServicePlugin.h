@@ -51,10 +51,10 @@ struct Presence {
  */
 struct Health {
     std::string key;
-    std::string hostName;
-    std::string ipAddress;
-    std::chrono::system_clock::time_point createdTimeSystem;
-    std::chrono::steady_clock::time_point createdTime;
+    std::string host_name;
+    std::string ip_address;
+    std::chrono::system_clock::time_point created_time_system;
+    std::chrono::steady_clock::time_point created_time;
 //  std::chrono::system_clock::time_point updatedTime;
 };
 

@@ -49,17 +49,17 @@ ProcessStatKey append(const ProcessStatKey& input, std::string_view s, std::stri
     ProcessStatKey ret;
     ret.cpu     = join({input.cpu,     s.data()}, separator.data());
     ret.ram     = join({input.ram,     s.data()}, separator.data());
-    ret.stateId = join({input.stateId, s.data()}, separator.data());
+    ret.state_id = join({input.state_id, s.data()}, separator.data());
     return ret;
 }
 
 SocketMetricsKey append(const SocketMetricsKey &input, std::string_view s, std::string_view separator)
 {
     SocketMetricsKey ret;
-    ret.msgIn    = join({input.msgIn,    s.data()}, separator.data());
-    ret.msgOut   = join({input.msgOut,   s.data()}, separator.data());
-    ret.bytesIn  = join({input.bytesIn,  s.data()}, separator.data());
-    ret.bytesOut = join({input.bytesOut, s.data()}, separator.data());
+    ret.msg_in    = join({input.msg_in,    s.data()}, separator.data());
+    ret.msg_out   = join({input.msg_out,   s.data()}, separator.data());
+    ret.bytes_in  = join({input.bytes_in,  s.data()}, separator.data());
+    ret.bytes_out = join({input.bytes_out, s.data()}, separator.data());
     return ret;
 }
 
@@ -68,17 +68,17 @@ ProcessStatKey prepend(const ProcessStatKey& input, std::string_view s, std::str
     ProcessStatKey ret;
     ret.cpu     = join({s.data(), input.cpu},     separator.data());
     ret.ram     = join({s.data(), input.ram},     separator.data());
-    ret.stateId = join({s.data(), input.stateId}, separator.data());
+    ret.state_id = join({s.data(), input.state_id}, separator.data());
     return ret;
 }
 
 SocketMetricsKey prepend(const SocketMetricsKey& input, std::string_view s, std::string_view separator)
 {
     SocketMetricsKey ret;
-    ret.msgIn    = join({s.data(), input.msgIn},    separator.data());
-    ret.msgOut   = join({s.data(), input.msgOut},   separator.data());
-    ret.bytesIn  = join({s.data(), input.bytesIn},  separator.data());
-    ret.bytesOut = join({s.data(), input.bytesOut}, separator.data());
+    ret.msg_in    = join({s.data(), input.msg_in},    separator.data());
+    ret.msg_out   = join({s.data(), input.msg_out},   separator.data());
+    ret.bytes_in  = join({s.data(), input.bytes_in},  separator.data());
+    ret.bytes_out = join({s.data(), input.bytes_out}, separator.data());
     return ret;
 }
 
@@ -87,17 +87,17 @@ ProcessStatKey replaceAll(const ProcessStatKey& input, std::string_view search, 
     ProcessStatKey ret;
     ret.cpu     = boost::replace_all_copy(input.cpu,     search.data(), format.data());
     ret.ram     = boost::replace_all_copy(input.ram,     search.data(), format.data());
-    ret.stateId = boost::replace_all_copy(input.stateId, search.data(), format.data());
+    ret.state_id = boost::replace_all_copy(input.state_id, search.data(), format.data());
     return ret;
 }
 
 SocketMetricsKey replaceAll(const SocketMetricsKey& input, std::string_view search, std::string format)
 {
     SocketMetricsKey ret;
-    ret.msgIn    = boost::replace_all_copy(input.msgIn,    search.data(), format.data());
-    ret.msgOut   = boost::replace_all_copy(input.msgOut,   search.data(), format.data());
-    ret.bytesIn  = boost::replace_all_copy(input.bytesIn,  search.data(), format.data());
-    ret.bytesOut = boost::replace_all_copy(input.bytesOut, search.data(), format.data());
+    ret.msg_in    = boost::replace_all_copy(input.msg_in,    search.data(), format.data());
+    ret.msg_out   = boost::replace_all_copy(input.msg_out,   search.data(), format.data());
+    ret.bytes_in  = boost::replace_all_copy(input.bytes_in,  search.data(), format.data());
+    ret.bytes_out = boost::replace_all_copy(input.bytes_out, search.data(), format.data());
     return ret;
 }
 } // namespace daq::service
@@ -153,14 +153,14 @@ daq::service::MetricsPlugin::MetricsPlugin(std::string_view name,
     fStateKey        = join({fTopPrefix, kStatePrefix.data()},        fSeparator);
     fLastUpdateKey   = join({fTopPrefix, kLastUpdatePrefix.data()},   fSeparator);
     fLastUpdateNSKey = join({fTopPrefix, kLastUpdateNSPrefix.data()}, fSeparator);
-    fProcKey.stateId = join({fTopPrefix, kStateIdPrefix.data()},      fSeparator);
+    fProcKey.state_id = join({fTopPrefix, kStateIdPrefix.data()},      fSeparator);
     fProcKey.cpu     = join({fTopPrefix, kCpuStatPrefix.data()},      fSeparator);
     fProcKey.ram     = join({fTopPrefix, kRamStatPrefix.data()},      fSeparator);
 
-    fSockKey.msgIn    = join({fTopPrefix, kMessageInPrefix.data()},  fSeparator);
-    fSockKey.bytesIn  = join({fTopPrefix, kBytesInPrefix.data()},    fSeparator);
-    fSockKey.msgOut   = join({fTopPrefix, kMessageOutPrefix.data()}, fSeparator);
-    fSockKey.bytesOut = join({fTopPrefix, kBytesOutPrefix.data()},   fSeparator);
+    fSockKey.msg_in    = join({fTopPrefix, kMessageInPrefix.data()},  fSeparator);
+    fSockKey.bytes_in  = join({fTopPrefix, kBytesInPrefix.data()},    fSeparator);
+    fSockKey.msg_out   = join({fTopPrefix, kMessageOutPrefix.data()}, fSeparator);
+    fSockKey.bytes_out = join({fTopPrefix, kBytesOutPrefix.data()},   fSeparator);
 
     fSockSumKey       = append(fSockKey, "sum", "-");
 
@@ -177,26 +177,26 @@ daq::service::MetricsPlugin::MetricsPlugin(std::string_view name,
                << "\n LastUpdateKey     = " << fLastUpdateKey
                << "\n LastUpdateNSKey   = " << fLastUpdateNSKey
                << "\n"
-               << "\n ProcKey.stateId   = " << fProcKey.stateId
+               << "\n ProcKey.state_id   = " << fProcKey.state_id
                << "\n ProcKey.cpu       = " << fProcKey.cpu
                << "\n ProcKey.ram       = " << fProcKey.ram
                << "\n"
-               << "\n SockKey.msgIn     = " << fSockKey.msgIn
-               << "\n SockKey.bytesIn   = " << fSockKey.bytesIn
-               << "\n SockKey.msgOut    = " << fSockKey.msgOut
-               << "\n SockKey.bytesOut  = " << fSockKey.bytesOut
+               << "\n SockKey.msg_in     = " << fSockKey.msg_in
+               << "\n SockKey.bytes_in   = " << fSockKey.bytes_in
+               << "\n SockKey.msg_out    = " << fSockKey.msg_out
+               << "\n SockKey.bytes_out  = " << fSockKey.bytes_out
                << "\n"
-               << "\n SockSumKey.msgIn     = " << fSockSumKey.msgIn
-               << "\n SockSumKey.bytesIn   = " << fSockSumKey.bytesIn
-               << "\n SockSumKey.msgOut    = " << fSockSumKey.msgOut
-               << "\n SockSumKey.bytesOut  = " << fSockSumKey.bytesOut
+               << "\n SockSumKey.msg_in     = " << fSockSumKey.msg_in
+               << "\n SockSumKey.bytes_in   = " << fSockSumKey.bytes_in
+               << "\n SockSumKey.msg_out    = " << fSockSumKey.msg_out
+               << "\n SockSumKey.bytes_out  = " << fSockSumKey.bytes_out
                << "\n"
                << "\n fNumMessageKey    = " << fNumMessageKey
                << "\n fBytesKey         = " << fBytesKey
                << "\n fNuMMessageSumKey = " << fNumMessageSumKey
                << "\n fBytesSumKey      = " << fBytesSumKey
                << "\n"
-               << "\n TsProcKey.stateId   = " << fTsProcKey.stateId
+               << "\n TsProcKey.state_id   = " << fTsProcKey.state_id
                << "\n TsProcKey.cpu       = " << fTsProcKey.cpu
                << "\n PTsrocKey.ram       = " << fTsProcKey.ram;
     */
@@ -228,13 +228,13 @@ daq::service::MetricsPlugin::MetricsPlugin(std::string_view name,
     fRegisteredKeys.insert({fStateKey, fLastUpdateKey, fLastUpdateNSKey,
                             fStartTimeKey, fStartTimeNSKey, fStopTimeKey, fStopTimeNSKey,
                             fRunNumberKey,
-                            fProcKey.stateId, fProcKey.cpu, fProcKey.ram,
+                            fProcKey.state_id, fProcKey.cpu, fProcKey.ram,
                             fCreatedTimeKey, fHostNameKey, fIpAddressKey});
     //for (auto k : fRegisteredKeys) {
     //  LOG(debug) << " key = " << k;
     //}
-    fRegisteredSockKeys.insert({fSockKey.msgIn, fSockKey.bytesIn, fSockKey.msgOut, fSockKey.bytesOut,
-                                fSockSumKey.msgIn, fSockSumKey.bytesIn, fSockSumKey.msgOut, fSockSumKey.bytesOut,
+    fRegisteredSockKeys.insert({fSockKey.msg_in, fSockKey.bytes_in, fSockKey.msg_out, fSockKey.bytes_out,
+                                fSockSumKey.msg_in, fSockSumKey.bytes_in, fSockSumKey.msg_out, fSockSumKey.bytes_out,
                                 fNumMessageKey, fBytesKey, fNumMessageSumKey, fBytesSumKey});
 
     fPipe = std::make_unique<sw::redis::Pipeline>(std::move(fClient->pipeline()));
@@ -281,7 +281,7 @@ daq::service::MetricsPlugin::MetricsPlugin(std::string_view name,
             if (fPipe) {
                 fPipe->discard();
                 fPipe->hset(fStateKey,        fId, stateName)
-                .hset(fProcKey.stateId, {std::make_pair(fId, static_cast<int>(newState))})
+                .hset(fProcKey.state_id, {std::make_pair(fId, static_cast<int>(newState))})
                 .exec();
                 pipelineUsed = true;
             }
@@ -303,7 +303,7 @@ daq::service::MetricsPlugin::MetricsPlugin(std::string_view name,
             if (isRecreateTs()) {
                 pipelineUsed |= createTimeseries(fTsProcKey.cpu,     {{kDataType.data(), kCpuStatPrefix.data()}});
                 pipelineUsed |= createTimeseries(fTsProcKey.ram,     {{kDataType.data(), kRamStatPrefix.data()}});
-                pipelineUsed |= createTimeseries(fTsProcKey.stateId, {{kDataType.data(), kStateIdPrefix.data()}});
+                pipelineUsed |= createTimeseries(fTsProcKey.state_id, {{kDataType.data(), kStateIdPrefix.data()}});
                 pipelineUsed |= createSocketTS();
                 if (pipelineUsed) {
                     fPipe->exec();
@@ -382,32 +382,32 @@ bool daq::service::MetricsPlugin::createSocketTS()
     //LOG(warn) << __func__ << ":" << __LINE__;
     bool pipelineUsed=false;
     for (const auto &[name, property] : fSocketProperties) {
-        auto hasInput  = (property.type!="push") && (property.type!="pub");
-        auto hasOutput = (property.type!="pull") && (property.type!="sub");
-        if (!hasInput && !hasOutput) {
+        auto has_input  = (property.type!="push") && (property.type!="pub");
+        auto has_output = (property.type!="pull") && (property.type!="sub");
+        if (!has_input && !has_output) {
             continue;
         }
         const auto prefix = join({"ts", fId, name}, fSeparator);
         auto t = replaceAll(fSockKey, std::string(fTopPrefix)+fSeparator.data(), "");
-        auto tsKey = prepend(t, prefix, fSeparator);
-        fTsSockKey[name]    = tsKey;
-        auto sumKey = append(tsKey, "sum", "-");
+        auto ts_key = prepend(t, prefix, fSeparator);
+        fTsSockKey[name]    = ts_key;
+        auto sumKey = append(ts_key, "sum", "-");
         fTsSockSumKey[name] =  sumKey;
 
         //std::string s{" socket TS keys for "};
         //s += name + "\n";
-        //s += " " + tsKey.msgIn  + ", " + tsKey.bytesIn  + ", " + tsKey.msgOut  + ", " + tsKey.bytesOut + "\n";
-        //s += " " + sumKey.msgIn + ", " + sumKey.bytesIn + ", " + sumKey.msgOut + ", " + sumKey.bytesOut;
+        //s += " " + ts_key.msg_in  + ", " + ts_key.bytes_in  + ", " + ts_key.msg_out  + ", " + ts_key.bytes_out + "\n";
+        //s += " " + sumKey.msg_in + ", " + sumKey.bytes_in + ", " + sumKey.msg_out + ", " + sumKey.bytes_out;
         //LOG(debug) << kMyClass << s;
 
         std::unordered_map<std::string, std::string> labels{{"name",     property.name},
             {"socket",    property.type},
             {"transport", property.transport}};
-        if (hasInput) {
-            pipelineUsed |= createSocketTS(tsKey.msgIn, tsKey.bytesIn, kMessageInPrefix, kBytesInPrefix, labels);
+        if (has_input) {
+            pipelineUsed |= createSocketTS(ts_key.msg_in, ts_key.bytes_in, kMessageInPrefix, kBytesInPrefix, labels);
         }
-        if (hasOutput) {
-            pipelineUsed |= createSocketTS(tsKey.msgOut, tsKey.bytesOut, kMessageOutPrefix, kBytesOutPrefix, labels);
+        if (has_output) {
+            pipelineUsed |= createSocketTS(ts_key.msg_out, ts_key.bytes_out, kMessageOutPrefix, kBytesOutPrefix, labels);
         }
     }
     return pipelineUsed;
@@ -555,23 +555,23 @@ void daq::service::MetricsPlugin::initializeSocketProperties()
         } else if (field=="transport") {
             p.transport = v;
         } else if (field=="sndBufSize") {
-            p.sndBufSize = std::stoi(v);
+            p.snd_buf_size = std::stoi(v);
         } else if (field=="rcvBufSize") {
-            p.rcvBufSize = std::stoi(v);
+            p.rcv_buf_size = std::stoi(v);
         } else if (field=="sndKernelSize") {
-            p.sndKernelSize = std::stoi(v);
+            p.snd_kernel_size = std::stoi(v);
         } else if (field=="rcvKernelSize") {
-            p.rcvKernelSize = std::stoi(v);
+            p.rcv_kernel_size = std::stoi(v);
         } else if (field=="linger") {
             p.linger = std::stoi(v);
         } else if (field=="rateLogging") {
-            p.rateLogging = std::stoi(v);
+            p.rate_logging = std::stoi(v);
         } else if (field=="portRangeMin") {
-            p.portRangeMin = std::stoi(v);
+            p.port_range_min = std::stoi(v);
         } else if (field=="portRangeMax") {
-            p.portRangeMax = std::stoi(v);
+            p.port_range_max = std::stoi(v);
         } else if (field=="autoBind") {
-            p.autoBind = (v=="true") || (v=="1");
+            p.auto_bind = (v=="true") || (v=="1");
         }
     }
 }
@@ -601,11 +601,11 @@ auto daq::service::MetricsPlugin::readProcessUsage() const -> ProcessUsageSample
     if (getrusage(RUSAGE_SELF, &usage) != 0) {
         const auto error = std::error_code{errno, std::generic_category()};
         LOG(error) << kMyClass << " " << __FUNCTION__ << " getrusage failed: " << error.message();
-        return {.cpuSeconds = fProcessUsage.cpuSeconds, .timestamp = std::chrono::steady_clock::now()};
+        return {.cpu_seconds = fProcessUsage.cpu_seconds, .timestamp = std::chrono::steady_clock::now()};
     }
 
     return {
-        .cpuSeconds = timevalToSeconds(usage.ru_utime) + timevalToSeconds(usage.ru_stime),
+        .cpu_seconds = timevalToSeconds(usage.ru_utime) + timevalToSeconds(usage.ru_stime),
         .timestamp = std::chrono::steady_clock::now(),
     };
 }
@@ -634,38 +634,38 @@ void daq::service::MetricsPlugin::sendProcessMetrics()
 {
     //std::cout << kMyClass << " " << __FUNCTION__;
 
-    auto nowProcessUsage = readProcessUsage();
+    auto now_process_usage = readProcessUsage();
 
-    const auto cpuSeconds = nowProcessUsage.cpuSeconds - fProcessUsage.cpuSeconds;
-    const auto wallSeconds =
-        std::chrono::duration<double>(nowProcessUsage.timestamp - fProcessUsage.timestamp).count();
+    const auto cpu_seconds = now_process_usage.cpu_seconds - fProcessUsage.cpu_seconds;
+    const auto wall_seconds =
+        std::chrono::duration<double>(now_process_usage.timestamp - fProcessUsage.timestamp).count();
 
     // Top/htop style percent: one fully used CPU core is 100%, two cores are 200%.
-    const auto cpuUsage = wallSeconds > 0.0 ? cpuSeconds / wallSeconds * 100.0 : 0.0;
-    const auto ramUsage = readResidentMemoryMiB();
+    const auto cpu_usage = wall_seconds > 0.0 ? cpu_seconds / wall_seconds * 100.0 : 0.0;
+    const auto ram_usage = readResidentMemoryMiB();
 
 //  std::cout << " diff (self) = " << diffSelf
 //             << ", diff (all) = " << diffAll << "\n"
-//             << "cpu = " << cpuUsage
-//             << ", memory = " << ramUsage;
+//             << "cpu = " << cpu_usage
+//             << ", memory = " << ram_usage;
 
-    fProcessUsage = nowProcessUsage;
-    auto stateId  = static_cast<int>(GetCurrentDeviceState());
+    fProcessUsage = now_process_usage;
+    auto state_id = static_cast<int>(GetCurrentDeviceState());
 
-    const auto &[uptimeNSec, lastUpdate] = updateDate(fCreatedTimeSystem, fCreatedTime);
-    auto lastUpdateNS = std::chrono::duration_cast<std::chrono::nanoseconds>(lastUpdate.time_since_epoch());
+    const auto &[uptime_nsec, last_update] = updateDate(fCreatedTimeSystem, fCreatedTime);
+    auto last_update_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(last_update.time_since_epoch());
     try {
         if (fPipe) {
-            fPipe->hset(fProcKey.cpu, {std::make_pair(fId, cpuUsage)})
-            .hset(fProcKey.ram, {std::make_pair(fId, ramUsage)})
-            .hset(fLastUpdateKey, fId, toDate(lastUpdate))
-            .hset(fLastUpdateNSKey, fId, std::to_string(lastUpdateNS.count()))
-            .command("ts.add", fTsProcKey.cpu,        "*", std::to_string(cpuUsage))
-            .command("ts.add", fTsProcKey.ram,        "*", std::to_string(ramUsage))
-            .command("ts.add", fTsProcKey.stateId,    "*", std::to_string(stateId));
-            //std::cout << " "   << fTsProcKey.cpu       << "\t " << cpuUsage
-            //          << "\n " << fTsProcKey.ram       << "\t " << ramUsage
-            //          << "\n " << fTsProcKey.stateId   << "\t " << stateId << std::endl;
+            fPipe->hset(fProcKey.cpu, {std::make_pair(fId, cpu_usage)})
+            .hset(fProcKey.ram, {std::make_pair(fId, ram_usage)})
+            .hset(fLastUpdateKey, fId, toDate(last_update))
+            .hset(fLastUpdateNSKey, fId, std::to_string(last_update_ns.count()))
+            .command("ts.add", fTsProcKey.cpu,        "*", std::to_string(cpu_usage))
+            .command("ts.add", fTsProcKey.ram,        "*", std::to_string(ram_usage))
+            .command("ts.add", fTsProcKey.state_id,    "*", std::to_string(state_id));
+            //std::cout << " "   << fTsProcKey.cpu       << "\t " << cpu_usage
+            //          << "\n " << fTsProcKey.ram       << "\t " << ram_usage
+            //          << "\n " << fTsProcKey.state_id   << "\t " << state_id << std::endl;
         }
     } catch (const std::exception& e) {
         LOG(error) << kMyClass << " " << __FUNCTION__ << " exception : what() " << e.what();
@@ -689,94 +689,94 @@ void daq::service::MetricsPlugin::sendSocketMetrics(const std::string &content)
     }
     //std::cout << kMyClass << " " << __FUNCTION__ << " (passed) content = \n" << content << std::endl;
 
-    const auto &channelName = sample->channelName;
-    const auto subChannelIndex = std::to_string(*sample->subChannelIndex);
-    const auto &subChannelName = sample->subChannelName;
-    auto channelId       = join({fId, subChannelName}, fSeparator);
+    const auto &channel_name = sample->channelName;
+    const auto sub_channel_index = std::to_string(*sample->subChannelIndex);
+    const auto &sub_channel_name = sample->subChannelName;
+    auto channel_id       = join({fId, sub_channel_name}, fSeparator);
 
     SocketMetrics now;
-    now.msgIn    = sample->messagesPerSecondIn;
-    now.msgOut   = sample->messagesPerSecondOut;
+    now.msg_in    = sample->messagesPerSecondIn;
+    now.msg_out   = sample->messagesPerSecondOut;
     // mega bytes
-    now.bytesIn  = sample->megabytesPerSecondIn;
-    now.bytesOut = sample->megabytesPerSecondOut;
+    now.bytes_in  = sample->megabytesPerSecondIn;
+    now.bytes_out = sample->megabytesPerSecondOut;
 
-    auto& sum = fSocketMetrics[subChannelName];
-    sum.msgIn    += now.msgIn;
-    sum.msgOut   += now.msgOut;
-    sum.bytesIn  += now.bytesIn;
-    sum.bytesOut += now.bytesOut;
+    auto& sum = fSocketMetrics[sub_channel_name];
+    sum.msg_in    += now.msg_in;
+    sum.msg_out   += now.msg_out;
+    sum.bytes_in  += now.bytes_in;
+    sum.bytes_out += now.bytes_out;
 
-    //std::cout << __LINE__ << " " << channelName << " (sum) in = " << sum.msgIn << " " << sum.bytesIn << " MB, out = " << sum.msgOut << " " << sum.bytesOut << " MB" << std::endl;
-    auto msgIn     = static_cast<uint64_t>(std::nearbyint(now.msgIn));
-    auto msgOut    = static_cast<uint64_t>(std::nearbyint(now.msgOut));
+    //std::cout << __LINE__ << " " << channel_name << " (sum) in = " << sum.msg_in << " " << sum.bytes_in << " MB, out = " << sum.msg_out << " " << sum.bytes_out << " MB" << std::endl;
+    auto msg_in     = static_cast<uint64_t>(std::nearbyint(now.msg_in));
+    auto msg_out    = static_cast<uint64_t>(std::nearbyint(now.msg_out));
 
-    auto msgInSum  = static_cast<uint64_t>(std::nearbyint(sum.msgIn));
-    auto msgOutSum = static_cast<uint64_t>(std::nearbyint(sum.msgOut));
+    auto msg_in_sum  = static_cast<uint64_t>(std::nearbyint(sum.msg_in));
+    auto msg_out_sum = static_cast<uint64_t>(std::nearbyint(sum.msg_out));
 
     try {
         if (fPipe) {
-            const auto &socketTypeKey = join({"chans", channelName, subChannelIndex, "type"},  ".");
-            // std::cout << " channel type key = " << socketTypeKey << std::endl;
-            std::string socketType;
-            if (PropertyExists(socketTypeKey)) {
-                socketType = GetProperty<std::string>(socketTypeKey);
+            const auto &socket_type_key = join({"chans", channel_name, sub_channel_index, "type"},  ".");
+            // std::cout << " channel type key = " << socket_type_key << std::endl;
+            std::string socket_type;
+            if (PropertyExists(socket_type_key)) {
+                socket_type = GetProperty<std::string>(socket_type_key);
             } else {
                 return;
             }
-            bool hasInput  = (socketType!="push") && (socketType!="pub");
-            bool hasOutput = (socketType!="pull") && (socketType!="sub");
-            if (!hasInput && !hasOutput) {
+            bool has_input  = (socket_type!="push") && (socket_type!="pub");
+            bool has_output = (socket_type!="pull") && (socket_type!="sub");
+            if (!has_input && !has_output) {
                 return;
             }
 
-            // LOG(debug) << " subChannelName = " << subChannelName;
+            // LOG(debug) << " sub_channel_name = " << sub_channel_name;
 
-            const auto tsKey       = fTsSockKey[subChannelName];
-            const auto tsSumKey    = fTsSockSumKey[subChannelName];
+            const auto ts_key       = fTsSockKey[sub_channel_name];
+            const auto ts_sum_key    = fTsSockSumKey[sub_channel_name];
 
-            if (hasInput) {
-                fPipe->hset(fSockKey.msgIn,       {std::make_pair(channelId, msgIn)})
-                .hset(fSockKey.bytesIn,     {std::make_pair(channelId, now.bytesIn)})  // mega bytes
-                .hset(fSockSumKey.msgIn,    {std::make_pair(channelId, msgInSum)})
-                .hset(fSockSumKey.bytesIn,  {std::make_pair(channelId, sum.bytesIn)})  // mega bytes
-                .hset(fNumMessageKey,       {std::make_pair(channelId+".in",  msgIn)})
-                .hset(fBytesKey,            {std::make_pair(channelId+".in",  now.bytesIn)})
-                .hset(fNumMessageSumKey,    {std::make_pair(channelId+".in",  msgInSum)})
-                .hset(fBytesSumKey,         {std::make_pair(channelId+".in",  sum.bytesIn)})
-                .command("ts.add", tsKey.msgIn,         "*", std::to_string(msgIn))
-                .command("ts.add", tsKey.bytesIn,       "*", std::to_string(now.bytesIn))
-                .command("ts.add", tsSumKey.msgIn,      "*", std::to_string(msgInSum))
-                .command("ts.add", tsSumKey.bytesIn,    "*", std::to_string(sum.bytesIn));
+            if (has_input) {
+                fPipe->hset(fSockKey.msg_in,       {std::make_pair(channel_id, msg_in)})
+                .hset(fSockKey.bytes_in,     {std::make_pair(channel_id, now.bytes_in)})  // mega bytes
+                .hset(fSockSumKey.msg_in,    {std::make_pair(channel_id, msg_in_sum)})
+                .hset(fSockSumKey.bytes_in,  {std::make_pair(channel_id, sum.bytes_in)})  // mega bytes
+                .hset(fNumMessageKey,       {std::make_pair(channel_id+".in",  msg_in)})
+                .hset(fBytesKey,            {std::make_pair(channel_id+".in",  now.bytes_in)})
+                .hset(fNumMessageSumKey,    {std::make_pair(channel_id+".in",  msg_in_sum)})
+                .hset(fBytesSumKey,         {std::make_pair(channel_id+".in",  sum.bytes_in)})
+                .command("ts.add", ts_key.msg_in,         "*", std::to_string(msg_in))
+                .command("ts.add", ts_key.bytes_in,       "*", std::to_string(now.bytes_in))
+                .command("ts.add", ts_sum_key.msg_in,      "*", std::to_string(msg_in_sum))
+                .command("ts.add", ts_sum_key.bytes_in,    "*", std::to_string(sum.bytes_in));
                 //std::cout << __LINE__ << " has input: "
-                //          << tsKey.msgIn       << "\t " << msgIn
-                //          << "\n " << tsKey.bytesIn     << "\t " << now.bytesIn
-                //          << "\n " << tsSumKey.msgIn    << "\t " << msgInSum
-                //          << "\n " << tsSumKey.bytesIn  << "\t " << sum.bytesIn << std::endl;
+                //          << ts_key.msg_in       << "\t " << msg_in
+                //          << "\n " << ts_key.bytes_in     << "\t " << now.bytes_in
+                //          << "\n " << ts_sum_key.msg_in    << "\t " << msg_in_sum
+                //          << "\n " << ts_sum_key.bytes_in  << "\t " << sum.bytes_in << std::endl;
             }
 
-            if (hasOutput) {
-                fPipe->hset(fSockKey.msgOut,      {std::make_pair(channelId, msgOut)})
-                .hset(fSockKey.bytesOut,    {std::make_pair(channelId, now.bytesOut)}) // mega bytes
-                .hset(fSockSumKey.msgOut,   {std::make_pair(channelId, msgOutSum)})
-                .hset(fSockSumKey.bytesOut, {std::make_pair(channelId, sum.bytesOut)}) // mega bytes
-                .hset(fNumMessageKey,       {std::make_pair(channelId+".out", msgOut)})
-                .hset(fBytesKey,            {std::make_pair(channelId+".out", now.bytesOut)})
-                .hset(fNumMessageSumKey,    {std::make_pair(channelId+".out", msgOutSum)})
-                .hset(fBytesSumKey,         {std::make_pair(channelId+".out", sum.bytesOut)})
-                .command("ts.add", tsKey.msgOut,         "*", std::to_string(msgOut))
-                .command("ts.add", tsKey.bytesOut,       "*", std::to_string(now.bytesOut))
-                .command("ts.add", tsSumKey.msgOut,      "*", std::to_string(msgOutSum))
-                .command("ts.add", tsSumKey.bytesOut,    "*", std::to_string(sum.bytesOut));
+            if (has_output) {
+                fPipe->hset(fSockKey.msg_out,      {std::make_pair(channel_id, msg_out)})
+                .hset(fSockKey.bytes_out,    {std::make_pair(channel_id, now.bytes_out)}) // mega bytes
+                .hset(fSockSumKey.msg_out,   {std::make_pair(channel_id, msg_out_sum)})
+                .hset(fSockSumKey.bytes_out, {std::make_pair(channel_id, sum.bytes_out)}) // mega bytes
+                .hset(fNumMessageKey,       {std::make_pair(channel_id+".out", msg_out)})
+                .hset(fBytesKey,            {std::make_pair(channel_id+".out", now.bytes_out)})
+                .hset(fNumMessageSumKey,    {std::make_pair(channel_id+".out", msg_out_sum)})
+                .hset(fBytesSumKey,         {std::make_pair(channel_id+".out", sum.bytes_out)})
+                .command("ts.add", ts_key.msg_out,         "*", std::to_string(msg_out))
+                .command("ts.add", ts_key.bytes_out,       "*", std::to_string(now.bytes_out))
+                .command("ts.add", ts_sum_key.msg_out,      "*", std::to_string(msg_out_sum))
+                .command("ts.add", ts_sum_key.bytes_out,    "*", std::to_string(sum.bytes_out));
                 //std::cout << __LINE__ << " has output: "
-                //          << tsKey.msgOut      << "\t " << msgOut
-                //          << "\n " << tsKey.bytesOut    << "\t " << now.bytesOut
-                //          << "\n " << tsSumKey.msgOut   << "\t " << msgOutSum
-                //          << "\n " << tsSumKey.bytesOut << "\t " << sum.bytesOut << std::endl;
+                //          << ts_key.msg_out      << "\t " << msg_out
+                //          << "\n " << ts_key.bytes_out    << "\t " << now.bytes_out
+                //          << "\n " << ts_sum_key.msg_out   << "\t " << msg_out_sum
+                //          << "\n " << ts_sum_key.bytes_out << "\t " << sum.bytes_out << std::endl;
 
             }
 
-            auto &count = fNumChannels[subChannelName];
+            auto &count = fNumChannels[sub_channel_name];
             if (count==0) {
                 ++count;
             }

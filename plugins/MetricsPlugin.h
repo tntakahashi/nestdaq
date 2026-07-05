@@ -66,7 +66,7 @@ static constexpr std::string_view kSocketMethod{"method"};
  * @brief Process CPU sample used to compute CPU usage between timer ticks.
  */
 struct ProcessUsageSample {
-    double cpuSeconds{0.0};
+    double cpu_seconds{0.0};
     std::chrono::steady_clock::time_point timestamp;
 };
 
@@ -74,25 +74,25 @@ struct ProcessUsageSample {
  * @brief Per-socket throughput values parsed from FairMQ rate log lines.
  */
 struct SocketMetrics {
-    double msgIn{0};
-    double msgOut{0};
-    double bytesIn{0};
-    double bytesOut{0};
+    double msg_in{0};
+    double msg_out{0};
+    double bytes_in{0};
+    double bytes_out{0};
 };
 
 /** @brief Redis hash and time-series keys for process-level metrics. */
 struct ProcessStatKey {
     std::string cpu;
     std::string ram;
-    std::string stateId;
+    std::string state_id;
 };
 
 /** @brief Redis hash and time-series keys for one socket metric group. */
 struct SocketMetricsKey {
-    std::string msgIn;
-    std::string msgOut;
-    std::string bytesIn;
-    std::string bytesOut;
+    std::string msg_in;
+    std::string msg_out;
+    std::string bytes_in;
+    std::string bytes_out;
 };
 
 /**

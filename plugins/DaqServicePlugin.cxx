@@ -155,44 +155,44 @@ Plugin::Plugin(std::string_view name,
 
     fHealth = std::make_unique<Health>();
     if (PropertyExists(std::string{kHostname})) {
-        fHealth->hostName = GetProperty<std::string>(std::string{kHostname});
+        fHealth->host_name = GetProperty<std::string>(std::string{kHostname});
     } else {
-        fHealth->hostName = net::ip::host_name();
+        fHealth->host_name = net::ip::host_name();
     }
-    SetProperty(std::string{kHostname}, fHealth->hostName);
-    fHealth->createdTimeSystem = std::chrono::system_clock::now();
-    fHealth->createdTime       = std::chrono::steady_clock::now();
+    SetProperty(std::string{kHostname}, fHealth->host_name);
+    fHealth->created_time_system = std::chrono::system_clock::now();
+    fHealth->created_time       = std::chrono::steady_clock::now();
 
-    SetProperty("created-time", std::chrono::duration_cast<std::chrono::nanoseconds>(fHealth->createdTimeSystem.time_since_epoch()).count());
+    SetProperty("created-time", std::chrono::duration_cast<std::chrono::nanoseconds>(fHealth->created_time_system.time_since_epoch()).count());
 
     if (PropertyExists(std::string{kHostIpAddress})) {
-        auto ipAddress = GetProperty<std::string>(std::string{kHostIpAddress});
-        fHealth->ipAddress = fair::mq::tools::getIpFromHostname(ipAddress);
-        auto hostIPs = fair::mq::tools::getHostIPs();
-        //LOG(debug) << " host ip size = " << hostIPs.size();
-        for (const auto& [nic, ip] : hostIPs) {
-            //LOG(debug) << " nic = " << nic << ", ip = " << ip << ", ipAddress = " << fHealth->ipAddress;
-            if (ip==fHealth->ipAddress) {
+        auto ip_address = GetProperty<std::string>(std::string{kHostIpAddress});
+        fHealth->ip_address = fair::mq::tools::getIpFromHostname(ip_address);
+        auto host_ips = fair::mq::tools::getHostIPs();
+        //LOG(debug) << " host ip size = " << host_ips.size();
+        for (const auto& [nic, ip] : host_ips) {
+            //LOG(debug) << " nic = " << nic << ", ip = " << ip << ", ip_address = " << fHealth->ip_address;
+            if (ip==fHealth->ip_address) {
                 SetProperty<std::string>("network-interface", nic);
                 break;
             }
         }
     } else if (PropertyExists("network-interface")) {
         LOG(debug) << " find my ip address by network-interface";
-        const auto defaultNIC = fair::mq::tools::getDefaultRouteNetworkInterface();
+        const auto default_nic = fair::mq::tools::getDefaultRouteNetworkInterface();
         auto nic = GetProperty<std::string>("network-interface");
         if (nic!="default") {
-            fHealth->ipAddress = fair::mq::tools::getInterfaceIP(nic);
+            fHealth->ip_address = fair::mq::tools::getInterfaceIP(nic);
         }
-        if (fHealth->ipAddress.empty()) {
-            LOG(debug) << " use default route NIC = " << defaultNIC;
-            fHealth->ipAddress = fair::mq::tools::getInterfaceIP(defaultNIC);
-            SetProperty<std::string>("network-interface", defaultNIC);
+        if (fHealth->ip_address.empty()) {
+            LOG(debug) << " use default route NIC = " << default_nic;
+            fHealth->ip_address = fair::mq::tools::getInterfaceIP(default_nic);
+            SetProperty<std::string>("network-interface", default_nic);
         }
     }
 
-    LOG(debug) << " ip = " << fHealth->ipAddress;
-    SetProperty(std::string{kHostIpAddress}, fHealth->ipAddress);
+    LOG(debug) << " ip = " << fHealth->ip_address;
+    SetProperty(std::string{kHostIpAddress}, fHealth->ip_address);
 
     if (PropertyExists(std::string{kServiceName})) {
         fServiceName = GetProperty<std::string>(std::string{kServiceName});
@@ -206,8 +206,8 @@ Plugin::Plugin(std::string_view name,
     }
     fStartupState   = GetProperty<std::string>(std::string{kStartupState});
 
-    auto hostIPs = fair::mq::tools::getHostIPs();
-    for (const auto& [nic, ip] : hostIPs) {
+    auto host_ips = fair::mq::tools::getHostIPs();
+    for (const auto& [nic, ip] : host_ips) {
         LOG(debug) << " nic = " << nic << ", ip = " << ip;
     }
 
@@ -691,10 +691,10 @@ void Plugin::registerService()
             fClient->command("client", "setname", join({std::string{kTopPrefix}, fServiceName, fId}, fSeparator));
         }
         setId();
-        LOG(debug) << " mq device id = " << fId << ", service = " << fServiceName << ", hostname = " << fHealth->hostName
-                   << " ip(from_hostname) = " << fair::mq::tools::getIpFromHostname(fHealth->hostName)
+        LOG(debug) << " mq device id = " << fId << ", service = " << fServiceName << ", hostname = " << fHealth->host_name
+                   << " ip(from_hostname) = " << fair::mq::tools::getIpFromHostname(fHealth->host_name)
 
-                   << ", " << fHealth->ipAddress;
+                   << ", " << fHealth->ip_address;
 
         fProgOptionKeyName = join({std::string{kTopPrefix}, fServiceName, fId, std::string{kProgOptionPrefix}}, fSeparator);
 
@@ -726,10 +726,10 @@ void Plugin::registerService()
 
         }
 
-        //auto uptimeNsec = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - fHealth->createdTime);
-        //fHealth->updatedTime = fHealth->createdTimeSystem + std::chrono::duration_cast<std::chrono::seconds>(uptimeNsec);
-        const auto &[uptimeNsec, updatedTime] = updateDate(fHealth->createdTimeSystem, fHealth->createdTime);
-        LOG(debug) << kMyClass << " hset " << fHealth->key << " " << fHealth->hostName << " " << fHealth->ipAddress;
+        //auto uptimeNsec = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - fHealth->created_time);
+        //fHealth->updatedTime = fHealth->created_time_system + std::chrono::duration_cast<std::chrono::seconds>(uptimeNsec);
+        const auto &[uptimeNsec, updatedTime] = updateDate(fHealth->created_time_system, fHealth->created_time);
+        LOG(debug) << kMyClass << " hset " << fHealth->key << " " << fHealth->host_name << " " << fHealth->ip_address;
         LOG(debug) << kMyClass << " hset " << fProgOptionKeyName;
 
         {
@@ -739,10 +739,10 @@ void Plugin::registerService()
             pipe.hset(fHealth->key,
             {   std::make_pair("instanceID",  fId),
                 std::make_pair("uuid",        boost::uuids::to_string(fUuid)),
-                std::make_pair("hostName",    fHealth->hostName),
-                std::make_pair("hostIp",      fHealth->ipAddress),
+                std::make_pair("hostName",    fHealth->host_name),
+                std::make_pair("hostIp",      fHealth->ip_address),
                 std::make_pair("serviceName", fServiceName),
-                std::make_pair("createdTime", toDate(fHealth->createdTimeSystem)),
+                std::make_pair("createdTime", toDate(fHealth->created_time_system)),
 //              std::make_pair("updatedTime", toDate(fHealth->updatedTime)),
                 std::make_pair("updatedTime", toDate(updatedTime)),
                 std::make_pair("uptime",      std::to_string(std::chrono::duration_cast<std::chrono::milliseconds>(uptimeNsec).count())),
@@ -773,9 +773,9 @@ void Plugin::registerService()
 void Plugin::resetTtl()
 {
 //  LOG(debug) << " reset presence ttl";
-//  auto uptimeNsec = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - fHealth->createdTime);
-//  fHealth->updatedTime = fHealth->createdTimeSystem + std::chrono::duration_cast<std::chrono::seconds>(uptimeNsec);
-    const auto &[uptimeNsec, updatedTime] = updateDate(fHealth->createdTimeSystem, fHealth->createdTime);
+//  auto uptimeNsec = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - fHealth->created_time);
+//  fHealth->updatedTime = fHealth->created_time_system + std::chrono::duration_cast<std::chrono::seconds>(uptimeNsec);
+    const auto &[uptimeNsec, updatedTime] = updateDate(fHealth->created_time_system, fHealth->created_time);
     const auto & lastChecked = toDate(updatedTime);
 
     std::scoped_lock<std::mutex> lock{fMutex};
@@ -1136,7 +1136,7 @@ void Plugin::writeProgOptions()
  */
 void Plugin::writeStartTime()
 {
-    const auto &[uptimeNsec, updatedTime] = updateDate(fHealth->createdTimeSystem, fHealth->createdTime);
+    const auto &[uptimeNsec, updatedTime] = updateDate(fHealth->created_time_system, fHealth->created_time);
     auto t   = toDate(updatedTime);
     auto tNS = std::to_string(std::chrono::duration_cast<std::chrono::nanoseconds>(uptimeNsec).count());
     fClient->hset(fHealth->key,
@@ -1152,7 +1152,7 @@ void Plugin::writeStartTime()
  */
 void Plugin::writeStopTime()
 {
-    const auto &[uptimeNsec, updatedTime] = updateDate(fHealth->createdTimeSystem, fHealth->createdTime);
+    const auto &[uptimeNsec, updatedTime] = updateDate(fHealth->created_time_system, fHealth->created_time);
     auto t   = toDate(updatedTime);
     auto tNS = std::to_string(std::chrono::duration_cast<std::chrono::nanoseconds>(uptimeNsec).count());
     fClient->hset(fHealth->key,
