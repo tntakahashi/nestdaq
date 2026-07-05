@@ -184,7 +184,7 @@ auto clearLastError() -> void
     state.lastError.clear();
 }
 
-auto FlushFrameworkMetricsIfDirty(uint64_t timeoutMs) -> int
+auto flushFrameworkMetricsIfDirty(uint64_t timeoutMs) -> int
 {
     std::shared_ptr<opentelemetry::sdk::metrics::MeterProvider> frameworkMeterProvider;
     auto throughputCount = std::size_t{0};

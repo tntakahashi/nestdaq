@@ -686,7 +686,7 @@ auto OpenTelemetryInitializer::RecordFrameworkFairMQThroughput(const telemetry::
                 .megabytesPerSecond = sample.megabytesPerSecondOut,
             });
         }
-        static_cast<void>(otel_detail::FlushFrameworkMetricsIfDirty(otel_detail::kDefaultMetricExportIntervalMs));
+        static_cast<void>(otel_detail::flushFrameworkMetricsIfDirty(otel_detail::kDefaultMetricExportIntervalMs));
     } catch (...) {
     }
 }
@@ -711,7 +711,7 @@ auto OpenTelemetryInitializer::RecordFrameworkProcessUsage(double cpu_user_secon
                 .memoryUsageBytes = memory_usage_bytes,
             });
         }
-        static_cast<void>(otel_detail::FlushFrameworkMetricsIfDirty(otel_detail::kDefaultMetricExportIntervalMs));
+        static_cast<void>(otel_detail::flushFrameworkMetricsIfDirty(otel_detail::kDefaultMetricExportIntervalMs));
     } catch (...) {
     }
 }
@@ -731,7 +731,7 @@ auto OpenTelemetryInitializer::RecordFrameworkFairMQState(int64_t state_id, cons
                 .stateName = otel_detail::isEmpty(state_name) ? "" : state_name,
             });
         }
-        static_cast<void>(otel_detail::FlushFrameworkMetricsIfDirty(otel_detail::kDefaultMetricExportIntervalMs));
+        static_cast<void>(otel_detail::flushFrameworkMetricsIfDirty(otel_detail::kDefaultMetricExportIntervalMs));
     } catch (...) {
     }
 }

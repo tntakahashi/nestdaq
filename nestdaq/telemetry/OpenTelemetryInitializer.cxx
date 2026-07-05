@@ -69,7 +69,7 @@ auto OpenTelemetryInitializer::ForceFlush(uint64_t timeout_ms) -> int
 
 auto OpenTelemetryInitializer::FlushFrameworkMetricsIfDirty(uint64_t timeout_ms) -> int
 {
-    return otel_detail::FlushFrameworkMetricsIfDirty(timeout_ms);
+    return otel_detail::flushFrameworkMetricsIfDirty(timeout_ms);
 }
 
 auto OpenTelemetryInitializer::Initialize(const nestdaq_otel_config *config) -> int

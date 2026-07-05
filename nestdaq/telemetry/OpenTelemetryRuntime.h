@@ -329,7 +329,7 @@ auto configureFrameworkMetricsProvider(RuntimeState &state) -> void;
 /** @brief Return the plugin defaults used when no C ABI config is supplied. */
 auto defaultConfig() -> nestdaq_otel_config;
 /** @brief Export and clear pending framework metric samples only when dirty. */
-auto FlushFrameworkMetricsIfDirty(uint64_t timeoutMs) -> int;
+auto flushFrameworkMetricsIfDirty(uint64_t timeoutMs) -> int;
 /** @brief Build the structured FairMQ metadata log body emitted at initialization. */
 auto fairMQMetadataLogBody(const nestdaq_otel_config &config) -> std::string;
 /** @brief Install OpenTelemetry no-op providers after shutdown. */
