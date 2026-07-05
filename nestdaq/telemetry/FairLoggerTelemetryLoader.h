@@ -100,25 +100,25 @@ auto AddTelemetryOptions(boost::program_options::options_description& options,
 /**
  * @brief Apply `NESTDAQ_OTEL_*` environment variables to @p options.
  */
-auto ApplyEnvironment(TelemetryOptions& options) -> void;
+auto applyEnvironment(TelemetryOptions& options) -> void;
 /**
  * @brief Assign one parsed command-line, FairMQ, or environment option.
  */
-auto AssignOption(TelemetryOptions& options,
+auto assignOption(TelemetryOptions& options,
                   std::string_view key,
                   std::string_view value) -> void;
 /** @brief Return the final path component of an executable path. */
-auto Basename(std::string_view path) -> std::string_view;
+auto basename(std::string_view path) -> std::string_view;
 /** @brief Read an environment variable as a nullable borrowed C string. */
-auto Env(const char* name) -> const char*;
+auto env(const char* name) -> const char*;
 /** @brief Detect the current host name for the OTel host.name resource attribute. */
 auto DetectHostName() -> std::string;
 /** @brief Detect and store host.name when it has not already been set. */
-auto EnsureHostName(TelemetryOptions& options) -> void;
+auto ensureHostName(TelemetryOptions& options) -> void;
 /** @brief Generate and store a service instance id when the user did not set one. */
-auto EnsureServiceInstanceId(TelemetryOptions& options) -> void;
+auto ensureServiceInstanceId(TelemetryOptions& options) -> void;
 /** @brief Generate a UUID string for the default service instance id. */
-auto GenerateUuidString() -> std::string;
+auto generateUuidString() -> std::string;
 /**
  * @brief Build the C ABI configuration consumed by `libnestdaq_otel.so`.
  *

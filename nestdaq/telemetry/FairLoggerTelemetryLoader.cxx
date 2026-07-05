@@ -92,73 +92,73 @@ auto AddTelemetryOptions(boost::program_options::options_description& options,
            ("spdlog-async-overflow-policy", bpo::value<std::string>()->default_value(std::string{kDefaultSpdlogAsyncOverflowPolicy}), "spdlog async overflow policy: block, overrun_oldest, discard_new");
 }
 
-auto ApplyEnvironment(TelemetryOptions& options) -> void {
-    if (const auto* value = Env("NESTDAQ_OTEL_LIBRARY")) {
+auto applyEnvironment(TelemetryOptions& options) -> void {
+    if (const auto* value = env("NESTDAQ_OTEL_LIBRARY")) {
         options.library = value;
     }
-    if (const auto* value = Env("NESTDAQ_OTEL_LOG_PROTOCOL")) {
+    if (const auto* value = env("NESTDAQ_OTEL_LOG_PROTOCOL")) {
         options.logProtocol = value;
     }
-    if (const auto* value = Env("NESTDAQ_OTEL_METRIC_PROTOCOL")) {
+    if (const auto* value = env("NESTDAQ_OTEL_METRIC_PROTOCOL")) {
         options.metricProtocol = value;
     }
-    if (const auto* value = Env("NESTDAQ_OTEL_TRACE_PROTOCOL")) {
+    if (const auto* value = env("NESTDAQ_OTEL_TRACE_PROTOCOL")) {
         options.traceProtocol = value;
     }
-    if (const auto* value = Env("NESTDAQ_OTEL_LOG_ENDPOINT_HTTP")) {
+    if (const auto* value = env("NESTDAQ_OTEL_LOG_ENDPOINT_HTTP")) {
         options.logEndpointHttp = value;
     }
-    if (const auto* value = Env("NESTDAQ_OTEL_LOG_ENDPOINT_GRPC")) {
+    if (const auto* value = env("NESTDAQ_OTEL_LOG_ENDPOINT_GRPC")) {
         options.logEndpointGrpc = value;
     }
-    if (const auto* value = Env("NESTDAQ_OTEL_METRIC_ENDPOINT_HTTP")) {
+    if (const auto* value = env("NESTDAQ_OTEL_METRIC_ENDPOINT_HTTP")) {
         options.metricEndpointHttp = value;
     }
-    if (const auto* value = Env("NESTDAQ_OTEL_METRIC_ENDPOINT_GRPC")) {
+    if (const auto* value = env("NESTDAQ_OTEL_METRIC_ENDPOINT_GRPC")) {
         options.metricEndpointGrpc = value;
     }
-    if (const auto* value = Env("NESTDAQ_OTEL_TRACE_ENDPOINT_HTTP")) {
+    if (const auto* value = env("NESTDAQ_OTEL_TRACE_ENDPOINT_HTTP")) {
         options.traceEndpointHttp = value;
     }
-    if (const auto* value = Env("NESTDAQ_OTEL_TRACE_ENDPOINT_GRPC")) {
+    if (const auto* value = env("NESTDAQ_OTEL_TRACE_ENDPOINT_GRPC")) {
         options.traceEndpointGrpc = value;
     }
-    if (const auto* value = Env("NESTDAQ_OTEL_LOG_HEADERS")) {
+    if (const auto* value = env("NESTDAQ_OTEL_LOG_HEADERS")) {
         options.logHeaders = value;
     }
-    if (const auto* value = Env("NESTDAQ_OTEL_METRIC_HEADERS")) {
+    if (const auto* value = env("NESTDAQ_OTEL_METRIC_HEADERS")) {
         options.metricHeaders = value;
     }
-    if (const auto* value = Env("NESTDAQ_OTEL_TRACE_HEADERS")) {
+    if (const auto* value = env("NESTDAQ_OTEL_TRACE_HEADERS")) {
         options.traceHeaders = value;
     }
-    if (const auto* value = Env("NESTDAQ_OTEL_LOG_SEVERITY")) {
+    if (const auto* value = env("NESTDAQ_OTEL_LOG_SEVERITY")) {
         options.severity = value;
     }
-    if (const auto* value = Env("NESTDAQ_OTEL_LOG_REQUIRED")) {
+    if (const auto* value = env("NESTDAQ_OTEL_LOG_REQUIRED")) {
         options.required = parseBool(value);
     }
-    if (const auto* value = Env("NESTDAQ_SPDLOG_CONSOLE_PATTERN")) {
+    if (const auto* value = env("NESTDAQ_SPDLOG_CONSOLE_PATTERN")) {
         options.spdlogConsolePattern = value;
     }
-    if (const auto* value = Env("NESTDAQ_SPDLOG_NATIVE_CONSOLE")) {
+    if (const auto* value = env("NESTDAQ_SPDLOG_NATIVE_CONSOLE")) {
         options.spdlogNativeConsole = parseBool(value);
     }
-    if (const auto* value = Env("NESTDAQ_SPDLOG_ASYNC")) {
+    if (const auto* value = env("NESTDAQ_SPDLOG_ASYNC")) {
         options.spdlogAsync = parseBool(value);
     }
-    if (const auto* value = Env("NESTDAQ_SPDLOG_ASYNC_QUEUE_SIZE")) {
+    if (const auto* value = env("NESTDAQ_SPDLOG_ASYNC_QUEUE_SIZE")) {
         options.spdlogAsyncQueueSize = parseUInt32(value, options.spdlogAsyncQueueSize);
     }
-    if (const auto* value = Env("NESTDAQ_SPDLOG_ASYNC_THREAD_COUNT")) {
+    if (const auto* value = env("NESTDAQ_SPDLOG_ASYNC_THREAD_COUNT")) {
         options.spdlogAsyncThreadCount = parseUInt32(value, options.spdlogAsyncThreadCount);
     }
-    if (const auto* value = Env("NESTDAQ_SPDLOG_ASYNC_OVERFLOW_POLICY")) {
+    if (const auto* value = env("NESTDAQ_SPDLOG_ASYNC_OVERFLOW_POLICY")) {
         options.spdlogAsyncOverflowPolicy = value;
     }
 }
 
-auto AssignOption(TelemetryOptions& options, std::string_view key, std::string_view value) -> void {
+auto assignOption(TelemetryOptions& options, std::string_view key, std::string_view value) -> void {
     if (key == "otel-library") {
         options.library = value;
     } else if (key == "otel-log-protocol") {
@@ -228,7 +228,7 @@ auto AssignOption(TelemetryOptions& options, std::string_view key, std::string_v
     }
 }
 
-auto Basename(std::string_view path) -> std::string_view {
+auto basename(std::string_view path) -> std::string_view {
     const auto slash = path.find_last_of("/\\");
     if (slash == std::string_view::npos) {
         return path;
@@ -236,7 +236,7 @@ auto Basename(std::string_view path) -> std::string_view {
     return path.substr(slash + 1);
 }
 
-auto Env(const char* name) -> const char* {
+auto env(const char* name) -> const char* {
     return std::getenv(name); // NOLINT(concurrency-mt-unsafe)
 }
 
@@ -251,22 +251,22 @@ auto DetectHostName() -> std::string {
     return std::string{buffer.data()};
 }
 
-auto EnsureHostName(TelemetryOptions& options) -> void {
+auto ensureHostName(TelemetryOptions& options) -> void {
     if (!options.hostName.empty()) {
         return;
     }
     options.hostName = DetectHostName();
 }
 
-auto EnsureServiceInstanceId(TelemetryOptions& options) -> void {
+auto ensureServiceInstanceId(TelemetryOptions& options) -> void {
     if (!options.serviceInstanceId.empty()) {
         return;
     }
-    options.serviceInstanceId = GenerateUuidString();
+    options.serviceInstanceId = generateUuidString();
     options.generatedServiceInstanceId = true;
 }
 
-auto GenerateUuidString() -> std::string {
+auto generateUuidString() -> std::string {
     return boost::uuids::to_string(boost::uuids::random_generator{}());
 }
 
@@ -348,18 +348,18 @@ auto ParseTelemetryOptions(int argc, char* argv[], // NOLINT(cppcoreguidelines-a
     auto options = TelemetryOptions{};
     options.serviceName = default_service_name;
     if (argv == nullptr) {
-        ApplyEnvironment(options);
+        applyEnvironment(options);
         normalizeSpdlogAsyncOptions(options);
-        EnsureHostName(options);
-        EnsureServiceInstanceId(options);
+        ensureHostName(options);
+        ensureServiceInstanceId(options);
         return options;
     }
     if (argc > 0) {
-        if (const auto executable = Basename(argv[0]); !executable.empty()) { // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+        if (const auto executable = basename(argv[0]); !executable.empty()) { // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
             options.serviceName = executable;
         }
     }
-    ApplyEnvironment(options);
+    applyEnvironment(options);
     auto explicit_telemetry_service_name = false;
     auto explicit_telemetry_service_instance_id = false;
 
@@ -384,14 +384,14 @@ auto ParseTelemetryOptions(int argc, char* argv[], // NOLINT(cppcoreguidelines-a
             continue;
         }
         if (key == "otel-service-name") {
-            AssignOption(options, key, value);
+            assignOption(options, key, value);
             explicit_telemetry_service_name = true;
         } else if (key == "service-name") {
             if (!explicit_telemetry_service_name) {
                 options.serviceName = value;
             }
         } else if (key == "otel-service-instance-id") {
-            AssignOption(options, key, value);
+            assignOption(options, key, value);
             options.generatedServiceInstanceId = false;
             explicit_telemetry_service_instance_id = true;
         } else if (key == "uuid") {
@@ -400,14 +400,14 @@ auto ParseTelemetryOptions(int argc, char* argv[], // NOLINT(cppcoreguidelines-a
                 options.generatedServiceInstanceId = false;
             }
         } else {
-            AssignOption(options, key, value);
+            assignOption(options, key, value);
         }
     }
 
     normalizeServiceName(options);
     normalizeSpdlogAsyncOptions(options);
-    EnsureHostName(options);
-    EnsureServiceInstanceId(options);
+    ensureHostName(options);
+    ensureServiceInstanceId(options);
     return options;
 }
 
@@ -437,12 +437,12 @@ auto ReadTelemetryOptions(const boost::program_options::variables_map& vm,
                           std::string_view default_service_name) -> TelemetryOptions {
     auto options = TelemetryOptions{};
     options.serviceName = default_service_name;
-    ApplyEnvironment(options);
+    applyEnvironment(options);
 
     const auto read_string = [&vm, &options](std::string_view key) {
         const auto name = std::string{key};
         if (vm.count(name) != 0 && !vm[name].defaulted()) {
-            AssignOption(options, key, vm[name].as<std::string>());
+            assignOption(options, key, vm[name].as<std::string>());
         }
     };
 
@@ -502,8 +502,8 @@ auto ReadTelemetryOptions(const boost::program_options::variables_map& vm,
     }
     normalizeServiceName(options);
     normalizeSpdlogAsyncOptions(options);
-    EnsureHostName(options);
-    EnsureServiceInstanceId(options);
+    ensureHostName(options);
+    ensureServiceInstanceId(options);
     return options;
 }
 
