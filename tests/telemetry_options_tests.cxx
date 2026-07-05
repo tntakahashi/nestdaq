@@ -435,18 +435,18 @@ TEST_CASE("telemetry host name resource is detected by default", "[telemetry]") 
 TEST_CASE("telemetry service instance id follows plugin uuid option", "[telemetry]") {
     clearTelemetryEnvironment();
 
-    constexpr auto uuid = std::string_view{"123e4567-e89b-12d3-a456-426614174000"};
+    constexpr auto kUuid = std::string_view{"123e4567-e89b-12d3-a456-426614174000"};
     const auto options_with_equals = parse({"test", "--uuid=123e4567-e89b-12d3-a456-426614174000"});
     const auto config_with_equals = nestdaq::telemetry::makeConfig(options_with_equals);
 
     CHECK_FALSE(options_with_equals.generated_service_instance_id);
-    CHECK(std::string_view{config_with_equals.service_instance_id} == uuid);
+    CHECK(std::string_view{config_with_equals.service_instance_id} == kUuid);
 
     const auto options_with_space = parse({"test", "--uuid", "123e4567-e89b-12d3-a456-426614174000"});
     const auto config_with_space = nestdaq::telemetry::makeConfig(options_with_space);
 
     CHECK_FALSE(options_with_space.generated_service_instance_id);
-    CHECK(std::string_view{config_with_space.service_instance_id} == uuid);
+    CHECK(std::string_view{config_with_space.service_instance_id} == kUuid);
 }
 
 TEST_CASE("explicit telemetry service instance id overrides plugin uuid option", "[telemetry]") {
@@ -490,14 +490,14 @@ TEST_CASE("generated telemetry uuid populates missing FairMQ uuid property", "[t
 TEST_CASE("generated telemetry uuid does not overwrite FairMQ uuid property", "[telemetry]") {
     clearTelemetryEnvironment();
 
-    constexpr auto existing_uuid = std::string_view{"123e4567-e89b-12d3-a456-426614174000"};
+    constexpr auto kExistingUuid = std::string_view{"123e4567-e89b-12d3-a456-426614174000"};
     auto options = parse({"test"});
     auto config = fair::mq::ProgOptions{};
-    config.SetProperty<std::string>("uuid", std::string{existing_uuid});
+    config.SetProperty<std::string>("uuid", std::string{kExistingUuid});
 
     nestdaq::telemetry::setGeneratedUuidProperty(config, options);
 
-    CHECK(config.GetProperty<std::string>("uuid") == existing_uuid);
+    CHECK(config.GetProperty<std::string>("uuid") == kExistingUuid);
 }
 
 TEST_CASE("empty telemetry protocol disables the selected signal", "[telemetry]") {
