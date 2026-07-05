@@ -52,7 +52,7 @@ auto metricEndpointHttp(const nestdaq_otel_config &config) -> const char *
     return isEmpty(config.metrics.endpoint_http) ? kDefaultMetricHttpEndpoint.data() : config.metrics.endpoint_http;
 }
 
-auto observeFairMQThroughput(opentelemetry::metrics::ObserverResult observer, bool observeMegabytes) noexcept -> void;
+auto observeFairMQThroughput(opentelemetry::metrics::ObserverResult observer, bool observe_megabytes) noexcept -> void;
 auto observeFairMQState(opentelemetry::metrics::ObserverResult observer, void * /* state */) noexcept -> void;
 auto observeProcessCpuTime(opentelemetry::metrics::ObserverResult observer, void * /* state */) noexcept -> void;
 auto observeProcessCpuUtilization(opentelemetry::metrics::ObserverResult observer, void * /* state */) noexcept
@@ -75,7 +75,7 @@ auto observeFairMQMessagesPerSecond(opentelemetry::metrics::ObserverResult obser
     observeFairMQThroughput(observer, false);
 }
 
-auto observeFairMQThroughput(opentelemetry::metrics::ObserverResult observer, bool observeMegabytes) noexcept -> void
+auto observeFairMQThroughput(opentelemetry::metrics::ObserverResult observer, bool observe_megabytes) noexcept -> void
 {
     using DoubleObserver = opentelemetry::nostd::shared_ptr<opentelemetry::metrics::ObserverResultT<double>>;
     if (!opentelemetry::nostd::holds_alternative<DoubleObserver>(observer)) {
@@ -106,7 +106,7 @@ auto observeFairMQThroughput(opentelemetry::metrics::ObserverResult observer, bo
             attributes.emplace_back("fairmq.channel.index",
                                     static_cast<int64_t>(*measurement.sub_channel_index));
         }
-        result->Observe(observeMegabytes ? measurement.megabytes_per_second : measurement.messages_per_second,
+        result->Observe(observe_megabytes ? measurement.megabytes_per_second : measurement.messages_per_second,
                         attributes);
     }
 }
@@ -622,7 +622,7 @@ auto OpenTelemetryInitializer::metricRecordDoubleGauge(const char *name,
                          .unit = isEmpty(unit) ? "" : unit,
                          .description = isEmpty(description) ? "" : description};
 
-    opentelemetry::nostd::shared_ptr<opentelemetry::metrics::ObservableInstrument> newGauge;
+    opentelemetry::nostd::shared_ptr<opentelemetry::metrics::ObservableInstrument> new_gauge;
     MetricKey *callback_key = nullptr;
     {
         auto &state = runtimeState();
@@ -637,7 +637,7 @@ auto OpenTelemetryInitializer::metricRecordDoubleGauge(const char *name,
             gauge->second.callback_key = key;
             gauge->second.instrument = state.meter->CreateDoubleObservableGauge(key.name, key.description, key.unit);
             if (gauge->second.instrument) {
-                newGauge = gauge->second.instrument;
+                new_gauge = gauge->second.instrument;
                 callback_key = &gauge->second.callback_key;
             }
         }
@@ -646,8 +646,8 @@ auto OpenTelemetryInitializer::metricRecordDoubleGauge(const char *name,
                                       .attributes = std::move(gauge_attributes)}] = value;
         state.last_error.clear();
     }
-    if (newGauge) {
-        newGauge->AddCallback(observeUserDoubleGauge, callback_key);
+    if (new_gauge) {
+        new_gauge->AddCallback(observeUserDoubleGauge, callback_key);
     }
     return NESTDAQ_OTEL_OK;
 }

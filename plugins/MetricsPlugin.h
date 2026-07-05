@@ -50,7 +50,7 @@ static constexpr std::string_view kBytesSumPrefix{"mb-sum"};
 
 static constexpr std::string_view kCreatedTimePrefix{"created-time"};
 static constexpr std::string_view kLastUpdatePrefix{"last-update"};
-static constexpr std::string_view kLastUpdateNSPrefix{"last-update-ns"};
+static constexpr std::string_view kLastUpdateNsPrefix{"last-update-ns"};
 
 static constexpr std::string_view kHostnamePrefix{"hostname"};
 static constexpr std::string_view kHostIpAddressPrefix{"host-ip"};
@@ -112,7 +112,7 @@ public:
         static constexpr std::string_view kUpdateInterval{"proc-stat-update-interval"};
         static constexpr std::string_view kServerUri{"metrics-uri"};
         static constexpr std::string_view kRetention{"retention"};
-        static constexpr std::string_view kRecreateTS{"recreate-ts"};
+        static constexpr std::string_view kRecreateTs{"recreate-ts"};
         static constexpr std::string_view kMaxTtl{"metrics-max-ttl"};
     };
 
@@ -130,13 +130,13 @@ public:
 
 private:
     /** @brief Create RedisTimeSeries entries for one socket metric pair. */
-    bool createSocketTS(std::string_view key_msg,
+    bool createSocketTs(std::string_view key_msg,
                         std::string_view key_bytes,
                         std::string_view label_msg,
                         std::string_view label_bytes,
                         const std::unordered_map<std::string, std::string> &labels);
     /** @brief Create all configured socket RedisTimeSeries entries. */
-    bool createSocketTS();
+    bool createSocketTs();
     /** @brief Create one RedisTimeSeries key with labels and retention. */
     bool createTimeseries(std::string_view key,
                           const std::unordered_map<std::string, std::string> &labels);
@@ -174,9 +174,9 @@ private:
     long long fMaxTtl{0};
 
     std::string fStartTimeKey;
-    std::string fStartTimeNSKey;
+    std::string fStartTimeNsKey;
     std::string fStopTimeKey;
-    std::string fStopTimeNSKey;
+    std::string fStopTimeNsKey;
     std::string fRunNumberKey;
 
     std::chrono::system_clock::time_point fCreatedTimeSystem;
@@ -196,7 +196,7 @@ private:
     ProcessStatKey fProcKey;
     std::string fStateKey;
     std::string fLastUpdateKey;
-    std::string fLastUpdateNSKey;
+    std::string fLastUpdateNsKey;
 
     SocketMetricsKey fSockKey;
     SocketMetricsKey fSockSumKey;
@@ -212,8 +212,8 @@ private:
     std::unordered_map<std::string, SocketMetricsKey> fTsSockKey;
     std::unordered_map<std::string, SocketMetricsKey> fTsSockSumKey;
     std::unordered_map<std::string, int> fNumChannels;
-    std::string fRetentionMS{"0"};
-    std::unordered_set<std::string> fRegisteredTSKeys;
+    std::string fRetentionMs{"0"};
+    std::unordered_set<std::string> fRegisteredTsKeys;
     std::unordered_set<std::string> fRegisteredKeys;
     std::unordered_set<std::string> fRegisteredSockKeys;
 };

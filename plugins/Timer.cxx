@@ -28,14 +28,14 @@ void daq::service::Timer::start(const std::shared_ptr<net::io_context> &ctx,
     fContext   = ctx;
 // fStrand    = strand;
     fTimer     = std::make_unique<net::steady_timer>(*fContext);
-    fTimeoutMS = timeout_ms;
+    fTimeoutMs = timeout_ms;
     fHandle    = std::move(f);
     start();
 }
 
 void daq::service::Timer::start()
 {
-    fTimer->expires_after(std::chrono::milliseconds(fTimeoutMS));
+    fTimer->expires_after(std::chrono::milliseconds(fTimeoutMs));
     fTimer->async_wait( //
     [this](const auto &ec) {
         // std::cout << "# timer canceled : " << ec.message() << std::endl;

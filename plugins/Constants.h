@@ -31,9 +31,9 @@ static constexpr std::string_view kServiceRegistryUri{"registry-uri"};
 static constexpr std::string_view kRunInfoPrefix{"run_info"};
 static constexpr std::string_view kRunNumber{"run_number"};
 static constexpr std::string_view kStartTime{"start_time"};
-static constexpr std::string_view kStartTimeNS{"start_time_ns"};
+static constexpr std::string_view kStartTimeNs{"start_time_ns"};
 static constexpr std::string_view kStopTime{"stop_time"};
-static constexpr std::string_view kStopTimeNS{"stop_time_ns"};
+static constexpr std::string_view kStopTimeNs{"stop_time_ns"};
 
 static constexpr std::string_view kUuid{"uuid"};
 static constexpr std::string_view kMaxTtl{"max-ttl"};

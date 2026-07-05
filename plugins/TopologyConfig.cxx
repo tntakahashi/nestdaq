@@ -294,22 +294,22 @@ void daq::service::TopologyConfig::configConnect()
         auto &sp = fConnectChannels[my_channel_name];
 
         const auto &peer = child.second.get_child("peer");
-        std::vector<std::string> peerList;
+        std::vector<std::string> peer_list;
         if (const auto &s = peer.get_value<std::string>(); !s.empty()) {
             // string
             //LOG(info) << " peer : s = " << s;
-            peerList.push_back(s);
+            peer_list.push_back(s);
         } else {
             // array
             for (const auto &a : peer) {
                 const auto &ss = a.second.get_value<std::string>();
                 //LOG(info) << " peer (array) : " << ss;
-                peerList.push_back(ss);
+                peer_list.push_back(ss);
             }
         }
 
         std::vector<std::string> address_list;
-        for (const auto &p : peerList) {
+        for (const auto &p : peer_list) {
 
             int n_separators = std::count(p.begin(), p.end(), fSeparator[0]);
             bool has_sub_channel_index = (p.find("[") != std::string::npos);

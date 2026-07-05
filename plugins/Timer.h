@@ -42,7 +42,7 @@ private:
     std::shared_ptr<net::io_context> fContext;
 //  std::shared_ptr<strand_t> fStrand;
     std::unique_ptr<net::steady_timer> fTimer;
-    unsigned int fTimeoutMS{0};
+    unsigned int fTimeoutMs{0};
     std::function<bool(const std::error_code &)> fHandle;
 
 };

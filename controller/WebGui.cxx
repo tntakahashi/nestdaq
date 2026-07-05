@@ -24,7 +24,7 @@
 #include "controller/WebGui.h"
 
 static constexpr std::string_view kMyClass{"WebGui"};
-constexpr int kNStates = static_cast<int>(fair::mq::State::Exiting) + 1;
+constexpr int kNumberOfStates = static_cast<int>(fair::mq::State::Exiting) + 1;
 
 using namespace std::string_literals;
 using namespace std::chrono_literals;
@@ -208,8 +208,8 @@ void WebGui::pollState()
 
         auto t_now = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
         const auto elapsed = static_cast<uint64_t>(t_now - t_prev);
-        if (elapsed < fPollIntervalMS) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(fPollIntervalMS - elapsed));
+        if (elapsed < fPollIntervalMs) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(fPollIntervalMs - elapsed));
             continue;
         }
         t_prev = t_now;
@@ -268,11 +268,11 @@ void WebGui::pollState()
         }
 
         for (auto &[sname, ss] : summary_table) {
-            ss.counts.resize(kNStates, 0);
+            ss.counts.resize(kNumberOfStates, 0);
             for (const auto& [inst_name, inst] : ss.instances) {
                 if (!inst.state.empty()) {
                     auto istate = static_cast<int>(fair::mq::GetState(inst.state));
-                    if (istate >= kNStates) {
+                    if (istate >= kNumberOfStates) {
                         LOG(error) << __func__ << " bad state id = " << istate << ": service = " << sname << ", instance = " << inst_name;
                         continue;
                     }
@@ -565,7 +565,7 @@ void WebGui::sendStateSummary(const std::map<std::string, ServiceState> & summar
             s.put("date", summary.date);
             s.put("n_instances", summary.instances.size());
             boost::property_tree::ptree count_list;
-            for (auto i=0; i<kNStates; ++i) {
+            for (auto i=0; i<kNumberOfStates; ++i) {
                 boost::property_tree::ptree cnt;
                 cnt.put("state-id", i);
                 cnt.put("name", fair::mq::GetStateName(static_cast<fair::mq::State>(i)));

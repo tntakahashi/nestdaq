@@ -113,7 +113,7 @@ auto daq::service::metricsPluginProgramOptions() -> fair::mq::Plugin::ProgOption
            (opt::kUpdateInterval.data(), bpo::value<long long>()->default_value(1000),     "update interval in milliseconds for CPU and memory usage.")
            (opt::kServerUri.data(),      bpo::value<std::string>(),                        "Redis server URI (if empty, the same URI of the service registry is used.)")
            (opt::kRetention.data(),      bpo::value<std::string>()->default_value("0"),    "kRetention time in msec for time series data. When set to 0, the series is not trimmed at all.")
-           (opt::kRecreateTS.data(),     bpo::value<std::string>()->default_value("true"), "Recreate timeseries data on state transition to Running")
+           (opt::kRecreateTs.data(),     bpo::value<std::string>()->default_value("true"), "Recreate timeseries data on state transition to Running")
            (opt::kMaxTtl.data(),         bpo::value<std::string>()->default_value("3000"), "Max TTL for metrics in milliseconds. (if zero or negative, no TTL is set.)");
     return options;
 }
@@ -138,7 +138,7 @@ daq::service::MetricsPlugin::MetricsPlugin(std::string_view name,
     fSeparator   = GetProperty<std::string>(kSeparator.data());
     fTopPrefix   = kMetricsPrefix.data();
 
-    fRetentionMS = GetProperty<std::string>(opt::kRetention.data());
+    fRetentionMs = GetProperty<std::string>(opt::kRetention.data());
     fMaxTtl      = std::stoll(GetProperty<std::string>(opt::kMaxTtl.data()));
 
     if (PropertyExists("created-time")) {
@@ -152,7 +152,7 @@ daq::service::MetricsPlugin::MetricsPlugin(std::string_view name,
 
     fStateKey        = join({fTopPrefix, kStatePrefix.data()},        fSeparator);
     fLastUpdateKey   = join({fTopPrefix, kLastUpdatePrefix.data()},   fSeparator);
-    fLastUpdateNSKey = join({fTopPrefix, kLastUpdateNSPrefix.data()}, fSeparator);
+    fLastUpdateNsKey = join({fTopPrefix, kLastUpdateNsPrefix.data()}, fSeparator);
     fProcKey.state_id = join({fTopPrefix, kStateIdPrefix.data()},      fSeparator);
     fProcKey.cpu     = join({fTopPrefix, kCpuStatPrefix.data()},      fSeparator);
     fProcKey.ram     = join({fTopPrefix, kRamStatPrefix.data()},      fSeparator);
@@ -175,7 +175,7 @@ daq::service::MetricsPlugin::MetricsPlugin(std::string_view name,
     /*
     LOG(debug) << " StateKey       = " << fStateKey
                << "\n LastUpdateKey     = " << fLastUpdateKey
-               << "\n LastUpdateNSKey   = " << fLastUpdateNSKey
+               << "\n LastUpdateNSKey   = " << fLastUpdateNsKey
                << "\n"
                << "\n ProcKey.state_id   = " << fProcKey.state_id
                << "\n ProcKey.cpu       = " << fProcKey.cpu
@@ -220,13 +220,13 @@ daq::service::MetricsPlugin::MetricsPlugin(std::string_view name,
     //           << "\n ipAddresssKey  = " << fIpAddressKey;
 
     fStartTimeKey   = join({fTopPrefix, kStartTime.data()}, fSeparator);
-    fStartTimeNSKey = join({fTopPrefix, kStartTimeNS.data()}, fSeparator);
+    fStartTimeNsKey = join({fTopPrefix, kStartTimeNs.data()}, fSeparator);
     fStopTimeKey    = join({fTopPrefix, kStopTime.data()}, fSeparator);
-    fStopTimeNSKey  = join({fTopPrefix, kStopTimeNS.data()}, fSeparator);
+    fStopTimeNsKey  = join({fTopPrefix, kStopTimeNs.data()}, fSeparator);
     fRunNumberKey   = join({fTopPrefix, kRunNumber.data()}, fSeparator);
 
-    fRegisteredKeys.insert({fStateKey, fLastUpdateKey, fLastUpdateNSKey,
-                            fStartTimeKey, fStartTimeNSKey, fStopTimeKey, fStopTimeNSKey,
+    fRegisteredKeys.insert({fStateKey, fLastUpdateKey, fLastUpdateNsKey,
+                            fStartTimeKey, fStartTimeNsKey, fStopTimeKey, fStopTimeNsKey,
                             fRunNumberKey,
                             fProcKey.state_id, fProcKey.cpu, fProcKey.ram,
                             fCreatedTimeKey, fHostNameKey, fIpAddressKey});
@@ -250,7 +250,7 @@ daq::service::MetricsPlugin::MetricsPlugin(std::string_view name,
         .hset(fHostNameKey,    fId, GetProperty<std::string>("hostname"))
         .hset(fIpAddressKey,   fId, GetProperty<std::string>("host-ip"))
         //.hset(fLastUpdateKey, fId, toDate(lastUpdate))
-        //.hset(fLastUpdateNSKey, fId, std::to_string(last_update_ns.count()))
+        //.hset(fLastUpdateNsKey, fId, std::to_string(last_update_ns.count()))
         .exec();
     }
     fair::Logger::AddCustomSink(kMyClass.data(), "info", [this](const std::string &content, const fair::LogMetaData & /*metadata*/) {
@@ -261,9 +261,9 @@ daq::service::MetricsPlugin::MetricsPlugin(std::string_view name,
     SubscribeToPropertyChangeAsString([this](const std::string& key, std::string value) {
         if (
             (key==kStartTime)   ||
-            (key==kStartTimeNS) ||
+            (key==kStartTimeNs) ||
             (key==kStopTime)    ||
-            (key==kStopTimeNS)  ||
+            (key==kStopTimeNs)  ||
             (key==kRunNumber)) {
             //LOG(debug) << kMyClass << " (subscribed callback) key = " << key << ", value = " << value;
             std::scoped_lock<std::mutex> lock{fMutex};
@@ -304,7 +304,7 @@ daq::service::MetricsPlugin::MetricsPlugin(std::string_view name,
                 pipeline_used |= createTimeseries(fTsProcKey.cpu,     {{kDataType.data(), kCpuStatPrefix.data()}});
                 pipeline_used |= createTimeseries(fTsProcKey.ram,     {{kDataType.data(), kRamStatPrefix.data()}});
                 pipeline_used |= createTimeseries(fTsProcKey.state_id, {{kDataType.data(), kStateIdPrefix.data()}});
-                pipeline_used |= createSocketTS();
+                pipeline_used |= createSocketTs();
                 if (pipeline_used) {
                     fPipe->exec();
                 }
@@ -338,7 +338,7 @@ daq::service::MetricsPlugin::~MetricsPlugin()
 /**
  * @brief Create RedisTimeSeries keys for one socket direction and its sum.
  */
-bool daq::service::MetricsPlugin::createSocketTS(std::string_view key_msg,
+bool daq::service::MetricsPlugin::createSocketTs(std::string_view key_msg,
         std::string_view key_bytes,
         std::string_view label_msg,
         std::string_view label_bytes,
@@ -377,7 +377,7 @@ bool daq::service::MetricsPlugin::createSocketTS(std::string_view key_msg,
 /**
  * @brief Create RedisTimeSeries keys for all configured FairMQ sockets.
  */
-bool daq::service::MetricsPlugin::createSocketTS()
+bool daq::service::MetricsPlugin::createSocketTs()
 {
     //LOG(warn) << __func__ << ":" << __LINE__;
     bool pipeline_used=false;
@@ -404,10 +404,10 @@ bool daq::service::MetricsPlugin::createSocketTS()
             {"socket",    property.type},
             {"transport", property.transport}};
         if (has_input) {
-            pipeline_used |= createSocketTS(ts_key.msg_in, ts_key.bytes_in, kMessageInPrefix, kBytesInPrefix, labels);
+            pipeline_used |= createSocketTs(ts_key.msg_in, ts_key.bytes_in, kMessageInPrefix, kBytesInPrefix, labels);
         }
         if (has_output) {
-            pipeline_used |= createSocketTS(ts_key.msg_out, ts_key.bytes_out, kMessageOutPrefix, kBytesOutPrefix, labels);
+            pipeline_used |= createSocketTs(ts_key.msg_out, ts_key.bytes_out, kMessageOutPrefix, kBytesOutPrefix, labels);
         }
     }
     return pipeline_used;
@@ -423,13 +423,13 @@ bool daq::service::MetricsPlugin::createTimeseries(std::string_view key,
     if (fClient->exists(key.data())>0) {
         //LOG(warn) << " TS key = " << key << " already exists in DB";
         fClient->del(key.data());
-        fRegisteredTSKeys.erase(key.data());
+        fRegisteredTsKeys.erase(key.data());
     }
     std::vector<std::string> cmd;
     cmd.push_back("ts.create");
     cmd.push_back(key.data());
     cmd.push_back("retention");
-    cmd.push_back(fRetentionMS);
+    cmd.push_back(fRetentionMs);
     cmd.push_back("labels");
     cmd.push_back("service");
     cmd.push_back(fServiceName);
@@ -447,7 +447,7 @@ bool daq::service::MetricsPlugin::createTimeseries(std::string_view key,
     //LOG(debug) << s;
 
     fPipe->command(cmd.cbegin(), cmd.cend());
-    fRegisteredTSKeys.emplace(key.data());
+    fRegisteredTsKeys.emplace(key.data());
     return true;
 }
 
@@ -464,7 +464,7 @@ void daq::service::MetricsPlugin::deleteExpiredFields()
                 LOG(debug) << "got lock: " << kMyClass << " " << fId;
 
                 std::unordered_map<std::string, std::string> hash_instance_to_last_update_ns;
-                fClient->hgetall(fLastUpdateNSKey, std::inserter(hash_instance_to_last_update_ns, hash_instance_to_last_update_ns.begin()));
+                fClient->hgetall(fLastUpdateNsKey, std::inserter(hash_instance_to_last_update_ns, hash_instance_to_last_update_ns.begin()));
                 std::vector<std::string> expired_instances;
                 for (const auto& [k, v] : hash_instance_to_last_update_ns) {
                     auto t_ns = std::stoull(v); // nanoseconds -> milliseconds
@@ -518,9 +518,9 @@ void daq::service::MetricsPlugin::deleteExpiredFields()
  */
 void daq::service::MetricsPlugin::deleteTsKeys()
 {
-    if (!fRegisteredTSKeys.empty()) {
-        auto ndeleted = fClient->del(fRegisteredTSKeys.cbegin(), fRegisteredTSKeys.cend());
-        fRegisteredTSKeys.clear();
+    if (!fRegisteredTsKeys.empty()) {
+        auto ndeleted = fClient->del(fRegisteredTsKeys.cbegin(), fRegisteredTsKeys.cend());
+        fRegisteredTsKeys.clear();
         LOG(debug) << kMyClass << " " << __FUNCTION__ << " n deleted = " << ndeleted;
     }
 }
@@ -583,8 +583,8 @@ bool daq::service::MetricsPlugin::isRecreateTs()
 {
     //LOG(warn) << __func__ << ":" << __LINE__;
     using opt = OptionKey;
-    if (PropertyExists(opt::kRecreateTS.data())) {
-        auto f = GetProperty<std::string>(opt::kRecreateTS.data());
+    if (PropertyExists(opt::kRecreateTs.data())) {
+        auto f = GetProperty<std::string>(opt::kRecreateTs.data());
         boost::to_lower(f);
         return (f=="true") || (f=="1");
     }
@@ -659,7 +659,7 @@ void daq::service::MetricsPlugin::sendProcessMetrics()
             fPipe->hset(fProcKey.cpu, {std::make_pair(fId, cpu_usage)})
             .hset(fProcKey.ram, {std::make_pair(fId, ram_usage)})
             .hset(fLastUpdateKey, fId, toDate(last_update))
-            .hset(fLastUpdateNSKey, fId, std::to_string(last_update_ns.count()))
+            .hset(fLastUpdateNsKey, fId, std::to_string(last_update_ns.count()))
             .command("ts.add", fTsProcKey.cpu,        "*", std::to_string(cpu_usage))
             .command("ts.add", fTsProcKey.ram,        "*", std::to_string(ram_usage))
             .command("ts.add", fTsProcKey.state_id,    "*", std::to_string(state_id));

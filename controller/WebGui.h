@@ -88,7 +88,7 @@ public:
     void sendWebSocketIdList(const std::vector<std::pair<unsigned int, std::string>> &v);
 
     void setPollIntervalMs(uint64_t t) {
-        fPollIntervalMS = t;
+        fPollIntervalMs = t;
     }
     void setPostRunCommand(std::string_view value) {
         fPostRunCommand = value.data();
@@ -152,7 +152,7 @@ private:
     std::string fRedisKeyEventChannelName;
     std::thread fRedisPubSubListenThread;
     std::thread fStatePollThread;
-    uint64_t fPollIntervalMS{0};
+    uint64_t fPollIntervalMs{0};
 
-    bool fRecreateTS{false};
+    bool fRecreateTs{false};
 };

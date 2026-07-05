@@ -1141,10 +1141,10 @@ void Plugin::writeStartTime()
     auto t_ns = std::to_string(std::chrono::duration_cast<std::chrono::nanoseconds>(uptime_nsec).count());
     fClient->hset(fHealth->key,
     {   std::make_pair(std::string{kStartTime}, t),
-        std::make_pair(std::string{kStartTimeNS}, t_ns)
+        std::make_pair(std::string{kStartTimeNs}, t_ns)
     });
     SetProperty(std::string{kStartTime}, t);
-    SetProperty(std::string{kStartTimeNS}, t_ns);
+    SetProperty(std::string{kStartTimeNs}, t_ns);
 }
 
 /**
@@ -1157,10 +1157,10 @@ void Plugin::writeStopTime()
     auto t_ns = std::to_string(std::chrono::duration_cast<std::chrono::nanoseconds>(uptime_nsec).count());
     fClient->hset(fHealth->key,
     {   std::make_pair(std::string{kStopTime}, t),
-        std::make_pair(std::string{kStopTimeNS}, t_ns)
+        std::make_pair(std::string{kStopTimeNs}, t_ns)
     });
     SetProperty(std::string{kStopTime}, t);
-    SetProperty(std::string{kStopTimeNS}, t_ns);
+    SetProperty(std::string{kStopTimeNs}, t_ns);
 }
 
 } // namespace daq::service
