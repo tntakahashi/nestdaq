@@ -44,7 +44,7 @@ auto timevalToSeconds(const timeval &value) -> double
 
 namespace daq::service {
 
-ProcessStatKey  Append(const ProcessStatKey& input, std::string_view s, std::string_view separator)
+ProcessStatKey append(const ProcessStatKey& input, std::string_view s, std::string_view separator)
 {
     ProcessStatKey ret;
     ret.cpu     = join({input.cpu,     s.data()}, separator.data());
@@ -53,7 +53,7 @@ ProcessStatKey  Append(const ProcessStatKey& input, std::string_view s, std::str
     return ret;
 }
 
-SocketMetricsKey  Append(const SocketMetricsKey &input, std::string_view s, std::string_view separator)
+SocketMetricsKey append(const SocketMetricsKey &input, std::string_view s, std::string_view separator)
 {
     SocketMetricsKey ret;
     ret.msgIn    = join({input.msgIn,    s.data()}, separator.data());
@@ -63,7 +63,7 @@ SocketMetricsKey  Append(const SocketMetricsKey &input, std::string_view s, std:
     return ret;
 }
 
-ProcessStatKey Prepend(const ProcessStatKey& input, std::string_view s, std::string_view separator)
+ProcessStatKey prepend(const ProcessStatKey& input, std::string_view s, std::string_view separator)
 {
     ProcessStatKey ret;
     ret.cpu     = join({s.data(), input.cpu},     separator.data());
@@ -72,7 +72,7 @@ ProcessStatKey Prepend(const ProcessStatKey& input, std::string_view s, std::str
     return ret;
 }
 
-SocketMetricsKey Prepend(const SocketMetricsKey& input, std::string_view s, std::string_view separator)
+SocketMetricsKey prepend(const SocketMetricsKey& input, std::string_view s, std::string_view separator)
 {
     SocketMetricsKey ret;
     ret.msgIn    = join({s.data(), input.msgIn},    separator.data());
@@ -82,7 +82,7 @@ SocketMetricsKey Prepend(const SocketMetricsKey& input, std::string_view s, std:
     return ret;
 }
 
-ProcessStatKey ReplaceAll(const ProcessStatKey& input, std::string_view search, std::string format)
+ProcessStatKey replaceAll(const ProcessStatKey& input, std::string_view search, std::string format)
 {
     ProcessStatKey ret;
     ret.cpu     = boost::replace_all_copy(input.cpu,     search.data(), format.data());
@@ -91,7 +91,7 @@ ProcessStatKey ReplaceAll(const ProcessStatKey& input, std::string_view search, 
     return ret;
 }
 
-SocketMetricsKey ReplaceAll(const SocketMetricsKey& input, std::string_view search, std::string format)
+SocketMetricsKey replaceAll(const SocketMetricsKey& input, std::string_view search, std::string format)
 {
     SocketMetricsKey ret;
     ret.msgIn    = boost::replace_all_copy(input.msgIn,    search.data(), format.data());
@@ -162,15 +162,15 @@ daq::service::MetricsPlugin::MetricsPlugin(std::string_view name,
     fSockKey.msgOut   = join({fTopPrefix, kMessageOutPrefix.data()}, fSeparator);
     fSockKey.bytesOut = join({fTopPrefix, kBytesOutPrefix.data()},   fSeparator);
 
-    fSockSumKey       = Append(fSockKey, "sum", "-");
+    fSockSumKey       = append(fSockKey, "sum", "-");
 
     fNumMessageKey    = join({fTopPrefix, kNumMessagePrefix.data()},    fSeparator);
     fBytesKey         = join({fTopPrefix, kBytesPrefix.data()},         fSeparator);
     fNumMessageSumKey = join({fTopPrefix, kNumMessageSumPrefix.data()}, fSeparator);
     fBytesSumKey      = join({fTopPrefix, kBytesSumPrefix.data()},      fSeparator);
 
-    auto t     = ReplaceAll(fProcKey, std::string(fTopPrefix)+fSeparator.data(), "");
-    fTsProcKey = Prepend(t, join({"ts", fId}, fSeparator), fSeparator);
+    auto t     = replaceAll(fProcKey, std::string(fTopPrefix)+fSeparator.data(), "");
+    fTsProcKey = prepend(t, join({"ts", fId}, fSeparator), fSeparator);
 
     /*
     LOG(debug) << " StateKey       = " << fStateKey
@@ -388,10 +388,10 @@ bool daq::service::MetricsPlugin::createSocketTS()
             continue;
         }
         const auto prefix = join({"ts", fId, name}, fSeparator);
-        auto t = ReplaceAll(fSockKey, std::string(fTopPrefix)+fSeparator.data(), "");
-        auto tsKey = Prepend(t, prefix, fSeparator);
+        auto t = replaceAll(fSockKey, std::string(fTopPrefix)+fSeparator.data(), "");
+        auto tsKey = prepend(t, prefix, fSeparator);
         fTsSockKey[name]    = tsKey;
-        auto sumKey = Append(tsKey, "sum", "-");
+        auto sumKey = append(tsKey, "sum", "-");
         fTsSockSumKey[name] =  sumKey;
 
         //std::string s{" socket TS keys for "};
