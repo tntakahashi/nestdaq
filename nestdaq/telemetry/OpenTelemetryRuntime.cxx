@@ -475,8 +475,8 @@ auto storeFrameworkMetricConfig(RuntimeState &state,
 
 auto runtimeState() -> RuntimeState &
 {
-    static auto state = RuntimeState{};
-    return state;
+    static auto gRuntimeState = RuntimeState{};
+    return gRuntimeState;
 }
 
 auto timeoutFromMs(uint64_t timeoutMs) noexcept -> std::chrono::microseconds

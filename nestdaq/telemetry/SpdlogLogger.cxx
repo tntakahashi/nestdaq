@@ -26,13 +26,13 @@ struct ThreadPoolEntry {
 };
 
 auto threadPoolMutex() -> std::mutex& {
-    static auto value = std::mutex{};
-    return value;
+    static auto gThreadPoolMutex = std::mutex{};
+    return gThreadPoolMutex;
 }
 
 auto threadPools() -> std::vector<ThreadPoolEntry>& {
-    static auto value = std::vector<ThreadPoolEntry> {};
-    return value;
+    static auto gThreadPools = std::vector<ThreadPoolEntry> {};
+    return gThreadPools;
 }
 
 auto makeOverflowPolicy(std::string_view value) -> spdlog::async_overflow_policy {

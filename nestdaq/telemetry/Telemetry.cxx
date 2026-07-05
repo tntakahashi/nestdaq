@@ -66,18 +66,18 @@ auto makeOtelAttributes(std::span<const Attribute> attributes) -> std::vector<ne
 
 namespace {
 auto spdlogConsolePatternMutex() -> std::mutex& {
-    static auto value = std::mutex{};
-    return value;
+    static auto gSpdlogConsolePatternMutex = std::mutex{};
+    return gSpdlogConsolePatternMutex;
 }
 
 auto spdlogConsolePatternStorage() -> std::string& {
-    static auto value = std::string{kDefaultSpdlogConsolePattern};
-    return value;
+    static auto gSpdlogConsolePatternStorage = std::string{kDefaultSpdlogConsolePattern};
+    return gSpdlogConsolePatternStorage;
 }
 
 auto spdlogNativeConsoleEnabledStorage() -> bool& {
-    static auto value = true;
-    return value;
+    static auto gSpdlogNativeConsoleEnabled = true;
+    return gSpdlogNativeConsoleEnabled;
 }
 
 auto isValidSpdlogAsyncOverflowPolicy(std::string_view value) -> bool {
@@ -98,8 +98,8 @@ auto normalizeSpdlogAsyncOptions(SpdlogAsyncOptions options) -> SpdlogAsyncOptio
 }
 
 auto spdlogAsyncOptionsStorage() -> SpdlogAsyncOptions& {
-    static auto value = SpdlogAsyncOptions{};
-    return value;
+    static auto gSpdlogAsyncOptions = SpdlogAsyncOptions{};
+    return gSpdlogAsyncOptions;
 }
 } // namespace
 
@@ -319,8 +319,8 @@ namespace {
  * taking locks.
  */
 auto activeTelemetryLibrary() noexcept -> std::atomic<TelemetryLibrary*>& {
-    static auto value = std::atomic<TelemetryLibrary*> {nullptr};
-    return value;
+    static auto gActiveTelemetryLibrary = std::atomic<TelemetryLibrary*> {nullptr};
+    return gActiveTelemetryLibrary;
 }
 } // namespace
 

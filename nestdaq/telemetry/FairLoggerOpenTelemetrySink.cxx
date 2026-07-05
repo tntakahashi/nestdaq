@@ -216,20 +216,20 @@ auto fairLoggerSeverityName(fair::Severity severity) noexcept -> std::string_vie
 
 auto instanceIdStorage() -> std::string &
 {
-    static auto value = std::string{};
-    return value;
+    static auto gInstanceIdStorage = std::string{};
+    return gInstanceIdStorage;
 }
 
 auto instanceIdMutex() -> std::mutex &
 {
-    static auto value = std::mutex{};
-    return value;
+    static auto gInstanceIdMutex = std::mutex{};
+    return gInstanceIdMutex;
 }
 
 auto minSeverity() -> std::atomic<int32_t>&
 {
-    static std::atomic<int32_t> value{static_cast<int32_t>(fair::Severity::trace)};
-    return value;
+    static std::atomic<int32_t> gMinSeverity{static_cast<int32_t>(fair::Severity::trace)};
+    return gMinSeverity;
 }
 
 auto parseInstanceIndex(std::string_view instance_id) -> std::optional<std::pair<std::string_view, int64_t>>
@@ -264,8 +264,8 @@ auto shouldEmit(fair::Severity severity) noexcept -> bool
 
 auto sinkRegistered() -> std::atomic<bool>&
 {
-    static std::atomic<bool> value{false};
-    return value;
+    static std::atomic<bool> gSinkRegistered{false};
+    return gSinkRegistered;
 }
 
 auto toStringView(std::string_view value) noexcept -> opentelemetry::nostd::string_view
