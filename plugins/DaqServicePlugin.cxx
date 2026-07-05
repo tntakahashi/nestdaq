@@ -81,8 +81,8 @@ auto pluginProgramOptions() -> fair::mq::Plugin::ProgOptions
     namespace bpo = boost::program_options;
 
     LOG(debug) << "daq::service::pluginProgramOptions: add_options";
-    auto pluginOptions = bpo::options_description(std::string{kMyClass});
-    pluginOptions.add_options() //
+    auto plugin_options = bpo::options_description(std::string{kMyClass});
+    plugin_options.add_options() //
                  (std::string{kServiceName}.data(),        bpo::value<std::string>(),  "name of this service")
                  //
                  (std::string{kUuid}.data(),               bpo::value<std::string>(),  "uuid of this service")
@@ -121,7 +121,7 @@ auto pluginProgramOptions() -> fair::mq::Plugin::ProgOptions
                  //
                  (std::string{kMaxRetryToResolveAddress}.data(), bpo::value<std::string>()->default_value("10"), "max retry to resolve connect address");
 
-    return pluginOptions;
+    return plugin_options;
 }
 
 Plugin::Plugin(std::string_view name,
@@ -246,15 +246,15 @@ Plugin::Plugin(std::string_view name,
     LOG(warn) << kMyClass << " SubscribeToDeviceStateChange()";
     SubscribeToDeviceStateChange([this](DeviceState newState) {
         try {
-            auto stateName = GetStateName(newState);
-            LOG(info) << kMyClass << " state : " << stateName;
+            auto state_name = GetStateName(newState);
+            LOG(info) << kMyClass << " state : " << state_name;
             fStateQueue.Push(newState);
 
             {
                 std::scoped_lock<std::mutex> lock{fMutex};
                 auto pipe = fClient->pipeline();
-                pipe.setex(fFairMQStateKey, fMaxTtl, stateName)
-                    .hset(fHealth->key, "fair:mq:state", stateName)
+                pipe.setex(fFairMQStateKey, fMaxTtl, state_name)
+                    .hset(fHealth->key, "fair:mq:state", state_name)
                     .expire(fHealth->key, fMaxTtl);
                 pipe.exec();
             }
@@ -337,7 +337,7 @@ void Plugin::changeDeviceStateByMultiCommand(std::string_view cmd)
 {
     //LOG(debug) << kMyClass << ":" << __func__;
     auto state = GetCurrentDeviceState();
-    //auto stateName = GetStateName(state);
+    //auto state_name = GetStateName(state);
 
     switch (state) {
     // ---------- state transition from Idle ----------
@@ -563,7 +563,7 @@ void Plugin::changeDeviceStateBySingleCommand(std::string_view cmd)
 {
     //LOG(debug) << kMyClass << ":" << __func__;
     auto state = GetCurrentDeviceState();
-    //auto stateName = GetStateName(state);
+    //auto state_name = GetStateName(state);
 
     switch (state) {
     case DeviceState::Idle:
@@ -656,21 +656,21 @@ void Plugin::readRunNumber()
     auto key = join({std::string{kRunInfoPrefix}, std::string{kRunNumber}}, fSeparator);
 
     // LOG(debug) << " run number key = " << key;
-    const auto runNumber = fClient->get(key);
-    if (!runNumber) {
+    const auto run_number = fClient->get(key);
+    if (!run_number) {
         LOG(error) << " could not find run-number key in redis = " << key;
         return;
     }
-    LOG(debug) << kMyClass << " run number (from redis) = " << *runNumber;
-    std::string myRunNumber;
+    LOG(debug) << kMyClass << " run number (from redis) = " << *run_number;
+    std::string my_run_number;
     if (PropertyExists(std::string{kRunNumber})) {
-        myRunNumber = GetProperty<std::string>(std::string{kRunNumber});
+        my_run_number = GetProperty<std::string>(std::string{kRunNumber});
     }
-    if (myRunNumber!=*runNumber) {
-        LOG(warn) << kMyClass << " update run number " << *runNumber << " (old = " << myRunNumber << ")";
-        SetProperty(std::string{kRunNumber}, *runNumber);
+    if (my_run_number!=*run_number) {
+        LOG(warn) << kMyClass << " update run number " << *run_number << " (old = " << my_run_number << ")";
+        SetProperty(std::string{kRunNumber}, *run_number);
     } else {
-        // LOG(debug) << kMyClass << " same run number " << *runNumber << " (old = " << myRunNumber << ")";
+        // LOG(debug) << kMyClass << " same run number " << *run_number << " (old = " << my_run_number << ")";
     }
 }
 
@@ -682,12 +682,12 @@ void Plugin::readRunNumber()
  */
 void Plugin::registerService()
 {
-    auto registryUri = GetProperty<std::string>(std::string{kServiceRegistryUri});
-    LOG(debug) << " registry URI = " << registryUri;
+    auto registry_uri = GetProperty<std::string>(std::string{kServiceRegistryUri});
+    LOG(debug) << " registry URI = " << registry_uri;
 
     try {
         {
-            fClient = std::make_shared<sw::redis::Redis>(registryUri);
+            fClient = std::make_shared<sw::redis::Redis>(registry_uri);
             fClient->command("client", "setname", join({std::string{kTopPrefix}, fServiceName, fId}, fSeparator));
         }
         setId();
@@ -726,9 +726,9 @@ void Plugin::registerService()
 
         }
 
-        //auto uptimeNsec = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - fHealth->created_time);
-        //fHealth->updatedTime = fHealth->created_time_system + std::chrono::duration_cast<std::chrono::seconds>(uptimeNsec);
-        const auto &[uptimeNsec, updatedTime] = updateDate(fHealth->created_time_system, fHealth->created_time);
+        //auto uptime_nsec = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - fHealth->created_time);
+        //fHealth->updated_time = fHealth->created_time_system + std::chrono::duration_cast<std::chrono::seconds>(uptime_nsec);
+        const auto &[uptime_nsec, updated_time] = updateDate(fHealth->created_time_system, fHealth->created_time);
         LOG(debug) << kMyClass << " hset " << fHealth->key << " " << fHealth->host_name << " " << fHealth->ip_address;
         LOG(debug) << kMyClass << " hset " << fProgOptionKeyName;
 
@@ -743,9 +743,9 @@ void Plugin::registerService()
                 std::make_pair("hostIp",      fHealth->ip_address),
                 std::make_pair("serviceName", fServiceName),
                 std::make_pair("createdTime", toDate(fHealth->created_time_system)),
-//              std::make_pair("updatedTime", toDate(fHealth->updatedTime)),
-                std::make_pair("updatedTime", toDate(updatedTime)),
-                std::make_pair("uptime",      std::to_string(std::chrono::duration_cast<std::chrono::milliseconds>(uptimeNsec).count())),
+//              std::make_pair("updated_time", toDate(fHealth->updated_time)),
+                std::make_pair("updated_time", toDate(updated_time)),
+                std::make_pair("uptime",      std::to_string(std::chrono::duration_cast<std::chrono::milliseconds>(uptime_nsec).count())),
             })
             .expire(fHealth->key, fMaxTtl)
             .exec();
@@ -773,20 +773,20 @@ void Plugin::registerService()
 void Plugin::resetTtl()
 {
 //  LOG(debug) << " reset presence ttl";
-//  auto uptimeNsec = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - fHealth->created_time);
-//  fHealth->updatedTime = fHealth->created_time_system + std::chrono::duration_cast<std::chrono::seconds>(uptimeNsec);
-    const auto &[uptimeNsec, updatedTime] = updateDate(fHealth->created_time_system, fHealth->created_time);
-    const auto & lastChecked = toDate(updatedTime);
+//  auto uptime_nsec = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - fHealth->created_time);
+//  fHealth->updated_time = fHealth->created_time_system + std::chrono::duration_cast<std::chrono::seconds>(uptime_nsec);
+    const auto &[uptime_nsec, updated_time] = updateDate(fHealth->created_time_system, fHealth->created_time);
+    const auto & last_checked = toDate(updated_time);
 
     std::scoped_lock<std::mutex> lock{fMutex};
     auto pipe = fClient->pipeline();
     pipe.hset(fHealth->key,
-    {   std::make_pair("updatedTime", lastChecked),
-        std::make_pair("uptime", std::to_string(std::chrono::duration_cast<std::chrono::milliseconds>(uptimeNsec).count())),
+    {   std::make_pair("updated_time", last_checked),
+        std::make_pair("uptime", std::to_string(std::chrono::duration_cast<std::chrono::milliseconds>(uptime_nsec).count())),
     })
     .setex(fPresence->key, fMaxTtl, boost::uuids::to_string(fUuid))
     .setex(fFairMQStateKey, fMaxTtl, GetStateName(GetCurrentDeviceState()))
-    .setex(fUpdateTimeKey, fMaxTtl, lastChecked)
+    .setex(fUpdateTimeKey, fMaxTtl, last_checked)
     .expire(fHealth->key, fMaxTtl)
     .expire(fProgOptionKeyName, fMaxTtl);
     if (fTopology) {
@@ -834,14 +834,14 @@ void Plugin::runStartupSequence()
 void Plugin::runShutdownSequence()
 {
     LOG(debug) << kMyClass << " runShutdownSequence()";
-    auto nextState = GetCurrentDeviceState();
-    if (nextState != DeviceState::Error) {
+    auto next_state = GetCurrentDeviceState();
+    if (next_state != DeviceState::Error) {
         fStateQueue.Clear();
     }
 
     // any state -> .. -> Exiting
-    while (nextState != DeviceState::Exiting && nextState != DeviceState::Error) {
-        switch (nextState) {
+    while (next_state != DeviceState::Exiting && next_state != DeviceState::Error) {
+        switch (next_state) {
         case DeviceState::Idle:
             ChangeDeviceState(DeviceStateTransition::End);
             break;
@@ -863,7 +863,7 @@ void Plugin::runShutdownSequence()
         default:
             break;
         }
-        nextState = fStateQueue.WaitForNext();
+        next_state = fStateQueue.WaitForNext();
     }
     ReleaseDeviceControl();
     LOG(debug) << kMyClass << " runShutdownSequence() done";
@@ -890,60 +890,60 @@ void Plugin::setId()
         while (true) {
             try {
                 sw::redis::RedMutex mtx(fClient, "resource");
-                std::unique_lock<sw::redis::RedMutex> redLock(mtx, std::defer_lock);
-                if (redLock.try_lock()) {
+                std::unique_lock<sw::redis::RedMutex> red_lock(mtx, std::defer_lock);
+                if (red_lock.try_lock()) {
                     LOG(debug) << "got lock:  " << fUuid;
-                    auto presenceKeys = scan(*fClient, {std::string{kTopPrefix}, fServiceName, "*", std::string{kPresencePrefix}}, fSeparator);
-                    std::unordered_set<std::string> uuidList; // existing uuids
+                    auto presence_keys = scan(*fClient, {std::string{kTopPrefix}, fServiceName, "*", std::string{kPresencePrefix}}, fSeparator);
+                    std::unordered_set<std::string> uuid_list; // existing uuids
 
-                    if (!presenceKeys.empty()) {
-                        fClient->mget(presenceKeys.cbegin(), presenceKeys.cend(), std::inserter(uuidList, uuidList.begin()));
+                    if (!presence_keys.empty()) {
+                        fClient->mget(presence_keys.cbegin(), presence_keys.cend(), std::inserter(uuid_list, uuid_list.begin()));
                     }
                     std::string key = join({std::string{kTopPrefix}, std::string{kServiceInstanceIndexPrefix}, fServiceName}, fSeparator);
 
-                    std::unordered_map<std::string, std::string> hashIndexToUuid;
+                    std::unordered_map<std::string, std::string> hash_index_to_uuid;
                     LOG(debug) << "'id' (instance id) is empty. calculate service-instance-index";
-                    fClient->hgetall(key, std::inserter(hashIndexToUuid, hashIndexToUuid.begin()));
-                    auto myUuid = boost::uuids::to_string(fUuid);
-                    std::vector<std::string> indexExpired;
-                    std::string myIndex;
-                    for (const auto &[index, uuid] : hashIndexToUuid) {
-                        if (uuidList.count(uuid)==0) {
+                    fClient->hgetall(key, std::inserter(hash_index_to_uuid, hash_index_to_uuid.begin()));
+                    auto my_uuid = boost::uuids::to_string(fUuid);
+                    std::vector<std::string> index_expired;
+                    std::string my_index;
+                    for (const auto &[index, uuid] : hash_index_to_uuid) {
+                        if (uuid_list.count(uuid)==0) {
                             LOG(warn) << " expired " << index << " " << uuid;
-                            indexExpired.emplace_back(index);
-                        } else if (uuid == myUuid) {
-                            myIndex = index;
-                            LOG(debug) << " same uuid is found. reuse the service instance-index: " << myIndex;
+                            index_expired.emplace_back(index);
+                        } else if (uuid == my_uuid) {
+                            my_index = index;
+                            LOG(debug) << " same uuid is found. reuse the service instance-index: " << my_index;
                         }
                     }
-                    if (!indexExpired.empty()) {
-                        fClient->hdel(key, indexExpired.cbegin(), indexExpired.cend());
+                    if (!index_expired.empty()) {
+                        fClient->hdel(key, index_expired.cbegin(), index_expired.cend());
                     }
-                    LOG(debug) << " number of expired uuids " << indexExpired.size();
+                    LOG(debug) << " number of expired uuids " << index_expired.size();
 
-                    if (myIndex.empty()) {
+                    if (my_index.empty()) {
                         for (auto index=0; ; ++index) {
-                            myIndex = std::to_string(index);
-                            if (fClient->hsetnx(key, myIndex, myUuid)) {
-                                fRegisteredHashes.insert({key, myIndex});
-                                fId = fServiceName + "-" + myIndex;
+                            my_index = std::to_string(index);
+                            if (fClient->hsetnx(key, my_index, my_uuid)) {
+                                fRegisteredHashes.insert({key, my_index});
+                                fId = fServiceName + "-" + my_index;
                                 fPresence->key = join({std::string{kTopPrefix}, fServiceName, fId, std::string{kPresencePrefix}}, fSeparator);
                                 fClient->setex(fPresence->key, fMaxTtl, boost::uuids::to_string(fUuid));
                                 fRegisteredKeys.insert(fPresence->key);
-                                LOG(debug) << " service instance-index: " << myIndex << " for uuid = " << fUuid;
+                                LOG(debug) << " service instance-index: " << my_index << " for uuid = " << fUuid;
                                 break;
                             }
                         }
                     }
                 }
 
-                if (redLock.owns_lock()) {
+                if (red_lock.owns_lock()) {
                     LOG(debug) << "unlock:  " << fUuid;
-                    redLock.unlock();
+                    red_lock.unlock();
                     break;
                 } else {
                     //LOG(debug) << "extend lock:  " << fUuid;
-                    //redLock.extend_lock(std::chrono::milliseconds(30000));
+                    //red_lock.extend_lock(std::chrono::milliseconds(30000));
                     std::this_thread::sleep_for(kRedLockRetryInterval);
                 }
             } catch (const sw::redis::Error& e) {
@@ -968,8 +968,8 @@ void Plugin::setProcessName()
     fPid = getpid();
 
     // /proc/self/cmdline --> process name + all args (without white space)
-    //  auto pathName = "/proc/"s + std::to_string(fPid) + "/cmdline";
-    //  std::ifstream ifproc(pathName.data());
+    //  auto path_name = "/proc/"s + std::to_string(fPid) + "/cmdline";
+    //  std::ifstream ifproc(path_name.data());
     //  std::string s;
     //  if (std::getline(ifproc, s)) {
     //    LOG(debug) << " process : " << fPid << " " << s;
@@ -1034,11 +1034,11 @@ void Plugin::subscribeToDaqCommand()
                 LOG(error) << kMyClass << " on_message() change_state : instance is not specified.";
                 return;
             }
-            bool isSingleCommand = false; // TO DO
-            const std::string longInstanceId = daq::service::join({fServiceName, fId}, fSeparator);
+            bool is_single_command = false; // TO DO
+            const std::string long_instance_id = daq::service::join({fServiceName, fId}, fSeparator);
             if ((services.count("all")>0) ||
-                    ((services.count(fServiceName)>0) && ((instances.count("all")>0) || (instances.count(longInstanceId)>0)))) {
-                if (isSingleCommand) {
+                    ((services.count(fServiceName)>0) && ((instances.count("all")>0) || (instances.count(long_instance_id)>0)))) {
+                if (is_single_command) {
                     changeDeviceStateBySingleCommand(*val);
                 } else {
                     changeDeviceStateByMultiCommand(*val);
@@ -1136,15 +1136,15 @@ void Plugin::writeProgOptions()
  */
 void Plugin::writeStartTime()
 {
-    const auto &[uptimeNsec, updatedTime] = updateDate(fHealth->created_time_system, fHealth->created_time);
-    auto t   = toDate(updatedTime);
-    auto tNS = std::to_string(std::chrono::duration_cast<std::chrono::nanoseconds>(uptimeNsec).count());
+    const auto &[uptime_nsec, updated_time] = updateDate(fHealth->created_time_system, fHealth->created_time);
+    auto t   = toDate(updated_time);
+    auto t_ns = std::to_string(std::chrono::duration_cast<std::chrono::nanoseconds>(uptime_nsec).count());
     fClient->hset(fHealth->key,
     {   std::make_pair(std::string{kStartTime}, t),
-        std::make_pair(std::string{kStartTimeNS}, tNS)
+        std::make_pair(std::string{kStartTimeNS}, t_ns)
     });
     SetProperty(std::string{kStartTime}, t);
-    SetProperty(std::string{kStartTimeNS}, tNS);
+    SetProperty(std::string{kStartTimeNS}, t_ns);
 }
 
 /**
@@ -1152,15 +1152,15 @@ void Plugin::writeStartTime()
  */
 void Plugin::writeStopTime()
 {
-    const auto &[uptimeNsec, updatedTime] = updateDate(fHealth->created_time_system, fHealth->created_time);
-    auto t   = toDate(updatedTime);
-    auto tNS = std::to_string(std::chrono::duration_cast<std::chrono::nanoseconds>(uptimeNsec).count());
+    const auto &[uptime_nsec, updated_time] = updateDate(fHealth->created_time_system, fHealth->created_time);
+    auto t   = toDate(updated_time);
+    auto t_ns = std::to_string(std::chrono::duration_cast<std::chrono::nanoseconds>(uptime_nsec).count());
     fClient->hset(fHealth->key,
     {   std::make_pair(std::string{kStopTime}, t),
-        std::make_pair(std::string{kStopTimeNS}, tNS)
+        std::make_pair(std::string{kStopTimeNS}, t_ns)
     });
     SetProperty(std::string{kStopTime}, t);
-    SetProperty(std::string{kStopTimeNS}, tNS);
+    SetProperty(std::string{kStopTimeNS}, t_ns);
 }
 
 } // namespace daq::service

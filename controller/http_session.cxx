@@ -117,8 +117,8 @@ void HttpSession::doClose()
     // Send a TCP shutdown
     beast::error_code ec;
     LOG(debug) << "boost::beast http session: Send a TCP shutdown";
-    const auto shutdownResult = fStream.socket().shutdown(tcp::socket::shutdown_send, ec);
-    boost::ignore_unused(shutdownResult);
+    const auto shutdown_result = fStream.socket().shutdown(tcp::socket::shutdown_send, ec);
+    boost::ignore_unused(shutdown_result);
 
     // At this point the connection is closed gracefully
 }

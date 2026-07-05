@@ -74,63 +74,63 @@ auto OpenTelemetryInitializer::flushFrameworkMetricsIfDirty(uint64_t timeout_ms)
 
 auto OpenTelemetryInitializer::initialize(const nestdaq_otel_config *config) -> int
 {
-    auto localConfig = defaultConfig();
+    auto local_config = defaultConfig();
     if (config != nullptr) {
         if (config->size != sizeof(nestdaq_otel_config)) {
             return setLastError("nestdaq_otel_config has an unsupported size");
         }
-        localConfig = *config;
+        local_config = *config;
     }
-    if (!validateSeverity(localConfig.min_severity)) {
+    if (!validateSeverity(local_config.min_severity)) {
         return setLastError("min_severity must be a valid fair::Severity numeric value");
     }
 
-    auto logProtocols = std::vector<Protocol> {};
-    auto metricProtocols = std::vector<Protocol> {};
-    auto traceProtocols = std::vector<Protocol> {};
-    if ((signalEnabled(localConfig.logs) && !parseProtocols(localConfig.logs.protocol, logProtocols)) ||
-            (signalEnabled(localConfig.metrics) && !parseProtocols(localConfig.metrics.protocol, metricProtocols)) ||
-            (signalEnabled(localConfig.traces) && !parseProtocols(localConfig.traces.protocol, traceProtocols))) {
+    auto log_protocols = std::vector<Protocol> {};
+    auto metric_protocols = std::vector<Protocol> {};
+    auto trace_protocols = std::vector<Protocol> {};
+    if ((signalEnabled(local_config.logs) && !parseProtocols(local_config.logs.protocol, log_protocols)) ||
+            (signalEnabled(local_config.metrics) && !parseProtocols(local_config.metrics.protocol, metric_protocols)) ||
+            (signalEnabled(local_config.traces) && !parseProtocols(local_config.traces.protocol, trace_protocols))) {
         return setLastError("unsupported OpenTelemetry protocol; expected comma-separated console, otlp-http, or otlp-grpc");
     }
 
     try {
-        auto resource = makeResource(localConfig);
+        auto resource = makeResource(local_config);
         std::shared_ptr<opentelemetry::sdk::logs::LoggerProvider> logger_provider;
         std::shared_ptr<opentelemetry::sdk::metrics::MeterProvider> meter_provider;
         std::shared_ptr<opentelemetry::sdk::trace::TracerProvider> tracer_provider;
 
-        if (!logProtocols.empty()) {
+        if (!log_protocols.empty()) {
             auto processors = std::vector<std::unique_ptr<opentelemetry::sdk::logs::LogRecordProcessor>> {};
-            for (const auto protocol : logProtocols) {
-                processors.emplace_back(createLogProcessor(createLogExporter(localConfig, protocol), protocol));
+            for (const auto protocol : log_protocols) {
+                processors.emplace_back(createLogProcessor(createLogExporter(local_config, protocol), protocol));
             }
             logger_provider = std::shared_ptr<opentelemetry::sdk::logs::LoggerProvider> {
                 opentelemetry::sdk::logs::LoggerProviderFactory::Create(std::move(processors), resource)
             };
         }
 
-        if (!metricProtocols.empty()) {
+        if (!metric_protocols.empty()) {
             auto views = opentelemetry::sdk::metrics::ViewRegistryFactory::Create();
             meter_provider = std::shared_ptr<opentelemetry::sdk::metrics::MeterProvider> {
                 opentelemetry::sdk::metrics::MeterProviderFactory::Create(std::move(views), resource)
             };
-            for (const auto protocol : metricProtocols) {
-                meter_provider->AddMetricReader(createMetricReader(createMetricExporter(localConfig, protocol), localConfig));
+            for (const auto protocol : metric_protocols) {
+                meter_provider->AddMetricReader(createMetricReader(createMetricExporter(local_config, protocol), local_config));
             }
         }
 
-        if (!traceProtocols.empty()) {
+        if (!trace_protocols.empty()) {
             auto processors = std::vector<std::unique_ptr<opentelemetry::sdk::trace::SpanProcessor>> {};
-            for (const auto protocol : traceProtocols) {
-                processors.emplace_back(createSpanProcessor(createSpanExporter(localConfig, protocol), protocol));
+            for (const auto protocol : trace_protocols) {
+                processors.emplace_back(createSpanProcessor(createSpanExporter(local_config, protocol), protocol));
             }
             tracer_provider = std::shared_ptr<opentelemetry::sdk::trace::TracerProvider> {
                 opentelemetry::sdk::trace::TracerProviderFactory::Create(std::move(processors), resource)
             };
         }
 
-        shutdown(localConfig.timeout_ms);
+        shutdown(local_config.timeout_ms);
         {
             auto &state = runtimeState();
             std::scoped_lock lock{state.mutex};
@@ -143,8 +143,8 @@ auto OpenTelemetryInitializer::initialize(const nestdaq_otel_config *config) -> 
             if (meter_provider) {
                 state.meter = meter_provider->GetMeter("nestdaq", std::string{NESTDAQ_VERSION});
             }
-            if (!metricProtocols.empty()) {
-                storeFrameworkMetricConfig(state, localConfig, metricProtocols, resource);
+            if (!metric_protocols.empty()) {
+                storeFrameworkMetricConfig(state, local_config, metric_protocols, resource);
                 configureFrameworkMetricsProvider(state);
             }
             if (tracer_provider) {
@@ -152,8 +152,8 @@ auto OpenTelemetryInitializer::initialize(const nestdaq_otel_config *config) -> 
             }
             state.last_error.clear();
         }
-        if (!metricProtocols.empty()) {
-            startProcessMetricsThread(localConfig.metric_export_interval_ms);
+        if (!metric_protocols.empty()) {
+            startProcessMetricsThread(local_config.metric_export_interval_ms);
         }
 
         if (logger_provider) {
@@ -161,10 +161,10 @@ auto OpenTelemetryInitializer::initialize(const nestdaq_otel_config *config) -> 
             opentelemetry::nostd::shared_ptr<opentelemetry::logs::LoggerProvider> {
                 std::shared_ptr<opentelemetry::logs::LoggerProvider>{logger_provider}
             });
-            FairLoggerOpenTelemetrySink::setMinSeverity(localConfig.min_severity);
+            FairLoggerOpenTelemetrySink::setMinSeverity(local_config.min_severity);
             FairLoggerOpenTelemetrySink::initialize();
             LOG(info) << nestDAQMetadataLogBody();
-            LOG(info) << fairMQMetadataLogBody(localConfig);
+            LOG(info) << fairMQMetadataLogBody(local_config);
         }
         if (meter_provider) {
             opentelemetry::metrics::Provider::SetMeterProvider(
@@ -215,7 +215,7 @@ auto OpenTelemetryInitializer::shutdown(uint64_t timeout_ms) -> int
     try {
         stop_process_metrics_thread();
         auto &runtime_state = runtimeState();
-        std::scoped_lock reconfigureLock{runtime_state.framework_reconfigure_mutex};
+        std::scoped_lock reconfigure_lock{runtime_state.framework_reconfigure_mutex};
         std::shared_ptr<opentelemetry::sdk::logs::LoggerProvider> logger_provider;
         std::shared_ptr<opentelemetry::sdk::metrics::MeterProvider> meter_provider;
         std::shared_ptr<opentelemetry::sdk::metrics::MeterProvider> framework_meter_provider;

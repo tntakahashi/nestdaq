@@ -130,10 +130,10 @@ public:
 
 private:
     /** @brief Create RedisTimeSeries entries for one socket metric pair. */
-    bool createSocketTS(std::string_view keyMsg,
-                        std::string_view keyBytes,
-                        std::string_view labelMsg,
-                        std::string_view labelBytes,
+    bool createSocketTS(std::string_view key_msg,
+                        std::string_view key_bytes,
+                        std::string_view label_msg,
+                        std::string_view label_bytes,
                         const std::unordered_map<std::string, std::string> &labels);
     /** @brief Create all configured socket RedisTimeSeries entries. */
     bool createSocketTS();

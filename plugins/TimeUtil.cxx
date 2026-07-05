@@ -28,6 +28,6 @@ auto daq::service::updateDate(const std::chrono::system_clock::time_point &s,
                               const std::chrono::steady_clock::time_point &t)
 -> const std::pair<std::chrono::nanoseconds, std::chrono::system_clock::time_point>
 {
-    auto uptimeNsec = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - t);
-    return {uptimeNsec, (s + std::chrono::duration_cast<std::chrono::nanoseconds>(uptimeNsec))};
+    auto uptime_nsec = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - t);
+    return {uptime_nsec, (s + std::chrono::duration_cast<std::chrono::nanoseconds>(uptime_nsec))};
 }

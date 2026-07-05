@@ -155,29 +155,29 @@ int main(int argc, char* argv[]) {
             nestdaq::telemetry::setGeneratedUuidProperty(r.fConfig, telemetry_options);
             r.fDevice = getDevice(r.fConfig);
             if (telemetry_initialized && r.fConfig.Count("id") != 0) {
-                auto resolvedOptions = telemetry_options;
-                resolvedOptions.nestdaqInstanceId = r.fConfig.GetProperty<std::string>("id");
-                resolvedOptions.nestdaqInstanceIdStatus = "resolved";
-                const auto config = nestdaq::telemetry::makeConfig(resolvedOptions);
+                auto resolved_options = telemetry_options;
+                resolved_options.nestdaqInstanceId = r.fConfig.GetProperty<std::string>("id");
+                resolved_options.nestdaqInstanceIdStatus = "resolved";
+                const auto config = nestdaq::telemetry::makeConfig(resolved_options);
                 if (!telemetry->initializeWith(config)) {
                     LOG(error) << "Failed to reinitialize telemetry with NestDAQ instance id '"
-                               << resolvedOptions.nestdaqInstanceId << "': " << telemetry->getLastError();
+                               << resolved_options.nestdaqInstanceId << "': " << telemetry->getLastError();
                     if (telemetry_options.required) {
                         throw std::runtime_error{"failed to reinitialize required telemetry"};
                     }
                 } else {
                     telemetry_resolved = true;
                     nestdaq::telemetry::setActiveTelemetryLibrary(telemetry);
-                    telemetry->setNestdaqInstanceId(resolvedOptions.nestdaqInstanceId);
+                    telemetry->setNestdaqInstanceId(resolved_options.nestdaqInstanceId);
                 }
             }
             if (telemetry_initialized && telemetry_resolved && r.fDevice) {
                 r.fDevice->SubscribeToStateChange(
                     std::string{nestdaq::run_device_detail::kTelemetryStateSubscriber},
-                [telemetry](const fair::mq::State newState) {
+                [telemetry](const fair::mq::State new_state) {
                     telemetry->recordFrameworkFairMQState(
-                        static_cast<int64_t>(newState),
-                        fair::mq::GetStateName(newState));
+                        static_cast<int64_t>(new_state),
+                        fair::mq::GetStateName(new_state));
                 });
             }
         });

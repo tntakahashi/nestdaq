@@ -133,7 +133,7 @@ private:
  * The returned array borrows string storage from @p attributes, so callers must
  * pass it to the telemetry backend before the input attributes are destroyed.
  */
-auto makeOtelAttributes(const Attribute* attributes, std::size_t attributeCount) -> std::vector<nestdaq_otel_attribute>;
+auto makeOtelAttributes(const Attribute* attributes, std::size_t attribute_count) -> std::vector<nestdaq_otel_attribute>;
 
 /** @brief Convert an initializer list of attributes into the C ABI representation. */
 auto makeOtelAttributes(std::initializer_list<Attribute> attributes) -> std::vector<nestdaq_otel_attribute>;
@@ -299,7 +299,7 @@ public:
                           std::string_view unit = "",
                           std::string_view description = "",
                           const nestdaq_otel_attribute* attributes = nullptr,
-                          std::size_t attributeCount = 0) -> bool;
+                          std::size_t attribute_count = 0) -> bool;
 
 #if __cplusplus >= 202002L
     /** @brief Add @p value to a double counter instrument with C++20 span attributes. */
@@ -319,8 +319,8 @@ public:
                     std::string_view unit = "",
                     std::string_view description = "",
                     const nestdaq_otel_attribute* attributes = nullptr,
-                    std::size_t attributeCount = 0) -> bool {
-        return addDoubleCounter(name, static_cast<double>(value), unit, description, attributes, attributeCount);
+                    std::size_t attribute_count = 0) -> bool {
+        return addDoubleCounter(name, static_cast<double>(value), unit, description, attributes, attribute_count);
     }
 
 #if __cplusplus >= 202002L
@@ -345,7 +345,7 @@ public:
                                std::string_view unit = "",
                                std::string_view description = "",
                                const nestdaq_otel_attribute* attributes = nullptr,
-                               std::size_t attributeCount = 0) -> bool;
+                               std::size_t attribute_count = 0) -> bool;
 
 #if __cplusplus >= 202002L
     /** @brief Record @p value in a double histogram instrument with C++20 span attributes. */
@@ -365,8 +365,8 @@ public:
                          std::string_view unit = "",
                          std::string_view description = "",
                          const nestdaq_otel_attribute* attributes = nullptr,
-                         std::size_t attributeCount = 0) -> bool {
-        return recordDoubleHistogram(name, static_cast<double>(value), unit, description, attributes, attributeCount);
+                         std::size_t attribute_count = 0) -> bool {
+        return recordDoubleHistogram(name, static_cast<double>(value), unit, description, attributes, attribute_count);
     }
 
 #if __cplusplus >= 202002L
@@ -391,7 +391,7 @@ public:
                            std::string_view unit = "",
                            std::string_view description = "",
                            const nestdaq_otel_attribute* attributes = nullptr,
-                           std::size_t attributeCount = 0) -> bool;
+                           std::size_t attribute_count = 0) -> bool;
 
 #if __cplusplus >= 202002L
     /** @brief Record the latest @p value for a double gauge instrument with C++20 span attributes. */
@@ -411,8 +411,8 @@ public:
                      std::string_view unit = "",
                      std::string_view description = "",
                      const nestdaq_otel_attribute* attributes = nullptr,
-                     std::size_t attributeCount = 0) -> bool {
-        return recordDoubleGauge(name, static_cast<double>(value), unit, description, attributes, attributeCount);
+                     std::size_t attribute_count = 0) -> bool {
+        return recordDoubleGauge(name, static_cast<double>(value), unit, description, attributes, attribute_count);
     }
 
 #if __cplusplus >= 202002L
@@ -434,7 +434,7 @@ public:
      */
     auto startSpan(std::string_view name,
                    const nestdaq_otel_attribute* attributes = nullptr,
-                   std::size_t attributeCount = 0) -> TelemetrySpan;
+                   std::size_t attribute_count = 0) -> TelemetrySpan;
 
 #if __cplusplus >= 202002L
     /** @brief Start a span through the active backend with C++20 span attributes. */

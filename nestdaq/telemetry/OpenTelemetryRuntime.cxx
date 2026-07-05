@@ -123,29 +123,29 @@ auto appendAttribute(AttributeStorage &storage, const nestdaq_otel_attribute &at
     }
 }
 
-auto buildAttributes(const nestdaq_otel_attribute *attributes, uint64_t attributeCount) -> AttributeStorage
+auto buildAttributes(const nestdaq_otel_attribute *attributes, uint64_t attribute_count) -> AttributeStorage
 {
     auto storage = AttributeStorage{};
-    storage.keys.reserve(attributeCount);
-    storage.values.reserve(attributeCount);
+    storage.keys.reserve(attribute_count);
+    storage.values.reserve(attribute_count);
     if (attributes == nullptr) {
         return storage;
     }
-    for (uint64_t i = 0; i < attributeCount; ++i) {
+    for (uint64_t i = 0; i < attribute_count; ++i) {
         appendAttribute(storage, attributes[i]); // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
     }
     return storage;
 }
 
-auto buildGaugeAttributes(const nestdaq_otel_attribute *attributes, uint64_t attributeCount) -> std::vector<GaugeAttribute>
+auto buildGaugeAttributes(const nestdaq_otel_attribute *attributes, uint64_t attribute_count) -> std::vector<GaugeAttribute>
 {
     auto values = std::vector<GaugeAttribute> {};
-    values.reserve(attributeCount);
+    values.reserve(attribute_count);
     if (attributes == nullptr) {
         return values;
     }
 
-    for (uint64_t i = 0; i < attributeCount; ++i) {
+    for (uint64_t i = 0; i < attribute_count; ++i) {
         const auto &attribute = attributes[i]; // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
         if (!validateAttribute(&attribute)) {
             continue;
@@ -187,9 +187,9 @@ auto clearLastError() -> void
 auto flushFrameworkMetricsIfDirty(uint64_t timeout_ms) -> int
 {
     std::shared_ptr<opentelemetry::sdk::metrics::MeterProvider> framework_meter_provider;
-    auto throughputCount = std::size_t{0};
-    auto processCount = std::size_t{0};
-    auto stateCount = std::size_t{0};
+    auto throughput_count = std::size_t{0};
+    auto process_count = std::size_t{0};
+    auto state_count = std::size_t{0};
     {
         auto &state = runtimeState();
         std::scoped_lock lock{state.mutex};
@@ -207,19 +207,19 @@ auto flushFrameworkMetricsIfDirty(uint64_t timeout_ms) -> int
         state.exporting_fairmq_throughput_measurements = state.pending_fairmq_throughput_measurements;
         state.exporting_process_usage_measurements = state.pending_process_usage_measurements;
         state.exporting_fairmq_state_measurements = state.pending_fairmq_state_measurements;
-        throughputCount = state.exporting_fairmq_throughput_measurements.size();
-        processCount = state.exporting_process_usage_measurements.size();
-        stateCount = state.exporting_fairmq_state_measurements.size();
+        throughput_count = state.exporting_fairmq_throughput_measurements.size();
+        process_count = state.exporting_process_usage_measurements.size();
+        state_count = state.exporting_fairmq_state_measurements.size();
     }
 
     // Export a snapshot of pending framework samples. Successful flushes erase
     // only the exported prefix and recreate observable instruments so already
     // exported one-shot samples cannot be observed again.
     const auto ok = framework_meter_provider->ForceFlush(timeoutFromMs(timeout_ms));
-    auto shouldRecreateProvider = false;
+    auto should_recreate_provider = false;
     auto &state = runtimeState();
     if (ok) {
-        std::scoped_lock reconfigureLock{state.framework_reconfigure_mutex};
+        std::scoped_lock reconfigure_lock{state.framework_reconfigure_mutex};
         {
             std::scoped_lock lock{state.mutex};
             state.exporting_fairmq_throughput_measurements.clear();
@@ -228,15 +228,15 @@ auto flushFrameworkMetricsIfDirty(uint64_t timeout_ms) -> int
             state.pending_fairmq_throughput_measurements.erase(
                 state.pending_fairmq_throughput_measurements.begin(),
                 state.pending_fairmq_throughput_measurements.begin() +
-                std::min(throughputCount, state.pending_fairmq_throughput_measurements.size()));
+                std::min(throughput_count, state.pending_fairmq_throughput_measurements.size()));
             state.pending_process_usage_measurements.erase(
                 state.pending_process_usage_measurements.begin(),
                 state.pending_process_usage_measurements.begin() +
-                std::min(processCount, state.pending_process_usage_measurements.size()));
+                std::min(process_count, state.pending_process_usage_measurements.size()));
             state.pending_fairmq_state_measurements.erase(
                 state.pending_fairmq_state_measurements.begin(),
                 state.pending_fairmq_state_measurements.begin() +
-                std::min(stateCount, state.pending_fairmq_state_measurements.size()));
+                std::min(state_count, state.pending_fairmq_state_measurements.size()));
             if (state.framework_meter_provider == framework_meter_provider) {
                 state.framework_meter_provider.reset();
                 state.framework_meter = {};
@@ -246,11 +246,11 @@ auto flushFrameworkMetricsIfDirty(uint64_t timeout_ms) -> int
                 state.process_cpu_utilization_gauge = {};
                 state.process_memory_usage_counter = {};
                 state.fairmq_state_gauge = {};
-                shouldRecreateProvider = true;
+                should_recreate_provider = true;
             }
             state.last_error.clear();
         }
-        if (shouldRecreateProvider) {
+        if (should_recreate_provider) {
             configureFrameworkMetricsProvider(state);
         }
         return NESTDAQ_OTEL_OK;

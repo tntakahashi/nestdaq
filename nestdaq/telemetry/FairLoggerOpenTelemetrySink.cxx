@@ -299,10 +299,10 @@ auto FairLoggerOpenTelemetrySink::initialize() -> void
     }
 }
 
-auto FairLoggerOpenTelemetrySink::setNestdaqInstanceId(std::string_view instanceId) -> void
+auto FairLoggerOpenTelemetrySink::setNestdaqInstanceId(std::string_view instance_id) -> void
 {
     std::scoped_lock lock{instanceIdMutex()};
-    instanceIdStorage() = instanceId;
+    instanceIdStorage() = instance_id;
 }
 
 auto FairLoggerOpenTelemetrySink::setMinSeverity(int32_t severity) noexcept -> void

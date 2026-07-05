@@ -201,14 +201,14 @@ daq::service::MetricsPlugin::MetricsPlugin(std::string_view name,
                << "\n PTsrocKey.ram       = " << fTsProcKey.ram;
     */
 
-    std::string serverUri;
+    std::string server_uri;
     if (PropertyExists(opt::kServerUri.data())) {
-        serverUri = GetProperty<std::string>(opt::kServerUri.data());
+        server_uri = GetProperty<std::string>(opt::kServerUri.data());
     } else if (PropertyExists(kServiceRegistryUri.data())) {
-        serverUri = GetProperty<std::string>(kServiceRegistryUri.data());
+        server_uri = GetProperty<std::string>(kServiceRegistryUri.data());
     }
-    if (!serverUri.empty()) {
-        fClient = std::make_shared<sw::redis::Redis>(serverUri);
+    if (!server_uri.empty()) {
+        fClient = std::make_shared<sw::redis::Redis>(server_uri);
     }
 
     fCreatedTimeKey = join({fTopPrefix, kCreatedTimePrefix.data()},   fSeparator);
@@ -244,13 +244,13 @@ daq::service::MetricsPlugin::MetricsPlugin(std::string_view name,
 
     {
         //const auto &[uptimeNSec, lastUpdate] = updateDate(fCreatedTimeSystem, fCreatedTime);
-        //auto lastUpdateNS = std::chrono::duration_cast<std::chrono::nanoseconds>(lastUpdate.time_since_epoch());
+        //auto last_update_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(lastUpdate.time_since_epoch());
         std::scoped_lock<std::mutex> lock{fMutex};
         fPipe->hset(fCreatedTimeKey, fId, toDate(fCreatedTimeSystem))
         .hset(fHostNameKey,    fId, GetProperty<std::string>("hostname"))
         .hset(fIpAddressKey,   fId, GetProperty<std::string>("host-ip"))
         //.hset(fLastUpdateKey, fId, toDate(lastUpdate))
-        //.hset(fLastUpdateNSKey, fId, std::to_string(lastUpdateNS.count()))
+        //.hset(fLastUpdateNSKey, fId, std::to_string(last_update_ns.count()))
         .exec();
     }
     fair::Logger::AddCustomSink(kMyClass.data(), "info", [this](const std::string &content, const fair::LogMetaData & /*metadata*/) {
@@ -273,17 +273,17 @@ daq::service::MetricsPlugin::MetricsPlugin(std::string_view name,
     });
 
     SubscribeToDeviceStateChange([this](DeviceState newState) {
-        auto pipelineUsed{false};
-        const auto stateName = GetStateName(newState);
-        LOG(debug) << kMyClass << " state change: " << stateName;
+        auto pipeline_used{false};
+        const auto state_name = GetStateName(newState);
+        LOG(debug) << kMyClass << " state change: " << state_name;
         {
             std::scoped_lock<std::mutex> lock{fMutex};
             if (fPipe) {
                 fPipe->discard();
-                fPipe->hset(fStateKey,        fId, stateName)
+                fPipe->hset(fStateKey,        fId, state_name)
                 .hset(fProcKey.state_id, {std::make_pair(fId, static_cast<int>(newState))})
                 .exec();
-                pipelineUsed = true;
+                pipeline_used = true;
             }
         }
         switch (newState) {
@@ -301,11 +301,11 @@ daq::service::MetricsPlugin::MetricsPlugin(std::string_view name,
         }
         case DeviceState::Running:
             if (isRecreateTs()) {
-                pipelineUsed |= createTimeseries(fTsProcKey.cpu,     {{kDataType.data(), kCpuStatPrefix.data()}});
-                pipelineUsed |= createTimeseries(fTsProcKey.ram,     {{kDataType.data(), kRamStatPrefix.data()}});
-                pipelineUsed |= createTimeseries(fTsProcKey.state_id, {{kDataType.data(), kStateIdPrefix.data()}});
-                pipelineUsed |= createSocketTS();
-                if (pipelineUsed) {
+                pipeline_used |= createTimeseries(fTsProcKey.cpu,     {{kDataType.data(), kCpuStatPrefix.data()}});
+                pipeline_used |= createTimeseries(fTsProcKey.ram,     {{kDataType.data(), kRamStatPrefix.data()}});
+                pipeline_used |= createTimeseries(fTsProcKey.state_id, {{kDataType.data(), kStateIdPrefix.data()}});
+                pipeline_used |= createSocketTS();
+                if (pipeline_used) {
                     fPipe->exec();
                 }
             }
@@ -338,40 +338,40 @@ daq::service::MetricsPlugin::~MetricsPlugin()
 /**
  * @brief Create RedisTimeSeries keys for one socket direction and its sum.
  */
-bool daq::service::MetricsPlugin::createSocketTS(std::string_view keyMsg,
-        std::string_view keyBytes,
-        std::string_view labelMsg,
-        std::string_view labelBytes,
+bool daq::service::MetricsPlugin::createSocketTS(std::string_view key_msg,
+        std::string_view key_bytes,
+        std::string_view label_msg,
+        std::string_view label_bytes,
         const std::unordered_map<std::string, std::string>& labels)
 {
     //LOG(warn) << __func__ << ":" << __LINE__;
-    bool pipelineUsed=false;
+    bool pipeline_used=false;
 
-    auto keyMsgSum     = join({keyMsg.data(),     "sum"}, "-");
-    auto keyBytesSum   = join({keyBytes.data(),   "sum"}, "-");
-    auto labelMsgSum   = join({labelMsg.data(),   "sum"}, "-");
-    auto labelBytesSum = join({labelBytes.data(), "sum"}, "-");
+    auto key_msg_sum     = join({key_msg.data(),     "sum"}, "-");
+    auto key_bytes_sum   = join({key_bytes.data(),   "sum"}, "-");
+    auto label_msg_sum   = join({label_msg.data(),   "sum"}, "-");
+    auto label_bytes_sum = join({label_bytes.data(), "sum"}, "-");
 
-    auto labelsMsg      = labels;
-    auto labelsBytes    = labels;
-    auto labelsMsgSum   = labels;
-    auto labelsBytesSum = labels;
+    auto labels_msg      = labels;
+    auto labels_bytes    = labels;
+    auto labels_msg_sum   = labels;
+    auto labels_bytes_sum = labels;
 
     //LOG(debug) << __func__ << ":"
-    //           << "\n keyMsgSum     = " << keyMsgSum
-    //           << "\n keyBytesSum   = " << keyBytesSum
-    //           << "\n labelMsgSum   = " << labelMsgSum
-    //           << "\n labelBytesSum = " << labelBytesSum;
+    //           << "\n key_msg_sum     = " << key_msg_sum
+    //           << "\n key_bytes_sum   = " << key_bytes_sum
+    //           << "\n label_msg_sum   = " << label_msg_sum
+    //           << "\n label_bytes_sum = " << label_bytes_sum;
 
-    labelsMsg.emplace(kDataType.data(),      labelMsg);
-    labelsBytes.emplace(kDataType.data(),    labelBytes);
-    labelsMsgSum.emplace(kDataType.data(),   labelMsgSum);
-    labelsBytesSum.emplace(kDataType.data(), labelBytesSum);
-    pipelineUsed |= createTimeseries(keyMsg,      labelsMsg);
-    pipelineUsed |= createTimeseries(keyBytes,    labelsBytes);
-    pipelineUsed |= createTimeseries(keyMsgSum,   labelsMsgSum);
-    pipelineUsed |= createTimeseries(keyBytesSum, labelsBytesSum);
-    return pipelineUsed;
+    labels_msg.emplace(kDataType.data(),      label_msg);
+    labels_bytes.emplace(kDataType.data(),    label_bytes);
+    labels_msg_sum.emplace(kDataType.data(),   label_msg_sum);
+    labels_bytes_sum.emplace(kDataType.data(), label_bytes_sum);
+    pipeline_used |= createTimeseries(key_msg,      labels_msg);
+    pipeline_used |= createTimeseries(key_bytes,    labels_bytes);
+    pipeline_used |= createTimeseries(key_msg_sum,   labels_msg_sum);
+    pipeline_used |= createTimeseries(key_bytes_sum, labels_bytes_sum);
+    return pipeline_used;
 }
 
 /**
@@ -380,7 +380,7 @@ bool daq::service::MetricsPlugin::createSocketTS(std::string_view keyMsg,
 bool daq::service::MetricsPlugin::createSocketTS()
 {
     //LOG(warn) << __func__ << ":" << __LINE__;
-    bool pipelineUsed=false;
+    bool pipeline_used=false;
     for (const auto &[name, property] : fSocketProperties) {
         auto has_input  = (property.type!="push") && (property.type!="pub");
         auto has_output = (property.type!="pull") && (property.type!="sub");
@@ -391,26 +391,26 @@ bool daq::service::MetricsPlugin::createSocketTS()
         auto t = replaceAll(fSockKey, std::string(fTopPrefix)+fSeparator.data(), "");
         auto ts_key = prepend(t, prefix, fSeparator);
         fTsSockKey[name]    = ts_key;
-        auto sumKey = append(ts_key, "sum", "-");
-        fTsSockSumKey[name] =  sumKey;
+        auto sum_key = append(ts_key, "sum", "-");
+        fTsSockSumKey[name] =  sum_key;
 
         //std::string s{" socket TS keys for "};
         //s += name + "\n";
         //s += " " + ts_key.msg_in  + ", " + ts_key.bytes_in  + ", " + ts_key.msg_out  + ", " + ts_key.bytes_out + "\n";
-        //s += " " + sumKey.msg_in + ", " + sumKey.bytes_in + ", " + sumKey.msg_out + ", " + sumKey.bytes_out;
+        //s += " " + sum_key.msg_in + ", " + sum_key.bytes_in + ", " + sum_key.msg_out + ", " + sum_key.bytes_out;
         //LOG(debug) << kMyClass << s;
 
         std::unordered_map<std::string, std::string> labels{{"name",     property.name},
             {"socket",    property.type},
             {"transport", property.transport}};
         if (has_input) {
-            pipelineUsed |= createSocketTS(ts_key.msg_in, ts_key.bytes_in, kMessageInPrefix, kBytesInPrefix, labels);
+            pipeline_used |= createSocketTS(ts_key.msg_in, ts_key.bytes_in, kMessageInPrefix, kBytesInPrefix, labels);
         }
         if (has_output) {
-            pipelineUsed |= createSocketTS(ts_key.msg_out, ts_key.bytes_out, kMessageOutPrefix, kBytesOutPrefix, labels);
+            pipeline_used |= createSocketTS(ts_key.msg_out, ts_key.bytes_out, kMessageOutPrefix, kBytesOutPrefix, labels);
         }
     }
-    return pipelineUsed;
+    return pipeline_used;
 }
 
 /**
@@ -459,34 +459,34 @@ void daq::service::MetricsPlugin::deleteExpiredFields()
     while (true) {
         try {
             sw::redis::RedMutex mtx(fClient, "metrics");
-            std::unique_lock<sw::redis::RedMutex> redLock(mtx, std::defer_lock);
-            if (redLock.try_lock()) {
+            std::unique_lock<sw::redis::RedMutex> red_lock(mtx, std::defer_lock);
+            if (red_lock.try_lock()) {
                 LOG(debug) << "got lock: " << kMyClass << " " << fId;
 
-                std::unordered_map<std::string, std::string> hashInstanceToLastUpdateNS;
-                fClient->hgetall(fLastUpdateNSKey, std::inserter(hashInstanceToLastUpdateNS, hashInstanceToLastUpdateNS.begin()));
-                std::vector<std::string> expiredInstances;
-                for (const auto& [k, v] : hashInstanceToLastUpdateNS) {
-                    auto tNS = std::stoull(v); // nanoseconds -> milliseconds
-                    auto tNow = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-                    if ((tNow - tNS)/1e6 > fMaxTtl) {
-                        expiredInstances.push_back(k);
+                std::unordered_map<std::string, std::string> hash_instance_to_last_update_ns;
+                fClient->hgetall(fLastUpdateNSKey, std::inserter(hash_instance_to_last_update_ns, hash_instance_to_last_update_ns.begin()));
+                std::vector<std::string> expired_instances;
+                for (const auto& [k, v] : hash_instance_to_last_update_ns) {
+                    auto t_ns = std::stoull(v); // nanoseconds -> milliseconds
+                    auto t_now = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+                    if ((t_now - t_ns)/1e6 > fMaxTtl) {
+                        expired_instances.push_back(k);
                     }
                 }
 
-                if (!expiredInstances.empty()) {
+                if (!expired_instances.empty()) {
                     for (const auto &k : fRegisteredKeys) {
                         LOG(debug) << __func__ << ":" << __LINE__ << " delete " << k;
-                        fPipe->hdel(k, expiredInstances.begin(), expiredInstances.end());
+                        fPipe->hdel(k, expired_instances.begin(), expired_instances.end());
                     }
 
                     std::unordered_map<std::string, std::string> sockets;
                     for (const auto &k : fRegisteredSockKeys) {
                         fClient->hgetall(k, std::inserter(sockets, sockets.begin()));
                         std::vector<std::string> a;
-                        for (const auto &instName : expiredInstances) {
+                        for (const auto &inst_name : expired_instances) {
                             for (const auto &[sockName, v] : sockets) {
-                                if (sockName.find(instName) == 0) {
+                                if (sockName.find(inst_name) == 0) {
                                     LOG(debug) << __func__ << ":" << __LINE__ << " delete " << k << " " << sockName;
                                     fPipe->hdel(k, sockName);
                                 }
@@ -495,7 +495,7 @@ void daq::service::MetricsPlugin::deleteExpiredFields()
                     }
                 }
                 fPipe->exec();
-                if (redLock.owns_lock()) {
+                if (red_lock.owns_lock()) {
                     LOG(debug) << "unlock: " << kMyClass << " " << fId;
                     break;
                 } else {
@@ -616,15 +616,15 @@ auto daq::service::MetricsPlugin::readProcessUsage() const -> ProcessUsageSample
 auto daq::service::MetricsPlugin::readResidentMemoryMiB() const -> double
 {
     std::ifstream input{"/proc/self/statm"};
-    uint64_t totalPages = 0;
-    uint64_t residentPages = 0;
-    if (!(input >> totalPages >> residentPages)) {
+    uint64_t total_pages = 0;
+    uint64_t resident_pages = 0;
+    if (!(input >> total_pages >> resident_pages)) {
         LOG(error) << kMyClass << " " << __FUNCTION__ << " failed to read /proc/self/statm";
         return 0.0;
     }
 
     static constexpr auto kBytesPerMiB = 1024.0 * 1024.0;
-    return static_cast<double>(residentPages) * static_cast<double>(fPageSize) / kBytesPerMiB;
+    return static_cast<double>(resident_pages) * static_cast<double>(fPageSize) / kBytesPerMiB;
 }
 
 /**
@@ -780,11 +780,11 @@ void daq::service::MetricsPlugin::sendSocketMetrics(const std::string &content)
             if (count==0) {
                 ++count;
             }
-            std::size_t countAll = 0;
+            std::size_t count_all = 0;
             for (const auto &[k, v] : fNumChannels) {
-                countAll += static_cast<std::size_t>(v);
+                count_all += static_cast<std::size_t>(v);
             }
-            if (countAll==fSocketMetrics.size()) {
+            if (count_all==fSocketMetrics.size()) {
                 sendProcessMetrics();
                 fPipe->exec();
                 fNumChannels.clear();

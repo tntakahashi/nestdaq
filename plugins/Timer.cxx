@@ -21,14 +21,14 @@ daq::service::Timer::~Timer() noexcept
 
 void daq::service::Timer::start(const std::shared_ptr<net::io_context> &ctx,
                                 //const std::shared_ptr<strand_t> &strand,
-                                unsigned int timeoutMS,
+                                unsigned int timeout_ms,
                                 std::function<bool(const std::error_code &)> f)
 {
-    // std::cout << " timer start " << timeoutMS << " msec" << std::endl;
+    // std::cout << " timer start " << timeout_ms << " msec" << std::endl;
     fContext   = ctx;
 // fStrand    = strand;
     fTimer     = std::make_unique<net::steady_timer>(*fContext);
-    fTimeoutMS = timeoutMS;
+    fTimeoutMS = timeout_ms;
     fHandle    = std::move(f);
     start();
 }

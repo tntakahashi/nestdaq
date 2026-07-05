@@ -17,7 +17,7 @@ class Listener;
 class HttpWebSocketServer
 {
 public:
-    explicit HttpWebSocketServer(int nThreads);
+    explicit HttpWebSocketServer(int n_threads);
     HttpWebSocketServer(const HttpWebSocketServer&) = delete;
     HttpWebSocketServer& operator=(const HttpWebSocketServer&) = delete;
     HttpWebSocketServer(HttpWebSocketServer&&) = delete;

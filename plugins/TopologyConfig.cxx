@@ -51,15 +51,15 @@ void printConfig(const std::map<std::string, std::string> &p, std::string_view n
     LOG(debug) << ss.str();
 }
 
-std::string makeAddress(const std::string &address, std::string_view peerIP)
+std::string makeAddress(const std::string &address, std::string_view peer_ip)
 {
     // e.g. address = tcp://AAAA:XXXX
-    auto posPort = address.find_last_of(":");
-    auto posStar = address.find("*");
+    auto pos_port = address.find_last_of(":");
+    auto pos_star = address.find("*");
     auto pos0000 = address.find("0.0.0.0");
     if (address.find("tcp://")==0) {
-        if ((posStar!=std::string::npos) || (pos0000!=std::string::npos)) {
-            return address.substr(0, 6) + peerIP.data() + address.substr(posPort);
+        if ((pos_star!=std::string::npos) || (pos0000!=std::string::npos)) {
+            return address.substr(0, 6) + peer_ip.data() + address.substr(pos_port);
         }
     }
     return address;
@@ -88,9 +88,9 @@ const std::string toChannelConfig(const daq::service::SocketProperty& p)
     if (p.address.find(",")!=std::string::npos) {
         std::vector<std::string> res;
         boost::split(res, p.address, boost::is_any_of(","));
-        const auto numSockets = static_cast<std::vector<std::string>::size_type>(p.num_sockets);
-        if (res.size()<numSockets) {
-            auto n = numSockets - res.size();
+        const auto num_sockets = static_cast<std::vector<std::string>::size_type>(p.num_sockets);
+        if (res.size()<num_sockets) {
+            auto n = num_sockets - res.size();
             for (auto i=0u; i<n; ++i) {
                 res.push_back("unspecified");
             }
@@ -155,7 +155,7 @@ const daq::service::SocketProperty toSocketProperty(const Container& c)
         } else if (field=="autoBind") {
             const auto& v = boost::to_lower_copy(value);
             sp.auto_bind = (v=="1") || (v=="true");
-        } else if (field=="numSockets") {
+        } else if (field=="num_sockets") {
             sp.num_sockets = std::stoi(value);
         } else if (field=="autoSubChannel") {
             const auto& v = boost::to_lower_copy(value);
@@ -209,30 +209,30 @@ daq::service::TopologyConfig::~TopologyConfig()
  */
 void daq::service::TopologyConfig::configConnect()
 {
-    auto findPeerIP = [this](const auto& service, const auto& id) {
-        const auto &idFull = join({service, id}, fSeparator);
-        const auto& peerHealthKey = join({fTopPrefix, idFull,  kHealthPrefix.data()}, fSeparator);
-        auto  peerIP = getClient()->hget(peerHealthKey, "hostIp");
-        if (!peerIP) {
-            LOG(warn) << " id = " << idFull << " : hostIp not found";
+    auto find_peer_ip = [this](const auto& service, const auto& id) {
+        const auto &id_full = join({service, id}, fSeparator);
+        const auto& peer_health_key = join({fTopPrefix, id_full,  kHealthPrefix.data()}, fSeparator);
+        auto  peer_ip = getClient()->hget(peer_health_key, "hostIp");
+        if (!peer_ip) {
+            LOG(warn) << " id = " << id_full << " : hostIp not found";
             return ""s;
         } else {
-            LOG(warn) << " id = " << idFull << " : hostIp found " << *peerIP;
+            LOG(warn) << " id = " << id_full << " : hostIp found " << *peer_ip;
         }
-        return *peerIP;
+        return *peer_ip;
     };
 
-    auto findAddress = [this, findPeerIP](const auto& service, const auto& id, const auto& channel, const auto& subChannelIndex) {
-        const auto &peerIP = findPeerIP(service, id);
-        if (peerIP.empty()) {
+    auto find_address = [this, find_peer_ip](const auto& service, const auto& id, const auto& channel, const auto& sub_channel_index) {
+        const auto &peer_ip = find_peer_ip(service, id);
+        if (peer_ip.empty()) {
             return ""s;
         }
 
-        const auto& chFull = join({service, id, topology::kSocketPrefix.data(), "chans."s+channel+"."s+subChannelIndex}, fSeparator);
+        const auto& chFull = join({service, id, topology::kSocketPrefix.data(), "chans."s+channel+"."s+sub_channel_index}, fSeparator);
         std::string key = join({fTopPrefix, chFull}, fSeparator);
         // check whether peer address exists
         std::string address;
-        int nRetry = 0;
+        int n_retry = 0;
         while (true) {
             auto a = getClient()->hget(key, "address"s);
             if (a) {
@@ -241,41 +241,41 @@ void daq::service::TopologyConfig::configConnect()
                 break;
             }
             LOG(warn) << " ch = " << chFull << " : address not found";
-            if (isCanceled() || nRetry>fMaxRetryToResolveAddress) {
+            if (isCanceled() || n_retry>fMaxRetryToResolveAddress) {
                 LOG(warn) << " find address of peer channel = " << chFull << " -> canceled";
                 return ""s;
             }
             std::this_thread::sleep_for(1000ms);
-            ++nRetry;
+            ++n_retry;
         }
-        return makeAddress(address, peerIP);
+        return makeAddress(address, peer_ip);
     };
 
-    auto findAddresses = [this, findPeerIP](const auto& service, const auto& id, const auto& channel) {
+    auto find_addresses = [this, find_peer_ip](const auto& service, const auto& id, const auto& channel) {
         std::vector<std::string> ret;
-        const auto &peerIP = findPeerIP(service, id);
-        if (peerIP.empty()) {
+        const auto &peer_ip = find_peer_ip(service, id);
+        if (peer_ip.empty()) {
             return ret;
         }
 
-        const auto &socketKeyPattern = join({fTopPrefix, service, id, topology::kSocketPrefix.data(), channel}, fSeparator);
-        const auto &socketKeys = scan(*getClient(), socketKeyPattern);
-        for (const auto &socketKey : socketKeys) {
-            int nRetry = 0;
+        const auto &socket_key_pattern = join({fTopPrefix, service, id, topology::kSocketPrefix.data(), channel}, fSeparator);
+        const auto &socket_keys = scan(*getClient(), socket_key_pattern);
+        for (const auto &socket_key : socket_keys) {
+            int n_retry = 0;
             while (true) {
-                auto a = getClient()->hget(socketKey, "address");
+                auto a = getClient()->hget(socket_key, "address");
                 if (a) {
-                    LOG(warn) << " ch = " << socketKey << " : address found " << *a;
-                    ret.push_back(makeAddress(*a, peerIP));
+                    LOG(warn) << " ch = " << socket_key << " : address found " << *a;
+                    ret.push_back(makeAddress(*a, peer_ip));
                     break;
                 }
-                LOG(warn) << " ch = " << socketKey << " : address not found";
-                if (isCanceled() || nRetry>fMaxRetryToResolveAddress) {
-                    LOG(warn) << " find address of peer channel = " << socketKey << " -> canceled";
+                LOG(warn) << " ch = " << socket_key << " : address not found";
+                if (isCanceled() || n_retry>fMaxRetryToResolveAddress) {
+                    LOG(warn) << " find address of peer channel = " << socket_key << " -> canceled";
                     break;
                 }
                 std::this_thread::sleep_for(1000ms);
-                ++nRetry;
+                ++n_retry;
             }
         }
         return ret;
@@ -285,13 +285,13 @@ void daq::service::TopologyConfig::configConnect()
     const auto& pt = toJson(fConnectConfig);
 
     //LOG(info) << " connect-config (JSON) = " << toJsonString(pt);
-    std::vector<std::string> channelConfigOptions;
+    std::vector<std::string> channel_config_options;
     for (const auto& child : pt) {
         // child.first is string
         //LOG(info) << " channel name = " << child.first;
-        auto myChannelName = child.first;
+        auto my_channel_name = child.first;
 
-        auto &sp = fConnectChannels[myChannelName];
+        auto &sp = fConnectChannels[my_channel_name];
 
         const auto &peer = child.second.get_child("peer");
         std::vector<std::string> peerList;
@@ -308,108 +308,108 @@ void daq::service::TopologyConfig::configConnect()
             }
         }
 
-        std::vector<std::string> addressList;
+        std::vector<std::string> address_list;
         for (const auto &p : peerList) {
 
-            int nSeparators = std::count(p.begin(), p.end(), fSeparator[0]);
-            bool hasSubChannelIndex = (p.find("[") != std::string::npos);
-            if (nSeparators==2) {
-                if (hasSubChannelIndex) {
+            int n_separators = std::count(p.begin(), p.end(), fSeparator[0]);
+            bool has_sub_channel_index = (p.find("[") != std::string::npos);
+            if (n_separators==2) {
+                if (has_sub_channel_index) {
                     // try to match:  "service" : "instance" - "index" : "channel" ["sub_channel_index"]
                     std::regex pattern{"(\\w+)" + fSeparator + "(\\w+)-(\\d+)" + fSeparator + "(\\w+)\\[(\\d+)\\]"};
-                    auto nMarks = pattern.mark_count();
-                    std::smatch matchResults;
-                    std::regex_match(p, matchResults, pattern);
-                    if (!matchResults.ready() || matchResults.size()!=(nMarks+1)) {
-                        LOG(warn) << " failed to match.  \"service\"" + fSeparator + "\"instance\"-\"index\"" + fSeparator + "\"channel\"[\"subChannelIndex\"]";
+                    auto n_marks = pattern.mark_count();
+                    std::smatch match_results;
+                    std::regex_match(p, match_results, pattern);
+                    if (!match_results.ready() || match_results.size()!=(n_marks+1)) {
+                        LOG(warn) << " failed to match.  \"service\"" + fSeparator + "\"instance\"-\"index\"" + fSeparator + "\"channel\"[\"sub_channel_index\"]";
                         continue;
                     }
-                    const auto& service         = matchResults[1].str();
-                    const auto& id              = matchResults[2].str() + "-"s + matchResults[3].str();
-                    const auto& channel         = matchResults[4].str();
-                    const auto& subChannelIndex = matchResults[5].str();
+                    const auto& service         = match_results[1].str();
+                    const auto& id              = match_results[2].str() + "-"s + match_results[3].str();
+                    const auto& channel         = match_results[4].str();
+                    const auto& sub_channel_index = match_results[5].str();
 
-                    const auto& a = findAddress(service, id, channel, subChannelIndex);
+                    const auto& a = find_address(service, id, channel, sub_channel_index);
                     if (a.empty()) {
                         continue;
                     }
-                    addressList.push_back(a);
+                    address_list.push_back(a);
                 } else {
                     // try to match: "service" : "instance" - "index" : "channel"
                     std::regex pattern{"(\\w+)" + fSeparator + "(\\w+)-(\\d+)" + fSeparator +  "(\\w+)"};
-                    auto nMarks = pattern.mark_count();
-                    std::smatch matchResults;
-                    std::regex_match(p, matchResults, pattern);
-                    if (!matchResults.ready() || matchResults.size()!=(nMarks+1)) {
+                    auto n_marks = pattern.mark_count();
+                    std::smatch match_results;
+                    std::regex_match(p, match_results, pattern);
+                    if (!match_results.ready() || match_results.size()!=(n_marks+1)) {
                         LOG(warn) << " failed to match.  \"service\"" + fSeparator + "\"instance\"-\"index\"" + fSeparator + "\"channel\"";
                         continue;
                     }
-                    const auto& service = matchResults[1].str();
-                    const auto& id      = matchResults[2].str() + "-"s + matchResults[3].str();
-                    const auto& channel = matchResults[4].str();
+                    const auto& service = match_results[1].str();
+                    const auto& id      = match_results[2].str() + "-"s + match_results[3].str();
+                    const auto& channel = match_results[4].str();
 
                     if (!sp.auto_sub_channel) {
-                        // infer subChannelIndex = 0
-                        const auto& a = findAddress(service, id, channel, "0"s);
+                        // infer sub_channel_index = 0
+                        const auto& a = find_address(service, id, channel, "0"s);
                         if (a.empty()) {
                             continue;
                         }
-                        addressList.push_back(a);
+                        address_list.push_back(a);
                     } else {
-                        // get subChannelIndex (and full key name) from the database
-                        const auto &addresses = findAddresses(service, id, channel);
-                        addressList.insert(addressList.end(), addresses.begin(), addresses.end());
+                        // get sub_channel_index (and full key name) from the database
+                        const auto &addresses = find_addresses(service, id, channel);
+                        address_list.insert(address_list.end(), addresses.begin(), addresses.end());
 
                     }
                 }
 
-            } else if (nSeparators==1) {
-                if (hasSubChannelIndex) {
+            } else if (n_separators==1) {
+                if (has_sub_channel_index) {
                     std::string service;
                     std::string id;
                     std::string channel;
-                    std::string subChannelIndex;
+                    std::string sub_channel_index;
 
                     // try to match: "instance" - "index" : "channel" ["sub_channel_index"]
                     std::regex pattern{"(\\w+)-(\\d+)" + fSeparator + "(\\w+)\\[(\\d+)\\]"};
-                    auto nMarks = pattern.mark_count();
-                    std::smatch matchResults;
-                    std::regex_match(p, matchResults, pattern);
+                    auto n_marks = pattern.mark_count();
+                    std::smatch match_results;
+                    std::regex_match(p, match_results, pattern);
 
-                    if (matchResults.ready() && matchResults.size()==(nMarks+1)) {
-                        const auto &instance = matchResults[1].str();
-                        const auto &index    = matchResults[2].str();
-                        channel              = matchResults[3].str();
-                        subChannelIndex      = matchResults[4].str();
+                    if (match_results.ready() && match_results.size()==(n_marks+1)) {
+                        const auto &instance = match_results[1].str();
+                        const auto &index    = match_results[2].str();
+                        channel              = match_results[3].str();
+                        sub_channel_index      = match_results[4].str();
 
                         // infer service name from instance name
                         service = instance;
                         id      = instance + "-"s + index;
                     } else {
-                        //LOG(warn) << " failed to match. \"instance\"-\"index\"" + fSeparator + "\"channel\"[\"subChannelIndex\"]";
+                        //LOG(warn) << " failed to match. \"instance\"-\"index\"" + fSeparator + "\"channel\"[\"sub_channel_index\"]";
 
                         // try to match: "service" : "channel" ["sub_channel_index"]
                         pattern = "(\\w+)" + fSeparator + "(\\w+)\\[(\\d+)\\]";
-                        nMarks = pattern.mark_count();
-                        std::regex_match(p,  matchResults, pattern);
-                        if (!matchResults.ready() || matchResults.size()!=(nMarks+1)) {
-                            LOG(warn) << " failed to match. \"service\"" + fSeparator + "\"channel\"[\"subChannelIndex\"]";
+                        n_marks = pattern.mark_count();
+                        std::regex_match(p,  match_results, pattern);
+                        if (!match_results.ready() || match_results.size()!=(n_marks+1)) {
+                            LOG(warn) << " failed to match. \"service\"" + fSeparator + "\"channel\"[\"sub_channel_index\"]";
                             continue;
                         }
 
-                        service         = matchResults[1].str();
-                        channel         = matchResults[2].str();
-                        subChannelIndex = matchResults[3].str();
+                        service         = match_results[1].str();
+                        channel         = match_results[2].str();
+                        sub_channel_index = match_results[3].str();
 
                         // infer instance id from service name
                         id = service + "-0"s;
                     }
 
-                    const auto &a = findAddress(service, id, channel, subChannelIndex);
+                    const auto &a = find_address(service, id, channel, sub_channel_index);
                     if (a.empty()) {
                         continue;
                     }
-                    addressList.push_back(a);
+                    address_list.push_back(a);
                 } else {
                     std::string service;
                     std::string id;
@@ -417,13 +417,13 @@ void daq::service::TopologyConfig::configConnect()
 
                     // try to match:  "instance" - "index" : "channel"
                     std::regex pattern{"(\\w+)-(\\d+)" + fSeparator + "(\\w+)"};
-                    auto nMarks = pattern.mark_count();
-                    std::smatch matchResults;
-                    std::regex_match(p, matchResults, pattern);
-                    if (matchResults.ready() && matchResults.size()==(nMarks+1)) {
-                        const auto &instance = matchResults[1].str();
-                        const auto &index    = matchResults[2].str();
-                        channel              = matchResults[3].str();
+                    auto n_marks = pattern.mark_count();
+                    std::smatch match_results;
+                    std::regex_match(p, match_results, pattern);
+                    if (match_results.ready() && match_results.size()==(n_marks+1)) {
+                        const auto &instance = match_results[1].str();
+                        const auto &index    = match_results[2].str();
+                        channel              = match_results[3].str();
 
                         // infer service name
                         service = instance;
@@ -433,38 +433,38 @@ void daq::service::TopologyConfig::configConnect()
 
                         // try to match: "service" : "channel"
                         pattern = "(\\w+)" + fSeparator + "(\\w+)";
-                        nMarks = pattern.mark_count();
-                        std::regex_match(p,  matchResults, pattern);
-                        if (!matchResults.ready() || matchResults.size()!=(nMarks+1)) {
+                        n_marks = pattern.mark_count();
+                        std::regex_match(p,  match_results, pattern);
+                        if (!match_results.ready() || match_results.size()!=(n_marks+1)) {
                             LOG(warn) << " failed to match. \"service\"" + fSeparator + "\"channel\"";
                             continue;
                         }
 
-                        service = matchResults[1].str();
-                        channel = matchResults[2].str();
+                        service = match_results[1].str();
+                        channel = match_results[2].str();
 
                         // infer instance id from service name
                         id = service + "-0"s;
                     }
 
                     if (!sp.auto_sub_channel) {
-                        // infer subChannelIndex = 0
-                        const auto &a = findAddress(service, id, channel, "0"s);
+                        // infer sub_channel_index = 0
+                        const auto &a = find_address(service, id, channel, "0"s);
                         if (a.empty()) {
                             continue;
                         }
-                        addressList.push_back(a);
+                        address_list.push_back(a);
                     } else {
-                        // get subChannelIndex (and full key name) from the database
-                        const auto &addresses = findAddresses(service, id, channel);
-                        addressList.insert(addressList.end(), addresses.begin(), addresses.end());
+                        // get sub_channel_index (and full key name) from the database
+                        const auto &addresses = find_addresses(service, id, channel);
+                        address_list.insert(address_list.end(), addresses.begin(), addresses.end());
                     }
                 }
 
             }
         }
 
-        for (const auto& address : addressList) {
+        for (const auto& address : address_list) {
             if (!address.empty()) {
                 if (sp.address.empty()) {
                     sp.address = address;
@@ -475,21 +475,21 @@ void daq::service::TopologyConfig::configConnect()
             }
         }
 
-        channelConfigOptions.emplace_back(toChannelConfig(sp));
+        channel_config_options.emplace_back(toChannelConfig(sp));
 
     }
 
-    if (channelConfigOptions.empty()) {
+    if (channel_config_options.empty()) {
         LOG(info) << __FUNCTION__ << " done (empty)";
         return;
     }
 
-    for (const auto &s : channelConfigOptions) {
+    for (const auto &s : channel_config_options) {
         LOG(info) << " channel config option = " << s;
     }
 
     try {
-        auto properties = fair::mq::SuboptParser(channelConfigOptions, fServiceName);
+        auto properties = fair::mq::SuboptParser(channel_config_options, fServiceName);
         for (const auto & [k, v] : properties) {
 
             const auto s = fair::mq::PropertyHelper::ConvertPropertyToString(v);
@@ -515,7 +515,7 @@ void daq::service::TopologyConfig::configConnect()
  */
 auto daq::service::TopologyConfig::getPeerState(const MQChannel & channels) -> std::map<std::string, std::string>
 {
-    std::unordered_set<std::string> peerKeys;
+    std::unordered_set<std::string> peer_keys;
     for (const auto &[name, sp] : channels) {
         for (const auto& [lk, lp] : fLinks) {
             //LOG(debug) << kMyClass << " " << __FUNCTION__ << ":" << __LINE__ << " bind endpoint = " << sp.name
@@ -523,36 +523,36 @@ auto daq::service::TopologyConfig::getPeerState(const MQChannel & channels) -> s
             //           << ", " << lp.peer_service << ":" << lp.peer_channel;
             if ((fServiceName == lp.my_service) && (sp.name == lp.my_channel)) {
                 auto k = join({fTopPrefix, lp.peer_service, "*"}, fSeparator);
-                peerKeys.emplace(k);
+                peer_keys.emplace(k);
             } else if ((fServiceName == lp.peer_service) && (sp.name == lp.peer_channel)) {
                 auto k = join({fTopPrefix, lp.my_service, "*"}, fSeparator);
-                peerKeys.emplace(k);
+                peer_keys.emplace(k);
             }
         }
     }
 
 
-    std::unordered_set<std::string> stateKeys;
+    std::unordered_set<std::string> state_keys;
     auto client = getClient();
-    for (const auto &k : peerKeys) {
+    for (const auto &k : peer_keys) {
         //LOG(debug) << " peer key = " << k;
         auto s = daq::service::scan(*client, {k, daq::service::kFairMQStatePrefix.data()}, fSeparator);
-        stateKeys.merge(s);
+        state_keys.merge(s);
     }
 
-    if (stateKeys.empty()) {
+    if (state_keys.empty()) {
         return {};
     }
 
-    std::vector<sw::redis::OptionalString> stateValues;
-    client->mget(stateKeys.begin(), stateKeys.end(), std::back_inserter(stateValues));
+    std::vector<sw::redis::OptionalString> state_values;
+    client->mget(state_keys.begin(), state_keys.end(), std::back_inserter(state_values));
 
     std::map<std::string, std::string> result;
     int i=0;
     std::stringstream ss;
     //ss << " scan result\n";
-    for (const auto & k : stateKeys) {
-        const auto & v = stateValues[i];
+    for (const auto & k : state_keys) {
+        const auto & v = state_values[i];
         if (v) {
             //ss << " key = " << k << ", value = " << *v << "\n";
             // remove the last part ":fairm-mq-state"
@@ -582,18 +582,18 @@ void daq::service::TopologyConfig::initialize()
         for (const auto& child : pt) {
             // child.first is string
             //LOG(info) << " channel name = " << child.first;
-            const auto myChannelName = child.first;
+            const auto my_channel_name = child.first;
 
             std::unordered_map<std::string, std::string> cont;
             for (const auto &k : {
-                        "type", "transport", "sndBufSize", "rcvBufSize", "sndKernelSize", "rcvKernelSize", "linger", "rateLogging", "numSockets", "autoSubChannel"
+                        "type", "transport", "sndBufSize", "rcvBufSize", "sndKernelSize", "rcvKernelSize", "linger", "rateLogging", "num_sockets", "autoSubChannel"
                     }) {
                 if (const auto &v = child.second.get_optional<std::string>(k); v) {
                     cont[k] = *v;
                 }
             }
             auto sp = toSocketProperty(cont);
-            sp.name = myChannelName;
+            sp.name = my_channel_name;
             sp.method = "connect"s;
             fConnectChannels.emplace(sp.name, sp);
         }
@@ -634,7 +634,7 @@ void daq::service::TopologyConfig::initialize()
 
     LOG(debug) << kMyClass << " " << __FUNCTION__ << " number of channels : bind = " //
                << fBindChannels.size() << ", connect = " << fConnectChannels.size();
-    std::vector<std::string> channelConfigOptions;
+    std::vector<std::string> channel_config_options;
     for (auto p : channelList) {
         auto &sp = *p;
         std::vector<std::string> peers;
@@ -646,15 +646,15 @@ void daq::service::TopologyConfig::initialize()
             if ((l.my_service!=l.peer_service) && (l.my_channel!=sp.name)) {
                 continue;
             }
-            auto useL = ((l.my_service==l.peer_service) && (l.peer_channel==sp.name));
-            const auto &peerService = (useL) ? l.my_service : l.peer_service;
-            const auto &peerChannel = (useL) ? l.my_channel : l.peer_channel;
+            auto use_l = ((l.my_service==l.peer_service) && (l.peer_channel==sp.name));
+            const auto &peer_service = (use_l) ? l.my_service : l.peer_service;
+            const auto &peer_channel = (use_l) ? l.my_channel : l.peer_channel;
             // scan keys by a pattern = "daq_servie:service:*:presence"
-            const auto &keys = scan(*getClient(), {fTopPrefix, peerService, "*", kPresencePrefix.data()}, fSeparator);
-            LOG(debug) << kMyClass << " " << __FUNCTION__ << " scan-service : peer name = " << peerService << ", n peers " << keys.size();
+            const auto &keys = scan(*getClient(), {fTopPrefix, peer_service, "*", kPresencePrefix.data()}, fSeparator);
+            LOG(debug) << kMyClass << " " << __FUNCTION__ << " scan-service : peer name = " << peer_service << ", n peers " << keys.size();
             for (const auto &a: keys) {
                 auto k = a.substr(0, a.find_last_of(fSeparator));
-                k = join({k, topology::kChannelPrefix.data(), peerChannel}, fSeparator);
+                k = join({k, topology::kChannelPrefix.data(), peer_channel}, fSeparator);
                 LOG(debug) << " " << k;
                 peers.push_back(k);
             }
@@ -665,7 +665,7 @@ void daq::service::TopologyConfig::initialize()
         std::sort(peers.begin(), peers.end());
         peers.erase(std::unique(peers.begin(), peers.end()), peers.end());
 
-        LOG(debug) << " channel = " << sp.name << " autoSubChannel set numSockets = " << sp.num_sockets;
+        LOG(debug) << " channel = " << sp.name << " autoSubChannel set num_sockets = " << sp.num_sockets;
 
         if (isUdsAvailable(peers) && fEnableUds && (sp.method=="bind") && (sp.transport=="zeromq")) {
             sp.address += "ipc://@/tmp/nestdaq/"s + "/" + fServiceName + "/" + fId + "/" + sp.name + "[0]";
@@ -674,13 +674,13 @@ void daq::service::TopologyConfig::initialize()
             }
             //LOG(debug4) << " uds address =  " << sp.address;
         }
-        channelConfigOptions.emplace_back(toChannelConfig(sp));
+        channel_config_options.emplace_back(toChannelConfig(sp));
 
         writeChannel(sp, peers);
     }
 
     try {
-        auto properties = fair::mq::SuboptParser(channelConfigOptions, fServiceName);
+        auto properties = fair::mq::SuboptParser(channel_config_options, fServiceName);
         for (auto it = properties.begin(); it!=properties.end();) {
             if (fDefaultChannelProperties.count(it->first)>0) {
                 it = properties.erase(it);
@@ -706,22 +706,22 @@ void daq::service::TopologyConfig::initializeDefaultChannelProperties()
 {
     //printConfig(getPropertiesAsStringStartingWith("channel-config"), "(default) channel-config"); // available in InitializingDevice
     //printConfig(getPropertiesAsStringStartingWith("mq-config"), "(default) mq-config"); // available in InitializingDevice
-    std::string idForParser;
+    std::string id_for_parser;
     if (propertyExists("config-key")) {
-        idForParser = getProperty<std::string>("config-key");
+        id_for_parser = getProperty<std::string>("config-key");
     } else if (propertyExists("id")) {
-        idForParser = getProperty<std::string>("id");
+        id_for_parser = getProperty<std::string>("id");
     }
 
-    if (!idForParser.empty()) {
+    if (!id_for_parser.empty()) {
         try {
             if (propertyExists("mq-config")) {
-                auto properties = fair::mq::JSONParser(getProperty<std::string>("mq-config"), idForParser);
+                auto properties = fair::mq::JSONParser(getProperty<std::string>("mq-config"), id_for_parser);
                 for (auto &[k, v] : properties) {
                     fDefaultChannelProperties[k] = fair::mq::PropertyHelper::ConvertPropertyToString(v);
                 }
             } else if (propertyExists("channel-config")) {
-                auto properties = fair::mq::SuboptParser(getProperty<std::vector<std::string>>("channel-config"), idForParser);
+                auto properties = fair::mq::SuboptParser(getProperty<std::vector<std::string>>("channel-config"), id_for_parser);
                 for (auto &[k, v] : properties) {
                     LOG(debug) << " property name = " << k;
                     fDefaultChannelProperties[k] = fair::mq::PropertyHelper::ConvertPropertyToString(v);
@@ -743,11 +743,11 @@ void daq::service::TopologyConfig::initializeDefaultChannelProperties()
  */
 bool daq::service::TopologyConfig::isUdsAvailable(const std::vector<std::string> &peers)
 {
-    const auto& myIP = fPlugin.getHealth().ip_address;
+    const auto& my_ip = fPlugin.getHealth().ip_address;
     for (const auto& x : peers) {
         const auto& ip = readPeerIp(x);
-        if (myIP!=ip) {
-            LOG(debug4) << __func__ << " different ip: me =  " << myIP << ", peer = " << ip;
+        if (my_ip!=ip) {
+            LOG(debug4) << __func__ << " different ip: me =  " << my_ip << ", peer = " << ip;
             return false;
         }
     }
@@ -799,13 +799,13 @@ const daq::service::SocketProperty daq::service::TopologyConfig::readEndpointPro
 {
     const auto& prefix = join({fTopPrefix, topology::kPrefix.data(), topology::kEndpointPrefix.data(), fServiceName, ""}, fSeparator);
     LOG(debug) << __FUNCTION__ << " prefix = " << prefix;
-    const auto& channelName = key.substr(prefix.size());
+    const auto& channel_name = key.substr(prefix.size());
     std::unordered_map<std::string, std::string> h;
     getClient()->hgetall(key, std::inserter(h, h.begin()));
     // std::ostringstream ss;
-    // ss << " name = " << channelName;
+    // ss << " name = " << channel_name;
     SocketProperty sp = toSocketProperty(h);
-    sp.name = channelName;
+    sp.name = channel_name;
     return sp;
 }
 
@@ -844,44 +844,44 @@ const daq::service::LinkProperty daq::service::TopologyConfig::readLinkProperty(
     const auto& prefix = join({fTopPrefix, topology::kPrefix.data(), topology::kLinkPrefix.data(), ""}, fSeparator);
     // LOG(debug) << " readLinkProperty prefix = " << prefix;
 
-    // socketPairName = service0:channel0,service1:channel1
-    const auto& socketPairName = key.substr(prefix.size());
+    // socket_pair_name = service0:channel0,service1:channel1
+    const auto& socket_pair_name = key.substr(prefix.size());
     std::ostringstream ss;
-    ss << " link = " << socketPairName;
+    ss << " link = " << socket_pair_name;
     LinkProperty lp;
-    const auto comma     = socketPairName.find_first_of(",");
-    const auto firstSep  = socketPairName.find_last_of(fSeparator, comma);
-    const auto secondSep = socketPairName.find_last_of(fSeparator);
-    //  LOG(debug) << " 1st sep = " << firstSep << ", comma = " << comma << ", 2nd sep = " << secondSep;
-    const auto &serviceL = socketPairName.substr(0, firstSep);
-    const auto &channelL = socketPairName.substr(firstSep+1, comma-(firstSep+1));
-    const auto &serviceR = socketPairName.substr(comma+1, secondSep-(comma+1));
-    const auto &channelR = socketPairName.substr(secondSep+1);
+    const auto comma     = socket_pair_name.find_first_of(",");
+    const auto first_sep  = socket_pair_name.find_last_of(fSeparator, comma);
+    const auto second_sep = socket_pair_name.find_last_of(fSeparator);
+    //  LOG(debug) << " 1st sep = " << first_sep << ", comma = " << comma << ", 2nd sep = " << second_sep;
+    const auto &service_l = socket_pair_name.substr(0, first_sep);
+    const auto &channel_l = socket_pair_name.substr(first_sep+1, comma-(first_sep+1));
+    const auto &service_r = socket_pair_name.substr(comma+1, second_sep-(comma+1));
+    const auto &channel_r = socket_pair_name.substr(second_sep+1);
 
-    // LOG(debug) << " LinkProperty parse result = " << serviceL << " " << channelL << " " << serviceR << " " << channelR;
+    // LOG(debug) << " LinkProperty parse result = " << service_l << " " << channel_l << " " << service_r << " " << channel_r;
 
-    if (serviceL==serviceR) {
-        lp.my_service   = serviceL;
-        lp.peer_service = serviceR;
-        if (channelL < channelR) {
-            lp.my_channel   = channelL;
-            lp.peer_channel = channelR;
+    if (service_l==service_r) {
+        lp.my_service   = service_l;
+        lp.peer_service = service_r;
+        if (channel_l < channel_r) {
+            lp.my_channel   = channel_l;
+            lp.peer_channel = channel_r;
         } else {
-            lp.my_channel   = channelR;
-            lp.peer_channel = channelL;
+            lp.my_channel   = channel_r;
+            lp.peer_channel = channel_l;
         }
     }
 
-    if (serviceL == fServiceName) {
-        lp.my_service   = serviceL;
-        lp.my_channel   = channelL;
-        lp.peer_service = serviceR;
-        lp.peer_channel = channelR;
+    if (service_l == fServiceName) {
+        lp.my_service   = service_l;
+        lp.my_channel   = channel_l;
+        lp.peer_service = service_r;
+        lp.peer_channel = channel_r;
     } else {
-        lp.my_service   = serviceR;
-        lp.my_channel   = channelR;
-        lp.peer_service = serviceL;
-        lp.peer_channel = channelL;
+        lp.my_service   = service_r;
+        lp.my_channel   = channel_r;
+        lp.peer_service = service_l;
+        lp.peer_channel = channel_l;
     }
     lp.options = *val;
 
@@ -920,43 +920,43 @@ std::unordered_set<std::string> daq::service::TopologyConfig::readLinks()
  */
 const std::vector<std::string> daq::service::TopologyConfig::readPeerAddress(const std::string& peer)
 {
-    const auto &peerInstanceKey = peer.substr(0, peer.find(fSeparator+topology::kChannelPrefix.data()));
-    const auto &peerHealthKey   = join({peerInstanceKey, kHealthPrefix.data()}, fSeparator);
-    const auto &peerChannel     = peer.substr(peer.find_last_of(fSeparator)+1);
+    const auto &peer_instance_key = peer.substr(0, peer.find(fSeparator+topology::kChannelPrefix.data()));
+    const auto &peer_health_key   = join({peer_instance_key, kHealthPrefix.data()}, fSeparator);
+    const auto &peer_channel     = peer.substr(peer.find_last_of(fSeparator)+1);
     auto &r = *getClient();
-    LOG(debug) << "peerInstanceKey = " << peerInstanceKey << ", peerHealthKey =  " << peerHealthKey << ", peerChannel = " << peerChannel;
-    auto peerIP = r.hget(peerHealthKey, "hostIp");
-    LOG(debug) << "id = " << fId << " peer health = " << peerHealthKey;
-    if (!peerIP) {
+    LOG(debug) << "peer_instance_key = " << peer_instance_key << ", peer_health_key =  " << peer_health_key << ", peer_channel = " << peer_channel;
+    auto peer_ip = r.hget(peer_health_key, "hostIp");
+    LOG(debug) << "id = " << fId << " peer health = " << peer_health_key;
+    if (!peer_ip) {
         LOG(warn) << "id = " << fId << " hostIp not found";
     } else {
-        LOG(warn) << "id = " << fId << " hostIp found " << peerIP.value();
+        LOG(warn) << "id = " << fId << " hostIp found " << peer_ip.value();
     }
 
-    auto scanPattern = join({peerInstanceKey.data(), topology::kSocketPrefix.data(), "chans."s + peerChannel.data() + ".*"s}, fSeparator);
-    LOG(debug) << kMyClass << " " << __FUNCTION__ << " id = " << fId<<  " scanPattern = " << scanPattern;
-    auto subSocketKeys = scan(r, scanPattern);
-    LOG(debug) << kMyClass << " " << __FUNCTION__ << " id = " << fId << " subSokectKeys = " << subSocketKeys.size();
-    std::set<std::string> sorted(subSocketKeys.cbegin(), subSocketKeys.cend());
+    auto scan_pattern = join({peer_instance_key.data(), topology::kSocketPrefix.data(), "chans."s + peer_channel.data() + ".*"s}, fSeparator);
+    LOG(debug) << kMyClass << " " << __FUNCTION__ << " id = " << fId<<  " scan_pattern = " << scan_pattern;
+    auto sub_socket_keys = scan(r, scan_pattern);
+    LOG(debug) << kMyClass << " " << __FUNCTION__ << " id = " << fId << " subSokectKeys = " << sub_socket_keys.size();
+    std::set<std::string> sorted(sub_socket_keys.cbegin(), sub_socket_keys.cend());
 
     std::vector<std::string> ret;
     for (const auto &k : sorted) {
         LOG(debug) << kMyClass << " " << __FUNCTION__ << " id = " << fId << " k = " << k;
         std::string address;
-        int nRetry = 0;
+        int n_retry = 0;
         while (true) {
             auto a = getClient()->hget(k, "address");
             if (a) {
-                address = makeAddress(*a, peerIP->data());
+                address = makeAddress(*a, peer_ip->data());
                 break;
             }
             LOG(warn) << " address not found for " << k;
-            if (isCanceled() || nRetry>fMaxRetryToResolveAddress) {
+            if (isCanceled() || n_retry>fMaxRetryToResolveAddress) {
                 LOG(warn) << " find address of peer channel = " << k << " -> canceled";
                 break;
             }
             std::this_thread::sleep_for(1000ms);
-            ++nRetry;
+            ++n_retry;
         }
         LOG(debug) << kMyClass << " " << __FUNCTION__ << ":" << __LINE__ << " id = " << fId << " address = " << address;
 
@@ -970,19 +970,19 @@ const std::vector<std::string> daq::service::TopologyConfig::readPeerAddress(con
  */
 const std::string daq::service::TopologyConfig::readPeerIp(const std::string& peer)
 {
-    const auto &peerInstanceKey = peer.substr(0, peer.find(fSeparator+topology::kChannelPrefix.data()));
-    const auto &peerHealthKey   = join({peerInstanceKey, kHealthPrefix.data()}, fSeparator);
+    const auto &peer_instance_key = peer.substr(0, peer.find(fSeparator+topology::kChannelPrefix.data()));
+    const auto &peer_health_key   = join({peer_instance_key, kHealthPrefix.data()}, fSeparator);
     auto &r = *getClient();
-    LOG(debug4) << "peerInstanceKey = " << peerInstanceKey << ", peerHealthKey =  " << peerHealthKey;
-    auto peerIP = r.hget(peerHealthKey, "hostIp");
-    LOG(debug4) << "id = " << fId << " peer health = " << peerHealthKey;
-    if (!peerIP) {
+    LOG(debug4) << "peer_instance_key = " << peer_instance_key << ", peer_health_key =  " << peer_health_key;
+    auto peer_ip = r.hget(peer_health_key, "hostIp");
+    LOG(debug4) << "id = " << fId << " peer health = " << peer_health_key;
+    if (!peer_ip) {
         LOG(warn) << "id = " << fId << " hostIp not found";
         return {};
     } else {
-        LOG(warn) << "id = " << fId << " hostIp found " << peerIP.value();
+        LOG(warn) << "id = " << fId << " hostIp found " << peer_ip.value();
     }
-    return peerIP.value();
+    return peer_ip.value();
 }
 
 /**
@@ -1026,20 +1026,20 @@ void daq::service::TopologyConfig::resolveConnectAddress()
     auto &r = *getClient();
 
     // list of instances with the same service name
-    //     auto sameServices = scan(r, {fTopPrefix, fServiceName, "*", kPresencePrefix.data()}, fSeparator);
-    //     std::vector<std::string> sortedSameServices;
-    //     for (const auto &k : sameServices) {
-    //       auto instanceKey = k.substr(0, k.find_last_of(fSeparator));
-    //       instanceKey      = instanceKey.substr(instanceKey.find_last_of(fSeparator));
-    //       sortedSameServices.push_back(instanceKey);
+    //     auto same_services = scan(r, {fTopPrefix, fServiceName, "*", kPresencePrefix.data()}, fSeparator);
+    //     std::vector<std::string> sorted_same_services;
+    //     for (const auto &k : same_services) {
+    //       auto instance_key = k.substr(0, k.find_last_of(fSeparator));
+    //       instance_key      = instance_key.substr(instance_key.find_last_of(fSeparator));
+    //       sorted_same_services.push_back(instance_key);
     //     }
-    //     std::sort(sortedSameServices.begin(), sortedSameServices.end());
-    //     int myInstanceIndex = 0;
-    //     for (const auto &k : sortedSameServices) {
+    //     std::sort(sorted_same_services.begin(), sorted_same_services.end());
+    //     int my_instance_index = 0;
+    //     for (const auto &k : sorted_same_services) {
     //       if (k != fServiceName) {
     //         continue;
     //       }
-    //       ++myInstanceIndex;
+    //       ++my_instance_index;
     //     }
 
     std::unordered_map<std::string, std::vector<std::string>> options;
@@ -1047,14 +1047,14 @@ void daq::service::TopologyConfig::resolveConnectAddress()
         if (!sp.address.empty() && sp.address!="unspecified") {
             continue;
         }
-        LOG(debug) << kMyClass << " " << __FUNCTION__ << " id = " << fId << " find peer of " << sp.name << " numSockets = " << sp.num_sockets;
-        const auto &myInstanceKey = join({fTopPrefix, fServiceName, fId}, fSeparator);
-        const auto &myChannelKey  = join({myInstanceKey, topology::kChannelPrefix.data(), sp.name}, fSeparator);
+        LOG(debug) << kMyClass << " " << __FUNCTION__ << " id = " << fId << " find peer of " << sp.name << " num_sockets = " << sp.num_sockets;
+        const auto &my_instance_key = join({fTopPrefix, fServiceName, fId}, fSeparator);
+        const auto &my_channel_key  = join({my_instance_key, topology::kChannelPrefix.data(), sp.name}, fSeparator);
 
         std::vector<std::string> peers;
-        const auto &myPeerKey = join({myChannelKey, topology::kPeerPrefix.data()}, fSeparator);
-        r.lrange(myPeerKey, 0, -1, std::back_inserter(peers));
-        int peerIndex{0};
+        const auto &my_peer_key = join({my_channel_key, topology::kPeerPrefix.data()}, fSeparator);
+        r.lrange(my_peer_key, 0, -1, std::back_inserter(peers));
+        int peer_index{0};
         SocketProperty res(sp);
         bool is1to1{false};
         for (const auto& p : peers) {
@@ -1063,57 +1063,57 @@ void daq::service::TopologyConfig::resolveConnectAddress()
             std::vector<std::string> neighbors;
             r.lrange(k, 0, -1, std::back_inserter(neighbors));
             LOG(debug) << kMyClass << " " << __FUNCTION__ << ":" << __LINE__ << " id = " << fId << " n neighbors " << neighbors.size();
-            int myIndex = 0; // index viewed from the peer
+            int my_index = 0; // index viewed from the peer
             // for (const auto& n : neighbors) {
             //   LOG(debug) << kMyClass << " " << __FUNCTION__ << ":" << __LINE__ << " id = " << fId << " neighbor: " << n;
             // }
             for (const auto& n : neighbors) {
-                if (n==myChannelKey) {
+                if (n==my_channel_key) {
                     break;
                 }
-                ++myIndex;
+                ++my_index;
             }
             if (is1to1) {
-                if (myIndex!=peerIndex) {
-                    ++peerIndex;
+                if (my_index!=peer_index) {
+                    ++peer_index;
                     continue;
                 }
             }
-            LOG(debug) << kMyClass << " " << __FUNCTION__ << ":" << __LINE__ << " id = " << fId << " myIndex = " << myIndex;
+            LOG(debug) << kMyClass << " " << __FUNCTION__ << ":" << __LINE__ << " id = " << fId << " my_index = " << my_index;
             std::unordered_map<std::string, std::string> h;
             r.hgetall(p, std::inserter(h, h.begin()));
-            const auto &peerProperty = toSocketProperty(h);
+            const auto &peer_property = toSocketProperty(h);
 
-            LOG(debug) << "id = " << fId << " numSocket (me) = " << sp.num_sockets << ", (peer) = " << peerProperty.num_sockets;
-            const auto address = readPeerAddress(p); //peerHealthKey, *peerIP, peerChannel);
-            const auto myAddressIndex = static_cast<decltype(address)::size_type>(myIndex);
-            if ((sp.num_sockets<=1) && (peerProperty.num_sockets<=1)) {
+            LOG(debug) << "id = " << fId << " numSocket (me) = " << sp.num_sockets << ", (peer) = " << peer_property.num_sockets;
+            const auto address = readPeerAddress(p); //peer_health_key, *peer_ip, peer_channel);
+            const auto my_address_index = static_cast<decltype(address)::size_type>(my_index);
+            if ((sp.num_sockets<=1) && (peer_property.num_sockets<=1)) {
                 is1to1 = true;
                 // 1:1 or fan-in/fan-out
                 LOG(debug) << kMyClass << " " << __FUNCTION__ << ":" << __LINE__ << " id = " << fId << " 1:1 or fan-in/fan-out ";
                 LOG(debug) << kMyClass << " " << __FUNCTION__ << ":" << __LINE__  << " id = " << fId
-                           << " peer size = " << peers.size() << " myIndex = " << myIndex << " peerIndex = " << peerIndex
+                           << " peer size = " << peers.size() << " my_index = " << my_index << " peer_index = " << peer_index
                            << " address.size() = " << address.size();
-                if ((myIndex==peerIndex) || (peers.size()==1)) {
+                if ((my_index==peer_index) || (peers.size()==1)) {
                     res.address = address[0];
                     break;
                 }
-            } else if ((sp.num_sockets<=1) && (peerProperty.num_sockets>1)) {
+            } else if ((sp.num_sockets<=1) && (peer_property.num_sockets>1)) {
                 // 1:m
                 LOG(debug) << kMyClass << " " << __FUNCTION__ << ":" << __LINE__ << " id = " << fId << " 1:m ";
-                res.address = address[myAddressIndex];
-            } else if ((sp.num_sockets>1) && (peerProperty.num_sockets<=1)) {
+                res.address = address[my_address_index];
+            } else if ((sp.num_sockets>1) && (peer_property.num_sockets<=1)) {
                 // n:1
                 LOG(debug) << kMyClass << " " << __FUNCTION__ << ":" << __LINE__ << " id = " << fId << " n:1 ";
                 assert(address.size()==1);
                 res.address += (res.address.empty()) ? address[0] : ("," + address[0]);
-            } else if ((sp.num_sockets>1) && (peerProperty.num_sockets>1)) {
+            } else if ((sp.num_sockets>1) && (peer_property.num_sockets>1)) {
                 // n:m
                 LOG(debug) << kMyClass << " " << __FUNCTION__ << ":" << __LINE__ << " id = " << fId << " n:m ";
-                assert(address.size()>myAddressIndex);
-                res.address += (res.address.empty()) ? address[myAddressIndex] : ("," + address[myAddressIndex]);
+                assert(address.size()>my_address_index);
+                res.address += (res.address.empty()) ? address[my_address_index] : ("," + address[my_address_index]);
             }
-            ++peerIndex;
+            ++peer_index;
         }
         LOG(debug) << " id = " << fId << " add socket property : " << res.name << " " << res.address;
         options[res.name].emplace_back(toChannelConfig(res));
@@ -1128,8 +1128,8 @@ void daq::service::TopologyConfig::resolveConnectAddress()
     }
 
     try {
-        for (const auto& [name, channelConfig] : options) {
-            auto properties = fair::mq::SuboptParser(channelConfig, fServiceName);
+        for (const auto& [name, channel_config] : options) {
+            auto properties = fair::mq::SuboptParser(channel_config, fServiceName);
             for (const auto & [k, v] : properties) {
                 const auto s = fair::mq::PropertyHelper::ConvertPropertyToString(v);
                 fCustomChannelProperties[k] = s;
@@ -1181,9 +1181,9 @@ void daq::service::TopologyConfig::waitBindAddress()
             if ((fServiceName == lp.my_service) && (sp.name == lp.my_channel)) {
                 auto k = join({fTopPrefix, lp.peer_service, "*", kPresencePrefix.data()}, fSeparator);
                 LOG(debug) << kMyClass << " " << __FUNCTION__ << ":" << __LINE__ << " : k = " << k;
-                auto presenceKeys = scan(r, {fTopPrefix, lp.peer_service, "*", kPresencePrefix.data()}, fSeparator);
-                LOG(debug) << __LINE__ << ": n presence: " << presenceKeys.size();
-                for (auto &a : presenceKeys) {
+                auto presence_keys = scan(r, {fTopPrefix, lp.peer_service, "*", kPresencePrefix.data()}, fSeparator);
+                LOG(debug) << __LINE__ << ": n presence: " << presence_keys.size();
+                for (auto &a : presence_keys) {
                     auto c =  a.substr(0, a.find_last_of(fSeparator));
                     // e.g.: daq_service:peer-service:peer-instance-id:endpoint:peer-chanenl
                     channels.emplace(join({c, topology::kChannelPrefix.data(), lp.peer_channel}, fSeparator));
@@ -1191,9 +1191,9 @@ void daq::service::TopologyConfig::waitBindAddress()
             } else if ((fServiceName == lp.peer_service) && (sp.name == lp.peer_channel)) {
                 auto k = join({fTopPrefix, lp.my_service, "*", kPresencePrefix.data()}, fSeparator);
                 LOG(debug) << kMyClass << " " << __FUNCTION__ << ":" << __LINE__ << " : k = " << k;
-                auto presenceKeys = scan(r, {fTopPrefix, lp.my_service, "*", kPresencePrefix.data()}, fSeparator);
-                LOG(debug) << __LINE__ << ": n presence: " << presenceKeys.size();
-                for (auto &a : presenceKeys) {
+                auto presence_keys = scan(r, {fTopPrefix, lp.my_service, "*", kPresencePrefix.data()}, fSeparator);
+                LOG(debug) << __LINE__ << ": n presence: " << presence_keys.size();
+                for (auto &a : presence_keys) {
                     auto c = a.substr(0, a.find_last_of(fSeparator));
                     channels.emplace(join({c, topology::kChannelPrefix.data(), lp.my_channel}, fSeparator));
                 }
@@ -1225,7 +1225,7 @@ void daq::service::TopologyConfig::waitBindAddress()
 void daq::service::TopologyConfig::waitForPeerConnection()
 {
     LOG(debug) << __FUNCTION__ << " ...";
-    std::unordered_set<std::string> peerKeys;
+    std::unordered_set<std::string> peer_keys;
     for (const auto &[name, sp] : fBindChannels) {
         //LOG(debug) << name << " waitForPeerConnection = " << sp.wait_for_peer_connection;
         if (!sp.wait_for_peer_connection) {
@@ -1237,10 +1237,10 @@ void daq::service::TopologyConfig::waitForPeerConnection()
             //           << ", " << lp.peer_service << ":" << lp.peer_channel;
             if ((fServiceName == lp.my_service) && (sp.name == lp.my_channel)) {
                 auto k = join({fTopPrefix, lp.peer_service, "*"}, fSeparator);
-                peerKeys.emplace(k);
+                peer_keys.emplace(k);
             } else if ((fServiceName == lp.peer_service) && (sp.name == lp.peer_channel)) {
                 auto k = join({fTopPrefix, lp.my_service, "*"}, fSeparator);
-                peerKeys.emplace(k);
+                peer_keys.emplace(k);
             }
         }
     }
@@ -1249,29 +1249,29 @@ void daq::service::TopologyConfig::waitForPeerConnection()
     bool done{false};
     auto client = getClient();
     while (!done && !isCanceled()) {
-        std::unordered_set<std::string> stateKeys;
-        for (const auto &k : peerKeys) {
+        std::unordered_set<std::string> state_keys;
+        for (const auto &k : peer_keys) {
             auto s = daq::service::scan(*client, {k, daq::service::kFairMQStatePrefix.data()}, fSeparator);
-            stateKeys.merge(s);
+            state_keys.merge(s);
         }
 
-        if (stateKeys.empty()) {
+        if (state_keys.empty()) {
             return;
         }
 
         // {
         //     std::string k;
-        //     for (const auto &x : stateKeys) {
+        //     for (const auto &x : state_keys) {
         //         k += x + ", ";
         //     }
-        //     LOG(debug) << " stateKeys = " << k;
+        //     LOG(debug) << " state_keys = " << k;
         // }
 
-        std::vector<sw::redis::OptionalString> stateValues;
-        client->mget(stateKeys.begin(), stateKeys.end(), std::back_inserter(stateValues));
+        std::vector<sw::redis::OptionalString> state_values;
+        client->mget(state_keys.begin(), state_keys.end(), std::back_inserter(state_values));
 
         std::vector<std::string> states;
-        for (const auto & x : stateValues) {
+        for (const auto & x : state_values) {
             if (!x) {
                 continue;
             }
@@ -1310,14 +1310,14 @@ void daq::service::TopologyConfig::writeAddress(MQChannel &channels, std::functi
     std::scoped_lock<std::mutex> lock{getMutex()};
     try {
         for (auto &[name, sp] : channels) {
-            auto localKeyPrefix = "chans." + sp.name + ".";
+            auto local_key_prefix = "chans." + sp.name + ".";
             for (auto index=0; ; ++index) {
-                auto localKey = localKeyPrefix + std::to_string(index);
-                const auto &chans = getPropertiesAsStringStartingWith(localKey);
+                auto local_key = local_key_prefix + std::to_string(index);
+                const auto &chans = getPropertiesAsStringStartingWith(local_key);
                 if (chans.empty()) {
                     break;
                 }
-                const auto &key = join({fTopPrefix, fServiceName, fId, topology::kSocketPrefix.data(), localKey}, fSeparator);
+                const auto &key = join({fTopPrefix, fServiceName, fId, topology::kSocketPrefix.data(), local_key}, fSeparator);
                 std::ostringstream ss;
                 ss << kMyClass << " " << __FUNCTION__ << ":" << __LINE__ << " key = " << key << " :\n";
                 std::map<std::string, std::string> h;
@@ -1328,7 +1328,7 @@ void daq::service::TopologyConfig::writeAddress(MQChannel &channels, std::functi
                 }
                 LOG(debug1) << ss.str();
 
-                h["numSockets"]     = std::to_string(sp.num_sockets);
+                h["num_sockets"]     = std::to_string(sp.num_sockets);
                 h["autoSubChannel"] = std::to_string(sp.auto_sub_channel);
 
                 pipe.hset(key, h.cbegin(), h.cend());
@@ -1398,21 +1398,21 @@ void daq::service::TopologyConfig::writeChannel(SocketProperty &sp, const std::v
         std::make_pair("portRangeMin",          std::to_string(sp.port_range_min)),
         std::make_pair("portRangeMax",          std::to_string(sp.port_range_max)),
         std::make_pair("autoBind",              std::to_string(sp.auto_bind)),
-        std::make_pair("numSockets",            std::to_string(sp.num_sockets)),
+        std::make_pair("num_sockets",            std::to_string(sp.num_sockets)),
         std::make_pair("autoSubChannel",        std::to_string(sp.auto_sub_channel)),
         std::make_pair("bound",                 std::to_string(sp.bound)),
         std::make_pair("waitForPeerConnection", std::to_string(sp.wait_for_peer_connection)),
     });
     pipe.expire(key, fMaxTtl);
 
-    auto listKey = join({key, topology::kPeerPrefix.data()}, fSeparator);
-    pipe.rpush(listKey, peers.cbegin(), peers.cend());
-    pipe.expire(listKey, fMaxTtl);
+    auto list_key = join({key, topology::kPeerPrefix.data()}, fSeparator);
+    pipe.rpush(list_key, peers.cbegin(), peers.cend());
+    pipe.expire(list_key, fMaxTtl);
 
     pipe.exec();
 
     fRegisteredKeys.push_back(key);
-    fRegisteredKeys.push_back(listKey);
+    fRegisteredKeys.push_back(list_key);
 
 }
 

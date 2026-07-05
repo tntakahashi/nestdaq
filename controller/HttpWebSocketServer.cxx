@@ -10,11 +10,11 @@
 #include "controller/listener.h"
 #include "controller/HttpWebSocketServer.h"
 
-HttpWebSocketServer::HttpWebSocketServer(int nThreads)
-    : fContext(std::make_shared<net::io_context>(nThreads)) // The io_context is required for all I/O
-    , fNThreads(nThreads)
+HttpWebSocketServer::HttpWebSocketServer(int n_threads)
+    : fContext(std::make_shared<net::io_context>(n_threads)) // The io_context is required for all I/O
+    , fNThreads(n_threads)
 {
-    fThreads.reserve(nThreads-1);
+    fThreads.reserve(n_threads-1);
 }
 
 HttpWebSocketServer::~HttpWebSocketServer()
@@ -27,12 +27,12 @@ HttpWebSocketServer::~HttpWebSocketServer()
 
 void HttpWebSocketServer::run(std::string_view /*scheme*/, std::string_view address, std::string_view port, std::string_view doc_root)
 {
-    const auto docRoot = std::make_shared<std::string>(doc_root);
-    const auto ipAddr = net::ip::make_address(address);
-    const auto portNumber = std::stoi(std::string{port});
+    const auto doc_root_storage = std::make_shared<std::string>(doc_root);
+    const auto ip_addr = net::ip::make_address(address);
+    const auto port_number = std::stoi(std::string{port});
 
     // Create and launch a listening port
-    fListener = std::make_shared<Listener>(fContext, tcp::endpoint(ipAddr, portNumber), docRoot);
+    fListener = std::make_shared<Listener>(fContext, tcp::endpoint(ip_addr, port_number), doc_root_storage);
     if (fListener->getStatus()!=Listener::kStatusGood) {
         return;
     }

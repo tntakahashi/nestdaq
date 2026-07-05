@@ -23,7 +23,7 @@ static constexpr std::string_view kMyClass{"daq::service::ParameterConfigPlugin"
 
 static constexpr std::string_view kRedisKeySpacePrefix{"__keyspace@"};
 
-const std::unordered_set<std::string_view> reservedOptionsString
+const std::unordered_set<std::string_view> kReservedOptionsString
 {   "id",  //
     "transport", //
     "network-interface", //
@@ -37,12 +37,12 @@ const std::unordered_set<std::string_view> reservedOptionsString
     "log-to-file", //
 };
 
-const std::unordered_set<std::string_view> reservedOptionsInt
+const std::unordered_set<std::string_view> kReservedOptionsInt
 {   "io-threads", //
     "init-timeout", //
 };
 
-const std::unordered_set<std::string_view> reservedOptionsBool
+const std::unordered_set<std::string_view> kReservedOptionsBool
 {   "print-channels", //
     "shm-mlock-segment", //
     "shm-zero-segment", //
@@ -50,20 +50,20 @@ const std::unordered_set<std::string_view> reservedOptionsBool
     "shm-monitor", //
 };
 
-const std::unordered_set<std::string_view> reservedOptionsSize
+const std::unordered_set<std::string_view> kReservedOptionsSize
 {   "shm-segment-size", //
     "color", //
 };
 
-const std::unordered_set<std::string_view> reservedOptionsUint16
+const std::unordered_set<std::string_view> kReservedOptionsUint16
 {   "shm-segment-id", //
 };
 
-const std::unordered_set<std::string_view> reservedOptionsFloat
+const std::unordered_set<std::string_view> kReservedOptionsFloat
 {   "rate", //
 };
 
-const std::unordered_set<std::string_view> reservedOptionsVectorString
+const std::unordered_set<std::string_view> kReservedOptionsVectorString
 {   "channel-config", //
 };
 namespace daq::service {
@@ -93,14 +93,14 @@ ParameterConfigPlugin::ParameterConfigPlugin(std::string_view name,
 {
     LOG(debug) << kMyClass << " hello";
     using opt = ParameterConfigPlugin::OptionKey;
-    std::string serverUri;
+    std::string server_uri;
     if (PropertyExists(opt::kServerUri.data())) {
-        serverUri = GetProperty<std::string>(opt::kServerUri.data());
+        server_uri = GetProperty<std::string>(opt::kServerUri.data());
     } else if (PropertyExists(kServiceRegistryUri.data())) {
-        serverUri = GetProperty<std::string>(kServiceRegistryUri.data());
+        server_uri = GetProperty<std::string>(kServiceRegistryUri.data());
     }
-    if (!serverUri.empty()) {
-        fClient = std::make_shared<sw::redis::Redis>(serverUri);
+    if (!server_uri.empty()) {
+        fClient = std::make_shared<sw::redis::Redis>(server_uri);
     }
 
     SubscribeToDeviceStateChange([this](DeviceState newState) {
@@ -146,25 +146,25 @@ ParameterConfigPlugin::~ParameterConfigPlugin()
  */
 bool ParameterConfigPlugin::isReservedOption(std::string_view name)
 {
-    if (reservedOptionsString.count(name)>0) {
+    if (kReservedOptionsString.count(name)>0) {
         return true;
     }
-    if (reservedOptionsInt.count(name)>0) {
+    if (kReservedOptionsInt.count(name)>0) {
         return true;
     }
-    if (reservedOptionsBool.count(name)>0) {
+    if (kReservedOptionsBool.count(name)>0) {
         return true;
     }
-    if (reservedOptionsSize.count(name)>0) {
+    if (kReservedOptionsSize.count(name)>0) {
         return true;
     }
-    if (reservedOptionsUint16.count(name)>0) {
+    if (kReservedOptionsUint16.count(name)>0) {
         return true;
     }
-    if (reservedOptionsFloat.count(name)>0) {
+    if (kReservedOptionsFloat.count(name)>0) {
         return true;
     }
-    if (reservedOptionsVectorString.count(name)>0) {
+    if (kReservedOptionsVectorString.count(name)>0) {
         return true;
     }
     return false;
@@ -256,17 +256,17 @@ void ParameterConfigPlugin::readParameters()
         fKey = kParametersPrefix.data() + fSeparator + fId;
     }
     if (fGroupKey.empty()) {
-        auto lastHyphen = fKey.find_last_of("-");
-        auto idx = fKey.substr(lastHyphen+1);
-        bool isNumber{true};
+        auto last_hyphen = fKey.find_last_of("-");
+        auto idx = fKey.substr(last_hyphen+1);
+        bool is_number{true};
         for (const auto& c : idx) {
             if (!std::isdigit(c)) {
-                isNumber = false;
+                is_number = false;
                 break;
             }
         }
-        if (isNumber) {
-            fGroupKey = fKey.substr(0, lastHyphen);
+        if (is_number) {
+            fGroupKey = fKey.substr(0, last_hyphen);
         }
     }
 
@@ -280,9 +280,9 @@ void ParameterConfigPlugin::readParameters()
         if (k.empty()) {
             continue;
         }
-        auto scanKey = k + fSeparator + "*";
-        //LOG(debug) << " parameter read hash done. scanning additional parameters ... : " << scanKey;
-        const auto keys = scan(*fClient, scanKey);
+        auto scan_key = k + fSeparator + "*";
+        //LOG(debug) << " parameter read hash done. scanning additional parameters ... : " << scan_key;
+        const auto keys = scan(*fClient, scan_key);
         if (!keys.empty()) {
             LOG(debug) << " additional parameters found.";
             for (const auto & x : keys) {
@@ -362,32 +362,32 @@ void ParameterConfigPlugin::readZset(const std::string& name)
  */
 void ParameterConfigPlugin::setPropertyOfReservedOption(std::string_view name, std::string_view value)
 {
-    if (reservedOptionsString.count(name)>0) {
+    if (kReservedOptionsString.count(name)>0) {
         setPropertyFromString<std::string>(name,  value);
         return;
     }
 
-    if (reservedOptionsInt.count(name)>0) {
+    if (kReservedOptionsInt.count(name)>0) {
         setPropertyFromString<int>(name, value);
         return;
     }
 
-    if (reservedOptionsSize.count(name)>0) {
+    if (kReservedOptionsSize.count(name)>0) {
         setPropertyFromString<uint64_t>(name, value);
         return;
     }
 
-    if (reservedOptionsBool.count(name)>0) {
+    if (kReservedOptionsBool.count(name)>0) {
         setPropertyFromString<bool>(name, value);
         return;
     }
 
-    if (reservedOptionsFloat.count(name)>0) {
+    if (kReservedOptionsFloat.count(name)>0) {
         setPropertyFromString<float>(name, value);
         return;
     }
 
-    if (reservedOptionsVectorString.count(name)>0) {
+    if (kReservedOptionsVectorString.count(name)>0) {
         toArray(name, value.data());
         return;
     }
@@ -402,22 +402,22 @@ void ParameterConfigPlugin::subscribeToParameterChange()
     LOG(debug) << " create a subscriber. (parameter change)";
     auto sub = fClient->subscriber();
 
-    const auto &serverUri = GetProperty<std::string>(opt::kServerUri.data());
-    const auto dbNumber = serverUri.substr(serverUri.find_last_of("/")+1);
-    LOG(debug) << " db number = " << dbNumber;
-    const std::string redisKeySpaceNotificationChannel = kRedisKeySpacePrefix.data() + dbNumber + "__:"s + fKey;
-    const std::string redisKeySpaceNotificationGroupChannel = kRedisKeySpacePrefix.data() + dbNumber + "__:"s + fGroupKey;
-    LOG(debug) << " key-space-notification channel = " << redisKeySpaceNotificationChannel << ", " << redisKeySpaceNotificationGroupChannel;
+    const auto &server_uri = GetProperty<std::string>(opt::kServerUri.data());
+    const auto db_number = server_uri.substr(server_uri.find_last_of("/")+1);
+    LOG(debug) << " db number = " << db_number;
+    const std::string redis_keyspace_notification_channel = kRedisKeySpacePrefix.data() + db_number + "__:"s + fKey;
+    const std::string redis_keyspace_notification_group_channel = kRedisKeySpacePrefix.data() + db_number + "__:"s + fGroupKey;
+    LOG(debug) << " key-space-notification channel = " << redis_keyspace_notification_channel << ", " << redis_keyspace_notification_group_channel;
 
-    sub.on_message([this, &redisKeySpaceNotificationChannel, &redisKeySpaceNotificationGroupChannel](auto channel, auto /*msg*/) {
+    sub.on_message([this, &redis_keyspace_notification_channel, &redis_keyspace_notification_group_channel](auto channel, auto /*msg*/) {
         //LOG(debug) << kMyClass << " on_message(MESSAGE): channel = " << channel << " msg = " << msg;
-        if (redisKeySpaceNotificationChannel!=channel && redisKeySpaceNotificationGroupChannel!=channel) {
+        if (redis_keyspace_notification_channel!=channel && redis_keyspace_notification_group_channel!=channel) {
             return;
         }
         readParameters();
     });
 
-    sub.subscribe({redisKeySpaceNotificationChannel, redisKeySpaceNotificationGroupChannel});
+    sub.subscribe({redis_keyspace_notification_channel, redis_keyspace_notification_group_channel});
 
     while (!fPluginShutdownRequested) {
         try {

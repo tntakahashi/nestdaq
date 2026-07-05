@@ -401,7 +401,7 @@ void WebGui::redisIncr(unsigned int conn_id, const boost::property_tree::ptree &
 // publish command via redis
 void WebGui::redisPublishDaqCommand(unsigned int conn_id, const boost::property_tree::ptree& arg)
 {
-    auto isWaitFlagSet = [this](const auto &s) {
+    auto is_wait_flag_set = [this](const auto &s) {
         auto w = fClient->get(run_info::kPrefix.data() + fSeparator + s);
         if (!w) {
             return false;
@@ -409,7 +409,7 @@ void WebGui::redisPublishDaqCommand(unsigned int conn_id, const boost::property_
         const auto &v = boost::to_lower_copy(*w);
         return (v == "1") || (v == "true");
     };
-    auto toMessage = [&arg](const auto &v) {
+    auto to_message = [&arg](const auto &v) {
         boost::property_tree::ptree cmd;
         cmd.put("command", "change_state");
         cmd.put("value", v);
@@ -437,8 +437,8 @@ void WebGui::redisPublishDaqCommand(unsigned int conn_id, const boost::property_
 
         try {
 
-            bool wait_device_ready_flag = isWaitFlagSet(run_info::kWaitDeviceReady.data());
-            bool wait_ready_flag       = isWaitFlagSet(run_info::kWaitReady.data());
+            bool wait_device_ready_flag = is_wait_flag_set(run_info::kWaitDeviceReady.data());
+            bool wait_ready_flag       = is_wait_flag_set(run_info::kWaitReady.data());
             std::unordered_set<std::string> services;
             for (const auto& x : arg.get_child("services")) {
                 services.emplace(x.second. template get_value<std::string>());
@@ -450,45 +450,45 @@ void WebGui::redisPublishDaqCommand(unsigned int conn_id, const boost::property_
 
             // use boost::iequals for case insensitive compare
             if (boost::iequals(v, fairmq::command::kConnect)) {
-                fClient->publish(fChannelName, toMessage(fairmq::command::kConnect));
+                fClient->publish(fChannelName, to_message(fairmq::command::kConnect));
                 if (wait_device_ready_flag) {
                     wait(services, instances, kWaitDeviceReadyTargets);
                 }
 
             } else if (boost::iequals(v, fairmq::command::kInitTask)) {
                 if (wait_device_ready_flag) {
-                    fClient->publish(fChannelName, toMessage(fairmq::command::kConnect));
+                    fClient->publish(fChannelName, to_message(fairmq::command::kConnect));
                     wait(services, instances, kWaitDeviceReadyTargets);
                 }
-                fClient->publish(fChannelName, toMessage(fairmq::command::kInitTask));
+                fClient->publish(fChannelName, to_message(fairmq::command::kInitTask));
                 if (wait_ready_flag) {
                     wait(services, instances, kWaitReadyTargets);
                 }
 
             } else if (boost::iequals(v, fairmq::command::kRun)) {
                 if (wait_device_ready_flag) {
-                    fClient->publish(fChannelName, toMessage(fairmq::command::kConnect));
+                    fClient->publish(fChannelName, to_message(fairmq::command::kConnect));
                     wait(services, instances, kWaitDeviceReadyTargets);
                 }
                 if (wait_ready_flag) {
-                    fClient->publish(fChannelName, toMessage(fairmq::command::kInitTask));
+                    fClient->publish(fChannelName, to_message(fairmq::command::kInitTask));
                     wait(services, instances, kWaitReadyTargets);
                 }
                 LOG(debug) << " pre-run = " << fPreRunCommand;
                 boost::process::system(fPreRunCommand.data(), boost::process::std_out > stdout, boost::process::std_err > stderr, boost::process::std_in < stdin);
-                fClient->publish(fChannelName, toMessage(fairmq::command::kRun));
+                fClient->publish(fChannelName, to_message(fairmq::command::kRun));
                 LOG(debug) << " post-run = " << fPostRunCommand;
                 boost::process::system(fPostRunCommand.data(), boost::process::std_out > stdout, boost::process::std_err > stderr, boost::process::std_in < stdin);
 
             } else if (boost::iequals(v,  fairmq::command::kStop)) {
                 LOG(debug) << " pre-stop = " << fPreStopCommand;
                 boost::process::system(fPreStopCommand.data(), boost::process::std_out > stdout, boost::process::std_err > stderr, boost::process::std_in < stdin);
-                fClient->publish(fChannelName, toMessage(fairmq::command::kStop));
+                fClient->publish(fChannelName, to_message(fairmq::command::kStop));
                 LOG(debug) << " post-stop = " << fPostStopCommand;
                 boost::process::system(fPostStopCommand.data(), boost::process::std_out > stdout, boost::process::std_err > stderr, boost::process::std_in < stdin);
 
             } else {
-                fClient->publish(fChannelName, toMessage(v));
+                fClient->publish(fChannelName, to_message(v));
             }
         } catch (const std::exception &e) {
             LOG(error) << __func__ << " e.what() = " << e.what();
@@ -520,33 +520,33 @@ void WebGui::redisSet(unsigned int conn_id, const boost::property_tree::ptree &a
 void WebGui::sendStateSummary(const std::map<std::string, ServiceState> & summary_table)
 {
     static std::map<std::string, ServiceState> prev_table;
-    bool serviceListChanged = false;
-    bool instanceListChanged = false;
+    bool service_list_changed = false;
+    bool instance_list_changed = false;
     if (prev_table.size() != summary_table.size()) {
-        serviceListChanged = true;
-        instanceListChanged = true;
+        service_list_changed = true;
+        instance_list_changed = true;
     } else {
         for (const auto& [k, v] : summary_table) {
             if (prev_table.count(k)==0) {
-                serviceListChanged = true;
-                instanceListChanged = true;
+                service_list_changed = true;
+                instance_list_changed = true;
                 break;
             }
         }
-        if (!serviceListChanged) {
+        if (!service_list_changed) {
             for (const auto& [k, v] : summary_table) {
                 const auto& srv = prev_table[k];
                 if (srv.instances.size()!=v.instances.size()) {
-                    instanceListChanged = true;
+                    instance_list_changed = true;
                     break;
                 }
                 for (const auto &[instK, instV] : v.instances) {
                     if (srv.instances.count(instK)==0) {
-                        instanceListChanged = true;
+                        instance_list_changed = true;
                         break;
                     }
                 }
-                if (instanceListChanged) {
+                if (instance_list_changed) {
                     break;
                 }
             }
@@ -556,34 +556,34 @@ void WebGui::sendStateSummary(const std::map<std::string, ServiceState> & summar
     try {
         boost::property_tree::ptree obj;
         obj.put("type", "state-summary-table");
-        obj.put("service_list_changed", serviceListChanged);
-        obj.put("instance_list_changed", instanceListChanged);
+        obj.put("service_list_changed", service_list_changed);
+        obj.put("instance_list_changed", instance_list_changed);
         boost::property_tree::ptree services;
         for (const auto& [service, summary]: summary_table) {
             boost::property_tree::ptree s;
             s.put("service", service);
             s.put("date", summary.date);
             s.put("n_instances", summary.instances.size());
-            boost::property_tree::ptree countList;
+            boost::property_tree::ptree count_list;
             for (auto i=0; i<kNStates; ++i) {
                 boost::property_tree::ptree cnt;
                 cnt.put("state-id", i);
                 cnt.put("name", fair::mq::GetStateName(static_cast<fair::mq::State>(i)));
                 cnt.put("value", summary.counts[i]);
-                countList.push_back(std::make_pair("", cnt));
+                count_list.push_back(std::make_pair("", cnt));
             }
-            s.add_child("counts", countList);
+            s.add_child("counts", count_list);
 
-            boost::property_tree::ptree instList;
+            boost::property_tree::ptree inst_list;
             for (const auto& [inst_name, istate] : summary.instances) {
                 boost::property_tree::ptree inst;
                 inst.put("service", service);
                 inst.put("instance", inst_name);
                 inst.put("state", istate.state);
                 inst.put("date", istate.date);
-                instList.push_back(std::make_pair("", inst));
+                inst_list.push_back(std::make_pair("", inst));
             }
-            s.add_child("instances", instList);
+            s.add_child("instances", inst_list);
 
             services.push_back(std::make_pair("", s));
         }
@@ -618,8 +618,8 @@ void WebGui::subscribeToRedisPubSub()
         //std::cout << kMyClass << " on_message(MESSAGE): channel = " << channel << ", msg = " << msg << std::endl;
         if (daq::service::kStateChannelName.data() == channel) {
             const auto& obj = toJson(msg) ;
-            const auto& cmdValue = obj. template get_optional<std::string>("value");
-            if (!cmdValue) {
+            const auto& cmd_value = obj. template get_optional<std::string>("value");
+            if (!cmd_value) {
                 LOG(error) << kMyClass << ":" << __LINE__ << " on_message: missing command value";
                 return;
             }

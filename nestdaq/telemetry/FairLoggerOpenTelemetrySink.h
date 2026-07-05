@@ -21,7 +21,7 @@ public:
     /** @brief Install the FairLogger custom sink once for the process. */
     static auto initialize() -> void;
     /** @brief Set the NestDAQ instance id attached to subsequent log records. */
-    static auto setNestdaqInstanceId(std::string_view instanceId) -> void;
+    static auto setNestdaqInstanceId(std::string_view instance_id) -> void;
     /** @brief Set the minimum FairLogger severity exported as OpenTelemetry logs. */
     static auto setMinSeverity(int32_t severity) noexcept -> void;
     /** @brief Remove the custom sink and clear per-process log attributes. */

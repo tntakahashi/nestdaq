@@ -294,9 +294,9 @@ auto addStringAttribute(opentelemetry::sdk::resource::ResourceAttributes &attrib
 /** @brief Append one validated C ABI attribute to owned iterable storage. */
 auto appendAttribute(AttributeStorage &storage, const nestdaq_otel_attribute &attribute) -> void;
 /** @brief Build owned iterable storage from a C ABI attribute array. */
-auto buildAttributes(const nestdaq_otel_attribute *attributes, uint64_t attributeCount) -> AttributeStorage;
+auto buildAttributes(const nestdaq_otel_attribute *attributes, uint64_t attribute_count) -> AttributeStorage;
 /** @brief Build comparable gauge attributes from a C ABI attribute array. */
-auto buildGaugeAttributes(const nestdaq_otel_attribute *attributes, uint64_t attributeCount) -> std::vector<GaugeAttribute>;
+auto buildGaugeAttributes(const nestdaq_otel_attribute *attributes, uint64_t attribute_count) -> std::vector<GaugeAttribute>;
 /** @brief Clear the process-wide last-error string. */
 auto clearLastError() -> void;
 /** @brief Create the log exporter selected by @p protocol. */
@@ -353,7 +353,7 @@ auto setLastError(std::string message) -> int;
 /** @brief Return true when a signal config names at least one protocol. */
 auto signalEnabled(const nestdaq_otel_signal_config &config) noexcept -> bool;
 /** @brief Start the background CPU/RSS sampler for framework metrics. */
-auto startProcessMetricsThread(uint32_t intervalMs) -> void;
+auto startProcessMetricsThread(uint32_t interval_ms) -> void;
 /** @brief Return the process-wide telemetry plugin state. */
 auto runtimeState() -> RuntimeState &;
 /** @brief Copy framework metric configuration and resource for future reconfiguration. */

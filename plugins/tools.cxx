@@ -21,8 +21,8 @@ namespace net = boost::asio;
 
 std::string currentDate()
 {
-    auto timePoint = std::chrono::system_clock::now();
-    auto t         = std::chrono::system_clock::to_time_t(timePoint);
+    auto time_point = std::chrono::system_clock::now();
+    auto t         = std::chrono::system_clock::to_time_t(time_point);
     std::tm lt{};
 #ifdef _WIN32
     localtime_s(&lt, &t);

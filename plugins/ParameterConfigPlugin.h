@@ -87,7 +87,7 @@ private:
     template <typename T>
     void setPropertyFromString(std::string_view name, std::string_view value)
     {
-        auto isNewValue = !PropertyExists(name.data());
+        auto is_new_value = !PropertyExists(name.data());
         T v;
         if constexpr (std::is_same_v<std::string, T>) {
             v = value.data();
@@ -107,15 +107,15 @@ private:
             return;
         }
 
-        if (!isNewValue) {
+        if (!is_new_value) {
             const auto &v0 = GetProperty<T>(name.data());
             if constexpr (std::is_floating_point_v<T>) {
-                isNewValue = std::abs(v0 - v) > std::numeric_limits<T>::epsilon();
+                is_new_value = std::abs(v0 - v) > std::numeric_limits<T>::epsilon();
             } else {
-                isNewValue = v0!=v;
+                is_new_value = v0!=v;
             }
         }
-        if (isNewValue) {
+        if (is_new_value) {
             LOG(info) << " new parameter: field = " << name << ", value = " << value;
             SetProperty<T>(name.data(), v);
         }

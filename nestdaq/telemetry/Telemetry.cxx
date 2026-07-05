@@ -39,15 +39,15 @@ auto Attribute::toOtelAttribute() const noexcept -> nestdaq_otel_attribute {
     };
 }
 
-auto makeOtelAttributes(const Attribute* attributes, std::size_t attributeCount) -> std::vector<nestdaq_otel_attribute> {
+auto makeOtelAttributes(const Attribute* attributes, std::size_t attribute_count) -> std::vector<nestdaq_otel_attribute> {
     auto values = std::vector<nestdaq_otel_attribute> {};
-    values.reserve(attributeCount);
+    values.reserve(attribute_count);
 #if !defined(__clang__) && defined(__GNUC__) && (__GNUC__ < 9)
-    for (std::size_t index = 0; index < attributeCount; ++index) {
+    for (std::size_t index = 0; index < attribute_count; ++index) {
         values.push_back(attributes[index].toOtelAttribute());
     }
 #else
-    std::for_each_n(attributes, attributeCount, [&values](const Attribute& attribute) {
+    std::for_each_n(attributes, attribute_count, [&values](const Attribute& attribute) {
         values.push_back(attribute.toOtelAttribute());
     });
 #endif
@@ -244,11 +244,11 @@ auto Telemetry::addDoubleCounter(std::string_view name,
                                  std::string_view unit,
                                  std::string_view description,
                                  const nestdaq_otel_attribute* attributes,
-                                 std::size_t attributeCount) -> bool {
+                                 std::size_t attribute_count) -> bool {
     if (fLibrary == nullptr) {
         return true;
     }
-    return fLibrary->metricAddDoubleCounter(name, value, unit, description, attributes, attributeCount);
+    return fLibrary->metricAddDoubleCounter(name, value, unit, description, attributes, attribute_count);
 }
 
 auto Telemetry::recordDoubleHistogram(std::string_view name,
@@ -256,11 +256,11 @@ auto Telemetry::recordDoubleHistogram(std::string_view name,
                                       std::string_view unit,
                                       std::string_view description,
                                       const nestdaq_otel_attribute* attributes,
-                                      std::size_t attributeCount) -> bool {
+                                      std::size_t attribute_count) -> bool {
     if (fLibrary == nullptr) {
         return true;
     }
-    return fLibrary->metricRecordDoubleHistogram(name, value, unit, description, attributes, attributeCount);
+    return fLibrary->metricRecordDoubleHistogram(name, value, unit, description, attributes, attribute_count);
 }
 
 auto Telemetry::recordDoubleGauge(std::string_view name,
@@ -268,20 +268,20 @@ auto Telemetry::recordDoubleGauge(std::string_view name,
                                   std::string_view unit,
                                   std::string_view description,
                                   const nestdaq_otel_attribute* attributes,
-                                  std::size_t attributeCount) -> bool {
+                                  std::size_t attribute_count) -> bool {
     if (fLibrary == nullptr) {
         return true;
     }
-    return fLibrary->metricRecordDoubleGauge(name, value, unit, description, attributes, attributeCount);
+    return fLibrary->metricRecordDoubleGauge(name, value, unit, description, attributes, attribute_count);
 }
 
 auto Telemetry::startSpan(std::string_view name,
                           const nestdaq_otel_attribute* attributes,
-                          std::size_t attributeCount) -> TelemetrySpan {
+                          std::size_t attribute_count) -> TelemetrySpan {
     if (fLibrary == nullptr) {
         return {};
     }
-    return TelemetrySpan{*fLibrary, fLibrary->spanStart(name, attributes, attributeCount)};
+    return TelemetrySpan{*fLibrary, fLibrary->spanStart(name, attributes, attribute_count)};
 }
 
 auto Telemetry::counter(std::string_view name,

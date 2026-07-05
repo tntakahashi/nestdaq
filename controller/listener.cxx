@@ -17,8 +17,8 @@ Listener::Listener(const std::shared_ptr<net::io_context> &ioc, const tcp::endpo
     beast::error_code ec;
 
     // Open the acceptor
-    const auto openResult = fAcceptor.open(endpoint.protocol(), ec);
-    boost::ignore_unused(openResult);
+    const auto open_result = fAcceptor.open(endpoint.protocol(), ec);
+    boost::ignore_unused(open_result);
     if(ec) {
         fail(ec, "Listener open");
         fStatus = ec.message();
@@ -26,8 +26,8 @@ Listener::Listener(const std::shared_ptr<net::io_context> &ioc, const tcp::endpo
     }
 
     // Allow address reuse
-    const auto setOptionResult = fAcceptor.set_option(net::socket_base::reuse_address(true), ec);
-    boost::ignore_unused(setOptionResult);
+    const auto set_option_result = fAcceptor.set_option(net::socket_base::reuse_address(true), ec);
+    boost::ignore_unused(set_option_result);
     if(ec) {
         fail(ec, "Listener set_option");
         fStatus = ec.message();
@@ -35,8 +35,8 @@ Listener::Listener(const std::shared_ptr<net::io_context> &ioc, const tcp::endpo
     }
 
     // Bind to the server address
-    const auto bindResult = fAcceptor.bind(endpoint, ec);
-    boost::ignore_unused(bindResult);
+    const auto bind_result = fAcceptor.bind(endpoint, ec);
+    boost::ignore_unused(bind_result);
     if(ec) {
         fail(ec, "Listener bind");
         fStatus = ec.message();
@@ -44,8 +44,8 @@ Listener::Listener(const std::shared_ptr<net::io_context> &ioc, const tcp::endpo
     }
 
     // Start listening for connections
-    const auto listenResult = fAcceptor.listen(net::socket_base::max_listen_connections, ec);
-    boost::ignore_unused(listenResult);
+    const auto listen_result = fAcceptor.listen(net::socket_base::max_listen_connections, ec);
+    boost::ignore_unused(listen_result);
     if(ec) {
         fail(ec, "Listener listen");
         fStatus = ec.message();

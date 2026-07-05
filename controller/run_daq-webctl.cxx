@@ -135,48 +135,48 @@ int main(int argc, char* argv[]) { // NOLINT(bugprone-exception-escape)
     }
 
     {
-        const auto logFile = vm["log-to-file"].as<std::string>();
+        const auto log_file = vm["log-to-file"].as<std::string>();
         const auto verbosity = vm["verbosity"].as<std::string>();
         fair::Logger::SetVerbosity(verbosity);
-        if (logFile.empty()) {
+        if (log_file.empty()) {
             fair::Logger::SetConsoleColor(vm["color"].as<bool>());
             fair::Logger::SetConsoleSeverity(vm["severity"].as<std::string>());
         } else {
-            fair::Logger::InitFileSink(vm["file-severity"].as<std::string>(), logFile);
+            fair::Logger::InitFileSink(vm["file-severity"].as<std::string>(), log_file);
             fair::Logger::SetConsoleSeverity("nolog");
         }
     }
 
-    const auto telemetryOptions = nestdaq::telemetry::readTelemetryOptions(vm, "daq-webctl");
-    nestdaq::telemetry::setSpdlogConsolePattern(telemetryOptions.spdlogConsolePattern);
-    nestdaq::telemetry::setSpdlogNativeConsoleEnabled(telemetryOptions.spdlogNativeConsole);
+    const auto telemetry_options = nestdaq::telemetry::readTelemetryOptions(vm, "daq-webctl");
+    nestdaq::telemetry::setSpdlogConsolePattern(telemetry_options.spdlogConsolePattern);
+    nestdaq::telemetry::setSpdlogNativeConsoleEnabled(telemetry_options.spdlogNativeConsole);
     nestdaq::telemetry::setSpdlogAsyncOptions({
-        .enabled = telemetryOptions.spdlogAsync,
-        .queueSize = telemetryOptions.spdlogAsyncQueueSize,
-        .threadCount = telemetryOptions.spdlogAsyncThreadCount,
-        .overflowPolicy = telemetryOptions.spdlogAsyncOverflowPolicy,
+        .enabled = telemetry_options.spdlogAsync,
+        .queueSize = telemetry_options.spdlogAsyncQueueSize,
+        .threadCount = telemetry_options.spdlogAsyncThreadCount,
+        .overflowPolicy = telemetry_options.spdlogAsyncOverflowPolicy,
     });
     auto telemetry = std::make_unique<nestdaq::telemetry::TelemetryLibrary>();
-    auto telemetryLoaded = false;
-    if (!telemetryOptions.library.empty()) {
-        telemetryLoaded = telemetry->load(telemetryOptions.library);
-        if (!telemetryLoaded) {
-            LOG(error) << "Failed to load telemetry library '" << telemetryOptions.library
+    auto telemetry_loaded = false;
+    if (!telemetry_options.library.empty()) {
+        telemetry_loaded = telemetry->load(telemetry_options.library);
+        if (!telemetry_loaded) {
+            LOG(error) << "Failed to load telemetry library '" << telemetry_options.library
                        << "': " << telemetry->getLastError();
-            if (telemetryOptions.required) {
+            if (telemetry_options.required) {
                 return EXIT_FAILURE;
             }
         } else {
-            const auto telemetryConfig = nestdaq::telemetry::makeConfig(telemetryOptions);
-            if (!telemetry->initializeWith(telemetryConfig)) {
-                LOG(error) << "Failed to initialize telemetry library '" << telemetryOptions.library
+            const auto telemetry_config = nestdaq::telemetry::makeConfig(telemetry_options);
+            if (!telemetry->initializeWith(telemetry_config)) {
+                LOG(error) << "Failed to initialize telemetry library '" << telemetry_options.library
                            << "': " << telemetry->getLastError();
-                if (telemetryOptions.required) {
+                if (telemetry_options.required) {
                     return EXIT_FAILURE;
                 }
-                telemetryLoaded = false;
+                telemetry_loaded = false;
             } else {
-                nestdaq::telemetry::warnUnknownSeverityFallback(telemetryOptions.severity);
+                nestdaq::telemetry::warnUnknownSeverityFallback(telemetry_options.severity);
             }
         }
     }
@@ -223,21 +223,21 @@ int main(int argc, char* argv[]) { // NOLINT(bugprone-exception-escape)
 
     // ============================================
     // http server setup
-    const auto httpUri = vm["http-uri"].as<std::string>();
-    LOG(info) << "http serve URI = " << httpUri;
-    const auto &[httpScheme, httpAddress, httpPort] = parseHttpUri(httpUri);
-    LOG(info) << "http server scheme  = " << httpScheme;
-    LOG(info) << "http server address = " << httpAddress;
-    LOG(info) << "http server port    = " << httpPort;
-    const auto nThreads = vm["threads"].as<unsigned int>();
-    LOG(info) << "http threads = " << nThreads;
-    const auto docRoot = vm["doc-root"].as<std::string>();
-    LOG(info) << "doc-root = " << docRoot;
+    const auto http_uri = vm["http-uri"].as<std::string>();
+    LOG(info) << "http serve URI = " << http_uri;
+    const auto &[http_scheme, http_address, http_port] = parseHttpUri(http_uri);
+    LOG(info) << "http server scheme  = " << http_scheme;
+    LOG(info) << "http server address = " << http_address;
+    LOG(info) << "http server port    = " << http_port;
+    const auto n_threads = vm["threads"].as<unsigned int>();
+    LOG(info) << "http threads = " << n_threads;
+    const auto doc_root = vm["doc-root"].as<std::string>();
+    LOG(info) << "doc-root = " << doc_root;
 
-    HttpWebSocketServer server(static_cast<int>(nThreads));
-    server.run(httpScheme, httpAddress, httpPort, docRoot);
-    if (telemetryLoaded) {
-        telemetry->shutdownTelemetry(telemetryOptions.timeoutMs);
+    HttpWebSocketServer server(static_cast<int>(n_threads));
+    server.run(http_scheme, http_address, http_port, doc_root);
+    if (telemetry_loaded) {
+        telemetry->shutdownTelemetry(telemetry_options.timeoutMs);
     }
     return ret;
 }

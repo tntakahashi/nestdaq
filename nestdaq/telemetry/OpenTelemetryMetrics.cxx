@@ -131,15 +131,15 @@ auto observeProcessCpuTime(opentelemetry::metrics::ObserverResult observer, void
     }
 
     for (const auto &measurement : measurements) {
-        auto userAttributes =
+        auto user_attributes =
             std::vector<std::pair<opentelemetry::nostd::string_view, opentelemetry::common::AttributeValue>> {};
-        userAttributes.emplace_back("cpu.mode", opentelemetry::nostd::string_view{"user"});
-        result->Observe(measurement.cpu_user_seconds, userAttributes);
+        user_attributes.emplace_back("cpu.mode", opentelemetry::nostd::string_view{"user"});
+        result->Observe(measurement.cpu_user_seconds, user_attributes);
 
-        auto systemAttributes =
+        auto system_attributes =
             std::vector<std::pair<opentelemetry::nostd::string_view, opentelemetry::common::AttributeValue>> {};
-        systemAttributes.emplace_back("cpu.mode", opentelemetry::nostd::string_view{"system"});
-        result->Observe(measurement.cpu_system_seconds, systemAttributes);
+        system_attributes.emplace_back("cpu.mode", opentelemetry::nostd::string_view{"system"});
+        result->Observe(measurement.cpu_system_seconds, system_attributes);
     }
 }
 
@@ -302,13 +302,13 @@ auto readProcessMemoryUsageBytes(long page_size) -> std::optional<double>
     }
 
     auto statm = std::ifstream{"/proc/self/statm"};
-    auto totalPages = uint64_t{0};
-    auto residentPages = uint64_t{0};
-    if (!(statm >> totalPages >> residentPages)) {
+    auto total_pages = uint64_t{0};
+    auto resident_pages = uint64_t{0};
+    if (!(statm >> total_pages >> resident_pages)) {
         return std::nullopt;
     }
 
-    return static_cast<double>(residentPages) * static_cast<double>(page_size);
+    return static_cast<double>(resident_pages) * static_cast<double>(page_size);
 }
 
 auto timevalToSeconds(const timeval &value) noexcept -> double
@@ -454,7 +454,7 @@ auto createMetricReader(std::unique_ptr<opentelemetry::sdk::metrics::PushMetricE
     return opentelemetry::sdk::metrics::PeriodicExportingMetricReaderFactory::Create(std::move(exporter), options);
 }
 
-auto startProcessMetricsThread(uint32_t intervalMs) -> void
+auto startProcessMetricsThread(uint32_t interval_ms) -> void
 {
     stop_process_metrics_thread();
     auto &state = runtimeState();
@@ -462,7 +462,7 @@ auto startProcessMetricsThread(uint32_t intervalMs) -> void
         std::scoped_lock lock{state.mutex};
         state.stop_process_metrics_thread = false;
         state.process_metrics_interval = std::chrono::milliseconds{
-            intervalMs == 0 ? kDefaultMetricExportIntervalMs : intervalMs};
+            interval_ms == 0 ? kDefaultMetricExportIntervalMs : interval_ms};
     }
 
     // CPU utilization needs two process CPU samples. CPU time and memory usage
@@ -481,7 +481,7 @@ auto startProcessMetricsThread(uint32_t intervalMs) -> void
 
                 std::this_thread::sleep_for(interval);
 
-                auto previousCpu = std::optional<ProcessCpuUsageSample> {};
+                auto previous_cpu = std::optional<ProcessCpuUsageSample> {};
                 auto page_size = 0L;
                 auto available_cpu_count = 0.0;
                 {
@@ -490,7 +490,7 @@ auto startProcessMetricsThread(uint32_t intervalMs) -> void
                     if (runtime.stop_process_metrics_thread) {
                         return;
                     }
-                    previousCpu = runtime.process_cpu_usage_sample;
+                    previous_cpu = runtime.process_cpu_usage_sample;
                     page_size = runtime.page_size;
                     available_cpu_count = runtime.available_cpu_count;
                 }
@@ -502,14 +502,14 @@ auto startProcessMetricsThread(uint32_t intervalMs) -> void
                 }
 
                 auto cpu_utilization = std::optional<double> {};
-                if (previousCpu && available_cpu_count > 0.0) {
-                    const auto elapsedSeconds =
-                        std::chrono::duration<double> {current_cpu->timestamp - previousCpu->timestamp}.count();
-                    if (elapsedSeconds > 0.0) {
-                        const auto cpuSeconds =
+                if (previous_cpu && available_cpu_count > 0.0) {
+                    const auto elapsed_seconds =
+                        std::chrono::duration<double> {current_cpu->timestamp - previous_cpu->timestamp}.count();
+                    if (elapsed_seconds > 0.0) {
+                        const auto cpu_seconds =
                             (current_cpu->user_seconds + current_cpu->system_seconds) -
-                            (previousCpu->user_seconds + previousCpu->system_seconds);
-                        cpu_utilization = cpuSeconds / elapsedSeconds / available_cpu_count;
+                            (previous_cpu->user_seconds + previous_cpu->system_seconds);
+                        cpu_utilization = cpu_seconds / elapsed_seconds / available_cpu_count;
                     }
                 }
                 {
@@ -664,7 +664,7 @@ auto OpenTelemetryInitializer::recordFrameworkFairMQThroughput(const telemetry::
     try {
         {
             auto &state = otel_detail::runtimeState();
-            std::scoped_lock reconfigureLock{state.framework_reconfigure_mutex};
+            std::scoped_lock reconfigure_lock{state.framework_reconfigure_mutex};
             std::scoped_lock lock{state.mutex};
             if (!state.framework_meter_provider) {
                 return;
@@ -699,7 +699,7 @@ auto OpenTelemetryInitializer::recordFrameworkProcessUsage(double cpu_user_secon
     try {
         {
             auto &state = otel_detail::runtimeState();
-            std::scoped_lock reconfigureLock{state.framework_reconfigure_mutex};
+            std::scoped_lock reconfigure_lock{state.framework_reconfigure_mutex};
             std::scoped_lock lock{state.mutex};
             if (!state.framework_meter_provider) {
                 return;
@@ -721,7 +721,7 @@ auto OpenTelemetryInitializer::recordFrameworkFairMQState(int64_t state_id, cons
     try {
         {
             auto &state = otel_detail::runtimeState();
-            std::scoped_lock reconfigureLock{state.framework_reconfigure_mutex};
+            std::scoped_lock reconfigure_lock{state.framework_reconfigure_mutex};
             std::scoped_lock lock{state.mutex};
             if (!state.framework_meter_provider) {
                 return;

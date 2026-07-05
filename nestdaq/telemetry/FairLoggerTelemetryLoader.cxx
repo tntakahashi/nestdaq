@@ -562,11 +562,11 @@ auto TelemetryLibrary::initializeWith(const nestdaq_otel_config& config) -> bool
     return true;
 }
 
-auto TelemetryLibrary::forceFlush(uint64_t timeoutMs) -> bool {
+auto TelemetryLibrary::forceFlush(uint64_t timeout_ms) -> bool {
     if (!fForceFlush) {
         return false;
     }
-    return storeResult(fForceFlush(timeoutMs));
+    return storeResult(fForceFlush(timeout_ms));
 }
 
 auto TelemetryLibrary::createSpdlogSink() const -> std::shared_ptr<spdlog::sinks::sink> {
@@ -576,12 +576,12 @@ auto TelemetryLibrary::createSpdlogSink() const -> std::shared_ptr<spdlog::sinks
     return fCreateSpdlogSink();
 }
 
-auto TelemetryLibrary::recordFrameworkFairMQState(int64_t stateId, std::string_view stateName) -> void {
+auto TelemetryLibrary::recordFrameworkFairMQState(int64_t state_id, std::string_view state_name) -> void {
     if (!fRecordFrameworkFairMQState) {
         return;
     }
-    const auto value = std::string{stateName};
-    fRecordFrameworkFairMQState(stateId, value.data());
+    const auto value = std::string{state_name};
+    fRecordFrameworkFairMQState(state_id, value.data());
 }
 
 auto TelemetryLibrary::metricAddDoubleCounter(std::string_view name,
@@ -589,11 +589,11 @@ auto TelemetryLibrary::metricAddDoubleCounter(std::string_view name,
         std::string_view unit,
         std::string_view description,
         const nestdaq_otel_attribute* attributes,
-        uint64_t attributeCount) -> bool {
+        uint64_t attribute_count) -> bool {
     if (!fMetricAddDoubleCounter) {
         return false;
     }
-    return storeResult(fMetricAddDoubleCounter(name.data(), value, unit.data(), description.data(), attributes, attributeCount));
+    return storeResult(fMetricAddDoubleCounter(name.data(), value, unit.data(), description.data(), attributes, attribute_count));
 }
 
 auto TelemetryLibrary::metricRecordDoubleHistogram(std::string_view name,
@@ -601,11 +601,11 @@ auto TelemetryLibrary::metricRecordDoubleHistogram(std::string_view name,
         std::string_view unit,
         std::string_view description,
         const nestdaq_otel_attribute* attributes,
-        uint64_t attributeCount) -> bool {
+        uint64_t attribute_count) -> bool {
     if (!fMetricRecordDoubleHistogram) {
         return false;
     }
-    return storeResult(fMetricRecordDoubleHistogram(name.data(), value, unit.data(), description.data(), attributes, attributeCount));
+    return storeResult(fMetricRecordDoubleHistogram(name.data(), value, unit.data(), description.data(), attributes, attribute_count));
 }
 
 auto TelemetryLibrary::metricRecordDoubleGauge(std::string_view name,
@@ -613,11 +613,11 @@ auto TelemetryLibrary::metricRecordDoubleGauge(std::string_view name,
         std::string_view unit,
         std::string_view description,
         const nestdaq_otel_attribute* attributes,
-        uint64_t attributeCount) -> bool {
+        uint64_t attribute_count) -> bool {
     if (!fMetricRecordDoubleGauge) {
         return false;
     }
-    return storeResult(fMetricRecordDoubleGauge(name.data(), value, unit.data(), description.data(), attributes, attributeCount));
+    return storeResult(fMetricRecordDoubleGauge(name.data(), value, unit.data(), description.data(), attributes, attribute_count));
 }
 
 auto TelemetryLibrary::load(const std::string& library) -> bool {
@@ -691,21 +691,21 @@ auto TelemetryLibrary::spanSetAttribute(uint64_t span_handle, const nestdaq_otel
     return storeResult(fSpanSetAttribute(span_handle, &attribute));
 }
 
-auto TelemetryLibrary::setNestdaqInstanceId(std::string_view instanceId) -> bool {
+auto TelemetryLibrary::setNestdaqInstanceId(std::string_view instance_id) -> bool {
     if (!fSetNestdaqInstanceId) {
         return false;
     }
-    const auto value = std::string{instanceId};
+    const auto value = std::string{instance_id};
     return storeResult(fSetNestdaqInstanceId(value.data()));
 }
 
 auto TelemetryLibrary::spanStart(std::string_view name,
                                  const nestdaq_otel_attribute* attributes,
-                                 uint64_t attributeCount) -> uint64_t {
+                                 uint64_t attribute_count) -> uint64_t {
     if (!fSpanStart) {
         return 0;
     }
-    const auto span_handle = fSpanStart(name.data(), attributes, attributeCount);
+    const auto span_handle = fSpanStart(name.data(), attributes, attribute_count);
     if (span_handle == 0) {
         storeResult(NESTDAQ_OTEL_ERROR);
     } else {
@@ -740,11 +740,11 @@ auto TelemetryLibrary::setMinSeverity(int32_t severity) -> bool {
     return true;
 }
 
-auto TelemetryLibrary::shutdownTelemetry(uint64_t timeoutMs) const -> void {
+auto TelemetryLibrary::shutdownTelemetry(uint64_t timeout_ms) const -> void {
     fLogExportEnabled = false;
     if (fShutdown && !fShutdownCalled) {
         fShutdownCalled = true;
-        fShutdown(timeoutMs);
+        fShutdown(timeout_ms);
     }
 }
 

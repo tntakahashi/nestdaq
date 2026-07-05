@@ -163,8 +163,8 @@ TEST_CASE("spdlog native console option follows command line and environment", "
     const auto env_options = parse({"test"});
     CHECK_FALSE(env_options.spdlogNativeConsole);
 
-    const auto overrideOptions = parse({"test", "--spdlog-native-console", "true"});
-    CHECK(overrideOptions.spdlogNativeConsole);
+    const auto override_options = parse({"test", "--spdlog-native-console", "true"});
+    CHECK(override_options.spdlogNativeConsole);
 
     clearTelemetryEnvironment();
 }
@@ -179,8 +179,8 @@ TEST_CASE("spdlog console pattern follows command line and environment", "[telem
     const auto env_options = parse({"test"});
     CHECK(env_options.spdlogConsolePattern == "%l:%v");
 
-    const auto overrideOptions = parse({"test", "--spdlog-console-pattern", "%v"});
-    CHECK(overrideOptions.spdlogConsolePattern == "%v");
+    const auto override_options = parse({"test", "--spdlog-console-pattern", "%v"});
+    CHECK(override_options.spdlogConsolePattern == "%v");
 
     clearTelemetryEnvironment();
 }
@@ -209,18 +209,18 @@ TEST_CASE("spdlog async facade stores process setting", "[telemetry]") {
         .overflowPolicy = "discard_new",
     });
 
-    const auto enabledOptions = nestdaq::telemetry::getSpdlogAsyncOptions();
-    CHECK(enabledOptions.enabled);
-    CHECK(enabledOptions.queueSize == 4096);
-    CHECK(enabledOptions.threadCount == 2);
-    CHECK(enabledOptions.overflowPolicy == "discard_new");
+    const auto enabled_options = nestdaq::telemetry::getSpdlogAsyncOptions();
+    CHECK(enabled_options.enabled);
+    CHECK(enabled_options.queueSize == 4096);
+    CHECK(enabled_options.threadCount == 2);
+    CHECK(enabled_options.overflowPolicy == "discard_new");
 
     nestdaq::telemetry::setSpdlogAsyncOptions({});
-    const auto defaultOptions = nestdaq::telemetry::getSpdlogAsyncOptions();
-    CHECK_FALSE(defaultOptions.enabled);
-    CHECK(defaultOptions.queueSize == nestdaq::telemetry::kDefaultSpdlogAsyncQueueSize);
-    CHECK(defaultOptions.threadCount == nestdaq::telemetry::kDefaultSpdlogAsyncThreadCount);
-    CHECK(defaultOptions.overflowPolicy == nestdaq::telemetry::kDefaultSpdlogAsyncOverflowPolicy);
+    const auto default_options = nestdaq::telemetry::getSpdlogAsyncOptions();
+    CHECK_FALSE(default_options.enabled);
+    CHECK(default_options.queueSize == nestdaq::telemetry::kDefaultSpdlogAsyncQueueSize);
+    CHECK(default_options.threadCount == nestdaq::telemetry::kDefaultSpdlogAsyncThreadCount);
+    CHECK(default_options.overflowPolicy == nestdaq::telemetry::kDefaultSpdlogAsyncOverflowPolicy);
 }
 
 TEST_CASE("spdlog async options are read through Boost options", "[telemetry]") {
@@ -319,38 +319,38 @@ TEST_CASE("telemetry log severity parsing follows FairLogger severity names", "[
     CHECK(severityToFairLoggerValue("fatal") == static_cast<int32_t>(fair::Severity::fatal));
     CHECK(severityToFairLoggerValue("NOLOG") == static_cast<int32_t>(fair::Severity::nolog));
 
-    const auto unknownSeverity = parseFairLoggerSeverity("unknown");
-    CHECK(unknownSeverity.usedFallback);
-    CHECK(unknownSeverity.value == static_cast<int32_t>(fair::Severity::info));
+    const auto unknown_severity = parseFairLoggerSeverity("unknown");
+    CHECK(unknown_severity.usedFallback);
+    CHECK(unknown_severity.value == static_cast<int32_t>(fair::Severity::info));
     CHECK(severityToFairLoggerValue("unknown") == static_cast<int32_t>(fair::Severity::info));
 }
 
 TEST_CASE("telemetry service name follows DAQ service option for devices", "[telemetry]") {
     clearTelemetryEnvironment();
 
-    const auto optionsWithEquals = parse({"test", "--service-name=Sampler"});
-    const auto configWithEquals = nestdaq::telemetry::makeConfig(optionsWithEquals);
+    const auto options_with_equals = parse({"test", "--service-name=Sampler"});
+    const auto config_with_equals = nestdaq::telemetry::makeConfig(options_with_equals);
 
-    CHECK(std::string_view{configWithEquals.service_name} == "sampler");
+    CHECK(std::string_view{config_with_equals.service_name} == "sampler");
 
-    const auto optionsWithSpace = parse({"test", "--service-name", "Processor"});
-    const auto configWithSpace = nestdaq::telemetry::makeConfig(optionsWithSpace);
+    const auto options_with_space = parse({"test", "--service-name", "Processor"});
+    const auto config_with_space = nestdaq::telemetry::makeConfig(options_with_space);
 
-    CHECK(std::string_view{configWithSpace.service_name} == "processor");
+    CHECK(std::string_view{config_with_space.service_name} == "processor");
 }
 
 TEST_CASE("explicit telemetry service name overrides DAQ service option", "[telemetry]") {
     clearTelemetryEnvironment();
 
-    const auto optionsAfter = parse({"test", "--service-name=Sampler", "--otel-service-name=NullDevice"});
-    const auto configAfter = nestdaq::telemetry::makeConfig(optionsAfter);
+    const auto options_after = parse({"test", "--service-name=Sampler", "--otel-service-name=NullDevice"});
+    const auto config_after = nestdaq::telemetry::makeConfig(options_after);
 
-    CHECK(std::string_view{configAfter.service_name} == "nulldevice");
+    CHECK(std::string_view{config_after.service_name} == "nulldevice");
 
-    const auto optionsBefore = parse({"test", "--otel-service-name=explicit", "--service-name=Sampler"});
-    const auto configBefore = nestdaq::telemetry::makeConfig(optionsBefore);
+    const auto options_before = parse({"test", "--otel-service-name=explicit", "--service-name=Sampler"});
+    const auto config_before = nestdaq::telemetry::makeConfig(options_before);
 
-    CHECK(std::string_view{configBefore.service_name} == "explicit");
+    CHECK(std::string_view{config_before.service_name} == "explicit");
 }
 
 TEST_CASE("telemetry service name keeps daq-webctl default through Boost options", "[telemetry]") {
@@ -436,17 +436,17 @@ TEST_CASE("telemetry service instance id follows plugin uuid option", "[telemetr
     clearTelemetryEnvironment();
 
     constexpr auto uuid = std::string_view{"123e4567-e89b-12d3-a456-426614174000"};
-    const auto optionsWithEquals = parse({"test", "--uuid=123e4567-e89b-12d3-a456-426614174000"});
-    const auto configWithEquals = nestdaq::telemetry::makeConfig(optionsWithEquals);
+    const auto options_with_equals = parse({"test", "--uuid=123e4567-e89b-12d3-a456-426614174000"});
+    const auto config_with_equals = nestdaq::telemetry::makeConfig(options_with_equals);
 
-    CHECK_FALSE(optionsWithEquals.generatedServiceInstanceId);
-    CHECK(std::string_view{configWithEquals.service_instance_id} == uuid);
+    CHECK_FALSE(options_with_equals.generatedServiceInstanceId);
+    CHECK(std::string_view{config_with_equals.service_instance_id} == uuid);
 
-    const auto optionsWithSpace = parse({"test", "--uuid", "123e4567-e89b-12d3-a456-426614174000"});
-    const auto configWithSpace = nestdaq::telemetry::makeConfig(optionsWithSpace);
+    const auto options_with_space = parse({"test", "--uuid", "123e4567-e89b-12d3-a456-426614174000"});
+    const auto config_with_space = nestdaq::telemetry::makeConfig(options_with_space);
 
-    CHECK_FALSE(optionsWithSpace.generatedServiceInstanceId);
-    CHECK(std::string_view{configWithSpace.service_instance_id} == uuid);
+    CHECK_FALSE(options_with_space.generatedServiceInstanceId);
+    CHECK(std::string_view{config_with_space.service_instance_id} == uuid);
 }
 
 TEST_CASE("explicit telemetry service instance id overrides plugin uuid option", "[telemetry]") {
@@ -490,14 +490,14 @@ TEST_CASE("generated telemetry uuid populates missing FairMQ uuid property", "[t
 TEST_CASE("generated telemetry uuid does not overwrite FairMQ uuid property", "[telemetry]") {
     clearTelemetryEnvironment();
 
-    constexpr auto existingUuid = std::string_view{"123e4567-e89b-12d3-a456-426614174000"};
+    constexpr auto existing_uuid = std::string_view{"123e4567-e89b-12d3-a456-426614174000"};
     auto options = parse({"test"});
     auto config = fair::mq::ProgOptions{};
-    config.SetProperty<std::string>("uuid", std::string{existingUuid});
+    config.SetProperty<std::string>("uuid", std::string{existing_uuid});
 
     nestdaq::telemetry::setGeneratedUuidProperty(config, options);
 
-    CHECK(config.GetProperty<std::string>("uuid") == existingUuid);
+    CHECK(config.GetProperty<std::string>("uuid") == existing_uuid);
 }
 
 TEST_CASE("empty telemetry protocol disables the selected signal", "[telemetry]") {

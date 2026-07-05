@@ -197,7 +197,7 @@ public:
      */
     auto initializeWith(const nestdaq_otel_config& config) -> bool;
     /** @brief Force-flush initialized telemetry providers. */
-    auto forceFlush(uint64_t timeoutMs) -> bool;
+    auto forceFlush(uint64_t timeout_ms) -> bool;
     /**
      * @brief Create the optional spdlog OpenTelemetry sink from the loaded plugin.
      *
@@ -206,28 +206,28 @@ public:
      */
     auto createSpdlogSink() const -> std::shared_ptr<spdlog::sinks::sink>;
     /** @brief Record a FairMQ state transition as a framework metric sample. */
-    auto recordFrameworkFairMQState(int64_t stateId, std::string_view stateName) -> void;
+    auto recordFrameworkFairMQState(int64_t state_id, std::string_view state_name) -> void;
     /** @brief Add to a user double counter through the plugin C ABI. */
     auto metricAddDoubleCounter(std::string_view name,
                                 double value,
                                 std::string_view unit = "",
                                 std::string_view description = "",
                                 const nestdaq_otel_attribute* attributes = nullptr,
-                                uint64_t attributeCount = 0) -> bool;
+                                uint64_t attribute_count = 0) -> bool;
     /** @brief Record a user double histogram value through the plugin C ABI. */
     auto metricRecordDoubleHistogram(std::string_view name,
                                      double value,
                                      std::string_view unit = "",
                                      std::string_view description = "",
                                      const nestdaq_otel_attribute* attributes = nullptr,
-                                     uint64_t attributeCount = 0) -> bool;
+                                     uint64_t attribute_count = 0) -> bool;
     /** @brief Record a user double gauge value through the plugin C ABI. */
     auto metricRecordDoubleGauge(std::string_view name,
                                  double value,
                                  std::string_view unit = "",
                                  std::string_view description = "",
                                  const nestdaq_otel_attribute* attributes = nullptr,
-                                 uint64_t attributeCount = 0) -> bool;
+                                 uint64_t attribute_count = 0) -> bool;
     /**
      * @brief Load a telemetry plugin shared library and resolve its C ABI.
      *
@@ -240,17 +240,17 @@ public:
     /** @brief Set one attribute on an active span handle. */
     auto spanSetAttribute(uint64_t span_handle, const nestdaq_otel_attribute& attribute) -> bool;
     /** @brief Update the NestDAQ instance id attached to exported log records. */
-    auto setNestdaqInstanceId(std::string_view instanceId) -> bool;
+    auto setNestdaqInstanceId(std::string_view instance_id) -> bool;
     /** @brief Start a span and return its opaque plugin-owned handle. */
     auto spanStart(std::string_view name,
                    const nestdaq_otel_attribute* attributes = nullptr,
-                   uint64_t attributeCount = 0) -> uint64_t;
+                   uint64_t attribute_count = 0) -> uint64_t;
     /** @brief Update the FairLogger severity threshold by severity name. */
     auto setMinSeverity(std::string_view severity) -> bool;
     /** @brief Update the FairLogger severity threshold by numeric value. */
     auto setMinSeverity(int32_t severity) -> bool;
     /** @brief Shut down the plugin once; subsequent calls are no-ops. */
-    auto shutdownTelemetry(uint64_t timeoutMs) const -> void;
+    auto shutdownTelemetry(uint64_t timeout_ms) const -> void;
 
 private:
     auto storeResult(int rc) -> bool;
