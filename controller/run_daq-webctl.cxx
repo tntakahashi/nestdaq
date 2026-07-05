@@ -184,7 +184,7 @@ int main(int argc, char* argv[]) { // NOLINT(bugprone-exception-escape)
     // ============================================
     // redis client setup
     const auto redis_uri  = vm["redis-uri"].as<std::string>();
-    const auto channel   = daq::service::CommandChannelName.data();
+    const auto channel   = daq::service::kCommandChannelName.data();
     const auto sep       = vm["separator"].as<std::string>();
     LOG(info) << "redis-server URI  = " << redis_uri;
     LOG(info) << "command-channel   = " << channel;

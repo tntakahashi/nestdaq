@@ -36,7 +36,7 @@ class ParameterConfigPlugin : public fair::mq::Plugin
 public:
     /** @brief Command-line option names for parameter configuration. */
     struct OptionKey {
-        static constexpr std::string_view ServerUri{"parameter-config-uri"};
+        static constexpr std::string_view kServerUri{"parameter-config-uri"};
     };
 
     /** @brief Construct and initialize the Redis-backed parameter config plugin. */

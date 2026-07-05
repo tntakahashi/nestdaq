@@ -110,11 +110,11 @@ auto daq::service::metricsPluginProgramOptions() -> fair::mq::Plugin::ProgOption
 
     auto options = bpo::options_description(kMyClass.data());
     options.add_options()
-           (opt::UpdateInterval.data(), bpo::value<long long>()->default_value(1000),     "update interval in milliseconds for CPU and memory usage.")
-           (opt::ServerUri.data(),      bpo::value<std::string>(),                        "Redis server URI (if empty, the same URI of the service registry is used.)")
-           (opt::Retention.data(),      bpo::value<std::string>()->default_value("0"),    "Retention time in msec for time series data. When set to 0, the series is not trimmed at all.")
-           (opt::RecreateTS.data(),     bpo::value<std::string>()->default_value("true"), "Recreate timeseries data on state transition to Running")
-           (opt::MaxTtl.data(),         bpo::value<std::string>()->default_value("3000"), "Max TTL for metrics in milliseconds. (if zero or negative, no TTL is set.)");
+           (opt::kUpdateInterval.data(), bpo::value<long long>()->default_value(1000),     "update interval in milliseconds for CPU and memory usage.")
+           (opt::kServerUri.data(),      bpo::value<std::string>(),                        "Redis server URI (if empty, the same URI of the service registry is used.)")
+           (opt::kRetention.data(),      bpo::value<std::string>()->default_value("0"),    "kRetention time in msec for time series data. When set to 0, the series is not trimmed at all.")
+           (opt::kRecreateTS.data(),     bpo::value<std::string>()->default_value("true"), "Recreate timeseries data on state transition to Running")
+           (opt::kMaxTtl.data(),         bpo::value<std::string>()->default_value("3000"), "Max TTL for metrics in milliseconds. (if zero or negative, no TTL is set.)");
     return options;
 }
 
@@ -134,12 +134,12 @@ daq::service::MetricsPlugin::MetricsPlugin(std::string_view name,
     fProcessUsage = readProcessUsage();
 
     fId          = GetProperty<std::string>("id");
-    fServiceName = GetProperty<std::string>(ServiceName.data());
-    fSeparator   = GetProperty<std::string>(Separator.data());
+    fServiceName = GetProperty<std::string>(kServiceName.data());
+    fSeparator   = GetProperty<std::string>(kSeparator.data());
     fTopPrefix   = kMetricsPrefix.data();
 
-    fRetentionMS = GetProperty<std::string>(opt::Retention.data());
-    fMaxTtl      = std::stoll(GetProperty<std::string>(opt::MaxTtl.data()));
+    fRetentionMS = GetProperty<std::string>(opt::kRetention.data());
+    fMaxTtl      = std::stoll(GetProperty<std::string>(opt::kMaxTtl.data()));
 
     if (PropertyExists("created-time")) {
         auto t = GetProperty<int64_t>("created-time");
@@ -202,10 +202,10 @@ daq::service::MetricsPlugin::MetricsPlugin(std::string_view name,
     */
 
     std::string serverUri;
-    if (PropertyExists(opt::ServerUri.data())) {
-        serverUri = GetProperty<std::string>(opt::ServerUri.data());
-    } else if (PropertyExists(ServiceRegistryUri.data())) {
-        serverUri = GetProperty<std::string>(ServiceRegistryUri.data());
+    if (PropertyExists(opt::kServerUri.data())) {
+        serverUri = GetProperty<std::string>(opt::kServerUri.data());
+    } else if (PropertyExists(kServiceRegistryUri.data())) {
+        serverUri = GetProperty<std::string>(kServiceRegistryUri.data());
     }
     if (!serverUri.empty()) {
         fClient = std::make_shared<sw::redis::Redis>(serverUri);
@@ -219,11 +219,11 @@ daq::service::MetricsPlugin::MetricsPlugin(std::string_view name,
     //           << "\n hostnameKey    = " << fHostnameKey
     //           << "\n ipAddresssKey  = " << fIpAddressKey;
 
-    fStartTimeKey   = join({fTopPrefix, StartTime.data()}, fSeparator);
-    fStartTimeNSKey = join({fTopPrefix, StartTimeNS.data()}, fSeparator);
-    fStopTimeKey    = join({fTopPrefix, StopTime.data()}, fSeparator);
-    fStopTimeNSKey  = join({fTopPrefix, StopTimeNS.data()}, fSeparator);
-    fRunNumberKey   = join({fTopPrefix, RunNumber.data()}, fSeparator);
+    fStartTimeKey   = join({fTopPrefix, kStartTime.data()}, fSeparator);
+    fStartTimeNSKey = join({fTopPrefix, kStartTimeNS.data()}, fSeparator);
+    fStopTimeKey    = join({fTopPrefix, kStopTime.data()}, fSeparator);
+    fStopTimeNSKey  = join({fTopPrefix, kStopTimeNS.data()}, fSeparator);
+    fRunNumberKey   = join({fTopPrefix, kRunNumber.data()}, fSeparator);
 
     fRegisteredKeys.insert({fStateKey, fLastUpdateKey, fLastUpdateNSKey,
                             fStartTimeKey, fStartTimeNSKey, fStopTimeKey, fStopTimeNSKey,
@@ -260,11 +260,11 @@ daq::service::MetricsPlugin::MetricsPlugin(std::string_view name,
 
     SubscribeToPropertyChangeAsString([this](const std::string& key, std::string value) {
         if (
-            (key==StartTime)   ||
-            (key==StartTimeNS) ||
-            (key==StopTime)    ||
-            (key==StopTimeNS)  ||
-            (key==RunNumber)) {
+            (key==kStartTime)   ||
+            (key==kStartTimeNS) ||
+            (key==kStopTime)    ||
+            (key==kStopTimeNS)  ||
+            (key==kRunNumber)) {
             //LOG(debug) << kMyClass << " (subscribed callback) key = " << key << ", value = " << value;
             std::scoped_lock<std::mutex> lock{fMutex};
             fClient->hset(join({fTopPrefix, key}, fSeparator), fId, value);
@@ -583,8 +583,8 @@ bool daq::service::MetricsPlugin::isRecreateTs()
 {
     //LOG(warn) << __func__ << ":" << __LINE__;
     using opt = OptionKey;
-    if (PropertyExists(opt::RecreateTS.data())) {
-        auto f = GetProperty<std::string>(opt::RecreateTS.data());
+    if (PropertyExists(opt::kRecreateTS.data())) {
+        auto f = GetProperty<std::string>(opt::kRecreateTS.data());
         boost::to_lower(f);
         return (f=="true") || (f=="1");
     }

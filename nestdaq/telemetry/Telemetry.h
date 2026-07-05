@@ -48,7 +48,7 @@ struct IsMetricValue : std::bool_constant<std::is_arithmetic_v<RemoveCvref<T>> &
 };
 
 template<typename T>
-inline constexpr bool IsMetricValueV = IsMetricValue<T>::value;
+inline constexpr bool kIsMetricValue = IsMetricValue<T>::value;
 
 /**
  * @brief Numeric metric value accepted by the convenience metric overloads.
@@ -59,7 +59,7 @@ inline constexpr bool IsMetricValueV = IsMetricValue<T>::value;
  */
 #if __cplusplus >= 202002L
 template<typename T>
-concept MetricValue = IsMetricValueV<T>;
+concept MetricValue = kIsMetricValue<T>;
 #endif
 } // namespace detail
 
@@ -203,7 +203,7 @@ public:
     auto add(double value, std::initializer_list<Attribute> attributes = {}) const -> bool;
 
     /** @brief Add an arithmetic value after converting it to double. */
-    template<typename T, std::enable_if_t<detail::IsMetricValueV<T>, int> = 0>
+    template<typename T, std::enable_if_t<detail::kIsMetricValue<T>, int> = 0>
     auto add(T value, std::initializer_list<Attribute> attributes = {}) const -> bool {
         return add(static_cast<double>(value), attributes);
     }
@@ -228,7 +228,7 @@ public:
     auto record(double value, std::initializer_list<Attribute> attributes = {}) const -> bool;
 
     /** @brief Record an arithmetic value after converting it to double. */
-    template<typename T, std::enable_if_t<detail::IsMetricValueV<T>, int> = 0>
+    template<typename T, std::enable_if_t<detail::kIsMetricValue<T>, int> = 0>
     auto record(T value, std::initializer_list<Attribute> attributes = {}) const -> bool {
         return record(static_cast<double>(value), attributes);
     }
@@ -257,7 +257,7 @@ public:
     auto record(double value, std::initializer_list<Attribute> attributes = {}) const -> bool;
 
     /** @brief Record an arithmetic value after converting it to double. */
-    template<typename T, std::enable_if_t<detail::IsMetricValueV<T>, int> = 0>
+    template<typename T, std::enable_if_t<detail::kIsMetricValue<T>, int> = 0>
     auto record(T value, std::initializer_list<Attribute> attributes = {}) const -> bool {
         return record(static_cast<double>(value), attributes);
     }
@@ -313,7 +313,7 @@ public:
 #endif
 
     /** @brief Add an arithmetic value to a counter after converting it to double. */
-    template<typename T, std::enable_if_t<detail::IsMetricValueV<T>, int> = 0>
+    template<typename T, std::enable_if_t<detail::kIsMetricValue<T>, int> = 0>
     auto addCounter(std::string_view name,
                     T value,
                     std::string_view unit = "",
@@ -325,7 +325,7 @@ public:
 
 #if __cplusplus >= 202002L
     /** @brief Add an arithmetic value to a counter with C++20 span attributes. */
-    template<typename T, std::enable_if_t<detail::IsMetricValueV<T>, int> = 0>
+    template<typename T, std::enable_if_t<detail::kIsMetricValue<T>, int> = 0>
     auto addCounter(std::string_view name,
                     T value,
                     std::string_view unit,
@@ -359,7 +359,7 @@ public:
 #endif
 
     /** @brief Record an arithmetic histogram value after converting it to double. */
-    template<typename T, std::enable_if_t<detail::IsMetricValueV<T>, int> = 0>
+    template<typename T, std::enable_if_t<detail::kIsMetricValue<T>, int> = 0>
     auto recordHistogram(std::string_view name,
                          T value,
                          std::string_view unit = "",
@@ -371,7 +371,7 @@ public:
 
 #if __cplusplus >= 202002L
     /** @brief Record an arithmetic histogram value with C++20 span attributes. */
-    template<typename T, std::enable_if_t<detail::IsMetricValueV<T>, int> = 0>
+    template<typename T, std::enable_if_t<detail::kIsMetricValue<T>, int> = 0>
     auto recordHistogram(std::string_view name,
                          T value,
                          std::string_view unit,
@@ -405,7 +405,7 @@ public:
 #endif
 
     /** @brief Record an arithmetic gauge value after converting it to double. */
-    template<typename T, std::enable_if_t<detail::IsMetricValueV<T>, int> = 0>
+    template<typename T, std::enable_if_t<detail::kIsMetricValue<T>, int> = 0>
     auto recordGauge(std::string_view name,
                      T value,
                      std::string_view unit = "",
@@ -417,7 +417,7 @@ public:
 
 #if __cplusplus >= 202002L
     /** @brief Record an arithmetic gauge value with C++20 span attributes. */
-    template<typename T, std::enable_if_t<detail::IsMetricValueV<T>, int> = 0>
+    template<typename T, std::enable_if_t<detail::kIsMetricValue<T>, int> = 0>
     auto recordGauge(std::string_view name,
                      T value,
                      std::string_view unit,

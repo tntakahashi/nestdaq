@@ -43,20 +43,20 @@ static const std::unordered_set<std::string_view> kKnownRunInfoList{
 }
 
 static const std::unordered_set<std::string_view> kKnownCommandList{
-    fairmq::command::Bind,
-    fairmq::command::CompleteInit,
-    fairmq::command::Connect,
-    fairmq::command::End,
-    fairmq::command::InitDevice,
-    fairmq::command::InitTask,
-    fairmq::command::ResetDevice,
-    fairmq::command::ResetTask,
-    fairmq::command::Run,
-    fairmq::command::Stop,
-    daq::command::Exit,
-    daq::command::Quit,
-    daq::command::Reset,
-    daq::command::Start,
+    fairmq::command::kBind,
+    fairmq::command::kCompleteInit,
+    fairmq::command::kConnect,
+    fairmq::command::kEnd,
+    fairmq::command::kInitDevice,
+    fairmq::command::kInitTask,
+    fairmq::command::kResetDevice,
+    fairmq::command::kResetTask,
+    fairmq::command::kRun,
+    fairmq::command::kStop,
+    daq::command::kExit,
+    daq::command::kQuit,
+    daq::command::kReset,
+    daq::command::kStart,
 };
 
 static const std::vector<std::string> kWaitDeviceReadyTargets {
@@ -215,7 +215,7 @@ void WebGui::pollState()
         t_prev = t_now;
 
         std::map<std::string, ServiceState> summary_table;
-        const auto &state_keys = daq::service::scan(*fClient, {daq::service::TopPrefix.data(), "*", "*", daq::service::FairMQStatePrefix.data()}, fSeparator);
+        const auto &state_keys = daq::service::scan(*fClient, {daq::service::kTopPrefix.data(), "*", "*", daq::service::kFairMQStatePrefix.data()}, fSeparator);
         if (state_keys.empty()) {
             sendStateSummary(summary_table);
             continue;
@@ -223,7 +223,7 @@ void WebGui::pollState()
         std::vector<sw::redis::OptionalString> state_values;
         fClient->mget(state_keys.begin(), state_keys.end(), std::back_inserter(state_values));
 
-        const auto &update_time_keys = daq::service::scan(*fClient, {daq::service::TopPrefix.data(), "*", "*", daq::service::UpdateTimePrefix.data()}, fSeparator);
+        const auto &update_time_keys = daq::service::scan(*fClient, {daq::service::kTopPrefix.data(), "*", "*", daq::service::kUpdateTimePrefix.data()}, fSeparator);
         std::vector<sw::redis::OptionalString> update_time_values;
         if (!update_time_keys.empty()) {
             fClient->mget(update_time_keys.begin(), update_time_keys.end(), std::back_inserter(update_time_values));
@@ -330,7 +330,7 @@ void WebGui::processExpiredKey(std::string_view key)
             }
             const auto inst_index   = std::string{inst_name.substr(index_begin + 1)};
             {
-                const auto& instance_index_key = daq::service::join({daq::service::TopPrefix.data(), daq::service::ServiceInstanceIndexPrefix.data(), service_name}, fSeparator);
+                const auto& instance_index_key = daq::service::join({daq::service::kTopPrefix.data(), daq::service::kServiceInstanceIndexPrefix.data(), service_name}, fSeparator);
                 fClient->hdel(instance_index_key, inst_index);
                 LOG(warn) << " delete instance index: key = " << instance_index_key << ", field = " << inst_index;
             }
@@ -429,7 +429,7 @@ void WebGui::redisPublishDaqCommand(unsigned int conn_id, const boost::property_
     }
 
     const auto& v= *val;
-    if (v == fairmq::command::Run.data()) {
+    if (v == fairmq::command::kRun.data()) {
         copyLatestRunNumber(conn_id);
     }
     if (kKnownCommandList.count(v)>0) {
@@ -449,41 +449,41 @@ void WebGui::redisPublishDaqCommand(unsigned int conn_id, const boost::property_
             }
 
             // use boost::iequals for case insensitive compare
-            if (boost::iequals(v, fairmq::command::Connect)) {
-                fClient->publish(fChannelName, toMessage(fairmq::command::Connect));
+            if (boost::iequals(v, fairmq::command::kConnect)) {
+                fClient->publish(fChannelName, toMessage(fairmq::command::kConnect));
                 if (wait_device_ready_flag) {
                     wait(services, instances, kWaitDeviceReadyTargets);
                 }
 
-            } else if (boost::iequals(v, fairmq::command::InitTask)) {
+            } else if (boost::iequals(v, fairmq::command::kInitTask)) {
                 if (wait_device_ready_flag) {
-                    fClient->publish(fChannelName, toMessage(fairmq::command::Connect));
+                    fClient->publish(fChannelName, toMessage(fairmq::command::kConnect));
                     wait(services, instances, kWaitDeviceReadyTargets);
                 }
-                fClient->publish(fChannelName, toMessage(fairmq::command::InitTask));
+                fClient->publish(fChannelName, toMessage(fairmq::command::kInitTask));
                 if (wait_ready_flag) {
                     wait(services, instances, kWaitReadyTargets);
                 }
 
-            } else if (boost::iequals(v, fairmq::command::Run)) {
+            } else if (boost::iequals(v, fairmq::command::kRun)) {
                 if (wait_device_ready_flag) {
-                    fClient->publish(fChannelName, toMessage(fairmq::command::Connect));
+                    fClient->publish(fChannelName, toMessage(fairmq::command::kConnect));
                     wait(services, instances, kWaitDeviceReadyTargets);
                 }
                 if (wait_ready_flag) {
-                    fClient->publish(fChannelName, toMessage(fairmq::command::InitTask));
+                    fClient->publish(fChannelName, toMessage(fairmq::command::kInitTask));
                     wait(services, instances, kWaitReadyTargets);
                 }
                 LOG(debug) << " pre-run = " << fPreRunCommand;
                 boost::process::system(fPreRunCommand.data(), boost::process::std_out > stdout, boost::process::std_err > stderr, boost::process::std_in < stdin);
-                fClient->publish(fChannelName, toMessage(fairmq::command::Run));
+                fClient->publish(fChannelName, toMessage(fairmq::command::kRun));
                 LOG(debug) << " post-run = " << fPostRunCommand;
                 boost::process::system(fPostRunCommand.data(), boost::process::std_out > stdout, boost::process::std_err > stderr, boost::process::std_in < stdin);
 
-            } else if (boost::iequals(v,  fairmq::command::Stop)) {
+            } else if (boost::iequals(v,  fairmq::command::kStop)) {
                 LOG(debug) << " pre-stop = " << fPreStopCommand;
                 boost::process::system(fPreStopCommand.data(), boost::process::std_out > stdout, boost::process::std_err > stderr, boost::process::std_in < stdin);
-                fClient->publish(fChannelName, toMessage(fairmq::command::Stop));
+                fClient->publish(fChannelName, toMessage(fairmq::command::kStop));
                 LOG(debug) << " post-stop = " << fPostStopCommand;
                 boost::process::system(fPostStopCommand.data(), boost::process::std_out > stdout, boost::process::std_err > stderr, boost::process::std_in < stdin);
 
@@ -616,7 +616,7 @@ void WebGui::subscribeToRedisPubSub()
 
     sub.on_message([this](auto channel, auto msg) {
         //std::cout << kMyClass << " on_message(MESSAGE): channel = " << channel << ", msg = " << msg << std::endl;
-        if (daq::service::StateChannelName.data() == channel) {
+        if (daq::service::kStateChannelName.data() == channel) {
             const auto& obj = toJson(msg) ;
             const auto& cmdValue = obj. template get_optional<std::string>("value");
             if (!cmdValue) {
@@ -632,9 +632,9 @@ void WebGui::subscribeToRedisPubSub()
         }
     });
 
-    LOG(info) << "subscribe to redis pub/sub channel for DAQ state transition command: " << daq::service::StateChannelName.data();
+    LOG(info) << "subscribe to redis pub/sub channel for DAQ state transition command: " << daq::service::kStateChannelName.data();
     LOG(info) << "subscribe to redis key-event : " << fRedisKeyEventChannelName;
-    sub.subscribe({std::string(daq::service::StateChannelName.data()), fRedisKeyEventChannelName});
+    sub.subscribe({std::string(daq::service::kStateChannelName.data()), fRedisKeyEventChannelName});
 
     while (true) {
         try {
@@ -661,7 +661,7 @@ void WebGui::wait(const std::vector<std::string> &keys, const std::vector<std::s
     while (!done) {
         std::unordered_set<std::string> state_keys;
         for (const auto &k : keys) {
-            auto s = daq::service::scan(*fClient, {daq::service::TopPrefix.data(), k, daq::service::FairMQStatePrefix.data()}, fSeparator);
+            auto s = daq::service::scan(*fClient, {daq::service::kTopPrefix.data(), k, daq::service::kFairMQStatePrefix.data()}, fSeparator);
             state_keys.merge(s);
         }
 

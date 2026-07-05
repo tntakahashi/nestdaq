@@ -109,11 +109,11 @@ public:
 
     /** @brief Command-line option names for metrics plugin configuration. */
     struct OptionKey {
-        static constexpr std::string_view UpdateInterval{"proc-stat-update-interval"};
-        static constexpr std::string_view ServerUri{"metrics-uri"};
-        static constexpr std::string_view Retention{"retention"};
-        static constexpr std::string_view RecreateTS{"recreate-ts"};
-        static constexpr std::string_view MaxTtl{"metrics-max-ttl"};
+        static constexpr std::string_view kUpdateInterval{"proc-stat-update-interval"};
+        static constexpr std::string_view kServerUri{"metrics-uri"};
+        static constexpr std::string_view kRetention{"retention"};
+        static constexpr std::string_view kRecreateTS{"recreate-ts"};
+        static constexpr std::string_view kMaxTtl{"metrics-max-ttl"};
     };
 
     /** @brief Construct and initialize the Redis-backed metrics plugin. */

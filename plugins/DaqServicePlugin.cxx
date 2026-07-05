@@ -38,11 +38,11 @@
 
 static constexpr std::string_view kMyClass{"daq::service::Plugin"};
 
-static constexpr std::string_view StartupState{"startup-state"};
+static constexpr std::string_view kStartupState{"startup-state"};
 
 static constexpr std::string_view kEnableUds{"enable-uds"};
-static constexpr std::string_view ConnectConfig{"connect-config"};
-static constexpr std::string_view MaxRetryToResolveAddress{"max-retry-to-resolve-address"};
+static constexpr std::string_view kConnectConfig{"connect-config"};
+static constexpr std::string_view kMaxRetryToResolveAddress{"max-retry-to-resolve-address"};
 static constexpr long long kDefaultMaxTtl{5};
 static constexpr long long kDefaultTtlUpdateInterval{3};
 static constexpr long long kMillisecondsPerSecond{1000};
@@ -50,20 +50,20 @@ static constexpr std::size_t kCwdBufferSize{512};
 static constexpr std::chrono::milliseconds kRedLockRetryInterval{100};
 
 static const std::unordered_set<std::string_view> kKnownCommandList{
-    fairmq::command::Bind,
-    fairmq::command::CompleteInit,
-    fairmq::command::Connect,
-    fairmq::command::End,
-    fairmq::command::InitDevice,
-    fairmq::command::InitTask,
-    fairmq::command::ResetDevice,
-    fairmq::command::ResetTask,
-    fairmq::command::Run,
-    fairmq::command::Stop,
-    daq::command::Exit,
-    daq::command::Quit,
-    daq::command::Reset,
-    daq::command::Start,
+    fairmq::command::kBind,
+    fairmq::command::kCompleteInit,
+    fairmq::command::kConnect,
+    fairmq::command::kEnd,
+    fairmq::command::kInitDevice,
+    fairmq::command::kInitTask,
+    fairmq::command::kResetDevice,
+    fairmq::command::kResetTask,
+    fairmq::command::kRun,
+    fairmq::command::kStop,
+    daq::command::kExit,
+    daq::command::kQuit,
+    daq::command::kReset,
+    daq::command::kStart,
 };
 
 using namespace std::string_literals;
@@ -83,29 +83,29 @@ auto pluginProgramOptions() -> fair::mq::Plugin::ProgOptions
     LOG(debug) << "daq::service::pluginProgramOptions: add_options";
     auto pluginOptions = bpo::options_description(std::string{kMyClass});
     pluginOptions.add_options() //
-                 (std::string{ServiceName}.data(),        bpo::value<std::string>(),  "name of this service")
+                 (std::string{kServiceName}.data(),        bpo::value<std::string>(),  "name of this service")
                  //
-                 (std::string{Uuid}.data(),               bpo::value<std::string>(),  "uuid of this service")
+                 (std::string{kUuid}.data(),               bpo::value<std::string>(),  "uuid of this service")
                  //
-                 (std::string{HostIpAddress}.data(),      bpo::value<std::string>(),  "IP address or hostname of this service")
+                 (std::string{kHostIpAddress}.data(),      bpo::value<std::string>(),  "IP address or hostname of this service")
                  //
-                 (std::string{Hostname}.data(),           bpo::value<std::string>(),  "hostname of this service")
+                 (std::string{kHostname}.data(),           bpo::value<std::string>(),  "hostname of this service")
                  //
-                 (std::string{ServiceRegistryUri}.data(), bpo::value<std::string>()->default_value("tcp://127.0.0.1:6379/0"), "DAQ service registry's URI")
+                 (std::string{kServiceRegistryUri}.data(), bpo::value<std::string>()->default_value("tcp://127.0.0.1:6379/0"), "DAQ service registry's URI")
                  //
-                 (std::string{Separator}.data(),          bpo::value<std::string>()->default_value(":"), "separator character for key space name")
+                 (std::string{kSeparator}.data(),          bpo::value<std::string>()->default_value(":"), "separator character for key space name")
                  //
-                 (std::string{MaxTtl}.data(),             bpo::value<long long>()->default_value(kDefaultMaxTtl), "max TTL (time-to-live) in second for keys")
+                 (std::string{kMaxTtl}.data(),             bpo::value<long long>()->default_value(kDefaultMaxTtl), "max TTL (time-to-live) in second for keys")
                  //
-                 (std::string{TtlUpdateInterval}.data(),  bpo::value<long long>()->default_value(kDefaultTtlUpdateInterval), "TTL update interval in second for keys")
+                 (std::string{kTtlUpdateInterval}.data(),  bpo::value<long long>()->default_value(kDefaultTtlUpdateInterval), "TTL update interval in second for keys")
                  //
-                 (std::string{StartupState}.data(),       bpo::value<std::string>()->default_value("idle"),
+                 (std::string{kStartupState}.data(),       bpo::value<std::string>()->default_value("idle"),
                   "state on startup. (idle, initializing-device, initialized, bound, device-ready, ready, running)")
                  //
                  (std::string{kEnableUds}.data(),          bpo::value<std::string>()->default_value("true"),
                   "Use Unix Domain Socket for the local IPC if available (bool)")
                  //
-                 (std::string{ConnectConfig}.data(),          bpo::value<std::string>(),
+                 (std::string{kConnectConfig}.data(),          bpo::value<std::string>(),
                   "MQ channel parameters of JSON string for temporary connection with method=connect\n"
                   " '{ \"my-channel-a\": { parameters-a }, \"my-channel-b\":  { parameters-b } }'\n\n"
                   " NOTE: When using start_device.sh, the JSON string must be enclosed in \\' (backslash + single quote)\n"
@@ -119,7 +119,7 @@ auto pluginProgramOptions() -> fair::mq::Plugin::ProgOptions
                   " e.g. 4 \n"
                   " '{ \"in\": {\"type\": \"sub\", \"peer\": \"Sampler:Sampler-0:out[0]\" }, \"out\": { \"type\": \"pub\",  \"peer\": \"Sink:Sink-2:in[1]\" } }'\n")
                  //
-                 (std::string{MaxRetryToResolveAddress}.data(), bpo::value<std::string>()->default_value("10"), "max retry to resolve connect address");
+                 (std::string{kMaxRetryToResolveAddress}.data(), bpo::value<std::string>()->default_value("10"), "max retry to resolve connect address");
 
     return pluginOptions;
 }
@@ -137,8 +137,8 @@ Plugin::Plugin(std::string_view name,
     setCurrentWorkingDirectory();
     setProcessName();
 
-    if (PropertyExists(std::string{Uuid})) {
-        fUuid = boost::lexical_cast<boost::uuids::uuid>(GetProperty<std::string>(std::string{Uuid}));
+    if (PropertyExists(std::string{kUuid})) {
+        fUuid = boost::lexical_cast<boost::uuids::uuid>(GetProperty<std::string>(std::string{kUuid}));
     }
     if (fUuid.is_nil()) {
         fUuid = boost::uuids::random_generator()();
@@ -146,27 +146,27 @@ Plugin::Plugin(std::string_view name,
     }
     LOG(debug) << kMyClass << " uuid = "  << fUuid;
 
-    fSeparator = GetProperty<std::string>(std::string{Separator});
-    SetProperty("top-prefix", std::string{TopPrefix});
+    fSeparator = GetProperty<std::string>(std::string{kSeparator});
+    SetProperty("top-prefix", std::string{kTopPrefix});
 
     fPresence = std::make_unique<Presence>();
-    fMaxTtl = GetProperty<long long>(std::string{MaxTtl});
-    fTtlUpdateInterval = GetProperty<long long>(std::string{TtlUpdateInterval});
+    fMaxTtl = GetProperty<long long>(std::string{kMaxTtl});
+    fTtlUpdateInterval = GetProperty<long long>(std::string{kTtlUpdateInterval});
 
     fHealth = std::make_unique<Health>();
-    if (PropertyExists(std::string{Hostname})) {
-        fHealth->hostName = GetProperty<std::string>(std::string{Hostname});
+    if (PropertyExists(std::string{kHostname})) {
+        fHealth->hostName = GetProperty<std::string>(std::string{kHostname});
     } else {
         fHealth->hostName = net::ip::host_name();
     }
-    SetProperty(std::string{Hostname}, fHealth->hostName);
+    SetProperty(std::string{kHostname}, fHealth->hostName);
     fHealth->createdTimeSystem = std::chrono::system_clock::now();
     fHealth->createdTime       = std::chrono::steady_clock::now();
 
     SetProperty("created-time", std::chrono::duration_cast<std::chrono::nanoseconds>(fHealth->createdTimeSystem.time_since_epoch()).count());
 
-    if (PropertyExists(std::string{HostIpAddress})) {
-        auto ipAddress = GetProperty<std::string>(std::string{HostIpAddress});
+    if (PropertyExists(std::string{kHostIpAddress})) {
+        auto ipAddress = GetProperty<std::string>(std::string{kHostIpAddress});
         fHealth->ipAddress = fair::mq::tools::getIpFromHostname(ipAddress);
         auto hostIPs = fair::mq::tools::getHostIPs();
         //LOG(debug) << " host ip size = " << hostIPs.size();
@@ -192,19 +192,19 @@ Plugin::Plugin(std::string_view name,
     }
 
     LOG(debug) << " ip = " << fHealth->ipAddress;
-    SetProperty(std::string{HostIpAddress}, fHealth->ipAddress);
+    SetProperty(std::string{kHostIpAddress}, fHealth->ipAddress);
 
-    if (PropertyExists(std::string{ServiceName})) {
-        fServiceName = GetProperty<std::string>(std::string{ServiceName});
+    if (PropertyExists(std::string{kServiceName})) {
+        fServiceName = GetProperty<std::string>(std::string{kServiceName});
     }
     if (fServiceName.empty()) {
         std::vector<std::string> v;
         boost::split(v, fProcessName, boost::is_any_of("/"));
         LOG(debug) << " service name is empty. use process name (filename of executable) as service name";
         fServiceName = v.back();
-        SetProperty(std::string{ServiceName}, fServiceName);
+        SetProperty(std::string{kServiceName}, fServiceName);
     }
-    fStartupState   = GetProperty<std::string>(std::string{StartupState});
+    fStartupState   = GetProperty<std::string>(std::string{kStartupState});
 
     auto hostIPs = fair::mq::tools::getHostIPs();
     for (const auto& [nic, ip] : hostIPs) {
@@ -225,9 +225,9 @@ Plugin::Plugin(std::string_view name,
     // register to service registry
     registerService();
     fTopology = std::make_unique<TopologyConfig>(*this);
-    if (PropertyExists(std::string{ConnectConfig})) {
-        fTopology->setConnectConfig(GetProperty<std::string>(std::string{ConnectConfig}));
-        fTopology->setMaxRetryToResolveAddress(std::stoi(GetProperty<std::string>(std::string{MaxRetryToResolveAddress})));
+    if (PropertyExists(std::string{kConnectConfig})) {
+        fTopology->setConnectConfig(GetProperty<std::string>(std::string{kConnectConfig}));
+        fTopology->setMaxRetryToResolveAddress(std::stoi(GetProperty<std::string>(std::string{kMaxRetryToResolveAddress})));
         // for quick debug
         //fTopology->configConnect();
     }
@@ -343,43 +343,43 @@ void Plugin::changeDeviceStateByMultiCommand(std::string_view cmd)
     // ---------- state transition from Idle ----------
     case DeviceState::Idle:
         // Idle -> InitialzingDevice -> Initialized
-        if ((cmd==fairmq::command::InitDevice) || (cmd==fairmq::command::CompleteInit)) {
-            changeDeviceStateBySingleCommand(fairmq::command::InitDevice);
-            changeDeviceStateBySingleCommand(fairmq::command::CompleteInit);
+        if ((cmd==fairmq::command::kInitDevice) || (cmd==fairmq::command::kCompleteInit)) {
+            changeDeviceStateBySingleCommand(fairmq::command::kInitDevice);
+            changeDeviceStateBySingleCommand(fairmq::command::kCompleteInit);
             break;
         }
         // Idle -> ... -> Bound
-        if (cmd==fairmq::command::Bind) {
-            changeDeviceStateBySingleCommand(fairmq::command::InitDevice);
-            changeDeviceStateBySingleCommand(fairmq::command::CompleteInit);
-            changeDeviceStateBySingleCommand(fairmq::command::Bind);
+        if (cmd==fairmq::command::kBind) {
+            changeDeviceStateBySingleCommand(fairmq::command::kInitDevice);
+            changeDeviceStateBySingleCommand(fairmq::command::kCompleteInit);
+            changeDeviceStateBySingleCommand(fairmq::command::kBind);
             break;
         }
         // Idle -> ... -> Bound -> Connecting -> DeviceReady
-        if (cmd==fairmq::command::Connect) {
-            changeDeviceStateBySingleCommand(fairmq::command::InitDevice);
-            changeDeviceStateBySingleCommand(fairmq::command::CompleteInit);
-            changeDeviceStateBySingleCommand(fairmq::command::Bind);
-            changeDeviceStateBySingleCommand(fairmq::command::Connect);
+        if (cmd==fairmq::command::kConnect) {
+            changeDeviceStateBySingleCommand(fairmq::command::kInitDevice);
+            changeDeviceStateBySingleCommand(fairmq::command::kCompleteInit);
+            changeDeviceStateBySingleCommand(fairmq::command::kBind);
+            changeDeviceStateBySingleCommand(fairmq::command::kConnect);
             break;
         }
         // Idle -> ... -> DeviceReady -> InitializingTask -> Ready
-        if (cmd==fairmq::command::InitTask) {
-            changeDeviceStateBySingleCommand(fairmq::command::InitDevice);
-            changeDeviceStateBySingleCommand(fairmq::command::CompleteInit);
-            changeDeviceStateBySingleCommand(fairmq::command::Bind);
-            changeDeviceStateBySingleCommand(fairmq::command::Connect);
-            changeDeviceStateBySingleCommand(fairmq::command::InitTask);
+        if (cmd==fairmq::command::kInitTask) {
+            changeDeviceStateBySingleCommand(fairmq::command::kInitDevice);
+            changeDeviceStateBySingleCommand(fairmq::command::kCompleteInit);
+            changeDeviceStateBySingleCommand(fairmq::command::kBind);
+            changeDeviceStateBySingleCommand(fairmq::command::kConnect);
+            changeDeviceStateBySingleCommand(fairmq::command::kInitTask);
             break;
         }
         // Idle -> ... -> Ready -> Running I
-        if ((cmd==fairmq::command::Run) || (cmd==daq::command::Start)) {
-            changeDeviceStateBySingleCommand(fairmq::command::InitDevice);
-            changeDeviceStateBySingleCommand(fairmq::command::CompleteInit);
-            changeDeviceStateBySingleCommand(fairmq::command::Bind);
-            changeDeviceStateBySingleCommand(fairmq::command::Connect);
-            changeDeviceStateBySingleCommand(fairmq::command::InitTask);
-            changeDeviceStateBySingleCommand(fairmq::command::Run);
+        if ((cmd==fairmq::command::kRun) || (cmd==daq::command::kStart)) {
+            changeDeviceStateBySingleCommand(fairmq::command::kInitDevice);
+            changeDeviceStateBySingleCommand(fairmq::command::kCompleteInit);
+            changeDeviceStateBySingleCommand(fairmq::command::kBind);
+            changeDeviceStateBySingleCommand(fairmq::command::kConnect);
+            changeDeviceStateBySingleCommand(fairmq::command::kInitTask);
+            changeDeviceStateBySingleCommand(fairmq::command::kRun);
             break;
         }
         break;
@@ -387,38 +387,38 @@ void Plugin::changeDeviceStateByMultiCommand(std::string_view cmd)
     // ---------- state transition from InitializingDevice ----------
     case DeviceState::InitializingDevice:
         // InitializingDevice -> Initialized
-        if (cmd==fairmq::command::CompleteInit) {
-            changeDeviceStateBySingleCommand(fairmq::command::CompleteInit);
+        if (cmd==fairmq::command::kCompleteInit) {
+            changeDeviceStateBySingleCommand(fairmq::command::kCompleteInit);
             break;
         }
         // InitializingDevice -> ... -> Bound
-        if (cmd==fairmq::command::Bind) {
-            changeDeviceStateBySingleCommand(fairmq::command::CompleteInit);
-            changeDeviceStateBySingleCommand(fairmq::command::Bind);
+        if (cmd==fairmq::command::kBind) {
+            changeDeviceStateBySingleCommand(fairmq::command::kCompleteInit);
+            changeDeviceStateBySingleCommand(fairmq::command::kBind);
             break;
         }
         // InitializingDevice -> ... -> Bound -> Connecting -> DeviceReady
-        if (cmd==fairmq::command::Connect) {
-            changeDeviceStateBySingleCommand(fairmq::command::CompleteInit);
-            changeDeviceStateBySingleCommand(fairmq::command::Bind);
-            changeDeviceStateBySingleCommand(fairmq::command::Connect);
+        if (cmd==fairmq::command::kConnect) {
+            changeDeviceStateBySingleCommand(fairmq::command::kCompleteInit);
+            changeDeviceStateBySingleCommand(fairmq::command::kBind);
+            changeDeviceStateBySingleCommand(fairmq::command::kConnect);
             break;
         }
         // InitializingDevice -> ... -> DeviceReady -> InitializingTask -> Ready
-        if (cmd==fairmq::command::InitTask) {
-            changeDeviceStateBySingleCommand(fairmq::command::CompleteInit);
-            changeDeviceStateBySingleCommand(fairmq::command::Bind);
-            changeDeviceStateBySingleCommand(fairmq::command::Connect);
-            changeDeviceStateBySingleCommand(fairmq::command::InitTask);
+        if (cmd==fairmq::command::kInitTask) {
+            changeDeviceStateBySingleCommand(fairmq::command::kCompleteInit);
+            changeDeviceStateBySingleCommand(fairmq::command::kBind);
+            changeDeviceStateBySingleCommand(fairmq::command::kConnect);
+            changeDeviceStateBySingleCommand(fairmq::command::kInitTask);
             break;
         }
         // InitializingDevice -> ... -> Ready -> Running
-        if ((cmd==fairmq::command::Run) || (cmd==daq::command::Start)) {
-            changeDeviceStateBySingleCommand(fairmq::command::CompleteInit);
-            changeDeviceStateBySingleCommand(fairmq::command::Bind);
-            changeDeviceStateBySingleCommand(fairmq::command::Connect);
-            changeDeviceStateBySingleCommand(fairmq::command::InitTask);
-            changeDeviceStateBySingleCommand(fairmq::command::Run);
+        if ((cmd==fairmq::command::kRun) || (cmd==daq::command::kStart)) {
+            changeDeviceStateBySingleCommand(fairmq::command::kCompleteInit);
+            changeDeviceStateBySingleCommand(fairmq::command::kBind);
+            changeDeviceStateBySingleCommand(fairmq::command::kConnect);
+            changeDeviceStateBySingleCommand(fairmq::command::kInitTask);
+            changeDeviceStateBySingleCommand(fairmq::command::kRun);
             break;
         }
         break;
@@ -426,35 +426,35 @@ void Plugin::changeDeviceStateByMultiCommand(std::string_view cmd)
     // ---------- state transition from Initialized ----------
     case DeviceState::Initialized:
         // Initialized -> ... -> Bound
-        if (cmd==fairmq::command::Bind) {
-            changeDeviceStateBySingleCommand(fairmq::command::Bind);
+        if (cmd==fairmq::command::kBind) {
+            changeDeviceStateBySingleCommand(fairmq::command::kBind);
             break;
         }
         // Initialized -> ... -> Bound -> Connecting -> DeviceReady
-        if (cmd==fairmq::command::Connect) {
-            changeDeviceStateBySingleCommand(fairmq::command::Bind);
-            changeDeviceStateBySingleCommand(fairmq::command::Connect);
+        if (cmd==fairmq::command::kConnect) {
+            changeDeviceStateBySingleCommand(fairmq::command::kBind);
+            changeDeviceStateBySingleCommand(fairmq::command::kConnect);
             break;
         }
         // Initialized -> ... -> DeviceReady -> InitializingTask -> Ready
-        if (cmd==fairmq::command::InitTask) {
-            changeDeviceStateBySingleCommand(fairmq::command::Bind);
-            changeDeviceStateBySingleCommand(fairmq::command::Connect);
-            changeDeviceStateBySingleCommand(fairmq::command::InitTask);
+        if (cmd==fairmq::command::kInitTask) {
+            changeDeviceStateBySingleCommand(fairmq::command::kBind);
+            changeDeviceStateBySingleCommand(fairmq::command::kConnect);
+            changeDeviceStateBySingleCommand(fairmq::command::kInitTask);
             break;
         }
         // Initialized -> ... -> Ready -> Running
-        if ((cmd==fairmq::command::Run) || (cmd==daq::command::Start)) {
-            changeDeviceStateBySingleCommand(fairmq::command::Bind);
-            changeDeviceStateBySingleCommand(fairmq::command::Connect);
-            changeDeviceStateBySingleCommand(fairmq::command::InitTask);
-            changeDeviceStateBySingleCommand(fairmq::command::Run);
+        if ((cmd==fairmq::command::kRun) || (cmd==daq::command::kStart)) {
+            changeDeviceStateBySingleCommand(fairmq::command::kBind);
+            changeDeviceStateBySingleCommand(fairmq::command::kConnect);
+            changeDeviceStateBySingleCommand(fairmq::command::kInitTask);
+            changeDeviceStateBySingleCommand(fairmq::command::kRun);
             break;
         }
 
         // Initialized -> ResettingDevice -> Idle
-        if ((cmd==fairmq::command::ResetDevice) || (cmd==daq::command::Reset)) {
-            changeDeviceStateBySingleCommand(fairmq::command::ResetDevice);
+        if ((cmd==fairmq::command::kResetDevice) || (cmd==daq::command::kReset)) {
+            changeDeviceStateBySingleCommand(fairmq::command::kResetDevice);
             break;
         }
         break;
@@ -462,27 +462,27 @@ void Plugin::changeDeviceStateByMultiCommand(std::string_view cmd)
     // ---------- state transition from Bound ----------
     case DeviceState::Bound:
         // Bound -> Connecting -> DeviceReady
-        if (cmd==fairmq::command::Connect) {
-            changeDeviceStateBySingleCommand(fairmq::command::Connect);
+        if (cmd==fairmq::command::kConnect) {
+            changeDeviceStateBySingleCommand(fairmq::command::kConnect);
             break;
         }
         // Bound -> ... -> DeviceReady -> InitializingTask -> Ready
-        if (cmd==fairmq::command::InitTask) {
-            changeDeviceStateBySingleCommand(fairmq::command::Connect);
-            changeDeviceStateBySingleCommand(fairmq::command::InitTask);
+        if (cmd==fairmq::command::kInitTask) {
+            changeDeviceStateBySingleCommand(fairmq::command::kConnect);
+            changeDeviceStateBySingleCommand(fairmq::command::kInitTask);
             break;
         }
         // Bound -> ... -> Ready -> Running
-        if ((cmd==fairmq::command::Run) || (cmd==daq::command::Start)) {
-            changeDeviceStateBySingleCommand(fairmq::command::Connect);
-            changeDeviceStateBySingleCommand(fairmq::command::InitTask);
-            changeDeviceStateBySingleCommand(fairmq::command::Run);
+        if ((cmd==fairmq::command::kRun) || (cmd==daq::command::kStart)) {
+            changeDeviceStateBySingleCommand(fairmq::command::kConnect);
+            changeDeviceStateBySingleCommand(fairmq::command::kInitTask);
+            changeDeviceStateBySingleCommand(fairmq::command::kRun);
             break;
         }
 
         // Bound -> ResettingDevice -> Idle
-        if ((cmd==fairmq::command::ResetDevice) || (cmd==daq::command::Reset)) {
-            changeDeviceStateBySingleCommand(fairmq::command::ResetDevice);
+        if ((cmd==fairmq::command::kResetDevice) || (cmd==daq::command::kReset)) {
+            changeDeviceStateBySingleCommand(fairmq::command::kResetDevice);
             break;
         }
         break;
@@ -490,20 +490,20 @@ void Plugin::changeDeviceStateByMultiCommand(std::string_view cmd)
     // ---------- state transition from DeviceReady ----------
     case DeviceState::DeviceReady:
         // DeviceReady -> InitializingTask -> Ready
-        if (cmd==fairmq::command::InitTask) {
-            changeDeviceStateBySingleCommand(fairmq::command::InitTask);
+        if (cmd==fairmq::command::kInitTask) {
+            changeDeviceStateBySingleCommand(fairmq::command::kInitTask);
             break;
         }
         // DeviceReady -> ... -> Ready -> Running
-        if ((cmd==fairmq::command::Run) || (cmd==daq::command::Start)) {
-            changeDeviceStateBySingleCommand(fairmq::command::InitTask);
-            changeDeviceStateBySingleCommand(fairmq::command::Run);
+        if ((cmd==fairmq::command::kRun) || (cmd==daq::command::kStart)) {
+            changeDeviceStateBySingleCommand(fairmq::command::kInitTask);
+            changeDeviceStateBySingleCommand(fairmq::command::kRun);
             break;
         }
 
         // DeviceReady -> ResettingDevice -> Idle
-        if ((cmd==fairmq::command::ResetDevice) || (cmd==daq::command::Reset)) {
-            changeDeviceStateBySingleCommand(fairmq::command::ResetDevice);
+        if ((cmd==fairmq::command::kResetDevice) || (cmd==daq::command::kReset)) {
+            changeDeviceStateBySingleCommand(fairmq::command::kResetDevice);
             break;
         }
         break;
@@ -511,20 +511,20 @@ void Plugin::changeDeviceStateByMultiCommand(std::string_view cmd)
     // ---------- state transition from Ready ----------
     case DeviceState::Ready:
         // Ready -> Running
-        if ((cmd==fairmq::command::Run) || (cmd==daq::command::Start)) {
-            changeDeviceStateBySingleCommand(fairmq::command::Run);
+        if ((cmd==fairmq::command::kRun) || (cmd==daq::command::kStart)) {
+            changeDeviceStateBySingleCommand(fairmq::command::kRun);
             break;
         }
 
         // Ready -> ResettingDevice -> DeviceReady
-        if (cmd==fairmq::command::ResetTask) {
-            changeDeviceStateBySingleCommand(fairmq::command::ResetTask);
+        if (cmd==fairmq::command::kResetTask) {
+            changeDeviceStateBySingleCommand(fairmq::command::kResetTask);
             break;
         }
         // Ready -> ResettingTask -> DeviceReady -> ResettingDevice -> Idle
-        if ((cmd==fairmq::command::ResetDevice) || (cmd==daq::command::Reset)) {
-            changeDeviceStateBySingleCommand(fairmq::command::ResetTask);
-            changeDeviceStateBySingleCommand(fairmq::command::ResetDevice);
+        if ((cmd==fairmq::command::kResetDevice) || (cmd==daq::command::kReset)) {
+            changeDeviceStateBySingleCommand(fairmq::command::kResetTask);
+            changeDeviceStateBySingleCommand(fairmq::command::kResetDevice);
             break;
         }
         break;
@@ -532,22 +532,22 @@ void Plugin::changeDeviceStateByMultiCommand(std::string_view cmd)
     // ---------- state transition from Running ----------
     case DeviceState::Running:
         // Running -> Ready
-        if (cmd==fairmq::command::Stop) {
-            changeDeviceStateBySingleCommand(fairmq::command::Stop);
+        if (cmd==fairmq::command::kStop) {
+            changeDeviceStateBySingleCommand(fairmq::command::kStop);
             break;
         }
 
         // Running -> Ready -> ResettingTask -> DeviceReady
-        if (cmd==fairmq::command::ResetTask) {
-            changeDeviceStateBySingleCommand(fairmq::command::Stop);
-            changeDeviceStateBySingleCommand(fairmq::command::ResetTask);
+        if (cmd==fairmq::command::kResetTask) {
+            changeDeviceStateBySingleCommand(fairmq::command::kStop);
+            changeDeviceStateBySingleCommand(fairmq::command::kResetTask);
             break;
         }
         // Running -> ... -> ResettingDevice -> Idle
-        if ((cmd==fairmq::command::ResetDevice) || (cmd==daq::command::Reset)) {
-            changeDeviceStateBySingleCommand(fairmq::command::Stop);
-            changeDeviceStateBySingleCommand(fairmq::command::ResetTask);
-            changeDeviceStateBySingleCommand(fairmq::command::ResetDevice);
+        if ((cmd==fairmq::command::kResetDevice) || (cmd==daq::command::kReset)) {
+            changeDeviceStateBySingleCommand(fairmq::command::kStop);
+            changeDeviceStateBySingleCommand(fairmq::command::kResetTask);
+            changeDeviceStateBySingleCommand(fairmq::command::kResetDevice);
             break;
         }
         break;
@@ -568,26 +568,26 @@ void Plugin::changeDeviceStateBySingleCommand(std::string_view cmd)
     switch (state) {
     case DeviceState::Idle:
         // Idle -> InitializingDevice
-        if (cmd==fairmq::command::InitDevice) {
+        if (cmd==fairmq::command::kInitDevice) {
             ChangeDeviceState(DeviceStateTransition::InitDevice);
             while (fStateQueue.WaitForNext() != DeviceState::InitializingDevice) {}
         }
         break;
     case DeviceState::InitializingDevice:
         // InitializingDevice -> Initialized
-        if (cmd==fairmq::command::CompleteInit) {
+        if (cmd==fairmq::command::kCompleteInit) {
             ChangeDeviceState(DeviceStateTransition::CompleteInit);
             while (fStateQueue.WaitForNext() != DeviceState::Initialized) {}
         }
         break;
     case DeviceState::Initialized:
         // Initialized -> Binding -> Bound
-        if (cmd==fairmq::command::Bind) {
+        if (cmd==fairmq::command::kBind) {
             ChangeDeviceState(DeviceStateTransition::Bind);
             while (fStateQueue.WaitForNext() != DeviceState::Bound) {}
         }
         // Initialized -> RessetingDevice -> Idle
-        if (cmd==fairmq::command::ResetDevice) {
+        if (cmd==fairmq::command::kResetDevice) {
             fResetDeviceRequested = true;
             ChangeDeviceState(DeviceStateTransition::ResetDevice);
             while (fStateQueue.WaitForNext() != DeviceState::Idle) {}
@@ -595,30 +595,30 @@ void Plugin::changeDeviceStateBySingleCommand(std::string_view cmd)
         break;
     case DeviceState::Bound:
         // Bound -> Connecting -> DeviceReady
-        if (cmd==fairmq::command::Connect) {
+        if (cmd==fairmq::command::kConnect) {
             ChangeDeviceState(DeviceStateTransition::Connect);
             while (fStateQueue.WaitForNext() != DeviceState::DeviceReady) {}
         }
         // Bound -> RessetingDevice -> Idle
-        if (cmd==fairmq::command::ResetDevice) {
+        if (cmd==fairmq::command::kResetDevice) {
             fResetDeviceRequested = true;
             ChangeDeviceState(DeviceStateTransition::ResetDevice);
             while (fStateQueue.WaitForNext() != DeviceState::Idle) {}
         }
         break;
     case DeviceState::Connecting:
-        if (cmd==fairmq::command::ResetDevice) {
+        if (cmd==fairmq::command::kResetDevice) {
             fResetDeviceRequested = true;
         }
         break;
     case DeviceState::DeviceReady:
         // DeviceReady -> InitializingTask -> Ready
-        if (cmd==fairmq::command::InitTask) {
+        if (cmd==fairmq::command::kInitTask) {
             ChangeDeviceState(DeviceStateTransition::InitTask);
             while (fStateQueue.WaitForNext() != DeviceState::Ready) {}
         }
         // DeviceReady -> RessetingDevice -> Idle
-        if (cmd==fairmq::command::ResetDevice) {
+        if (cmd==fairmq::command::kResetDevice) {
             fResetDeviceRequested = true;
             ChangeDeviceState(DeviceStateTransition::ResetDevice);
             while (fStateQueue.WaitForNext() != DeviceState::Idle) {}
@@ -626,19 +626,19 @@ void Plugin::changeDeviceStateBySingleCommand(std::string_view cmd)
         break;
     case DeviceState::Ready:
         // Ready -> Running
-        if (cmd==fairmq::command::Run) {
+        if (cmd==fairmq::command::kRun) {
             ChangeDeviceState(DeviceStateTransition::Run);
             while (fStateQueue.WaitForNext() != DeviceState::Running) {}
             writeStartTime();
         }
         // Ready -> ResettingTask -> DeviceReady
-        if (cmd==fairmq::command::ResetTask) {
+        if (cmd==fairmq::command::kResetTask) {
             ChangeDeviceState(DeviceStateTransition::ResetTask);
             while (fStateQueue.WaitForNext() != DeviceState::DeviceReady) {}
         }
         break;
     case DeviceState::Running:
-        if (cmd==fairmq::command::Stop) {
+        if (cmd==fairmq::command::kStop) {
             ChangeDeviceState(DeviceStateTransition::Stop);
             while (fStateQueue.WaitForNext() != DeviceState::Ready) {}
             writeStopTime();
@@ -653,7 +653,7 @@ void Plugin::changeDeviceStateBySingleCommand(std::string_view cmd)
 
 void Plugin::readRunNumber()
 {
-    auto key = join({std::string{RunInfoPrefix}, std::string{RunNumber}}, fSeparator);
+    auto key = join({std::string{kRunInfoPrefix}, std::string{kRunNumber}}, fSeparator);
 
     // LOG(debug) << " run number key = " << key;
     const auto runNumber = fClient->get(key);
@@ -663,12 +663,12 @@ void Plugin::readRunNumber()
     }
     LOG(debug) << kMyClass << " run number (from redis) = " << *runNumber;
     std::string myRunNumber;
-    if (PropertyExists(std::string{RunNumber})) {
-        myRunNumber = GetProperty<std::string>(std::string{RunNumber});
+    if (PropertyExists(std::string{kRunNumber})) {
+        myRunNumber = GetProperty<std::string>(std::string{kRunNumber});
     }
     if (myRunNumber!=*runNumber) {
         LOG(warn) << kMyClass << " update run number " << *runNumber << " (old = " << myRunNumber << ")";
-        SetProperty(std::string{RunNumber}, *runNumber);
+        SetProperty(std::string{kRunNumber}, *runNumber);
     } else {
         // LOG(debug) << kMyClass << " same run number " << *runNumber << " (old = " << myRunNumber << ")";
     }
@@ -682,13 +682,13 @@ void Plugin::readRunNumber()
  */
 void Plugin::registerService()
 {
-    auto registryUri = GetProperty<std::string>(std::string{ServiceRegistryUri});
+    auto registryUri = GetProperty<std::string>(std::string{kServiceRegistryUri});
     LOG(debug) << " registry URI = " << registryUri;
 
     try {
         {
             fClient = std::make_shared<sw::redis::Redis>(registryUri);
-            fClient->command("client", "setname", join({std::string{TopPrefix}, fServiceName, fId}, fSeparator));
+            fClient->command("client", "setname", join({std::string{kTopPrefix}, fServiceName, fId}, fSeparator));
         }
         setId();
         LOG(debug) << " mq device id = " << fId << ", service = " << fServiceName << ", hostname = " << fHealth->hostName
@@ -696,12 +696,12 @@ void Plugin::registerService()
 
                    << ", " << fHealth->ipAddress;
 
-        fProgOptionKeyName = join({std::string{TopPrefix}, fServiceName, fId, std::string{ProgOptionPrefix}}, fSeparator);
+        fProgOptionKeyName = join({std::string{kTopPrefix}, fServiceName, fId, std::string{kProgOptionPrefix}}, fSeparator);
 
         LOG(debug) << "(registerService) id = " << fId << ", service = " << fServiceName;
-        fHealth->key    = join({std::string{TopPrefix}, fServiceName, fId, std::string{HealthPrefix}}, fSeparator);
-        fFairMQStateKey = join({std::string{TopPrefix}, fServiceName, fId, std::string{FairMQStatePrefix}}, fSeparator);
-        fUpdateTimeKey  = join({std::string{TopPrefix}, fServiceName, fId, std::string{UpdateTimePrefix}}, fSeparator);
+        fHealth->key    = join({std::string{kTopPrefix}, fServiceName, fId, std::string{kHealthPrefix}}, fSeparator);
+        fFairMQStateKey = join({std::string{kTopPrefix}, fServiceName, fId, std::string{kFairMQStatePrefix}}, fSeparator);
+        fUpdateTimeKey  = join({std::string{kTopPrefix}, fServiceName, fId, std::string{kUpdateTimePrefix}}, fSeparator);
         fRegisteredKeys.insert(fFairMQStateKey);
         fRegisteredKeys.insert(fUpdateTimeKey);
         LOG(debug) << " precense (key) = " << fPresence->key << ", presence (ttl) = " << fMaxTtl;
@@ -807,22 +807,22 @@ void Plugin::runStartupSequence()
 
     if (s=="idle") return;
 
-    changeDeviceStateBySingleCommand(fairmq::command::InitDevice);
+    changeDeviceStateBySingleCommand(fairmq::command::kInitDevice);
     if (s=="initialingdevice" || s=="initializing-device") return;
 
-    changeDeviceStateBySingleCommand(fairmq::command::CompleteInit);
+    changeDeviceStateBySingleCommand(fairmq::command::kCompleteInit);
     if (s=="initialized") return;
 
-    changeDeviceStateBySingleCommand(fairmq::command::Bind);
+    changeDeviceStateBySingleCommand(fairmq::command::kBind);
     if (s=="bound") return;
 
-    changeDeviceStateBySingleCommand(fairmq::command::Connect);
+    changeDeviceStateBySingleCommand(fairmq::command::kConnect);
     if (s=="deviceready" || s=="device-ready") return;
 
-    changeDeviceStateBySingleCommand(fairmq::command::InitTask);
+    changeDeviceStateBySingleCommand(fairmq::command::kInitTask);
     if (s=="ready") return;
 
-    changeDeviceStateBySingleCommand(fairmq::command::Run);
+    changeDeviceStateBySingleCommand(fairmq::command::kRun);
     if (s=="running") return;
 
     LOG(debug) << kMyClass << " runStartupSequence() done";
@@ -893,13 +893,13 @@ void Plugin::setId()
                 std::unique_lock<sw::redis::RedMutex> redLock(mtx, std::defer_lock);
                 if (redLock.try_lock()) {
                     LOG(debug) << "got lock:  " << fUuid;
-                    auto presenceKeys = scan(*fClient, {std::string{TopPrefix}, fServiceName, "*", std::string{PresencePrefix}}, fSeparator);
+                    auto presenceKeys = scan(*fClient, {std::string{kTopPrefix}, fServiceName, "*", std::string{kPresencePrefix}}, fSeparator);
                     std::unordered_set<std::string> uuidList; // existing uuids
 
                     if (!presenceKeys.empty()) {
                         fClient->mget(presenceKeys.cbegin(), presenceKeys.cend(), std::inserter(uuidList, uuidList.begin()));
                     }
-                    std::string key = join({std::string{TopPrefix}, std::string{ServiceInstanceIndexPrefix}, fServiceName}, fSeparator);
+                    std::string key = join({std::string{kTopPrefix}, std::string{kServiceInstanceIndexPrefix}, fServiceName}, fSeparator);
 
                     std::unordered_map<std::string, std::string> hashIndexToUuid;
                     LOG(debug) << "'id' (instance id) is empty. calculate service-instance-index";
@@ -927,7 +927,7 @@ void Plugin::setId()
                             if (fClient->hsetnx(key, myIndex, myUuid)) {
                                 fRegisteredHashes.insert({key, myIndex});
                                 fId = fServiceName + "-" + myIndex;
-                                fPresence->key = join({std::string{TopPrefix}, fServiceName, fId, std::string{PresencePrefix}}, fSeparator);
+                                fPresence->key = join({std::string{kTopPrefix}, fServiceName, fId, std::string{kPresencePrefix}}, fSeparator);
                                 fClient->setex(fPresence->key, fMaxTtl, boost::uuids::to_string(fUuid));
                                 fRegisteredKeys.insert(fPresence->key);
                                 LOG(debug) << " service instance-index: " << myIndex << " for uuid = " << fUuid;
@@ -1003,7 +1003,7 @@ void Plugin::subscribeToDaqCommand()
     sub.on_message([this](const auto& channel, const auto& msg) {
         // process message of MESSAGE type.
         LOG(debug) << kMyClass << " on_message(MESSAGE): channel = " << channel << " msg = " << msg;
-        if (std::string{CommandChannelName} != channel) {
+        if (std::string{kCommandChannelName} != channel) {
             return;
         }
         const auto& obj = toJson(msg);
@@ -1045,15 +1045,15 @@ void Plugin::subscribeToDaqCommand()
                 }
 
                 // any state Exiting by exiting subscribeToDaqCommand() and calling runShutdownSequence() in the state control thread
-                if ((*val==daq::command::Exit) ||
-                        (*val==daq::command::Quit) ||
-                        (*val==fairmq::command::End)) {
+                if ((*val==daq::command::kExit) ||
+                        (*val==daq::command::kQuit) ||
+                        (*val==fairmq::command::kEnd)) {
                     fPluginShutdownRequested = true;
                 }
             }
         }
     });
-    sub.subscribe(std::string{CommandChannelName});
+    sub.subscribe(std::string{kCommandChannelName});
 
     while (!fPluginShutdownRequested) {
         try {
@@ -1140,11 +1140,11 @@ void Plugin::writeStartTime()
     auto t   = toDate(updatedTime);
     auto tNS = std::to_string(std::chrono::duration_cast<std::chrono::nanoseconds>(uptimeNsec).count());
     fClient->hset(fHealth->key,
-    {   std::make_pair(std::string{StartTime}, t),
-        std::make_pair(std::string{StartTimeNS}, tNS)
+    {   std::make_pair(std::string{kStartTime}, t),
+        std::make_pair(std::string{kStartTimeNS}, tNS)
     });
-    SetProperty(std::string{StartTime}, t);
-    SetProperty(std::string{StartTimeNS}, tNS);
+    SetProperty(std::string{kStartTime}, t);
+    SetProperty(std::string{kStartTimeNS}, tNS);
 }
 
 /**
@@ -1156,11 +1156,11 @@ void Plugin::writeStopTime()
     auto t   = toDate(updatedTime);
     auto tNS = std::to_string(std::chrono::duration_cast<std::chrono::nanoseconds>(uptimeNsec).count());
     fClient->hset(fHealth->key,
-    {   std::make_pair(std::string{StopTime}, t),
-        std::make_pair(std::string{StopTimeNS}, tNS)
+    {   std::make_pair(std::string{kStopTime}, t),
+        std::make_pair(std::string{kStopTimeNS}, tNS)
     });
-    SetProperty(std::string{StopTime}, t);
-    SetProperty(std::string{StopTimeNS}, tNS);
+    SetProperty(std::string{kStopTime}, t);
+    SetProperty(std::string{kStopTimeNS}, tNS);
 }
 
 } // namespace daq::service

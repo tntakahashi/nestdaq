@@ -77,7 +77,7 @@ auto parameterConfigPluginProgramOptions() -> fair::mq::Plugin::ProgOptions
     using opt = ParameterConfigPlugin::OptionKey;
     auto options = bpo::options_description(kMyClass.data());
     options.add_options()
-           (opt::ServerUri.data(), bpo::value<std::string>(), "Redis server URI (if empty, the same URI of the service registry is used.)");
+           (opt::kServerUri.data(), bpo::value<std::string>(), "Redis server URI (if empty, the same URI of the service registry is used.)");
     return options;
 }
 
@@ -94,10 +94,10 @@ ParameterConfigPlugin::ParameterConfigPlugin(std::string_view name,
     LOG(debug) << kMyClass << " hello";
     using opt = ParameterConfigPlugin::OptionKey;
     std::string serverUri;
-    if (PropertyExists(opt::ServerUri.data())) {
-        serverUri = GetProperty<std::string>(opt::ServerUri.data());
-    } else if (PropertyExists(ServiceRegistryUri.data())) {
-        serverUri = GetProperty<std::string>(ServiceRegistryUri.data());
+    if (PropertyExists(opt::kServerUri.data())) {
+        serverUri = GetProperty<std::string>(opt::kServerUri.data());
+    } else if (PropertyExists(kServiceRegistryUri.data())) {
+        serverUri = GetProperty<std::string>(kServiceRegistryUri.data());
     }
     if (!serverUri.empty()) {
         fClient = std::make_shared<sw::redis::Redis>(serverUri);
@@ -243,8 +243,8 @@ void ParameterConfigPlugin::readParameters()
     }
 
     if (fSeparator.empty()) {
-        if (PropertyExists(Separator.data())>0) {
-            fSeparator = GetProperty<std::string>(Separator.data());
+        if (PropertyExists(kSeparator.data())>0) {
+            fSeparator = GetProperty<std::string>(kSeparator.data());
         } else {
             return;
         }
@@ -402,7 +402,7 @@ void ParameterConfigPlugin::subscribeToParameterChange()
     LOG(debug) << " create a subscriber. (parameter change)";
     auto sub = fClient->subscriber();
 
-    const auto &serverUri = GetProperty<std::string>(opt::ServerUri.data());
+    const auto &serverUri = GetProperty<std::string>(opt::kServerUri.data());
     const auto dbNumber = serverUri.substr(serverUri.find_last_of("/")+1);
     LOG(debug) << " db number = " << dbNumber;
     const std::string redisKeySpaceNotificationChannel = kRedisKeySpacePrefix.data() + dbNumber + "__:"s + fKey;
