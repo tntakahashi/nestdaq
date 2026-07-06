@@ -380,21 +380,33 @@ function param () {
 }
 ```
 
-The first argument is the instance id. The rest are field/value pairs that
-become FairMQ or device options for that instance:
+The first argument is the parameter group or instance id. The rest are
+field/value pairs that become FairMQ or device options:
 
 ```bash
-param Sampler-0 text Hello rate 2 max-iterations 0
-param Sampler-1 text world rate 2 max-iterations 0
+param Sampler rate 2 max-iterations 0
+param Sampler-0 text Hello
+param Sampler-1 text world
 
-param Sink-0 multipart true
-param Sink-1 multipart true
+param Sink multipart true
 ```
 
-For example, `param Sampler-0 text Hello rate 2 max-iterations 0` writes a hash
-named `parameters:Sampler-0` with fields `text`, `rate`, and `max-iterations`.
-When `Sampler-0` starts with the `parameter_config` plugin, those values are
-mirrored into the device program options.
+For example, `param Sampler rate 2 max-iterations 0` writes a hash named
+`parameters:Sampler` with common defaults for instances such as `Sampler-0` and
+`Sampler-1`. `param Sampler-0 text Hello` writes an instance-specific hash named
+`parameters:Sampler-0`.
+
+When the `parameter_config` plugin starts for `Sampler-0`, it derives the group
+key by removing the trailing numeric `-N` suffix from the instance id. It reads
+`parameters:Sampler` first and then `parameters:Sampler-0`, so instance-specific
+values override group defaults. In the example above, `Sampler-0` receives
+`rate=2`, `max-iterations=0`, and `text=Hello`, while `Sampler-1` receives the
+same common values and `text=world`.
+
+See
+[`plugins/README.md#42-redis-keys-read-or-subscribed`](../plugins/README.md#42-redis-keys-read-or-subscribed)
+for the full Redis key patterns, including structured group and instance
+parameter keys.
 
 ## 4. Device skeleton generation
 
