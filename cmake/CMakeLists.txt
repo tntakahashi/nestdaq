@@ -36,7 +36,7 @@ message(STATUS "FairMQ_VERSION default for ${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_
 message(STATUS "FairMQ_VERSION selected: ${FairMQ_VERSION}")
 include("${NESTDAQ_DEPENDENCIES_CMAKE_DIR}/FairMQ.cmake")
 
-set(Catch2_VERSION "3.15.1" CACHE STRING "Catch2 version tag")
+set(Catch2_VERSION "3.15.2" CACHE STRING "Catch2 version tag")
 include("${NESTDAQ_DEPENDENCIES_CMAKE_DIR}/Catch2.cmake")
 
 set(nlohmann_json_VERSION "3.12.0" CACHE STRING "nlohmann/json version tag")
@@ -63,7 +63,7 @@ if(WITH_REDIS_SERVER_7)
   include("${NESTDAQ_DEPENDENCIES_CMAKE_DIR}/redis-server-7.cmake")
 endif()
 
-set(hiredis_VERSION "1.3.0" CACHE STRING "hiredis version tag")
+set(hiredis_VERSION "1.4.0" CACHE STRING "hiredis version tag")
 include("${NESTDAQ_DEPENDENCIES_CMAKE_DIR}/hiredis.cmake")
 
 set(redis_plus_plus_VERSION "1.3.15" CACHE STRING "redis++ version tag")
@@ -71,7 +71,7 @@ include("${NESTDAQ_DEPENDENCIES_CMAKE_DIR}/redis_plus_plus.cmake")
 
 option(WITH_OTEL_CPP "Build and install opentelemetry-cpp" ON)
 if(WITH_OTEL_CPP)
-  set(opentelemetry-cpp_VERSION "1.27.0" CACHE STRING "opentelemetry-cpp version tag")
+  set(opentelemetry-cpp_VERSION "1.28.0" CACHE STRING "opentelemetry-cpp version tag")
   include("${NESTDAQ_DEPENDENCIES_CMAKE_DIR}/opentelemetry-cpp.cmake")
 endif()
 

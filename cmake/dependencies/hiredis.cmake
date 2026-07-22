@@ -15,7 +15,7 @@ else()
   ExternalProject_Add(
     hiredis
     GIT_REPOSITORY https://github.com/redis/hiredis.git
-
+    GIT_TAG        ${hiredis_GIT_TAG}
 
     CMAKE_ARGS
       -DCMAKE_BUILD_TYPE=Release
