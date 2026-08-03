@@ -15,7 +15,7 @@ PROCESSING_MODES = ("conditional-run", "run", "on-data")
 CHANNEL_KINDS = ("input", "output", "dqm")
 DEFAULT_CHANNEL_OPTIONS = {
     "input": ("in-chan-name", "in"),
-    "output": ("out-chan-name", "data"),
+    "output": ("out-chan-name", "out"),
     "dqm": ("dqm-chan-name", "dqm"),
 }
 
@@ -196,17 +196,35 @@ def parse_args() -> argparse.Namespace:
         default="conditional-run",
         help="Main data-processing style to generate. Default: conditional-run.",
     )
-    parser.add_argument(
+    input_channel_group = parser.add_mutually_exclusive_group()
+    input_channel_group.add_argument(
         "--input-channel",
-        help="Generate input-channel code. Use KEY:DEFAULT_NAME, :DEFAULT_NAME, or DEFAULT_NAME.",
+        help="Override the generated input channel. Use KEY:DEFAULT_NAME, :DEFAULT_NAME, or DEFAULT_NAME.",
     )
-    parser.add_argument(
+    input_channel_group.add_argument(
+        "--no-input-channel",
+        action="store_true",
+        help="Do not generate input-channel code.",
+    )
+    output_channel_group = parser.add_mutually_exclusive_group()
+    output_channel_group.add_argument(
         "--output-channel",
-        help="Generate output-channel code. Use KEY:DEFAULT_NAME, :DEFAULT_NAME, or DEFAULT_NAME.",
+        help="Override the generated output channel. Use KEY:DEFAULT_NAME, :DEFAULT_NAME, or DEFAULT_NAME.",
     )
-    parser.add_argument(
+    output_channel_group.add_argument(
+        "--no-output-channel",
+        action="store_true",
+        help="Do not generate output-channel code.",
+    )
+    dqm_channel_group = parser.add_mutually_exclusive_group()
+    dqm_channel_group.add_argument(
         "--dqm-channel",
-        help="Generate data quality monitor channel code. Use KEY:DEFAULT_NAME, :DEFAULT_NAME, or DEFAULT_NAME.",
+        help="Override the generated DQM channel. Use KEY:DEFAULT_NAME, :DEFAULT_NAME, or DEFAULT_NAME.",
+    )
+    dqm_channel_group.add_argument(
+        "--no-dqm-channel",
+        action="store_true",
+        help="Do not generate data quality monitor (DQM) channel code.",
     )
     parser.add_argument(
         "--multipart-input",
@@ -298,27 +316,39 @@ def apply_interactive(args: argparse.Namespace) -> argparse.Namespace:
         "Processing mode (conditional-run, run, on-data)", args.processing_mode
     )
 
-    if prompt_bool("Generate input-channel code", bool(args.input_channel)):
+    if prompt_bool("Generate input-channel code", not args.no_input_channel):
+        args.no_input_channel = False
         args.input_channel = prompt_text(
             "Input channel KEY:DEFAULT_NAME, :DEFAULT_NAME, or DEFAULT_NAME",
             args.input_channel or "in-chan-name:in",
         )
         args.multipart_input = prompt_bool("Use multipart input", args.multipart_input)
         args.no_drain_input = not prompt_bool("Generate PostRun input drain", not args.no_drain_input)
+    else:
+        args.no_input_channel = True
+        args.input_channel = None
 
-    if prompt_bool("Generate output-channel code", bool(args.output_channel)):
+    if prompt_bool("Generate output-channel code", not args.no_output_channel):
+        args.no_output_channel = False
         args.output_channel = prompt_text(
             "Output channel KEY:DEFAULT_NAME, :DEFAULT_NAME, or DEFAULT_NAME",
-            args.output_channel or "out-chan-name:data",
+            args.output_channel or "out-chan-name:out",
         )
         args.single_output = not prompt_bool("Use multipart output", not args.single_output)
+    else:
+        args.no_output_channel = True
+        args.output_channel = None
 
-    if prompt_bool("Generate DQM-channel code", bool(args.dqm_channel)):
+    if prompt_bool("Generate DQM-channel code", not args.no_dqm_channel):
+        args.no_dqm_channel = False
         args.dqm_channel = prompt_text(
             "DQM channel KEY:DEFAULT_NAME, :DEFAULT_NAME, or DEFAULT_NAME",
             args.dqm_channel or "dqm-chan-name:dqm",
         )
         args.single_dqm = not prompt_bool("Use multipart DQM", not args.single_dqm)
+    else:
+        args.no_dqm_channel = True
+        args.dqm_channel = None
 
     args.no_poll = prompt_text("Channels not to poll (comma-separated input,output,dqm)", args.no_poll)
     return args
@@ -347,6 +377,15 @@ def parse_channel_spec(kind: str, value: str | None) -> ChannelSpec | None:
     return ChannelSpec(kind=kind, option_key=option_key, default_name=default_name)
 
 
+def configured_channel_spec(kind: str, value: str | None, disabled: bool) -> ChannelSpec | None:
+    if disabled:
+        return None
+    if value is None:
+        option_key, default_name = DEFAULT_CHANNEL_OPTIONS[kind]
+        return ChannelSpec(kind=kind, option_key=option_key, default_name=default_name)
+    return parse_channel_spec(kind, value)
+
+
 def parse_no_poll(value: str) -> frozenset[str]:
     if not value:
         return frozenset()
@@ -365,15 +404,15 @@ def build_config(args: argparse.Namespace) -> GenerationConfig:
     if args.processing_mode not in PROCESSING_MODES:
         raise ValueError(f"invalid processing mode: {args.processing_mode}")
 
-    input_channel = parse_channel_spec("input", args.input_channel)
-    output_channel = parse_channel_spec("output", args.output_channel)
-    dqm_channel = parse_channel_spec("dqm", args.dqm_channel)
+    input_channel = configured_channel_spec("input", args.input_channel, args.no_input_channel)
+    output_channel = configured_channel_spec("output", args.output_channel, args.no_output_channel)
+    dqm_channel = configured_channel_spec("dqm", args.dqm_channel, args.no_dqm_channel)
     no_poll = parse_no_poll(args.no_poll)
 
     if args.processing_mode == "on-data" and input_channel is None:
-        raise ValueError("--processing-mode on-data requires --input-channel")
+        raise ValueError("--processing-mode on-data requires generated input-channel code")
     if args.multipart_input and input_channel is None:
-        raise ValueError("--multipart-input requires --input-channel")
+        raise ValueError("--multipart-input requires generated input-channel code")
 
     return GenerationConfig(
         class_name=args.class_name,

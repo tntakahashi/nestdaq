@@ -419,13 +419,12 @@ The recommended first step is to generate a small project and then edit it.
 
 ```sh
 <install-prefix>/scripts/generate-device-skeleton.py MyDevice \
-  --output ./MyDevice \
-  --input-channel in \
-  --output-channel out
+  --output ./MyDevice
 ```
 
 This creates `MyDevice.h`, `MyDevice.cxx`, `CMakeLists.txt`, and `README.md`.
-Existing files are not overwritten unless `--force` is specified.
+Existing files are not overwritten unless `--force` is specified. The default
+skeleton includes input, output, and DQM channels named `in`, `out`, and `dqm`.
 
 Useful variants:
 
@@ -433,13 +432,15 @@ Useful variants:
 # A source-like device that only sends data.
 <install-prefix>/scripts/generate-device-skeleton.py MySource \
   --output ./MySource \
-  --output-channel out
+  --no-input-channel \
+  --no-dqm-channel
 
 # A sink-like device that handles received data through OnData().
 <install-prefix>/scripts/generate-device-skeleton.py MySink \
   --output ./MySink \
   --processing-mode on-data \
-  --input-channel in
+  --no-output-channel \
+  --no-dqm-channel
 
 # Interactive mode asks for the generation choices.
 <install-prefix>/scripts/generate-device-skeleton.py --interactive
@@ -447,8 +448,12 @@ Useful variants:
 
 The generator options describe what C++ code to generate. They are not the
 final command-line options of the generated device. For example,
-`--input-channel in-chan-name:in` makes the generated C++ register a runtime
-option named `in-chan-name` with default value `in`.
+`--input-channel source-chan-name:raw` overrides the input defaults and makes
+the generated C++ register a runtime option named `source-chan-name` with
+default value `raw`. Use the corresponding `--no-*-channel` option when the
+generated device does not need one of the default channels. You can instead
+delete all related option, member, initialization, polling, and processing code
+after generation, but excluding the channel during generation is simpler.
 
 See [`scripts/README.md#4-device-skeleton-generation`](../scripts/README.md#4-device-skeleton-generation)
 for all generator options.

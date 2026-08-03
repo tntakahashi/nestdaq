@@ -411,7 +411,9 @@ parameter keys.
 ## 4. Device skeleton generation
 
 `generate-device-skeleton.py` creates a minimal NestDAQ FairMQ device project
-from templates built into the script.
+from templates built into the script. By default, it generates input, output,
+and data quality monitor (DQM) channel code using `in`, `out`, and `dqm` as the
+respective channel names.
 
 ```bash
 ./generate-device-skeleton.py MyDevice --output ./MyDevice
@@ -425,6 +427,29 @@ options. Existing files are not overwritten unless `--force` is specified. Use
 `CMakeLists.txt` should not be generated. Use `--no-readme` when the generated
 device does not need its own `README.md`.
 
+Generator options have two command-line forms:
+
+- Options shown with a placeholder, such as `--output DIR`,
+  `--processing-mode MODE`, or `--no-poll LIST`, require a value in
+  `--key value` form.
+- Options shown without a placeholder, such as `--force`, `--single-output`,
+  or `--no-dqm-channel`, are presence-only flags. Specify the flag by itself
+  to apply the behavior described in the table; omit it to keep the default.
+
+Presence-only flags do not accept Boolean values. For example, use
+`--no-dqm-channel`, not `--no-dqm-channel true`, and omit the flag instead of
+writing `--no-dqm-channel false`. Repeating a flag does not toggle its state
+back. In the table, `off` means that the flag is not specified. For a `--no-*`
+flag, `off` means that the named feature remains enabled by default.
+
+```bash
+./generate-device-skeleton.py MyDevice \
+  --output ./MyDevice \
+  --processing-mode conditional-run \
+  --no-dqm-channel \
+  --single-output
+```
+
 Generator options:
 
 | Option | Default | Description |
@@ -437,10 +462,13 @@ Generator options:
 | `--no-readme` | off | Do not generate `README.md`; use this when the generated device will be documented elsewhere. |
 | `--no-namespace` | off | Generate the device class in the global namespace instead of `namespace nestdaq`. |
 | `--processing-mode MODE` | `conditional-run` | Select the generated processing entry point: `conditional-run`, `run`, or `on-data`. |
-| `--input-channel SPEC` | none | Generate input-channel code. `SPEC` is `KEY:DEFAULT_NAME`, `:DEFAULT_NAME`, or `DEFAULT_NAME`. |
-| `--output-channel SPEC` | none | Generate output-channel code. `SPEC` uses the same format as `--input-channel`. |
-| `--dqm-channel SPEC` | none | Generate data quality monitor (DQM) channel code. `SPEC` uses the same format as `--input-channel`. |
-| `--multipart-input` | off | Generate multipart receive/`OnData()` examples for the input channel. Requires `--input-channel`. |
+| `--input-channel SPEC` | `in-chan-name:in` | Override the generated input channel. `SPEC` is `KEY:DEFAULT_NAME`, `:DEFAULT_NAME`, or `DEFAULT_NAME`. |
+| `--no-input-channel` | off | Do not generate input-channel code. |
+| `--output-channel SPEC` | `out-chan-name:out` | Override the generated output channel. `SPEC` uses the same format as `--input-channel`. |
+| `--no-output-channel` | off | Do not generate output-channel code. |
+| `--dqm-channel SPEC` | `dqm-chan-name:dqm` | Override the generated data quality monitor (DQM) channel. `SPEC` uses the same format as `--input-channel`. |
+| `--no-dqm-channel` | off | Do not generate DQM-channel code. |
+| `--multipart-input` | off | Generate multipart receive/`OnData()` examples for the input channel. Cannot be combined with `--no-input-channel`. |
 | `--single-output` | off | Generate single-message output examples. Output is multipart by default. |
 | `--single-dqm` | off | Generate single-message DQM examples. DQM is multipart by default. |
 | `--no-drain-input` | off | Do not generate `PostRun()` input drain code. |
@@ -452,18 +480,19 @@ Processing modes:
 | :-- | :-- |
 | `conditional-run` | Generates `ConditionalRun()` with simple poll/receive/send examples. |
 | `run` | Generates an empty `Run()`. |
-| `on-data` | Generates an `OnData()` callback registration in `InitTask()`; requires `--input-channel`. |
+| `on-data` | Generates an `OnData()` callback registration in `InitTask()`; requires generated input-channel code. |
 
 For how to choose between `OnData()`, `ConditionalRun()`, and `Run()`, see
 [`examples/README.md#44-choosing-ondata-conditionalrun-or-run`](../examples/README.md#44-choosing-ondata-conditionalrun-or-run).
 
 Channel options passed to the generator are not the final device command-line
-options. They describe how to generate those options in C++:
+options. The generator creates all three channels by default; these options
+override how their runtime options are generated in C++:
 
 ```bash
 ./generate-device-skeleton.py MyProcessor \
   --input-channel in-chan-name:in \
-  --output-channel out-chan-name:data \
+  --output-channel out-chan-name:out \
   --dqm-channel dqm-chan-name:dqm
 ```
 
@@ -475,6 +504,14 @@ option into `fInputChannelName` in `InitTask()`. The short forms
 same way. `KEY:` and `:` are rejected because the generated option would have
 no default channel name.
 
+Use `--no-input-channel`, `--no-output-channel`, or `--no-dqm-channel` when a
+device does not need that channel. The same result can be obtained by deleting
+the corresponding option, member, initialization, polling, and processing code
+after generation, but excluding it at generation time is less error-prone. A
+`--*-channel` option and its corresponding `--no-*-channel` option are mutually
+exclusive. In interactive mode, each channel prompt defaults to `yes`; answer
+`no` to omit it.
+
 The generated device class is placed in `namespace nestdaq` by default.
 Use `--no-namespace` to generate the class in the global namespace.
 
@@ -482,7 +519,8 @@ Useful variants:
 
 ```bash
 ./generate-device-skeleton.py MySource \
-  --output-channel out-chan-name:data
+  --no-input-channel \
+  --no-dqm-channel
 
 ./generate-device-skeleton.py MyShortFormProcessor \
   --input-channel :in \
@@ -498,16 +536,18 @@ Useful variants:
 
 ./generate-device-skeleton.py MySink \
   --processing-mode on-data \
-  --input-channel in-chan-name:in
+  --no-output-channel \
+  --no-dqm-channel
 
 ./generate-device-skeleton.py MyMultipartSink \
   --processing-mode on-data \
-  --input-channel in-chan-name:in \
+  --no-output-channel \
+  --no-dqm-channel \
   --multipart-input
 
 ./generate-device-skeleton.py MyDevice \
   --input-channel in-chan-name:in \
-  --output-channel out-chan-name:data \
+  --output-channel out-chan-name:out \
   --no-poll output,dqm \
   --no-drain-input
 
