@@ -38,30 +38,30 @@ build, and run checks.
 
 ```mermaid
 flowchart BT
-  subgraph Upstream["Upstream repository<br/>spadi-alliance/nestdaq"]
+  subgraph Upstream["Upstream: spadi-alliance/nestdaq"]
     direction LR
-    UpstreamDevelop["develop branch"]
-    UpstreamMain["main branch"]
+    UpstreamDevelop["develop"]
+    UpstreamMain["main"]
   end
 
-  subgraph Fork["Your GitHub fork<br/>your-account/nestdaq"]
+  subgraph Fork["Fork: your-account/nestdaq"]
     direction LR
-    ForkDevelop["develop branch"]
-    ForkWorking["PR source branch<br/>develop or working branch"]
+    ForkDevelop["develop"]
+    ForkWorking["PR source"]
   end
 
-  subgraph Local["Local PC<br/>working clone"]
+  subgraph Local["Local PC"]
     direction LR
-    LocalClone["clone of your fork"]
-    LocalWorking["working tree<br/>develop-based branch"]
+    LocalClone["clone"]
+    LocalWorking["working tree"]
   end
 
-  UpstreamDevelop -->|fork or synchronize| ForkDevelop
-  ForkDevelop -->|git clone| LocalClone
-  LocalClone -->|git switch or git worktree add| LocalWorking
-  LocalWorking -->|git push| ForkWorking
-  ForkWorking -->|Pull Request| UpstreamDevelop
-  UpstreamDevelop -->|authorized maintainer Pull Request| UpstreamMain
+  UpstreamDevelop -.->|sync| ForkDevelop
+  ForkDevelop -.->|clone| LocalClone
+  LocalClone -->|switch / worktree| LocalWorking
+  LocalWorking -->|push| ForkWorking
+  ForkWorking -->|PR| UpstreamDevelop
+  UpstreamDevelop -->|maintainer PR| UpstreamMain
 ```
 
 For example, clone your fork and use `git switch` to create an independently

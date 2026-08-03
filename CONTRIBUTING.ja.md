@@ -24,30 +24,30 @@ upstream repositoryはNestDAQの基準となるrepositoryです。forkは自身�
 
 ```mermaid
 flowchart BT
-  subgraph Upstream["Upstream repository<br/>spadi-alliance/nestdaq"]
+  subgraph Upstream["Upstream: spadi-alliance/nestdaq"]
     direction LR
-    UpstreamDevelop["develop branch"]
-    UpstreamMain["main branch"]
+    UpstreamDevelop["develop"]
+    UpstreamMain["main"]
   end
 
-  subgraph Fork["自身のGitHub fork<br/>your-account/nestdaq"]
+  subgraph Fork["Fork: your-account/nestdaq"]
     direction LR
-    ForkDevelop["develop branch"]
-    ForkWorking["PR source branch<br/>developまたはworking branch"]
+    ForkDevelop["develop"]
+    ForkWorking["PR source"]
   end
 
-  subgraph Local["Local PC<br/>作業用clone"]
+  subgraph Local["Local PC"]
     direction LR
-    LocalClone["自身のforkのclone"]
-    LocalWorking["working tree<br/>developが基点のbranch"]
+    LocalClone["clone"]
+    LocalWorking["working tree"]
   end
 
-  UpstreamDevelop -->|forkまたは同期| ForkDevelop
-  ForkDevelop -->|git clone| LocalClone
-  LocalClone -->|git switchまたはgit worktree add| LocalWorking
-  LocalWorking -->|git push| ForkWorking
-  ForkWorking -->|Pull Request| UpstreamDevelop
-  UpstreamDevelop -->|権限を持つmaintainerのPull Request| UpstreamMain
+  UpstreamDevelop -.->|sync| ForkDevelop
+  ForkDevelop -.->|clone| LocalClone
+  LocalClone -->|switch / worktree| LocalWorking
+  LocalWorking -->|push| ForkWorking
+  ForkWorking -->|PR| UpstreamDevelop
+  UpstreamDevelop -->|maintainer PR| UpstreamMain
 ```
 
 例えば、自身のforkをcloneし、`git switch`を使用して既存のworking treeに別名の
