@@ -39,7 +39,7 @@ build, and run checks.
 ```mermaid
 flowchart BT
   subgraph Upstream["Upstream: spadi-alliance/nestdaq"]
-    direction LR
+    direction BT
     UpstreamDevelop["develop"]
     UpstreamMain["main"]
   end
@@ -56,7 +56,7 @@ flowchart BT
     LocalWorking["working tree"]
   end
 
-  UpstreamDevelop -.->|sync| ForkDevelop
+  UpstreamDevelop -.->|fork / sync| ForkDevelop
   ForkDevelop -.->|clone| LocalClone
   LocalClone -->|switch / worktree| LocalWorking
   LocalWorking -->|push| ForkWorking
