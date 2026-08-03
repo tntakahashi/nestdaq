@@ -11,92 +11,20 @@ to NestDAQ.
 - The `develop` branch contains the latest development version.
 - Before starting development, fork the upstream `spadi-alliance/nestdaq`
   repository to your own GitHub account.
-- Synchronize your fork with the upstream `develop` branch, then prepare a
-  local working tree from the fork's `develop` branch under the branch name you
-  want to use. Use `git switch` in the existing working tree or
-  `git worktree add` to create a separate working directory. The local branch
-  may also be named `develop`.
-- You may create working branches freely in your own fork. Do not create
+- Synchronize your fork with the upstream `develop` branch before starting
+  development.
+- Make changes in your fork and push commits to your fork. Do not create
   working branches in the upstream repository.
 - The upstream `main` and `develop` branches are protected and do not accept
   direct pushes.
-- Push the commits to your fork. The destination may be a working branch or the
-  fork's `develop` branch.
-- Open a Pull Request or Draft Pull Request from that branch in your fork to
-  the upstream `develop` branch.
+- Open a Pull Request or Draft Pull Request from your fork to the upstream
+  `develop` branch.
 - Only authorized maintainers may merge changes into the upstream `main`
   branch. Pull Requests to upstream `main` must come from the upstream
   `develop` branch; Pull Requests from forks or other branches to upstream
   `main` are not accepted.
 - Use Draft Pull Requests when the change is not ready for final review but
   early feedback is useful.
-
-The upstream repository is the canonical NestDAQ repository. Your fork is your
-personal GitHub copy and holds branches that you push. The local clone on your
-PC contains the working tree or trees where you select a branch, edit files,
-build, and run checks.
-
-```mermaid
-flowchart BT
-  subgraph Upstream["Upstream: spadi-alliance/nestdaq"]
-    direction BT
-    UpstreamDevelop["develop"]
-    UpstreamMain["main"]
-  end
-
-  subgraph Fork["Fork: your-account/nestdaq"]
-    direction LR
-    ForkDevelop["develop"]
-    ForkWorking["PR source"]
-  end
-
-  subgraph Local["Local PC"]
-    direction LR
-    LocalClone["clone"]
-    LocalWorking["working tree"]
-  end
-
-  UpstreamDevelop -.->|fork / sync| ForkDevelop
-  ForkDevelop -.->|clone| LocalClone
-  LocalClone -->|switch / worktree| LocalWorking
-  LocalWorking -->|push| ForkWorking
-  ForkWorking -->|PR| UpstreamDevelop
-  UpstreamDevelop -->|maintainer PR| UpstreamMain
-```
-
-For example, clone your fork and use `git switch` to create an independently
-named branch in the existing working tree:
-
-```sh
-git clone https://github.com/<your-account>/nestdaq.git
-cd nestdaq
-
-# Use an independently named working branch based on the fork's develop branch.
-git switch -c <working-branch> origin/develop
-```
-
-Alternatively, create the branch in a separate working directory with
-`git worktree add`:
-
-```sh
-git worktree add -b <working-branch> ../nestdaq-<working-branch> origin/develop
-```
-
-To work directly on the fork's `develop` branch instead, use:
-
-```sh
-git switch develop
-git pull --ff-only origin develop
-```
-
-After editing and committing, push the selected branch to your fork. Use the
-branch name selected above; `develop` is also valid.
-
-```sh
-git add <changed-files>
-git commit -m "<commit-message>"
-git push -u origin <branch-name>
-```
 
 ## Commits and Pull Requests
 
