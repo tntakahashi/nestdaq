@@ -1,0 +1,429 @@
+# NestDAQ FairMQプラグイン
+
+[English](README.md) | [日本語](README.ja.md)
+
+NestDAQは、service情報をRedisへpublishし、runtime metricsを収集し、Redis-backed configuration keyからFairMQ program optionをloadするFairMQ pluginをinstallします。
+
+pluginはshared libraryとしてbuildされます。
+
+| Plugin name | Library | 目的 |
+| --- | --- | --- |
+| `daq_service` | `libFairMQPlugin_daq_service.so` | FairMQ deviceをRedisへ登録し、health/state dataをpublishし、data acquisition（DAQ）commandを処理し、topology/channel metadataをpublishします。 |
+| `metrics` | `libFairMQPlugin_metrics.so` | process metricsおよびFairMQ channel throughput metricsをRedisとRedisTimeSeriesへpublishします。 |
+| `parameter_config` | `libFairMQPlugin_parameter_config.so` | Redisからparameterを読み取り、FairMQ program propertyへ反映します。 |
+
+正確なplugin load optionはFairMQとFairMQを使用するexecutableによって提供されます。これらのlibraryを有効にするときは、上記のplugin nameを使用してください。
+
+以下のkey patternで`{sep}`は設定されたseparatorを意味します。default separatorは`:`です。その他のplaceholderは`{service}`、`{id}`、`{channel}`、`{subindex}`です。
+
+<a id="1-time-to-live-ttl-behavior"></a>
+## 1. Time To Live（TTL）の動作
+
+TTLの扱いはpluginごとに異なります。
+
+- `daq_service`はRedis keyのexpirationを管理します。deviceの生存中はregistry keyをrefreshし、deviceが予期せず終了した場合はfallback cleanup mechanismとしてexpirationを使用します。
+- `metrics`は通常、metric hashにRedis key TTLを設定しません。代わりに`--metrics-max-ttl`をstale field cleanup thresholdとして使用します。RedisTimeSeries retentionは`--retention`で別に制御します。
+- `parameter_config`はparameter keyへTTLを設定しません。parameterのlifetimeは、そのRedis keyを書き込むproducerまたはoperatorが制御します。
+
+<a id="2-daq_service"></a>
+## 2. daq_service
+
+`daq_service`は中心となるRedis service registry pluginです。device instanceの登録、TTLのrefresh、FairMQ stateとhealth dataのpublish、DAQ commandのsubscribe、他serviceが使用するtopology/channel metadataの書き込みを行います。
+
+<a id="21-runtime-options"></a>
+### 2.1. 実行時オプション
+
+| Option | デフォルト | 必須 | 説明 |
+| --- | --- | --- | --- |
+| `--service-name` | 空の場合はexecutable basename | No | Redis key pathで使用するservice name。 |
+| `--uuid` | 生成 | No | このservice instanceのuniversally unique identifier（UUID）。利用可能な場合、FairMQ device wrapperはtelemetryが生成した`service.instance.id`を再利用し、それ以外はpluginが生成します。 |
+| `--host-ip` | 検出値/設定値 | No | このservice addressとしてpublishするInternet Protocol（IP）addressまたはhostname。 |
+| `--hostname` | 検出値/設定値 | No | health dataへpublishするhost name。 |
+| `--registry-uri` | `tcp://127.0.0.1:6379/0` | No | DAQ service registryのRedis uniform resource identifier（URI）。 |
+| `--separator` | `:` | No | Redis keyを構成するときのseparator。 |
+| `--max-ttl` | `5` | No | 一時registry keyのTTL（seconds）。 |
+| `--ttl-update-interval` | `3` | No | TTL refresh interval（seconds）。 |
+| `--startup-state` | `idle` | No | startup state sequence target：`idle`、`initializing-device`、`initialized`、`bound`、`device-ready`、`ready`、`running`。 |
+| `--enable-uds` | `true` | No | 利用可能な場合、local inter-process communication（IPC）にUnix domain socket（UDS）を使用。 |
+| `--connect-config` | なし | No | 一時message queue（MQ）channel connection parameterを記述するJavaScript Object Notation（JSON）string。 |
+| `--max-retry-to-resolve-address` | `10` | No | connect address解決の最大retry回数。 |
+
+<a id="22-daq-service-identity-defaults"></a>
+### 2.2. DAQサービス識別情報の既定値
+
+`daq_service`は、Redisに保存しcontrollerに表示するservice nameとして`--service-name`を使用します。`--service-name`が未設定または空の場合、pluginはexecutable nameの最後のpath componentをservice nameとして使用します。
+
+FairMQの`--id` optionが設定されている場合、その値をNestDAQ service instance idとして使用します。`--id`が未設定または空の場合、`daq_service`は`daq_service{sep}service-instance-index{sep}{service}`で数値indexを割り当て、instance idを`Sampler-0`のような`{service-name}-{index}`に設定します。`--uuid`値はinstance idとは別で、presence、health、index再利用においてこのprocessを識別します。
+
+<a id="23-redis-keys-written-or-read"></a>
+### 2.3. 書き込みまたは読み取りを行うRedis key
+
+| Key pattern | Redis type | Field / value | Writer / reader | 目的 |
+| --- | --- | --- | --- | --- |
+| `daq_service{sep}{service}{sep}{id}{sep}presence` | string | TTL付きでrefreshされるUUID string | Written | device instanceのpresence marker。 |
+| `daq_service{sep}{service}{sep}{id}{sep}health` | hash | `instanceID`, `uuid`, `hostName`, `hostIp`, `serviceName`, `createdTime`, `updatedTime`, `uptime`。run timing記録時は`start_time`, `start_time_ns`, `stop_time`, `stop_time_ns`も含む | Written | device instanceのhealth/lifecycle metadata。 |
+| `daq_service{sep}{service}{sep}{id}{sep}fair-mq-state` | string | FairMQ state name | Written | TTL付きの現在のFairMQ state。 |
+| `daq_service{sep}{service}{sep}{id}{sep}updatedTime` | string | 最終update timestamp | Written | TTL付きの軽量な最終update key。 |
+| `daq_service{sep}{service}{sep}{id}{sep}option` | hash | `severity`, `file-severity`, `verbosity`, `color`, `log-to-file`, `id`, `io-threads`, `transport`, `network-interface`, `init-timeout`、shared-memory option、`rate`, `session`などのFairMQ program option | Written | monitoring/debugging用runtime option snapshot。 |
+| `daq_service{sep}service-instance-index{sep}{service}` | hash | Field：数値instance index、value：UUID | Read/write | `--id`未指定時に`{service}-{index}` instance IDを割り当て、再利用。 |
+| `run_info{sep}run_number` | string integer | 現在または次のrun number | pluginがread、controllerがread/write | run number metadataのsource。web controllerは`RUN`前にincrementし`latest_run_number`へcopyする場合があります。 |
+| `run_info{sep}latest_run_number` | string integer | `RUN`要求時にcopyされた最後のrun number | controllerがwrite | run metadataおよび表示用run number snapshot。 |
+| `run_info{sep}wait-device-ready` | string boolean | `1`、`true`、またはその他のstring | controllerがread/write | trueの場合、web controllerはdevice readinessが必要な後続commandの前に前提`CONNECT`をpublish。 |
+| `run_info{sep}wait-ready` | string boolean | `1`、`true`、またはその他のstring | controllerがread/write | trueの場合、web controllerは`RUN`前に前提`INIT TASK`をpublish。 |
+| `daqctl` | pub/sub channel | JSON DAQ command message | pluginがsubscribe、controller/operatorがpublish | controller commandを受信。 |
+
+<a id="24-daq-command-publishsubscribe-pubsub"></a>
+### 2.4. DAQ commandのPublish/Subscribe（Pub/Sub）
+
+`daq_service`は`daqctl`をsubscribeし、対象に一致するcommand messageをlocal service instanceのFairMQ state transitionへ変換します。controllerや他のoperatorはこのchannelへcommand messageをpublishします。
+
+Redis Pub/Subは各`daqctl` messageを、このchannelをsubscribeするすべてのuser device processへ配信します。Redisはserviceやinstanceではfilterしません。各subscriberの`daq_service` pluginがcommand messageを読み、local `service-name`と`Sampler-0`のようなlong instance idが選択されているか確認し、local processがtargetでなければmessageを無視します。
+
+`daqctl`へpublishするmessageの形式は次のとおりです。
+
+```json
+{
+  "command": "change_state",
+  "value": "RUN",
+  "services": ["Sampler", "Sink"],
+  "instances": ["Sampler-0", "Sink-0"]
+}
+```
+
+`services` arrayはservice name、`instances` arrayはinstance idを選択します。両arrayは存在し、空でない必要があり、いずれも複数entryを含められます。pluginはsetとして保存するため、順序や重複entryはtarget matchingに影響しません。target selectionがlocal service instanceと一致する場合のみdeviceがmessageを処理します。`value` fieldにはpluginが扱う次のFairMQまたはNestDAQ command stringを指定できます。
+
+```text
+BIND, COMPLETE INIT, CONNECT, END, INIT DEVICE, INIT TASK, RESET DEVICE,
+RESET TASK, RUN, STOP, exit, quit, reset, start
+```
+
+target selectionは特殊なlowercase string `"all"`に対応します。
+
+- `services: ["all"]`は`instances`に関係なく全deviceを対象にします。
+- `services: ["Sampler"]`と`instances: ["all"]`は`Sampler` serviceの全instanceを対象にします。
+- `services: ["Sampler"]`と`instances: ["Sampler-0"]`は`Sampler-0` instanceだけを対象にします。
+- その他のdeviceはmessageを無視します。
+
+実装はcase conversionを行わずliteral string `"all"`を確認するため、`"ALL"`や`"All"`ではなくlowercase `"all"`を使用してください。
+
+例：
+
+```json
+{
+  "command": "change_state",
+  "value": "STOP",
+  "services": ["all"],
+  "instances": ["all"]
+}
+```
+
+```json
+{
+  "command": "change_state",
+  "value": "RUN",
+  "services": ["Sampler"],
+  "instances": ["all"]
+}
+```
+
+```json
+{
+  "command": "change_state",
+  "value": "RUN",
+  "services": ["Sampler"],
+  "instances": ["Sampler-0"]
+}
+```
+
+複数serviceとその配下の全instanceを対象にします。
+
+```json
+{
+  "command": "change_state",
+  "value": "CONNECT",
+  "services": ["Sampler", "Sink"],
+  "instances": ["all"]
+}
+```
+
+serviceをまたいで選択したinstanceを対象にします。
+
+```json
+{
+  "command": "change_state",
+  "value": "RUN",
+  "services": ["Sampler", "Sink"],
+  "instances": ["Sampler-0", "Sampler-1", "Sink-0"]
+}
+```
+
+最後のmessageも全`daqctl` subscriberへ配信されます。例えば`Sampler-2`と`Sink-1`もmessageを受信しますが、long instance idが`instances`にないため無視します。
+
+web controllerが`RUN`を要求すると、`run_info{sep}run_number`を`run_info{sep}latest_run_number`へcopyし、`run_info{sep}wait-device-ready`と`run_info{sep}wait-ready`に応じて任意の前提`CONNECT`と`INIT TASK` commandをpublishし、`RUN`をpublishして設定済みpre/post hookを実行します。`STOP`要求時は`STOP`をpublishし、設定済みpre/post hookを実行します。
+
+web controllerの前提wait logicも同じtarget intentを使用します。`services: ["all"]`は既知の全service/instance state keyを待ち、`instances: ["all"]`は選択service配下の全instanceを待ちます。
+
+`daq_service`は現在stateを`daq_service{sep}{service}{sep}{id}{sep}fair-mq-state`へ書き込み、関連するpresence、health、timestamp keyをrefreshします。`daq-webctl`などのcontrollerはそれらのkeyをpollまたはscanしてstate summaryを構築できます。
+
+<a id="25-topology-and-channel-keys"></a>
+### 2.5. トポロジーおよびchannel key
+
+`daq_service`は`TopologyConfig`を通してchannel metadataも書き込みます。
+
+| Key pattern | Redis type | Field / value | Writer / reader | 目的 |
+| --- | --- | --- | --- | --- |
+| `daq_service{sep}{service}{sep}{id}{sep}channel{sep}{channel}` | hash | `name`, `type`, `method`, `address`, `transport`、buffer/kernel size、`linger`, `rateLogging`、port range、`autoBind`, `numSockets`, `autoSubChannel`, `bound`, `waitForPeerConnection` | Written/read | publishされたchannel endpoint metadata。 |
+| `daq_service{sep}{service}{sep}{id}{sep}channel{sep}{channel}{sep}peer` | list | peer channel key string | Written/read | channelのpeer list。 |
+| `daq_service{sep}{service}{sep}{id}{sep}socket{sep}chans.{channel}.{subindex}` | hash | local subchannel/socket parameterと`numSockets`, `autoSubChannel` | Written/read | subchannelごとのconnection metadata。 |
+| `daq_service{sep}topology{sep}endpoint...` | string/hash key | topology endpoint configuration | Read/scanned | endpoint解決に使用する外部topology configuration。 |
+| `daq_service{sep}topology{sep}link...` | string/hash key | topology link configuration | Read/scanned | service/channel間のlink解決に使用する外部topology configuration。 |
+
+<a id="251-autosubchannel"></a>
+#### 2.5.1. `autoSubChannel`
+
+`autoSubChannel`は、明示的な`[subindex]`なしでtopology peerが書かれた場合に、`TopologyConfig`がFairMQ subchannelを展開する方法を制御します。
+
+- `autoSubChannel=false`はindexなしpeerをsubchannel `0`だけへ解決します。1:1など固定connectionに適します。
+- `autoSubChannel=true`はRedisへpublish済みのpeer channel subchannel recordをscanし、一致する全subchannelへ接続します。peer/socket数をruntimeに検出するn:m topologyに適します。
+- peer stringが`[subindex]`を含む場合、`autoSubChannel`に関係なく、そのsubchannelだけを解決します。
+
+次の図はprocess数が異なる2つのserviceをtopologyが接続するとき、各sideの`autoSubChannel`設定によってaddressを持つchannel socket数がどう変わるかを示します。これはsocket/subchannel数の例であり、固定port number割り当てやmessage方向の図ではありません。非表示のlayout linkは`Sampler`を左、`Sink`を右に保つためのもので、data pathではありません。
+
+```mermaid
+flowchart LR
+    Topology["Topology link: <br/> Sampler:out <-> Sink:in<br/>Samplerは3 process、<br/> Sinkは2 process"]
+
+    subgraph CaseFF["Sampler autoSubChannel=false、Sink autoSubChannel=false"]
+        direction LR
+        subgraph SFF["Sampler"]
+            SFF0["Sampler-1<br/>out[0] address:port"]
+            SFF1["Sampler-2<br/>out[0] address:port"]
+            SFF2["Sampler-0<br/>out[0] address:port"]
+        end
+        subgraph KFF["Sink"]
+            KFF0["Sink-0<br/>in[0] address:port"]
+            KFF1["Sink-1<br/>in[0] address:port"]
+        end
+        SFF2 ~~~ KFF0
+    end
+
+    subgraph CaseTF["Sampler autoSubChannel=true、Sink autoSubChannel=false"]
+        direction LR
+        subgraph STF["Sampler"]
+            STF0["Sampler-1<br/>out[0] address:port<br/>out[1] address:port"]
+            STF1["Sampler-2<br/>out[0] address:port<br/>out[1] address:port"]
+            STF2["Sampler-0<br/>out[0] address:port<br/>out[1] address:port"]
+        end
+        subgraph KTF["Sink"]
+            KTF0["Sink-0<br/>in[0] address:port"]
+            KTF1["Sink-1<br/>in[0] address:port"]
+        end
+        STF2 ~~~ KTF0
+    end
+
+    subgraph CaseFT["Sampler autoSubChannel=false、Sink autoSubChannel=true"]
+        direction LR
+        subgraph SFT["Sampler"]
+            SFT0["Sampler-1<br/>out[0] address:port"]
+            SFT1["Sampler-2<br/>out[0] address:port"]
+            SFT2["Sampler-0<br/>out[0] address:port"]
+        end
+        subgraph KFT["Sink"]
+            KFT0["Sink-0<br/>in[0] address:port<br/>in[1] address:port<br/>in[2] address:port"]
+            KFT1["Sink-1<br/>in[0] address:port<br/>in[1] address:port<br/>in[2] address:port"]
+        end
+        SFT2 ~~~ KFT0
+    end
+
+    subgraph CaseTT["Sampler autoSubChannel=true、Sink autoSubChannel=true"]
+        direction LR
+        subgraph STT["Sampler"]
+            STT0["Sampler-1<br/>out[0] address:port<br/>out[1] address:port"]
+            STT1["Sampler-2<br/>out[0] address:port<br/>out[1] address:port"]
+            STT2["Sampler-0<br/>out[0] address:port<br/>out[1] address:port"]
+        end
+        subgraph KTT["Sink"]
+            KTT0["Sink-0<br/>in[0] address:port<br/>in[1] address:port<br/>in[2] address:port"]
+            KTT1["Sink-1<br/>in[0] address:port<br/>in[1] address:port<br/>in[2] address:port"]
+        end
+        STT2 ~~~ KTT0
+    end
+
+    Topology --- CaseFF
+    Topology --- CaseTF
+    Topology --- CaseFT
+    Topology --- CaseTT
+```
+
+pluginは通常、topologyから`numSockets`を計算します。`autoSubChannel=true`のchannelでは、検出したpeer instance/subchannelに応じて`numSockets`が増え、各FairMQ sub-socketへ異なる`address:port`とsubchannel indexを設定できます。
+
+<a id="252-bindconnect-sequence"></a>
+#### 2.5.2. bind/connectシーケンス
+
+`TopologyConfig`はFairMQ state transition中にRedisを通じてbind endpointとconnect endpointを同期します。
+
+```mermaid
+sequenceDiagram
+    participant Device
+    participant TopologyConfig
+    participant Redis
+    participant PeerDevices as Peer device
+    participant FairMQProperties as FairMQ property
+
+    Device->>TopologyConfig: InitializingDevice
+    TopologyConfig->>Redis: topology endpointとlinkを読み取る
+    TopologyConfig->>TopologyConfig: bind/connect channelを分類
+    TopologyConfig->>Redis: peer presence keyをscan
+    TopologyConfig->>TopologyConfig: autoSubChannel=trueならnumSocketsを更新
+    TopologyConfig->>Redis: channel metadataとpeer listを書き込む
+    TopologyConfig->>FairMQProperties: 初期chans.* propertyを設定
+
+    Device->>TopologyConfig: Bound
+    alt bind channelが存在
+        TopologyConfig->>Redis: local socket address recordを書き込む
+        TopologyConfig->>Redis: bind channelをbound=1に設定
+    end
+    alt connect channelが存在
+        TopologyConfig->>Redis: peer bind channelのbound=1を待つ
+        alt 明示的なconnect-configを設定済み
+            TopologyConfig->>Redis: peer healthとsocket recordを読み取る
+            TopologyConfig->>FairMQProperties: configConnect()がconnect addressを設定
+        else topology linkを使用
+            TopologyConfig->>Redis: peer listとsocket recordを読み取る
+            TopologyConfig->>FairMQProperties: resolveConnectAddress()がconnect addressを設定
+        end
+        TopologyConfig->>Redis: 解決したconnect channel addressを書き込む
+    end
+    alt bind channelでwaitForPeerConnection=true
+        TopologyConfig->>Redis: peer FairMQ stateを読み取る
+        Redis-->>TopologyConfig: peer stateがconnection-ready
+    end
+```
+
+bind channelは最初にlocal addressをpublishします。connect channelはpeer bind channelが`bound=1`になるのを待ち、Redisからpeer socket addressを解決し、結果をFairMQ `chans.*` propertyへ書き込みます。`waitForPeerConnection=false`のbind channelは最後のpeer-ready waitを省略します。resetまたはcancellationはwait stepを中断します。
+
+<a id="26-ttl-details-daq_service"></a>
+### 2.6. TTLの詳細（daq_service）
+
+`daq_service`はseconds単位の`--max-ttl`を使用し、defaultは`5` secondsです。`--ttl-update-interval`はpluginがTTLをrefreshする頻度を制御し、default refresh intervalは`3` secondsです。
+
+pluginは2つの方法でRedis keyをrefreshします。
+
+- `presence`、`fair-mq-state`、`updatedTime`は`SETEX`で更新し、valueとTTLの両方をrefreshします。
+- `health`、`option`、topology channel key、topology socket key、peer list keyは`EXPIRE`でrefreshします。
+
+```mermaid
+sequenceDiagram
+  participant Device as User device process<br/>(daq_service)
+  participant Redis as Redis
+  participant WebCtl as daq-webctl
+
+  Device->>Redis: service keyを登録
+  Device->>Redis: SETEX presence, fair-mq-state, updatedTime<br/>value + --max-ttl
+  Device->>Redis: EXPIRE health, option, topology key<br/>--max-ttl
+  WebCtl->>Redis: expired key eventをSUBSCRIBE
+  loop --ttl-update-intervalごと
+    Device->>Redis: liveness keyをSETEX
+    Device->>Redis: hash/list topology keyをEXPIRE
+  end
+  alt 正常shutdown
+    Device->>Redis: 登録済みkeyをDEL
+    WebCtl->>Redis: state keyをpoll/scan
+    WebCtl-->>WebCtl: summaryから停止instanceを削除
+  else crashまたはRedis connection消失
+    Device-xRedis: refresh停止
+    Redis-->>Redis: --max-ttl後にkeyをexpire
+    Redis-->>WebCtl: expired presence key event
+    WebCtl-->>WebCtl: instance消失を記録
+  end
+```
+
+正常shutdownでは登録済みkeyを削除します。processがcrashするかRedis connectivityを失うと、refresh停止後にTTL expirationが一時registry keyを削除します。
+
+TTL expiration自体にRedis keyspace notificationは不要ですが、`daq-webctl`が次のpolling cycleを待たずに消失instanceを検出するにはexpired key eventが必要です。`metrics`は`--metrics-max-ttl`をRedis key TTLではなくstale field cleanup thresholdとして使用します。`parameter_config`はparameter keyへTTLを設定しません。
+
+<a id="3-metrics"></a>
+## 3. metrics
+
+`metrics`はprocess-level metricsとFairMQ channel throughput metricsをpublishします。process central processing unit（CPU）usageはtop/htop形式で、1 CPU coreを完全に使用すると約`100`、2 coreなら約`200`です。memory usageはmebibytes（MiB）単位のcurrent resident set size（RSS）です。
+
+<a id="31-runtime-options"></a>
+### 3.1. 実行時オプション
+
+| Option | デフォルト | 必須 | 説明 |
+| --- | --- | --- | --- |
+| `--proc-stat-update-interval` | `1000` | No | process CPU/memory metricsのupdate interval（milliseconds）。 |
+| `--metrics-uri` | なし | No | metrics用Redis URI。空の場合は`--registry-uri`を使用。 |
+| `--retention` | `0` | No | RedisTimeSeries retention（milliseconds）。`0`はtrimなし。 |
+| `--recreate-ts` | `true` | No | `Running`へのtransition時にRedisTimeSeries keyを再作成。 |
+| `--metrics-max-ttl` | `3000` | No | metrics fieldの最大TTL（milliseconds）。0以下ならTTL cleanupなし。 |
+
+<a id="32-redis-keys-written-or-read"></a>
+### 3.2. 書き込みまたは読み取りを行うRedis key
+
+| Key pattern | Redis type | Field / value | Writer / reader | 目的 |
+| --- | --- | --- | --- | --- |
+| `metrics{sep}created-time` | hash | Field：`{id}`、value：作成timestamp | Written | device作成時刻。 |
+| `metrics{sep}hostname` | hash | Field：`{id}`、value：hostname | Written | host metadata。 |
+| `metrics{sep}host-ip` | hash | Field：`{id}`、value：host IP address | Written | host metadata。 |
+| `metrics{sep}state` | hash | Field：`{id}`、value：FairMQ state name | Written | string形式の現在state。 |
+| `metrics{sep}state-id` | hash | Field：`{id}`、value：数値FairMQ state ID | Written | 数値形式の現在state。 |
+| `metrics{sep}last-update` | hash | Field：`{id}`、value：timestamp | Written | 最終metrics update時刻。 |
+| `metrics{sep}last-update-ns` | hash | Field：`{id}`、value：nanoseconds単位timestamp | Written/read | stale metric fieldの識別。 |
+| `metrics{sep}cpu-stat` | hash | Field：`{id}`、value：CPU percent | Written | process CPU usage。 |
+| `metrics{sep}ram-stat` | hash | Field：`{id}`、value：current RSS MiB | Written | process memory usage。 |
+| `metrics{sep}msg-in`, `metrics{sep}msg-out` | hash | Field：`{id}{sep}{channel}[{subindex}]`、value：messages/second | Written | 現在のchannel message rate。 |
+| `metrics{sep}mb-in`, `metrics{sep}mb-out` | hash | Field：`{id}{sep}{channel}[{subindex}]`、value：MiB/second | Written | 現在のchannel throughput。 |
+| `metrics{sep}msg-in-sum`, `metrics{sep}msg-out-sum` | hash | Field：`{id}{sep}{channel}[{subindex}]`、value：累積rounded message count | Written | 累積message count。 |
+| `metrics{sep}mb-in-sum`, `metrics{sep}mb-out-sum` | hash | Field：`{id}{sep}{channel}[{subindex}]`、value：累積MiB | Written | 累積throughput。 |
+| `metrics{sep}num-msg`, `metrics{sep}mb` | hash | Field：`{id}{sep}{channel}[{subindex}].in` または `.out`、value：current rate | Written | 方向付きcurrent rate。 |
+| `metrics{sep}num-msg-sum`, `metrics{sep}mb-sum` | hash | Field：`{id}{sep}{channel}[{subindex}].in` または `.out`、value：累積値 | Written | 方向付き累積値。 |
+| `ts{sep}{id}{sep}cpu-stat`, `ts{sep}{id}{sep}ram-stat`, `ts{sep}{id}{sep}state-id` | RedisTimeSeries | `TS.ADD`で追加するsample。labelは`service`, `id`, data type | Written | process/state time series。 |
+| `ts{sep}{id}{sep}{channel}[{subindex}]{sep}...` | RedisTimeSeries | `name`, `socket`, `transport`などのlabelを持つchannel rate/累積sample | Written | channel time series。 |
+
+pluginはFairMQのFairLogger throughput lineをlistenし、次のようなrecordをparseします。
+
+```text
+data[0]: in: 123 (4.5 MB) out: 67 (8.9 MB)
+```
+
+channel throughput metricsにはindex付きsubchannel recordだけを使用します。
+
+<a id="33-ttl-and-retention-details-metrics"></a>
+### 3.3. TTLと保持期間の詳細（metrics）
+
+`--metrics-max-ttl`はRedis key TTLではなくmilliseconds単位のstale field cleanup thresholdです。pluginは`metrics{sep}last-update-ns`を読み、最終updateがthresholdより古いinstanceを見つけ、登録済みmetric hashからそのfieldを`HDEL`で削除します。`--metrics-max-ttl`が0以下なら、このcleanupは無効です。
+
+`--retention`はpluginが作成するRedisTimeSeries keyだけに適用します。milliseconds単位で`TS.CREATE ... RETENTION`へ渡されます。`0`の場合、RedisTimeSeries sampleはretention timeによってtrimされません。
+
+<a id="4-parameter_config"></a>
+## 4. parameter_config
+
+`parameter_config`はRedis parameter keyを読み取り、値をFairMQ program propertyへ反映します。両方が存在する場合、instance固有parameterはgroup parameterをoverrideします。
+
+<a id="41-runtime-options"></a>
+### 4.1. 実行時オプション
+
+| Option | デフォルト | 必須 | 説明 |
+| --- | --- | --- | --- |
+| `--parameter-config-uri` | なし | No | parameter configuration用Redis URI。空の場合は`--registry-uri`を使用。 |
+
+<a id="42-redis-keys-read-or-subscribed"></a>
+### 4.2. 読み取りまたは購読するRedis key
+
+| Key pattern | Redis type | Field / value | Writer / reader | 目的 |
+| --- | --- | --- | --- | --- |
+| `parameters{sep}{id}` | hash | Field：option name、value：option value string | Read | instance固有parameter set。 |
+| `parameters{sep}{group}` | hash | Field：option name、value：option value string | Read | group default parameter set。`{group}`は`{id}`末尾の数値`-N` suffixを除いて生成。 |
+| `parameters{sep}{id}{sep}*` | string/list/hash/set/zset | instance key配下の追加structured parameter | Read/scanned | instanceごとのstructured parameter value。 |
+| `parameters{sep}{group}{sep}*` | string/list/hash/set/zset | group key配下の追加structured parameter | Read/scanned | group-level structured parameter value。 |
+| `__keyspace@{db}__:{key}` | pub/sub channel | Redis keyspace notification event | Subscribed | instance/group parameter keyのlive reloadをtrigger。 |
+
+string keyは最後のpath componentをoption nameとして使用します。hash valueはmap-like property、list valueはarray-like property、set valueはset、sorted-set valueはmemberからscoreへのmapになります。
+
+live reloadにはRedis serverでkeyspace notificationを有効にする必要があります。初期parameter loadにはkeyspace notificationは不要です。
+
+<a id="43-ttl-details-parameter_config"></a>
+### 4.3. TTLの詳細（parameter_config）
+
+`parameter_config`はparameter keyに対して`EXPIRE`、`SETEX`、`DEL`を呼びません。parameter keyを読み、live reload用にkeyspace notificationをsubscribeするだけです。parameter keyをexpireさせる場合は、そのkeyのwriterがTTLを設定する必要があります。

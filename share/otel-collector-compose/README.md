@@ -1,5 +1,7 @@
 # OpenTelemetry Collector Compose Setups
 
+[English](README.md) | [日本語](README.ja.md)
+
 This directory contains local validation Compose setups for receiving
 OpenTelemetry data with OpenTelemetry Collector and storing it in one selected
 backend.

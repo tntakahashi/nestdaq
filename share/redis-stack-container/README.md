@@ -1,5 +1,7 @@
 # Redis Stack Container Helpers
 
+[English](README.md) | [日本語](README.ja.md)
+
 This directory contains small helper scripts for starting Redis Stack containers
 for local NestDAQ validation. They publish ports on the host and do not enable
 Redis authentication by default, so do not expose them on a public or shared

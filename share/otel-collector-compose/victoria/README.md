@@ -1,5 +1,7 @@
 # Victoria OpenTelemetry (OTel) Backend
 
+[English](README.md) | [日本語](README.ja.md)
+
 This local validation stack receives OpenTelemetry logs, metrics, and traces
 with OpenTelemetry Collector, stores them in Victoria stack services, and opens
 them in Grafana.

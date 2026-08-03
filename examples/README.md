@@ -1,5 +1,7 @@
 # Examples
 
+[English](README.md) | [日本語](README.ja.md)
+
 This directory contains small NestDAQ device examples. The examples are a
 standalone CMake project, and are also included in the main NestDAQ build when
 `NestDAQ_BUILD_EXAMPLES=ON` is set. `NestDAQ_BUILD_EXAMPLES` defaults to `ON`.

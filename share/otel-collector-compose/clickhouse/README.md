@@ -1,5 +1,7 @@
 # ClickStack OpenTelemetry (OTel) Backend
 
+[English](README.md) | [日本語](README.ja.md)
+
 This local validation stack receives OpenTelemetry logs, metrics, and traces
 with the ClickStack OpenTelemetry Collector, stores them in ClickHouse, and
 opens them in the ClickStack user interface (UI).

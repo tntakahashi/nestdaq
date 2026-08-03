@@ -1,5 +1,7 @@
 # CMake Support Files
 
+[English](README.md) | [日本語](README.ja.md)
+
 This directory contains CMake files used by the NestDAQ build, the installed
 `find_package(NestDAQ)` package, and the separate external dependency build
 project. For build commands, dependency versions, and user-facing options, see

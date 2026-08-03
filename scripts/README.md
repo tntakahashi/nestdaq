@@ -1,5 +1,7 @@
 # Scripts
 
+[English](README.md) | [日本語](README.ja.md)
+
 Set of examples of how to use the plugins.
 The scripts can be copied to your favorite directory. 
 Redis server must be started before executing the scripts. 

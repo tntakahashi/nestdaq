@@ -1,5 +1,6 @@
 install(FILES
   README.md
+  README.ja.md
   DESTINATION ${CMAKE_INSTALL_DATADIR}/installers
 )
 

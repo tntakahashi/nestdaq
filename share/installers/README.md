@@ -1,5 +1,7 @@
 # Package Installer Helpers
 
+[English](README.md) | [日本語](README.ja.md)
+
 This directory contains optional helper scripts for installing and updating
 runtime services with the host package manager instead of using the local
 Compose examples.
@@ -41,7 +43,7 @@ The uninstall action is intentionally conservative: it does not delete package
 repository files, service configuration, logs, Redis persistence files, or
 OpenSearch data paths. Review those files manually before deleting them. If a
 service is managed by `systemd`, stop and disable it before uninstalling the
-package; see [systemd Management](#6-systemd-management).
+package; see <a href="#6-systemd-management">systemd Management</a>.
 
 Set `SUDO=` when running as root or when you want to provide your own privilege
 wrapper:
@@ -194,6 +196,7 @@ Official install instructions:
 - https://docs.opensearch.org/latest/install-and-configure/install-dashboards/rpm/
 - https://docs.opensearch.org/latest/install-and-configure/install-dashboards/debian/
 
+<a id="6-systemd-management"></a>
 ## 6. systemd Management
 
 The package scripts install software only. Review service configuration before

@@ -1,5 +1,7 @@
 # OpenSearch OpenTelemetry (OTel) Backend
 
+[English](README.md) | [日本語](README.ja.md)
+
 This local validation stack receives OpenTelemetry logs and traces with
 OpenTelemetry Collector, stores them in OpenSearch, and opens them in
 OpenSearch Dashboards.

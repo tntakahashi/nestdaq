@@ -1,5 +1,7 @@
 # NestDAQ FairMQ Plugins
 
+[English](README.md) | [日本語](README.ja.md)
+
 NestDAQ installs FairMQ plugins that publish service information to Redis,
 collect runtime metrics, and load FairMQ program options from Redis-backed
 configuration keys.

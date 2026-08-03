@@ -1,5 +1,7 @@
 # Data Acquisition (DAQ) Web Controller Implementation
 
+[English](README.md) | [日本語](README.ja.md)
+
 This directory contains the implementation of `daq-webctl`, the NestDAQ web
 controller process. It provides a Hypertext Transfer Protocol (HTTP) server for
 the browser user interface (UI), WebSocket sessions for interactive clients, and

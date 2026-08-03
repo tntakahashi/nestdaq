@@ -1,4 +1,7 @@
 # NestDAQ
+
+[English](README.md) | [日本語](README.ja.md)
+
 A streaming data acquisition (DAQ) implementation for the particle measurements
 
 ## 1. Project guide
