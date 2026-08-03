@@ -38,18 +38,16 @@ build, and run checks.
 
 ```mermaid
 flowchart TB
-  subgraph GitHub["GitHub repositories"]
+  subgraph Upstream["Upstream repository<br/>spadi-alliance/nestdaq"]
     direction LR
+    UpstreamDevelop["develop branch"]
+    UpstreamMain["main branch"]
+  end
 
-    subgraph Upstream["Upstream repository<br/>spadi-alliance/nestdaq"]
-      UpstreamDevelop["develop branch"]
-      UpstreamMain["main branch"]
-    end
-
-    subgraph Fork["Your GitHub fork<br/>your-account/nestdaq"]
-      ForkDevelop["develop branch"]
-      ForkWorking["PR source branch<br/>develop or working branch"]
-    end
+  subgraph Fork["Your GitHub fork<br/>your-account/nestdaq"]
+    direction LR
+    ForkDevelop["develop branch"]
+    ForkWorking["PR source branch<br/>develop or working branch"]
   end
 
   subgraph Local["Local PC<br/>working clone"]

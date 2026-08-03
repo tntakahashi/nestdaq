@@ -24,18 +24,16 @@ upstream repositoryはNestDAQの基準となるrepositoryです。forkは自身�
 
 ```mermaid
 flowchart TB
-  subgraph GitHub["GitHub repositories"]
+  subgraph Upstream["Upstream repository<br/>spadi-alliance/nestdaq"]
     direction LR
+    UpstreamDevelop["develop branch"]
+    UpstreamMain["main branch"]
+  end
 
-    subgraph Upstream["Upstream repository<br/>spadi-alliance/nestdaq"]
-      UpstreamDevelop["develop branch"]
-      UpstreamMain["main branch"]
-    end
-
-    subgraph Fork["自身のGitHub fork<br/>your-account/nestdaq"]
-      ForkDevelop["develop branch"]
-      ForkWorking["PR source branch<br/>developまたはworking branch"]
-    end
+  subgraph Fork["自身のGitHub fork<br/>your-account/nestdaq"]
+    direction LR
+    ForkDevelop["develop branch"]
+    ForkWorking["PR source branch<br/>developまたはworking branch"]
   end
 
   subgraph Local["Local PC<br/>作業用clone"]
