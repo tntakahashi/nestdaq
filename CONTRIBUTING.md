@@ -37,7 +37,7 @@ PC contains the working tree or trees where you select a branch, edit files,
 build, and run checks.
 
 ```mermaid
-flowchart TB
+flowchart BT
   subgraph Upstream["Upstream repository<br/>spadi-alliance/nestdaq"]
     direction LR
     UpstreamDevelop["develop branch"]

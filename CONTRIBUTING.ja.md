@@ -23,7 +23,7 @@ upstream repositoryはNestDAQの基準となるrepositoryです。forkは自身�
 選択してfileの編集、build、checkを行うworking treeを保持します。
 
 ```mermaid
-flowchart TB
+flowchart BT
   subgraph Upstream["Upstream repository<br/>spadi-alliance/nestdaq"]
     direction LR
     UpstreamDevelop["develop branch"]
