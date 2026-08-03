@@ -62,7 +62,8 @@ or `daq-webctl` container in the same compose network should use
 `otel-collector:4317` for OTLP gRPC, or `http://otel-collector:4318` for OTLP
 HTTP.
 
-## 3. Runtime Options
+<a id="3-runtime-options"></a>
+## 3. Environment Variables
 
 | Variable | Default | Description |
 | :-- | :-- | :-- |

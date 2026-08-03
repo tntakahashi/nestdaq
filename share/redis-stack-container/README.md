@@ -179,7 +179,8 @@ helper scripts:
 REDIS_VOLUME_MODE=volume ./run-redis-stack.sh
 ```
 
-## 10. Runtime Options
+<a id="10-runtime-options"></a>
+## 10. Environment Variables
 
 Both scripts use the directory containing the script as `THIS_SCRIPT_DIR`.
 Bind-mount data directories are relative to that directory, so copied installed
@@ -187,7 +188,7 @@ scripts keep bind-mounted data next to the copied scripts.
 
 | Variable | Default | Description |
 | -------- | ------- | ----------- |
-| `CONTAINER_RUNTIME` | `docker` | Container runtime command. Set to `podman` to use Podman. |
+| `CONTAINER_RUNTIME` | `docker` | Container engine command. Set to `podman` to use Podman. |
 | `REDIS_CONTAINER_NAME` | Script-specific name | Container name. |
 | `REDIS_CONTAINER_REPLACE` | `1` | Remove an existing same-name container before starting. Set to `0` to fail instead. |
 | `REDIS_IMAGE` | Script-specific pinned image | Container image. |

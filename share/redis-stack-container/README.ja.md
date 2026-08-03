@@ -155,14 +155,14 @@ helper scriptの隣にRedis data directoryを置かない場合は、named volum
 REDIS_VOLUME_MODE=volume ./run-redis-stack.sh
 ```
 
-<a id="10-runtime-options"></a>
-## 10. 実行時オプション
+<a id="10-environment-variables"></a>
+## 10. 環境変数
 
 すべてのscriptは、scriptが置かれているdirectoryを`THIS_SCRIPT_DIR`として使用します。bind mount用data directoryはこのdirectoryからの相対pathであるため、インストール済みscriptをコピーしても、bind mountされたdataはコピー先のscriptの隣に保持されます。
 
 | 変数 | デフォルト | 説明 |
 | -------- | ------- | ----------- |
-| `CONTAINER_RUNTIME` | `docker` | Container runtime command。Podmanを使用する場合は`podman`を設定します。 |
+| `CONTAINER_RUNTIME` | `docker` | container engineのcommand。Podmanを使用する場合は`podman`を設定します。 |
 | `REDIS_CONTAINER_NAME` | script固有の名前 | Container name。 |
 | `REDIS_CONTAINER_REPLACE` | `1` | 起動前に同名の既存containerを削除します。削除せずに失敗させる場合は`0`を設定します。 |
 | `REDIS_IMAGE` | script固有の固定image | Container image。 |

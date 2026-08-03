@@ -2,7 +2,7 @@
 
 [English](README.md) | [日本語](README.ja.md)
 
-このディレクトリには、NestDAQ Webコントローラー`daq-webctl`用にインストールされるブラウザーアセットが含まれています。コントローラーの実装と実行時の動作については、[`controller/README.md`](../../controller/README.ja.md)を参照してください。
+このディレクトリには、NestDAQ Webコントローラー`daq-webctl`用にインストールされるブラウザーアセットが含まれています。コントローラーの実装と起動後の動作については、[`controller/README.md`](../../controller/README.ja.md)を参照してください。
 
 <a id="1-daq-webctlhtml"></a>
 ## 1. `daq-webctl.html`

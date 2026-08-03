@@ -96,10 +96,11 @@ podman compose --in-pod=false -f compose-opensearch.yaml up
 ```
 
 The `PODMAN_USERNS` setting changes the user namespace mapping. It does not
-change the OpenSearch image's runtime user, which remains container
-`uid=1000,gid=1000`.
+change the user ID of the OpenSearch container process, which remains
+`uid=1000,gid=1000` inside the container.
 
-## 5. Runtime Options
+<a id="5-runtime-options"></a>
+## 5. Environment Variables
 
 | Variable | Default | Description |
 | :-- | :-- | :-- |

@@ -5,8 +5,8 @@
 NestDAQは、粒子線計測向けのストリーミングデータ収集（DAQ）アプリケーションを
 構築するためのフレームワークです。このリポジトリのコードをビルド・インストールすると
 共通機能とツールを利用できますが、それだけでは実際の回路に接続して動作するDAQ
-アプリケーションにはなりません。計測対象や回路に応じたデバイス処理とハードウェア連携を
-別途実装する必要があります。
+アプリケーションにはなりません。計測対象や回路に対応するDAQアプリケーションコードは、
+このリポジトリの提供範囲外です。
 
 <a id="1-project-guide"></a>
 ## 1. プロジェクトガイド
@@ -18,7 +18,7 @@ NestDAQは、粒子線計測向けのストリーミングデータ収集（DAQ�
 | [scripts/](scripts/README.ja.md) | このディレクトリには、プロセス起動・topology補助スクリプトと、device skeleton generator `generate-device-skeleton.py`があります。 |
 | [controller/](controller/README.ja.md) | このディレクトリでは、`daq-webctl` HTTP/WebSocket server、Redis制御、telemetry設定を実装しています。 |
 | [share/controller/](share/controller/README.ja.md) | このディレクトリには、`daq-webctl`が配信するWebブラウザー向けファイルがあります。 |
-| `nestdaq/` | このディレクトリには、NestDAQの公開headerとアプリケーション実行中に使用するhelperがあります。 |
+| `nestdaq/` | このディレクトリには、version headerのtemplate、FairMQ device applicationのentry pointと`main()`を提供する`runDevice.h`、telemetry codeなど、NestDAQのcore headerとsource codeがあります。 |
 | [nestdaq/telemetry/](nestdaq/telemetry/README.ja.md) | このディレクトリでは、必要に応じて有効にできるOpenTelemetry連携を提供します。 |
 | [plugins/](plugins/README.ja.md) | このディレクトリでは、DAQ service、metrics、parameter設定用のFairMQ pluginを提供します。 |
 | [cmake/](cmake/README.ja.md) | このディレクトリには、CMake helper、インストールされるpackage file、外部依存関係をビルドするprojectがあります。 |

@@ -58,7 +58,8 @@ http://localhost:4318/v1/metrics
 http://localhost:4318/v1/traces
 ```
 
-## 4. Runtime Options
+<a id="4-runtime-options"></a>
+## 4. Environment Variables
 
 | Variable | Default | Description |
 | :-- | :-- | :-- |

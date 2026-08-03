@@ -8,10 +8,12 @@
 ## フォークを使用した開発手順
 
 - `main`ブランチには、NestDAQの最新リリース版が含まれます。
-- `develop`ブランチには、最新開発版が含まれます。開発作業は`develop`を基点にしてください。
-- 保護された`main`および`develop`ブランチへの直接pushは許可されていません。
-- `develop`から作業ブランチを作成し、そのブランチを自身のフォークへpushしてください。
-- 作業ブランチから上流リポジトリの`develop`ブランチを対象として、Pull RequestまたはDraft Pull Requestを作成してください。
+- `develop`ブランチには、NestDAQの最新開発版が含まれます。
+- 開発を始める前に、upstreamの`spadi-alliance/nestdaq`リポジトリを自身のGitHub accountへforkしてください。
+- 自身のforkをupstreamの`develop`ブランチと同期し、fork内の`develop`を基点として作業ブランチを作成してください。
+- 自身のfork内では作業ブランチを自由に作成できます。upstreamリポジトリには作業ブランチを作成しないでください。
+- upstreamの`main`および`develop`ブランチは保護されており、直接pushできません。
+- 自身のfork内の作業ブランチから、upstreamの`develop`ブランチを対象としてPull RequestまたはDraft Pull Requestを作成してください。
 - 変更が最終レビューの準備段階にない場合でも、早期のフィードバックが有用であればDraft Pull Requestを使用してください。
 
 <a id="commits-and-pull-requests"></a>
@@ -50,19 +52,19 @@
 ### 命名規則
 
 - `PascalCase`と`UpperCamelCase`は同じ命名形式を意味します。
-- クラス名および型名: `PascalCase` / `UpperCamelCase`。
-- 名前空間: `snake_case`。
-- 関数およびメンバー関数: lower camel case / `camelCase`を優先します。既存スタイルとの一貫性を保つ場合は、`PascalCase` / `UpperCamelCase`も許容します。
-- 変数: `snake_case`を優先します。既存スタイルとの一貫性を保つ場合は、lower camel case / `camelCase`も許容します。
-- `using`による別名は命名規則の対象外です。局所的な可読性、外部ライブラリの規約、または一般的な短縮形に従って構いません。
-- 公開`struct`のデータフィールド: `snake_case`。
-- `private`および`protected`のクラスデータメンバー: `fPascalCase`。
-- 静的データメンバー: `fg`で開始します（例: `fgPascalCase`）。
-- 静的変数: `g`で開始します（例: `gPascalCase`）。
-- 定数: `k`で開始する`kPascalCase`、または`SCREAMING_SNAKE_CASE`を使用します。
-- マクロ名: `SCREAMING_SNAKE_CASE`。
-- 列挙定数: `kPascalCase`、`PascalCase` / `UpperCamelCase`、または`SCREAMING_SNAKE_CASE`。
-- NestDAQコードの基底名前空間: `nestdaq`。
+- `class`名およびtype名: `PascalCase` / `UpperCamelCase`。
+- `namespace`名: `snake_case`。
+- functionおよびmember function: lower camel case / `camelCase`を優先します。既存スタイルとの一貫性を保つ場合は、`PascalCase` / `UpperCamelCase`も許容します。
+- variable: `snake_case`を優先します。既存スタイルとの一貫性を保つ場合は、lower camel case / `camelCase`も許容します。
+- `using` aliasは命名規則の対象外です。局所的な可読性、外部libraryの規約、または一般的な短縮形に従って構いません。
+- `public struct`のdata field: `snake_case`。
+- `private`および`protected`の`class` data member: `fPascalCase`。
+- `static` data member: `fg`で開始します（例: `fgPascalCase`）。
+- `static` variable: `g`で開始します（例: `gPascalCase`）。
+- constant: `k`で開始する`kPascalCase`、または`SCREAMING_SNAKE_CASE`を使用します。
+- macro名: `SCREAMING_SNAKE_CASE`。
+- enum constant: `kPascalCase`、`PascalCase` / `UpperCamelCase`、または`SCREAMING_SNAKE_CASE`。
+- NestDAQ codeのbase `namespace`: `nestdaq`。
 
 <a id="file-naming"></a>
 ### ファイル名

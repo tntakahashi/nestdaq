@@ -19,9 +19,9 @@ Each executable links to `NestDAQ::NestDAQ`, which provides the NestDAQ
 and optional telemetry loader support.
 
 `Sampler` and `Sink` use the NestDAQ telemetry facade to demonstrate trace spans
-and metrics without including OpenTelemetry headers. Enable them at runtime with
-the telemetry options, for example `--otel-metric-protocol=console` and
-`--otel-trace-protocol=console`.
+and metrics without including OpenTelemetry headers. Enable them via
+command-line options when starting the device, for example
+`--otel-metric-protocol=console` and `--otel-trace-protocol=console`.
 
 ## 2. Build
 
@@ -42,9 +42,8 @@ cmake --install ./build-examples
 ```
 
 The examples do not need to be installed into the same prefix as NestDAQ, but
-the runtime linker must be able to find NestDAQ, FairMQ, Boost, and related
-libraries. The example CMake project sets an install runtime search path
-(rpath) relative to the
+the dynamic linker must be able to find NestDAQ, FairMQ, Boost, and related
+libraries. The example CMake project sets an install RPATH relative to the
 example install prefix and uses link paths discovered through `NestDAQ::NestDAQ`.
 
 ## 3. Running
@@ -244,8 +243,8 @@ F. Start the user devices with `start_device.sh`.
    [`scripts/README.md`](../scripts/README.md) to enable them or to print
    telemetry to the console.
 
-   Options after the device name override runtime defaults from the device or
-   NestDAQ plugins. Specify options such as `--service-name` or
+   Options after the device name override defaults set by the device or NestDAQ
+   plugins. Specify options such as `--service-name` or
    `--in-chan-name` on the command line only when the default values need to
    match a different topology, parameter set, or service grouping. For repeated
    runs, it is also fine to put those overrides in a small wrapper shell script.
@@ -412,8 +411,8 @@ The main pieces are:
   through `LOG(info)`, `LOG(error)`, and similar macros.
 - NestDAQ provides `nestdaq/runDevice.h`, Redis-backed plugins, DAQ command
   integration, plugin search paths, and optional telemetry setup.
-- Redis stores runtime service information, topology settings, parameter
-  settings, DAQ commands, and metrics used by the NestDAQ plugins.
+- Redis stores registered process and service information, topology settings,
+  parameter settings, DAQ commands, and metrics used by the NestDAQ plugins.
 
 ### 4.1. Start From the Skeleton Generator
 
@@ -451,11 +450,12 @@ Useful variants:
 The generator options describe what C++ code to generate. They are not the
 final command-line options of the generated device. For example,
 `--input-channel source-chan-name:raw` overrides the input defaults and makes
-the generated C++ register a runtime option named `source-chan-name` with
-default value `raw`. Use the corresponding `--no-*-channel` option when the
-generated device does not need one of the default channels. You can instead
-delete all related option, member, initialization, polling, and processing code
-after generation, but excluding the channel during generation is simpler.
+the generated C++ register a device command-line option named
+`source-chan-name` with default value `raw`. Use the corresponding
+`--no-*-channel` option when the generated device does not need one of the
+default channels. You can instead delete all related option, member,
+initialization, polling, and processing code after generation, but excluding
+the channel during generation is simpler.
 
 See [`scripts/README.md#4-device-skeleton-generation`](../scripts/README.md#4-device-skeleton-generation)
 for all generator options.
@@ -714,8 +714,8 @@ install(TARGETS MyDevice
 
 `find_package(NestDAQ REQUIRED CONFIG)` locates the installed NestDAQ CMake
 package. `NestDAQ::NestDAQ` carries the include directories, link libraries,
-and runtime integration needed for NestDAQ, FairMQ, FairLogger, and related
-dependencies.
+and link and library-search settings needed to execute a device with NestDAQ,
+FairMQ, FairLogger, and related dependencies.
 
 Build and install the generated project out of source:
 
@@ -735,7 +735,7 @@ prefix.
 
 ### 4.6. Running the New Device
 
-Use the same runtime services described in the local run sequence above:
+Use the same supporting services described in the local run sequence above:
 
 If an existing local validation environment is already running, skip the
 matching steps below. For example, you do not need to start another Redis

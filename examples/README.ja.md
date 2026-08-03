@@ -20,9 +20,9 @@ NestDAQのmain buildにも含まれます。`NestDAQ_BUILD_EXAMPLES`のdefault�
 必要に応じて利用できるtelemetry loader supportが提供されます。
 
 `Sampler`と`Sink`は、OpenTelemetry headerをincludeせずにtrace spanとmetricsを
-示すためNestDAQ telemetry facadeを使用します。たとえば
+示すためNestDAQ telemetry facadeを使用します。たとえばdevice起動時に
 `--otel-metric-protocol=console`と`--otel-trace-protocol=console`などの
-telemetry optionを使用してruntimeに有効化します。
+command-line optionを指定して有効化します。
 
 <a id="2-build"></a>
 ## 2. ビルド
@@ -43,10 +43,10 @@ cmake --build ./build-examples --parallel
 cmake --install ./build-examples
 ```
 
-exampleはNestDAQと同じprefixへインストールする必要はありませんが、runtime
-linkerがNestDAQ、FairMQ、Boost、および関連libraryを見つけられる必要があります。
-example CMake projectは、example install prefixからの相対的なinstall runtime
-search path（rpath）を設定し、`NestDAQ::NestDAQ`を通じて検出したlink pathを
+exampleはNestDAQと同じprefixへインストールする必要はありませんが、動的リンカーが
+NestDAQ、FairMQ、Boost、および関連libraryを見つけられる必要があります。
+example CMake projectは、example install prefixからの相対的なinstall RPATHを
+設定し、`NestDAQ::NestDAQ`を通じて検出したlink pathを
 使用します。
 
 <a id="3-running"></a>
@@ -242,7 +242,7 @@ F. `start_device.sh`でuser deviceを起動します。
    consoleへ出力する方法は
    [`scripts/README.md`](../scripts/README.ja.md)を参照してください。
 
-   device nameより後のoptionは、deviceまたはNestDAQ pluginのruntime defaultを
+   device nameより後のoptionは、deviceまたはNestDAQ pluginが設定するdefault値を
    overrideします。異なるtopology、parameter set、service groupingにdefault値を
    合わせる必要がある場合だけ、command lineで`--service-name`や
    `--in-chan-name`などを指定します。繰り返し実行する場合は、小さなwrapper
@@ -412,7 +412,7 @@ NestDAQ user deviceは、実際にdataを生成、消費、変換するprocess�
   macroを通じて使用するlogging systemです。
 - NestDAQは`nestdaq/runDevice.h`、Redisをbackendとするplugin、DAQ command
   integration、plugin search path、必要に応じて有効にできるtelemetry設定を提供します。
-- RedisはNestDAQ pluginが使用するruntime service information、topology設定、
+- RedisはNestDAQ pluginが使用する登録済みprocess/service情報、topology設定、
   parameter設定、DAQ command、metricsを保存します。
 
 <a id="41-start-from-the-skeleton-generator"></a>
@@ -453,7 +453,8 @@ skeletonには`in`、`out`、`dqm`という名前のinput、output、DQM channel
 generator optionは生成するC++ codeの内容を指定します。生成されたdeviceの最終的な
 command-line optionではありません。たとえば
 `--input-channel source-chan-name:raw`はinputのdefaultをoverrideし、生成される
-C++に、default valueが`raw`のruntime option `source-chan-name`を登録させます。
+C++に、default valueが`raw`のdevice command-line option
+`source-chan-name`を登録させます。
 生成deviceでdefault channelのいずれかが不要な場合は、対応する
 `--no-*-channel` optionを使用します。代わりに生成後、関連するoption、member、
 initialization、polling、processing codeをすべて削除することもできますが、
@@ -720,8 +721,8 @@ install(TARGETS MyDevice
 
 `find_package(NestDAQ REQUIRED CONFIG)`はインストール済みNestDAQ CMake
 packageを検索します。`NestDAQ::NestDAQ`はNestDAQ、FairMQ、FairLogger、
-関連依存関係で必要なinclude directory、link library、runtime integrationを
-伝播します。
+関連依存関係の実行に必要なinclude directory、link library、link設定、
+library search設定を伝播します。
 
 生成projectをout-of-sourceでビルド・インストールします。
 
@@ -742,7 +743,7 @@ CMakeが`NestDAQConfig.cmake`を見つけられます。`CMAKE_INSTALL_PREFIX`�
 <a id="46-running-the-new-device"></a>
 ### 4.6. 新しいデバイスの実行
 
-上のローカル実行sequenceで説明したものと同じruntime serviceを使用します。
+上のローカル実行sequenceで説明したものと同じ外部serviceを使用します。
 
 既存のローカル検証環境がすでに動作している場合、対応する以下のstepを省略します。
 たとえば、新しいdeviceで同じendpointを使用する場合、別のRedis server、

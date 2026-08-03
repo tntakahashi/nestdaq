@@ -5,9 +5,8 @@
 NestDAQ is a framework for building streaming data acquisition (DAQ)
 applications for particle-beam measurements. Building and installing this
 repository provides common components and tools, but does not by itself create
-a DAQ application that works with real detector electronics. Each experiment
-must separately implement its device-specific processing and hardware
-integration.
+a DAQ application that works with real detector electronics. Detector- and
+hardware-specific DAQ application code is outside the scope of this repository.
 
 ## 1. Project guide
 
@@ -18,7 +17,7 @@ integration.
 | [scripts/](scripts/README.md) | This directory provides process startup and topology helper scripts, and the `generate-device-skeleton.py` device skeleton generator. |
 | [controller/](controller/README.md) | This directory implements the `daq-webctl` HTTP/WebSocket server, Redis control, and telemetry setup. |
 | [share/controller/](share/controller/README.md) | This directory contains the browser files served by `daq-webctl`. |
-| `nestdaq/` | This directory contains the public NestDAQ headers and helpers used while applications are running. |
+| `nestdaq/` | This directory contains the NestDAQ core headers and telemetry code, including the version header template and `runDevice.h`, which provides the FairMQ device application entry point and `main()`. |
 | [nestdaq/telemetry/](nestdaq/telemetry/README.md) | This directory provides OpenTelemetry integration that can be enabled when needed. |
 | [plugins/](plugins/README.md) | This directory provides FairMQ plugins for DAQ services, metrics, and parameter configuration. |
 | [cmake/](cmake/README.md) | This directory provides CMake helpers, installed package files, and the external dependency build project. |

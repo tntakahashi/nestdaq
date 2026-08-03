@@ -2,9 +2,9 @@
 
 [English](README.md) | [日本語](README.ja.md)
 
-This directory contains optional helper scripts for installing and updating
-runtime services with the host package manager instead of using the local
-Compose examples.
+This directory contains helper scripts that can install and update external
+services with the host package manager instead of using the local Compose
+examples.
 
 The scripts are intended for administrator-controlled hosts. They use `sudo`
 unless they are run as root. They install packages into system-managed

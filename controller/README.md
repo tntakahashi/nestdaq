@@ -10,7 +10,8 @@ Redis-backed control operations for DAQ devices.
 The static browser assets served by `daq-webctl` are documented separately in
 [`share/controller/README.md`](../share/controller/README.md).
 
-## 1. Runtime Role
+<a id="1-runtime-role"></a>
+## 1. Controller Responsibilities
 
 `daq-webctl` listens on an HTTP endpoint, serves the configured document root,
 and accepts WebSocket clients. Commands from the browser are translated into
@@ -124,14 +125,14 @@ OpenTelemetry option list.
 
 `daq-webctl` uses the shared NestDAQ OpenTelemetry option helper with
 `daq-webctl` as the default `service.name`. The controller does not link
-OpenTelemetry directly; it loads the runtime telemetry library when
-`--otel-library` is non-empty and the library can be found.
+OpenTelemetry directly; it dynamically loads the telemetry library when the
+process starts if `--otel-library` is non-empty and the library can be found.
 
 Common controller telemetry options are:
 
 | Option | Default | Description |
 | :-- | :-- | :-- |
-| `--otel-library` | `libnestdaq_otel.so` | Telemetry shared library path or soname loaded at runtime. |
+| `--otel-library` | `libnestdaq_otel.so` | Telemetry shared library path or soname dynamically loaded when the process starts. |
 | `--otel-log-protocol` | `console` | Comma-separated log exporters: `console`, `otlp-http`, `otlp-grpc`; empty disables log export. |
 | `--otel-log-endpoint-grpc` | `localhost:4317` | OTLP gRPC log endpoint. |
 | `--otel-log-endpoint-http` | `http://localhost:4318/v1/logs` | OTLP HTTP log endpoint. |

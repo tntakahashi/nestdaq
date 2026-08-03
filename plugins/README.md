@@ -3,8 +3,8 @@
 [English](README.md) | [日本語](README.ja.md)
 
 NestDAQ installs FairMQ plugins that publish service information to Redis,
-collect runtime metrics, and load FairMQ program options from Redis-backed
-configuration keys.
+collect process and channel metrics while a device is running, and load FairMQ
+program options from Redis-backed configuration keys.
 
 The plugins are built as shared libraries:
 
@@ -40,7 +40,8 @@ TTL handling is different for each plugin:
 instance, refreshes TTLs, publishes FairMQ state and health data, subscribes to
 DAQ commands, and writes topology/channel metadata used by other services.
 
-### 2.1. Runtime Options
+<a id="21-runtime-options"></a>
+### 2.1. Command-Line Options
 
 | Option                           | Default                    | Required | Description |
 |----------------------------------|----------------------------|----------|-------------|
@@ -78,7 +79,7 @@ presence, health, and index reuse.
 | `daq_service{sep}{service}{sep}{id}{sep}health` | hash | `instanceID`, `uuid`, `hostName`, `hostIp`, `serviceName`, `createdTime`, `updatedTime`, `uptime`; also `start_time`, `start_time_ns`, `stop_time`, `stop_time_ns` when run timing is recorded | Written | Health and lifecycle metadata for one device instance. |
 | `daq_service{sep}{service}{sep}{id}{sep}fair-mq-state` | string | FairMQ state name | Written | Current FairMQ state with TTL. |
 | `daq_service{sep}{service}{sep}{id}{sep}updatedTime` | string | Last update timestamp | Written | Lightweight last-update key with TTL. |
-| `daq_service{sep}{service}{sep}{id}{sep}option` | hash | Selected FairMQ program options such as `severity`, `file-severity`, `verbosity`, `color`, `log-to-file`, `id`, `io-threads`, `transport`, `network-interface`, `init-timeout`, shared-memory options, `rate`, and `session` | Written | Runtime option snapshot for monitoring and debugging. |
+| `daq_service{sep}{service}{sep}{id}{sep}option` | hash | Selected FairMQ program options such as `severity`, `file-severity`, `verbosity`, `color`, `log-to-file`, `id`, `io-threads`, `transport`, `network-interface`, `init-timeout`, shared-memory options, `rate`, and `session` | Written | Current option values for monitoring and debugging. |
 | `daq_service{sep}service-instance-index{sep}{service}` | hash | Field: numeric instance index; value: UUID | Read/write | Allocates and reuses `{service}-{index}` instance IDs when `--id` is not given. |
 | `run_info{sep}run_number` | string integer | Current or next run number | Read by plugin; read/write by controller | Source for run number metadata. The web controller may increment it and copy it to `latest_run_number` before `RUN`. |
 | `run_info{sep}latest_run_number` | string integer | Last run number copied when `RUN` was requested | Written by controller | Run number snapshot used for run metadata and display. |
@@ -226,8 +227,8 @@ a topology peer is written without an explicit `[subindex]`.
   This is useful for 1:1 or otherwise fixed connections.
 - `autoSubChannel=true` scans the peer channel subchannel records already
   published in Redis and connects to all matching subchannels. This is useful
-  for n:m topologies where the number of peers or sockets is discovered at
-  runtime.
+  for n:m topologies where the number of peers or sockets is discovered while
+  the process is running.
 - When the peer string includes `[subindex]`, only that subchannel is resolved,
   regardless of `autoSubChannel`.
 
@@ -415,7 +416,8 @@ fully used CPU core is approximately `100`, and two fully used CPU cores are
 approximately `200`. Memory usage is current resident set size (RSS) in
 mebibytes (MiB).
 
-### 3.1. Runtime Options
+<a id="31-runtime-options"></a>
+### 3.1. Command-Line Options
 
 | Option                        | Default | Required | Description |
 |-------------------------------|---------|----------|-------------|
@@ -474,7 +476,8 @@ RedisTimeSeries samples are not trimmed by retention time.
 program properties. Instance-specific parameters override group parameters when
 both are present.
 
-### 4.1. Runtime Options
+<a id="41-runtime-options"></a>
+### 4.1. Command-Line Options
 
 | Option                   | Default | Required | Description |
 |--------------------------|---------|----------|-------------|

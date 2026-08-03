@@ -50,8 +50,8 @@ http://localhost:4318/v1/metrics
 http://localhost:4318/v1/traces
 ```
 
-<a id="4-runtime-options"></a>
-## 4. 実行時オプション
+<a id="4-environment-variables"></a>
+## 4. 環境変数
 
 | 変数 | デフォルト | 説明 |
 | :-- | :-- | :-- |

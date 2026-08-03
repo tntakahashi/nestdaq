@@ -15,8 +15,8 @@ Arguments after the device name are passed through to the device and FairMQ, so
 plugin options such as `--service-name` and device-specific options such as
 `--max-iterations` can be specified on the same command line.
 
-For a typical local validation run, prepare the runtime environment before
-starting devices with `start_device.sh`:
+For a typical local validation run, start the supporting services and register
+the required configuration before starting devices with `start_device.sh`:
 
 - Start a Redis server.
 - Start an OpenTelemetry Collector backend, for example the Compose setup under
@@ -489,7 +489,8 @@ For how to choose between `OnData()`, `ConditionalRun()`, and `Run()`, see
 
 Channel options passed to the generator are not the final device command-line
 options. The generator creates all three channels by default; these options
-override how their runtime options are generated in C++:
+override how the corresponding device command-line options are generated in
+C++:
 
 ```bash
 ./generate-device-skeleton.py MyProcessor \
@@ -576,12 +577,12 @@ to generate single-message examples instead. `SendOutputMessage()` and
 payload and only handle channel readiness, `Send()`, and success/failure
 checks.
 
-The options in the table above are generator options, not runtime command-line
+The options in the table above are generator options, not device command-line
 options of the generated device. The generated C++ custom options are
 registered as strings. Numeric members are assigned in `InitTask()` by
 converting those strings:
 
-| Generated runtime option | Default | Description |
+| Generated device command-line option | Default | Description |
 | :-- | :-- | :-- |
 | `poll-timeout-ms` | `100` | FairMQ poll timeout in milliseconds. |
 | `drain-timeout-ms` | `100` | Receive timeout used by input drain. Negative values are treated as `0`. |

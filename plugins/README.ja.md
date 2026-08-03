@@ -2,7 +2,7 @@
 
 [English](README.md) | [日本語](README.ja.md)
 
-NestDAQは、service情報をRedisへpublishし、runtime metricsを収集し、Redis-backed configuration keyからFairMQ program optionをloadするFairMQ pluginをinstallします。
+NestDAQは、service情報をRedisへpublishし、device動作中のprocessおよびchannel metricsを収集し、Redis-backed configuration keyからFairMQ program optionをloadするFairMQ pluginをinstallします。
 
 pluginはshared libraryとしてbuildされます。
 
@@ -30,8 +30,8 @@ TTLの扱いはpluginごとに異なります。
 
 `daq_service`は中心となるRedis service registry pluginです。device instanceの登録、TTLのrefresh、FairMQ stateとhealth dataのpublish、DAQ commandのsubscribe、他serviceが使用するtopology/channel metadataの書き込みを行います。
 
-<a id="21-runtime-options"></a>
-### 2.1. 実行時オプション
+<a id="21-command-line-options"></a>
+### 2.1. コマンドラインオプション
 
 | Option | デフォルト | 必須 | 説明 |
 | --- | --- | --- | --- |
@@ -64,7 +64,7 @@ FairMQの`--id` optionが設定されている場合、その値をNestDAQ servi
 | `daq_service{sep}{service}{sep}{id}{sep}health` | hash | `instanceID`, `uuid`, `hostName`, `hostIp`, `serviceName`, `createdTime`, `updatedTime`, `uptime`。run timing記録時は`start_time`, `start_time_ns`, `stop_time`, `stop_time_ns`も含む | Written | device instanceのhealth/lifecycle metadata。 |
 | `daq_service{sep}{service}{sep}{id}{sep}fair-mq-state` | string | FairMQ state name | Written | TTL付きの現在のFairMQ state。 |
 | `daq_service{sep}{service}{sep}{id}{sep}updatedTime` | string | 最終update timestamp | Written | TTL付きの軽量な最終update key。 |
-| `daq_service{sep}{service}{sep}{id}{sep}option` | hash | `severity`, `file-severity`, `verbosity`, `color`, `log-to-file`, `id`, `io-threads`, `transport`, `network-interface`, `init-timeout`、shared-memory option、`rate`, `session`などのFairMQ program option | Written | monitoring/debugging用runtime option snapshot。 |
+| `daq_service{sep}{service}{sep}{id}{sep}option` | hash | `severity`, `file-severity`, `verbosity`, `color`, `log-to-file`, `id`, `io-threads`, `transport`, `network-interface`, `init-timeout`、shared-memory option、`rate`, `session`などのFairMQ program option | Written | monitoring/debugging用の現在のoption値。 |
 | `daq_service{sep}service-instance-index{sep}{service}` | hash | Field：数値instance index、value：UUID | Read/write | `--id`未指定時に`{service}-{index}` instance IDを割り当て、再利用。 |
 | `run_info{sep}run_number` | string integer | 現在または次のrun number | pluginがread、controllerがread/write | run number metadataのsource。web controllerは`RUN`前にincrementし`latest_run_number`へcopyする場合があります。 |
 | `run_info{sep}latest_run_number` | string integer | `RUN`要求時にcopyされた最後のrun number | controllerがwrite | run metadataおよび表示用run number snapshot。 |
@@ -184,7 +184,7 @@ web controllerの前提wait logicも同じtarget intentを使用します。`ser
 `autoSubChannel`は、明示的な`[subindex]`なしでtopology peerが書かれた場合に、`TopologyConfig`がFairMQ subchannelを展開する方法を制御します。
 
 - `autoSubChannel=false`はindexなしpeerをsubchannel `0`だけへ解決します。1:1など固定connectionに適します。
-- `autoSubChannel=true`はRedisへpublish済みのpeer channel subchannel recordをscanし、一致する全subchannelへ接続します。peer/socket数をruntimeに検出するn:m topologyに適します。
+- `autoSubChannel=true`はRedisへpublish済みのpeer channel subchannel recordをscanし、一致する全subchannelへ接続します。process動作中にpeer/socket数を検出するn:m topologyに適します。
 - peer stringが`[subindex]`を含む場合、`autoSubChannel`に関係なく、そのsubchannelだけを解決します。
 
 次の図はprocess数が異なる2つのserviceをtopologyが接続するとき、各sideの`autoSubChannel`設定によってaddressを持つchannel socket数がどう変わるかを示します。これはsocket/subchannel数の例であり、固定port number割り当てやmessage方向の図ではありません。非表示のlayout linkは`Sampler`を左、`Sink`を右に保つためのもので、data pathではありません。
@@ -347,8 +347,8 @@ TTL expiration自体にRedis keyspace notificationは不要ですが、`daq-webc
 
 `metrics`はprocess-level metricsとFairMQ channel throughput metricsをpublishします。process central processing unit（CPU）usageはtop/htop形式で、1 CPU coreを完全に使用すると約`100`、2 coreなら約`200`です。memory usageはmebibytes（MiB）単位のcurrent resident set size（RSS）です。
 
-<a id="31-runtime-options"></a>
-### 3.1. 実行時オプション
+<a id="31-command-line-options"></a>
+### 3.1. コマンドラインオプション
 
 | Option | デフォルト | 必須 | 説明 |
 | --- | --- | --- | --- |
@@ -401,8 +401,8 @@ channel throughput metricsにはindex付きsubchannel recordだけを使用し�
 
 `parameter_config`はRedis parameter keyを読み取り、値をFairMQ program propertyへ反映します。両方が存在する場合、instance固有parameterはgroup parameterをoverrideします。
 
-<a id="41-runtime-options"></a>
-### 4.1. 実行時オプション
+<a id="41-command-line-options"></a>
+### 4.1. コマンドラインオプション
 
 | Option | デフォルト | 必須 | 説明 |
 | --- | --- | --- | --- |

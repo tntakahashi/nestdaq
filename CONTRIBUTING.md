@@ -8,12 +8,17 @@ to NestDAQ.
 ## Forking workflow
 
 - The `main` branch contains the latest released version of NestDAQ.
-- The `develop` branch contains the latest development version. Base development
-  work on `develop`.
-- Direct pushes to the protected `main` and `develop` branches are not allowed.
-- Create a working branch from `develop` and push that branch to your own fork.
-- Open a Pull Request or Draft Pull Request from your working branch to the
-  upstream `develop` branch.
+- The `develop` branch contains the latest development version.
+- Before starting development, fork the upstream `spadi-alliance/nestdaq`
+  repository to your own GitHub account.
+- Synchronize your fork with the upstream `develop` branch, then create a
+  working branch from `develop` in your fork.
+- You may create working branches freely in your own fork. Do not create
+  working branches in the upstream repository.
+- The upstream `main` and `develop` branches are protected and do not accept
+  direct pushes.
+- Open a Pull Request or Draft Pull Request from the working branch in your
+  fork to the upstream `develop` branch.
 - Use Draft Pull Requests when the change is not ready for final review but
   early feedback is useful.
 

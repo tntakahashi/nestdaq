@@ -58,7 +58,7 @@ dnf -y install \
     python3-devel \
     python3-pip
 
-# オプションのツール:
+# 必要に応じてインストールするツール:
 # - jq: コマンドラインツールのJSON出力を整形・確認します。
 # - clang-tools-extra: clang-tidy、clang-format、および関連するClangツールを提供します。
 # - doxygen: APIドキュメントを生成します。
@@ -146,7 +146,7 @@ apt install -y \
     python3-venv \
     python3-pip
 
-# オプションのツール:
+# 必要に応じてインストールするツール:
 # - jq: コマンドラインツールのJSON出力を整形・確認します。
 # - clang-tools: clang-tidyおよび関連するLLVM/Clangツールを提供します。
 # - clang-format: DebianおよびUbuntuではclang-toolsとは別パッケージとしてclang-formatを提供します。
@@ -181,8 +181,9 @@ cmake \
 cmake --build ./build-external
 ```
 
-Redis Stackは実行時サービスであり、直接のライブラリ依存関係ではありません。
-Redis Stackを用意する方法として、次の選択肢をサポートしています。
+Redis Stackは、NestDAQアプリケーションの稼働中に必要となる外部サービスであり、
+直接のライブラリ依存関係ではありません。Redis Stackを用意する方法として、
+次の選択肢をサポートしています。
 
 - 上記の外部依存関係ビルドでRedis Stackをソースからビルドしてインストールします。
   `WITH_REDIS_STACK=ON`の場合のデフォルトです。
@@ -206,7 +207,7 @@ Redis 8の`redis/modules`ツリー経由ではなくスタンドアロンモジ�
   - この場合、cmake --buildに渡す`--parallel`（または`-j`）オプションでは内部のExternalProjectビルドを制御できません。そのため、初回構成時に`-DBUILD_PARALLEL_LEVEL=xxx`を使用して並列ビルド数を指定してください。
     - `nproc`コマンドは、システムで使用可能なCPUコア数を表示します。メモリー使用量が過大になる場合は、より小さい値を手動で指定してください。
 - 依存関係のデフォルトバージョンを以下に示します。バージョンを上書きするには、CMakeに`-Dxxxx_VERSION=yyyy`を渡します。
-- 外部依存関係の構成時にDoxygenが見つかった場合、オプションのドキュメントアセットとして`doxygen-awesome-css`を`./install/share/doxygen-awesome-css`以下にインストールします。
+- 外部依存関係の構成時にDoxygenが見つかった場合、ドキュメント表示用の追加ファイルとして`doxygen-awesome-css`を`./install/share/doxygen-awesome-css`以下にインストールします。
 - Makeの代わりにNinjaを使用するには、CMakeオプションに`-G Ninja`を追加します。
 - システムの`ld`の代わりに`mold`を使用する場合:
   - GCC 12.1以降: CMakeオプションに`-DCMAKE_EXE_LINKER_FLAGS="-fuse-ld=mold"`と`-DCMAKE_SHARED_LINKER_FLAGS="-fuse-ld=mold"`を追加します。
@@ -218,15 +219,15 @@ Redis 8の`redis/modules`ツリー経由ではなくスタンドアロンモジ�
 | オプション | デフォルト | 説明 |
 | :-- | :-- | :-- |
 | `BUILD_PARALLEL_LEVEL` | 未設定 | 内部の`ExternalProject`ビルドへ渡す並列数です。構成時に設定してください。`cmake --build --parallel`では内部ビルドを制御できません。 |
-| `WITH_REDIS_STACK` | `ON` | Redis Stack実行時コンポーネントをビルドしてインストールします。コンテナなどでRedis Stackを別途用意する場合は`OFF`に設定します。 |
+| `WITH_REDIS_STACK` | `ON` | Redis Stack serverとmoduleをビルドしてインストールします。コンテナなどでRedis Stackを別途用意する場合は`OFF`に設定します。 |
 | `WITH_REDIS_SERVER_7` | `OFF` | Redis 7.xサーバーとスタンドアロンRedisTimeSeriesをビルドしてインストールします。このオプションは`WITH_REDIS_STACK`と同時に有効にできません。 |
 | `REDIS_SERVER_7_SERIES` | `7.4` | `WITH_REDIS_SERVER_7=ON`の場合に使用するRedis 7.x系列です。`7.4`はRedis 7.4.9とRedisTimeSeries 1.12.14、`7.2`はRedis 7.2.14とRedisTimeSeries 1.10.24を選択します。 |
 | `REDIS_BUILD_REDISBLOOM` | `ON` | `WITH_REDIS_STACK`が`ON`の場合にRedisBloomモジュールをビルドしてインストールします。 |
 | `REDIS_BUILD_REDISEARCH` | `ON` | `WITH_REDIS_STACK`が`ON`の場合にRediSearchモジュールをビルドしてインストールします。コンパイラーがRediSearchをビルドできない場合は無効にしてください。 |
 | `REDIS_BUILD_REDISJSON` | `ON` | `WITH_REDIS_STACK`が`ON`の場合にRedisJSONモジュールをビルドしてインストールします。 |
 | `REDIS_BUILD_REDISTIMESERIES` | `ON` | `WITH_REDIS_STACK`が`ON`の場合にRedisTimeSeriesモジュールをビルドしてインストールします。 |
-| `WITH_SPDLOG` | `ON` | spdlogをビルドしてインストールします。オプションのNestDAQ spdlog OpenTelemetry sinkをサポートします。 |
-| `WITH_OTEL_CPP` | `ON` | opentelemetry-cppと、gRPCなどのオプションの転送用依存関係をビルドしてインストールします。 |
+| `WITH_SPDLOG` | `ON` | spdlogをビルドしてインストールします。必要に応じて有効にできるNestDAQ spdlog OpenTelemetry sinkをサポートします。 |
+| `WITH_OTEL_CPP` | `ON` | opentelemetry-cppと、gRPCなど選択した機能に応じた転送用依存関係をビルドしてインストールします。 |
 | `<package>_VERSION` | パッケージ固有 | 以下に示す依存関係のバージョンを上書きします。例: `-DFairMQ_VERSION=...`。 |
 | `Redis7_VERSION` | 系列固有 | `REDIS_SERVER_7_SERIES`で選択したRedis 7.xのバージョンを上書きします。 |
 | `RedisTimeSeries7_VERSION` | 系列固有 | `REDIS_SERVER_7_SERIES`で選択したスタンドアロンRedisTimeSeriesのバージョンを上書きします。 |
@@ -260,15 +261,15 @@ Redis 7.xの保守用設定については`cmake/dependencies/redis-server-7.cma
 | [opentelemetry-cpp](https://github.com/open-telemetry/opentelemetry-cpp) | 1.28.0                   | `opentelemetry-cpp_VERSION`      |
 | [doxygen-awesome-css](https://github.com/jothepro/doxygen-awesome-css)   | 2.4.2                    | `doxygen-awesome-css_VERSION`    |
 
-<a id="external-runtime-components"></a>
-##### 外部実行時コンポーネント
+<a id="redis-server-and-modules"></a>
+##### Redis serverとmodule
 
 Redis Stack（`redis-server`、`redis-cli`、Redis modulesなど）は外部依存関係
 ビルドに含まれ、デフォルトではソースからビルドしてインストールします。
 Redisモジュールは`REDIS_BUILD_REDISBLOOM`、`REDIS_BUILD_REDISEARCH`、
 `REDIS_BUILD_REDISJSON`、`REDIS_BUILD_REDISTIMESERIES`を使用して個別に
-無効化できます。NestDAQアプリケーションの実行時にはRedisが必要ですが、直接のライブラリ
-依存関係ではありません。コンテナまたはホストパッケージ用インストーラースクリプトで
+無効化できます。NestDAQアプリケーションの稼働中にはRedisが必要ですが、直接の
+ライブラリ依存関係ではありません。コンテナまたはホストパッケージ用インストーラースクリプトで
 用意することもできます。パッケージインストーラーのデフォルトはRedis Stackモジュールを
 含むRedis 8.2.7で、RedisInsightは含みません。RedisInsightが必要でリポジトリに
 該当パッケージがある場合は、Redis Stackコンテナヘルパー、または
@@ -348,15 +349,16 @@ VERBOSE=1 cmake --build ./build
 ## ローカルのOpenTelemetry Collectorおよびバックエンドコンテナの実行
 
 NestDAQはOpenTelemetryのログ、メトリクス、トレースをOpenTelemetry Collectorへ
-エクスポートできます。リポジトリには、ローカル検証用のオプションのCompose構成を
+エクスポートできます。リポジトリには、必要に応じて利用できるローカル検証用Compose構成を
 [`share/otel-collector-compose/`](share/otel-collector-compose/README.ja.md)以下に
 用意しています。OpenTelemetry Collector Contrib、OpenSearch、OpenSearch Dashboards
-などの実行時サービスをコンテナで実行します。これらは実行時ツールであり、ビルド依存関係
-ではなく、そのまま本番環境へデプロイすることを意図していません。
+など、ローカル運用で使用するサービスをコンテナで実行します。これらのサービスとツールは
+ビルド依存関係ではなく、そのまま本番環境へデプロイすることを意図していません。
 
-実行時サービスは、コンテナまたはホストパッケージで用意できます。
+NestDAQアプリケーションの稼働中に必要となる外部サービスは、コンテナまたは
+ホストパッケージで用意できます。
 
-| 実行時サービス | ソースビルド | コンテナヘルパー | ホストパッケージインストーラー |
+| 外部サービス | ソースビルド | コンテナヘルパー | ホストパッケージインストーラー |
 | :-- | :-- | :-- | :-- |
 | Redis Stack | 外部依存関係ビルドの`WITH_REDIS_STACK=ON` | [`share/redis-stack-container/`](share/redis-stack-container/README.ja.md) | [`share/installers/`](share/installers/README.ja.md) |
 | OpenTelemetry Collector Contrib | NestDAQではビルドしません | [`share/otel-collector-compose/`](share/otel-collector-compose/README.ja.md) | [`share/installers/`](share/installers/README.ja.md) |

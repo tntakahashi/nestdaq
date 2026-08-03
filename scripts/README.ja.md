@@ -12,7 +12,7 @@ pluginの使用方法を示すexample集です。scriptは任意のdirectoryへc
 
 このexampleはcustom pluginを使用してFairMQDeviceを起動する方法を示します。deviceはこのrepositoryが提供するもの、またはpathに`fairmq-`を含むものを指定します。device name以降のargumentはdeviceおよびFairMQへそのまま渡されるため、`--service-name`などのplugin optionと`--max-iterations`などのdevice固有optionを同じcommand lineで指定できます。
 
-一般的なlocal validationでは、`start_device.sh`でdeviceを起動する前にruntime environmentを準備します。
+一般的なlocal validationでは、`start_device.sh`でdeviceを起動する前に外部serviceを起動し、必要な設定を登録します。
 
 - Redis serverを起動します。
 - `share/otel-collector-compose`配下のCompose setupなど、OpenTelemetry Collector backendを起動します。
@@ -378,7 +378,7 @@ processing mode：
 
 `OnData()`、`ConditionalRun()`、`Run()`の選び方は[`examples/README.ja.md#44-choosing-ondata-conditionalrun-or-run`](../examples/README.ja.md#44-choosing-ondata-conditionalrun-or-run)を参照してください。
 
-generatorへ渡すchannel optionは、最終的なdevice command-line optionではありません。generatorはdefaultで3 channelすべてを作成し、これらのoptionはC++ runtime optionの生成方法をoverrideします。
+generatorへ渡すchannel optionは、最終的なdevice command-line optionではありません。generatorはdefaultで3 channelすべてを作成し、これらのoptionは対応するdevice command-line optionをC++へ生成する方法をoverrideします。
 
 ```bash
 ./generate-device-skeleton.py MyProcessor \
@@ -443,9 +443,9 @@ channelが不要なdeviceでは`--no-input-channel`、`--no-output-channel`、`-
 
 input pollingを生成する場合、skeletonは`Receive()`前にFairMQ pollerを使用します。output/DQM pollingを生成する場合は`Send()`前に`Poller::CheckOutput()`を使用します。outputは送信可能になるかstate transitionがpendingになるまでpoll-timeout単位で待ちます。DQMは即時送信できない場合sampleを破棄します。output/DQM exampleはdefaultでmultipart messageとして生成されます。single-message exampleにはgenerator option `--single-output`または`--single-dqm`を使用します。`SendOutputMessage()`と`SendDQMMessage()`は、生成された`fair::mq::Parts&`または`fair::mq::MessagePtr&` payloadを受け取り、channel readiness、`Send()`、成功/失敗確認だけを処理します。
 
-上表のoptionはgenerator optionであり、生成deviceのruntime command-line optionではありません。生成C++ custom optionはstringとして登録され、数値memberは`InitTask()`でstringを変換して代入されます。
+上表のoptionはgenerator optionであり、生成されたdeviceのcommand-line optionではありません。生成C++ custom optionはstringとして登録され、数値memberは`InitTask()`でstringを変換して代入されます。
 
-| 生成runtime option | デフォルト | 説明 |
+| 生成device command-line option | デフォルト | 説明 |
 | :-- | :-- | :-- |
 | `poll-timeout-ms` | `100` | FairMQ poll timeout（milliseconds）。 |
 | `drain-timeout-ms` | `100` | input drainで使用するreceive timeout。負値は`0`として扱う。 |

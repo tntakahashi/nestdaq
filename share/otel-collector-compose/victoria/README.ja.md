@@ -55,8 +55,8 @@ http://victoriatraces:10428/insert/opentelemetry/v1/traces
 
 ホストプロセスは上記の`localhost` endpointを使用します。同じcompose network内のNestDAQ device containerまたは`daq-webctl` containerは、OTLP gRPCには`otel-collector:4317`を、OTLP HTTPには`http://otel-collector:4318`を使用してください。
 
-<a id="3-runtime-options"></a>
-## 3. 実行時オプション
+<a id="3-environment-variables"></a>
+## 3. 環境変数
 
 | 変数 | デフォルト | 説明 |
 | :-- | :-- | :-- |

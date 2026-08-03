@@ -174,8 +174,8 @@ cmake \
 cmake --build ./build-external
 ```
 
-Redis Stack is a runtime service, not a direct library dependency. There are
-three supported ways to provide it:
+Redis Stack is an external service required while NestDAQ applications run,
+not a direct library dependency. The following ways to provide it are supported:
 
 - Build and install Redis Stack from source with the external dependency build
   shown above. This is the default when `WITH_REDIS_STACK=ON`.
@@ -209,7 +209,7 @@ rather than through the Redis 8 `redis/modules` tree.
 | Option | Default | Description |
 | :-- | :-- | :-- |
 | `BUILD_PARALLEL_LEVEL` | unset | Parallel level passed to inner `ExternalProject` builds. Set this at configure time; `cmake --build --parallel` does not control those inner builds. |
-| `WITH_REDIS_STACK` | `ON` | Build and install Redis Stack runtime components. Set to `OFF` when Redis Stack is provided separately, for example by a container. |
+| `WITH_REDIS_STACK` | `ON` | Build and install the Redis Stack server and modules. Set to `OFF` when Redis Stack is provided separately, for example by a container. |
 | `WITH_REDIS_SERVER_7` | `OFF` | Build and install Redis 7.x server with standalone RedisTimeSeries. This option is mutually exclusive with `WITH_REDIS_STACK`. |
 | `REDIS_SERVER_7_SERIES` | `7.4` | Redis 7.x series used when `WITH_REDIS_SERVER_7=ON`: `7.4` selects Redis 7.4.9 and RedisTimeSeries 1.12.14; `7.2` selects Redis 7.2.14 and RedisTimeSeries 1.10.24. |
 | `REDIS_BUILD_REDISBLOOM` | `ON` | Build and install the RedisBloom module when `WITH_REDIS_STACK` is `ON`. |
@@ -250,14 +250,15 @@ For Redis 7.x maintenance knobs, inspect
 | [opentelemetry-cpp](https://github.com/open-telemetry/opentelemetry-cpp) | 1.28.0            | `opentelemetry-cpp_VERSION`      |
 | [doxygen-awesome-css](https://github.com/jothepro/doxygen-awesome-css)   | 2.4.2             | `doxygen-awesome-css_VERSION`    |
 
-##### External runtime components
+<a id="external-runtime-components"></a>
+##### Redis Server and Modules
 Redis Stack (`redis-server`, `redis-cli`, Redis modules, etc.) is included in
 the external dependency build and is built and installed from source by default.
 The Redis modules can be disabled individually with `REDIS_BUILD_REDISBLOOM`,
 `REDIS_BUILD_REDISEARCH`, `REDIS_BUILD_REDISJSON`, and
-`REDIS_BUILD_REDISTIMESERIES`. Redis is required by the NestDAQ application at
-runtime, but it is not a direct library dependency. It may also be provided by
-a container or by the host package installer scripts. The package installer
+`REDIS_BUILD_REDISTIMESERIES`. Redis is required while NestDAQ applications
+are running, but it is not a direct library dependency. It may also be provided
+by a container or by the host package installer scripts. The package installer
 default is Redis 8.2.7 with Redis Stack modules, without RedisInsight; use the
 Redis Stack container helper or `REDIS_PACKAGE=redis-stack` with
 `REDIS_VERSION=latest` when RedisInsight is needed and the repository provides
@@ -330,13 +331,15 @@ VERBOSE=1 cmake --build ./build
 NestDAQ can export OpenTelemetry logs, metrics, and traces to an OpenTelemetry
 Collector. The repository provides optional Compose setups for local validation
 under [`share/otel-collector-compose/`](share/otel-collector-compose/README.md).
-They run runtime services such as OpenTelemetry Collector Contrib, OpenSearch,
-and OpenSearch Dashboards in containers. They are runtime tools, not build
-dependencies, and are not intended for production deployment as-is.
+They run services used for local operation, such as OpenTelemetry Collector
+Contrib, OpenSearch, and OpenSearch Dashboards, in containers. These services
+and tools are not build dependencies and are not intended for production
+deployment as-is.
 
-Runtime services can be provided either by containers or by host packages:
+External services required while NestDAQ applications run can be provided
+either by containers or by host packages:
 
-| Runtime service | Source build | Container helper | Host package installer |
+| External service | Source build | Container helper | Host package installer |
 | :-- | :-- | :-- | :-- |
 | Redis Stack | `WITH_REDIS_STACK=ON` in the external dependency build | [`share/redis-stack-container/`](share/redis-stack-container/README.md) | [`share/installers/`](share/installers/README.md) |
 | OpenTelemetry Collector Contrib | not built by NestDAQ | [`share/otel-collector-compose/`](share/otel-collector-compose/README.md) | [`share/installers/`](share/installers/README.md) |

@@ -77,10 +77,10 @@ PODMAN_USERNS="keep-id:uid=1000,gid=1000" \
 podman compose --in-pod=false -f compose-opensearch.yaml up
 ```
 
-`PODMAN_USERNS`の設定はuser namespace mappingを変更します。OpenSearch imageのruntime userは変更されず、container内では引き続き`uid=1000,gid=1000`です。
+`PODMAN_USERNS`の設定はuser namespace mappingを変更します。OpenSearch container processのuser IDは変更されず、container内では引き続き`uid=1000,gid=1000`です。
 
-<a id="5-runtime-options"></a>
-## 5. 実行時オプション
+<a id="5-environment-variables"></a>
+## 5. 環境変数
 
 | 変数 | デフォルト | 説明 |
 | :-- | :-- | :-- |

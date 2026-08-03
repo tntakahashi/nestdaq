@@ -4,9 +4,9 @@
 
 NestDAQ telemetry is an optional OpenTelemetry integration for FairMQ-based
 devices and controller processes. The application executable does not link
-OpenTelemetry directly. Instead, NestDAQ loads a single runtime plugin,
-`libnestdaq_otel.so`, with `dlopen()` and resolves a small C application binary
-interface (ABI).
+OpenTelemetry directly. Instead, NestDAQ dynamically loads a single telemetry
+plugin, `libnestdaq_otel.so`, with `dlopen()` and resolves a small C application
+binary interface (ABI).
 
 The plugin can export three OpenTelemetry signals:
 
@@ -19,7 +19,8 @@ The plugin can export three OpenTelemetry signals:
 `libnestdaq_otel.so` is built and installed only when `opentelemetry-cpp` is
 found at CMake configure time.
 
-## 1. Runtime Model
+<a id="1-runtime-model"></a>
+## 1. Telemetry Plugin Loading Model
 
 NestDAQ installs process-wide OpenTelemetry providers inside the telemetry
 plugin. FairLogger logs are captured by a process-wide custom sink. spdlog logs
@@ -27,9 +28,10 @@ are exported only from loggers that explicitly attach the NestDAQ spdlog sink.
 Metrics and traces are recorded through the NestDAQ thin wrapper API, which
 does not expose OpenTelemetry C++ headers.
 
-The runtime plugin keeps the public C ABI in `OpenTelemetryInitializer.cxx` and
+The dynamically loaded telemetry plugin keeps the public C ABI in
+`OpenTelemetryInitializer.cxx` and
 organizes the implementation internally by signal area: logs, metrics, traces,
-and shared runtime helpers. Applications should use `TelemetryLibrary`,
+and shared telemetry helpers. Applications should use `TelemetryLibrary`,
 `Telemetry`, `Counter`, `Histogram`, `Gauge`, `TelemetrySpan`, and
 `GetTelemetry()` instead of depending on those internal implementation files.
 

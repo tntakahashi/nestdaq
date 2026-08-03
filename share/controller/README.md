@@ -3,8 +3,8 @@
 [English](README.md) | [日本語](README.ja.md)
 
 This directory contains the browser assets installed for `daq-webctl`, the
-NestDAQ web controller. The controller implementation and runtime behavior are
-documented in [`controller/README.md`](../../controller/README.md).
+NestDAQ web controller. The controller implementation and behavior after
+startup are documented in [`controller/README.md`](../../controller/README.md).
 
 ## 1. `daq-webctl.html`
 

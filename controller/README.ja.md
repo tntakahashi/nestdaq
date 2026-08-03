@@ -10,8 +10,8 @@ RedisをbackendとするDAQ device制御操作を提供します。
 `daq-webctl`が配信するstatic browser assetについては、
 [`share/controller/README.md`](../share/controller/README.ja.md)に記載されています。
 
-<a id="1-runtime-role"></a>
-## 1. ランタイムでの役割
+<a id="1-controller-responsibilities"></a>
+## 1. コントローラーの役割
 
 `daq-webctl`はHTTP endpointをlistenし、設定されたdocument rootを配信して
 WebSocket clientを受け付けます。ブラウザからのcommandはRedisをbackendとする
@@ -128,13 +128,13 @@ data-channel trafficは別経路であり、`daq-webctl`を経由しません。
 `daq-webctl`は、defaultの`service.name`を`daq-webctl`として
 共通NestDAQ OpenTelemetry option helperを使用します。controllerは
 OpenTelemetryへ直接linkしません。`--otel-library`が空でなくlibraryが
-見つかる場合に、ランタイムtelemetry libraryをloadします。
+見つかる場合に、process起動時にtelemetry libraryを動的loadします。
 
 controllerでよく使用するtelemetry optionは次のとおりです。
 
 | Option | 既定値 | 説明 |
 | :-- | :-- | :-- |
-| `--otel-library` | `libnestdaq_otel.so` | runtimeにloadするtelemetry shared library pathまたはsoname。 |
+| `--otel-library` | `libnestdaq_otel.so` | process起動時に動的loadするtelemetry shared library pathまたはsoname。 |
 | `--otel-log-protocol` | `console` | comma-separated log exporter: `console`、`otlp-http`、`otlp-grpc`。空の場合はlog exportを無効にします。 |
 | `--otel-log-endpoint-grpc` | `localhost:4317` | OTLP gRPC log endpoint。 |
 | `--otel-log-endpoint-http` | `http://localhost:4318/v1/logs` | OTLP HTTP log endpoint。 |

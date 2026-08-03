@@ -2,7 +2,7 @@
 
 [English](README.md) | [日本語](README.ja.md)
 
-NestDAQテレメトリーは、FairMQベースのdeviceおよびcontroller process向けに、必要に応じて有効にできるOpenTelemetry統合です。application executableはOpenTelemetryへ直接linkしません。代わりに、NestDAQは単一のruntime plugin `libnestdaq_otel.so`を`dlopen()`で読み込み、小さなC application binary interface（ABI）を解決します。
+NestDAQテレメトリーは、FairMQベースのdeviceおよびcontroller process向けに、必要に応じて有効にできるOpenTelemetry統合です。application executableはOpenTelemetryへ直接linkしません。代わりに、NestDAQは単一のtelemetry plugin `libnestdaq_otel.so`を`dlopen()`で動的loadし、小さなC application binary interface（ABI）を解決します。
 
 pluginは3種類のOpenTelemetry signalをexportできます。
 
@@ -14,12 +14,12 @@ pluginは3種類のOpenTelemetry signalをexportできます。
 
 `libnestdaq_otel.so`は、CMake configure時に`opentelemetry-cpp`が見つかった場合にのみbuildおよびinstallされます。
 
-<a id="1-runtime-model"></a>
-## 1. 実行時モデル
+<a id="1-telemetry-plugin-loading-model"></a>
+## 1. テレメトリープラグインのloadモデル
 
 NestDAQは、telemetry plugin内にprocess全体で共有するOpenTelemetry providerをinstallします。FairLogger logはprocess全体のcustom sinkで取得されます。spdlog logは、NestDAQ spdlog sinkを明示的に接続したloggerからのみexportされます。metricsとtracesは、OpenTelemetry C++ headerを公開しないNestDAQの薄いwrapper APIを通じて記録されます。
 
-runtime pluginはpublic C ABIを`OpenTelemetryInitializer.cxx`に保持し、内部実装をlogs、metrics、traces、共通runtime helperというsignal領域別に構成します。applicationは内部実装fileへ依存せず、`TelemetryLibrary`、`Telemetry`、`Counter`、`Histogram`、`Gauge`、`TelemetrySpan`、`GetTelemetry()`を使用してください。
+動的loadされるtelemetry pluginはpublic C ABIを`OpenTelemetryInitializer.cxx`に保持し、内部実装をlogs、metrics、traces、共通telemetry helperというsignal領域別に構成します。applicationは内部実装fileへ依存せず、`TelemetryLibrary`、`Telemetry`、`Counter`、`Histogram`、`Gauge`、`TelemetrySpan`、`GetTelemetry()`を使用してください。
 
 各signalはcomma区切りのprotocol listを受け取ります。対応protocolは`console`、`otlp-http`、`otlp-grpc`です。OTLPはOpenTelemetry Protocol、HTTPはHypertext Transfer Protocol、gRPCはGoogle remote procedure callの略です。aliasの`http`、`otlp_http`、`grpc`、`otlp_grpc`もpluginで使用できます。空のprotocolはsignalを無効にします。
 
