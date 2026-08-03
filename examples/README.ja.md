@@ -109,7 +109,7 @@ A. OpenTelemetry Collector backendを起動します。
 
    backendには、ローカルCompose設定、hostへインストールした
    `otelcol-contrib` service、またはNestDAQ processから到達可能な別のcollectorを
-   使用できます。example deviceからOpenTelemetry Protocol（OTLP）dataを受信し、
+   使用できます。example deviceからOpenTelemetry Protocol(OTLP)dataを受信し、
    設定されたlog、metric、trace storageへ転送します。
 
    以下のローカル検証例ではOpenSearch Compose backendを使用します。logとtraceを
@@ -188,9 +188,9 @@ B. Redisを起動します。
    Redis Stackはcontainerでも実行できます。以下を参照してください。
    [`share/redis-stack-container/README.md`](../share/redis-stack-container/README.ja.md)
    にはDocker、Podman、volume、RedisInsight optionが記載されています。
-   RedisInsight対応Redis Stack helper（`run-redis-stack.sh`）を使用する場合、
+   RedisInsight対応Redis Stack helper(`run-redis-stack.sh`)を使用する場合、
    `http://localhost:8001`でRedisInsightを開きます。Redis Stack Serverのみの
-   helper（`run-redis-stack-server.sh`）にはRedisInsightが含まれません。
+   helper(`run-redis-stack-server.sh`)にはRedisInsightが含まれません。
 
    host package managerでRedis Stackをインストールした場合、インストール済み
    serviceを`systemd`で起動します。

@@ -8,7 +8,7 @@ pluginはshared libraryとしてbuildされます。
 
 | Plugin name | Library | 目的 |
 | --- | --- | --- |
-| `daq_service` | `libFairMQPlugin_daq_service.so` | FairMQ deviceをRedisへ登録し、health/state dataをpublishし、data acquisition（DAQ）commandを処理し、topology/channel metadataをpublishします。 |
+| `daq_service` | `libFairMQPlugin_daq_service.so` | FairMQ deviceをRedisへ登録し、health/state dataをpublishし、data acquisition(DAQ)commandを処理し、topology/channel metadataをpublishします。 |
 | `metrics` | `libFairMQPlugin_metrics.so` | process metricsおよびFairMQ channel throughput metricsをRedisとRedisTimeSeriesへpublishします。 |
 | `parameter_config` | `libFairMQPlugin_parameter_config.so` | Redisからparameterを読み取り、FairMQ program propertyへ反映します。 |
 
@@ -17,7 +17,7 @@ pluginはshared libraryとしてbuildされます。
 以下のkey patternで`{sep}`は設定されたseparatorを意味します。default separatorは`:`です。その他のplaceholderは`{service}`、`{id}`、`{channel}`、`{subindex}`です。
 
 <a id="1-time-to-live-ttl-behavior"></a>
-## 1. Time To Live（TTL）の動作
+## 1. Time To Live(TTL)の動作
 
 TTLの扱いはpluginごとに異なります。
 
@@ -36,16 +36,16 @@ TTLの扱いはpluginごとに異なります。
 | Option | デフォルト | 必須 | 説明 |
 | --- | --- | --- | --- |
 | `--service-name` | 空の場合はexecutable basename | No | Redis key pathで使用するservice name。 |
-| `--uuid` | 生成 | No | このservice instanceのuniversally unique identifier（UUID）。利用可能な場合、FairMQ device wrapperはtelemetryが生成した`service.instance.id`を再利用し、それ以外はpluginが生成します。 |
-| `--host-ip` | 検出値/設定値 | No | このservice addressとしてpublishするInternet Protocol（IP）addressまたはhostname。 |
+| `--uuid` | 生成 | No | このservice instanceのuniversally unique identifier(UUID)。利用可能な場合、FairMQ device wrapperはtelemetryが生成した`service.instance.id`を再利用し、それ以外はpluginが生成します。 |
+| `--host-ip` | 検出値/設定値 | No | このservice addressとしてpublishするInternet Protocol(IP)addressまたはhostname。 |
 | `--hostname` | 検出値/設定値 | No | health dataへpublishするhost name。 |
-| `--registry-uri` | `tcp://127.0.0.1:6379/0` | No | DAQ service registryのRedis uniform resource identifier（URI）。 |
+| `--registry-uri` | `tcp://127.0.0.1:6379/0` | No | DAQ service registryのRedis uniform resource identifier(URI)。 |
 | `--separator` | `:` | No | Redis keyを構成するときのseparator。 |
-| `--max-ttl` | `5` | No | 一時registry keyのTTL（seconds）。 |
-| `--ttl-update-interval` | `3` | No | TTL refresh interval（seconds）。 |
+| `--max-ttl` | `5` | No | 一時registry keyのTTL(seconds)。 |
+| `--ttl-update-interval` | `3` | No | TTL refresh interval(seconds)。 |
 | `--startup-state` | `idle` | No | startup state sequence target：`idle`、`initializing-device`、`initialized`、`bound`、`device-ready`、`ready`、`running`。 |
-| `--enable-uds` | `true` | No | 利用可能な場合、local inter-process communication（IPC）にUnix domain socket（UDS）を使用。 |
-| `--connect-config` | なし | No | 一時message queue（MQ）channel connection parameterを記述するJavaScript Object Notation（JSON）string。 |
+| `--enable-uds` | `true` | No | 利用可能な場合、local inter-process communication(IPC)にUnix domain socket(UDS)を使用。 |
+| `--connect-config` | なし | No | 一時message queue(MQ)channel connection parameterを記述するJavaScript Object Notation(JSON)string。 |
 | `--max-retry-to-resolve-address` | `10` | No | connect address解決の最大retry回数。 |
 
 <a id="22-daq-service-identity-defaults"></a>
@@ -73,7 +73,7 @@ FairMQの`--id` optionが設定されている場合、その値をNestDAQ servi
 | `daqctl` | pub/sub channel | JSON DAQ command message | pluginがsubscribe、controller/operatorがpublish | controller commandを受信。 |
 
 <a id="24-daq-command-publishsubscribe-pubsub"></a>
-### 2.4. DAQ commandのPublish/Subscribe（Pub/Sub）
+### 2.4. DAQ commandのPublish/Subscribe(Pub/Sub)
 
 `daq_service`は`daqctl`をsubscribeし、対象に一致するcommand messageをlocal service instanceのFairMQ state transitionへ変換します。controllerや他のoperatorはこのchannelへcommand messageをpublishします。
 
@@ -303,7 +303,7 @@ sequenceDiagram
 bind channelは最初にlocal addressをpublishします。connect channelはpeer bind channelが`bound=1`になるのを待ち、Redisからpeer socket addressを解決し、結果をFairMQ `chans.*` propertyへ書き込みます。`waitForPeerConnection=false`のbind channelは最後のpeer-ready waitを省略します。resetまたはcancellationはwait stepを中断します。
 
 <a id="26-ttl-details-daq_service"></a>
-### 2.6. TTLの詳細（daq_service）
+### 2.6. TTLの詳細(daq_service)
 
 `daq_service`はseconds単位の`--max-ttl`を使用し、defaultは`5` secondsです。`--ttl-update-interval`はpluginがTTLをrefreshする頻度を制御し、default refresh intervalは`3` secondsです。
 
@@ -345,18 +345,18 @@ TTL expiration自体にRedis keyspace notificationは不要ですが、`daq-webc
 <a id="3-metrics"></a>
 ## 3. metrics
 
-`metrics`はprocess-level metricsとFairMQ channel throughput metricsをpublishします。process central processing unit（CPU）usageはtop/htop形式で、1 CPU coreを完全に使用すると約`100`、2 coreなら約`200`です。memory usageはmebibytes（MiB）単位のcurrent resident set size（RSS）です。
+`metrics`はprocess-level metricsとFairMQ channel throughput metricsをpublishします。process central processing unit(CPU)usageはtop/htop形式で、1 CPU coreを完全に使用すると約`100`、2 coreなら約`200`です。memory usageはmebibytes(MiB)単位のcurrent resident set size(RSS)です。
 
 <a id="31-command-line-options"></a>
 ### 3.1. コマンドラインオプション
 
 | Option | デフォルト | 必須 | 説明 |
 | --- | --- | --- | --- |
-| `--proc-stat-update-interval` | `1000` | No | process CPU/memory metricsのupdate interval（milliseconds）。 |
+| `--proc-stat-update-interval` | `1000` | No | process CPU/memory metricsのupdate interval(milliseconds)。 |
 | `--metrics-uri` | なし | No | metrics用Redis URI。空の場合は`--registry-uri`を使用。 |
-| `--retention` | `0` | No | RedisTimeSeries retention（milliseconds）。`0`はtrimなし。 |
+| `--retention` | `0` | No | RedisTimeSeries retention(milliseconds)。`0`はtrimなし。 |
 | `--recreate-ts` | `true` | No | `Running`へのtransition時にRedisTimeSeries keyを再作成。 |
-| `--metrics-max-ttl` | `3000` | No | metrics fieldの最大TTL（milliseconds）。0以下ならTTL cleanupなし。 |
+| `--metrics-max-ttl` | `3000` | No | metrics fieldの最大TTL(milliseconds)。0以下ならTTL cleanupなし。 |
 
 <a id="32-redis-keys-written-or-read"></a>
 ### 3.2. 書き込みまたは読み取りを行うRedis key
@@ -390,7 +390,7 @@ data[0]: in: 123 (4.5 MB) out: 67 (8.9 MB)
 channel throughput metricsにはindex付きsubchannel recordだけを使用します。
 
 <a id="33-ttl-and-retention-details-metrics"></a>
-### 3.3. TTLと保持期間の詳細（metrics）
+### 3.3. TTLと保持期間の詳細(metrics)
 
 `--metrics-max-ttl`はRedis key TTLではなくmilliseconds単位のstale field cleanup thresholdです。pluginは`metrics{sep}last-update-ns`を読み、最終updateがthresholdより古いinstanceを見つけ、登録済みmetric hashからそのfieldを`HDEL`で削除します。`--metrics-max-ttl`が0以下なら、このcleanupは無効です。
 
@@ -424,6 +424,6 @@ string keyは最後のpath componentをoption nameとして使用します。has
 live reloadにはRedis serverでkeyspace notificationを有効にする必要があります。初期parameter loadにはkeyspace notificationは不要です。
 
 <a id="43-ttl-details-parameter_config"></a>
-### 4.3. TTLの詳細（parameter_config）
+### 4.3. TTLの詳細(parameter_config)
 
 `parameter_config`はparameter keyに対して`EXPIRE`、`SETEX`、`DEL`を呼びません。parameter keyを読み、live reload用にkeyspace notificationをsubscribeするだけです。parameter keyをexpireさせる場合は、そのkeyのwriterがTTLを設定する必要があります。

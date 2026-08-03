@@ -10,7 +10,7 @@
 
 - [`opensearch/`](opensearch/README.ja.md): OpenSearchにログとトレースを保存し、OpenSearch Dashboardsで表示します。
 - [`victoria/`](victoria/README.ja.md): 実験的で、まだ十分に検証されていません。VictoriaLogs、VictoriaMetrics、VictoriaTracesにログ、メトリクス、トレースを保存し、Grafanaで表示します。
-- [`clickhouse/`](clickhouse/README.ja.md): 実験的で、まだ十分に検証されていません。ClickStackにログ、メトリクス、トレースを保存し、ClickStackユーザーインターフェース（UI）で表示します。
+- [`clickhouse/`](clickhouse/README.ja.md): 実験的で、まだ十分に検証されていません。ClickStackにログ、メトリクス、トレースを保存し、ClickStackユーザーインターフェース(UI)で表示します。
 
 <a id="1-start"></a>
 ## 1. 起動
@@ -82,4 +82,4 @@ OTLP HTTPでは、`/v1/logs`、`/v1/metrics`、`/v1/traces`など、テレメト
 
 すべてのスタックは固定されたデフォルトのimageを使用し、バックエンドのREADMEに記載された環境変数で上書きできます。
 
-Security-Enhanced Linux（SELinux）が有効なシステムでは、Composeファイルがbind mountされたパスに`:Z`ラベルオプションを適用します。
+Security-Enhanced Linux(SELinux)が有効なシステムでは、Composeファイルがbind mountされたパスに`:Z`ラベルオプションを適用します。

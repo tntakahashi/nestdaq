@@ -224,7 +224,7 @@ Redis 8の`redis/modules`ツリー経由ではなくスタンドアロンモジ�
 別のCMake経路を使用します。
 
 - 上記のコマンド例では、CMakeの`ExternalProject`を使用して`git clone`、ビルド、インストールを行います。
-  - この場合、cmake --buildに渡す`--parallel`（または`-j`）オプションでは内部のExternalProjectビルドを制御できません。そのため、初回構成時に`-DBUILD_PARALLEL_LEVEL=xxx`を使用して並列ビルド数を指定してください。
+  - この場合、cmake --buildに渡す`--parallel`(または`-j`)オプションでは内部のExternalProjectビルドを制御できません。そのため、初回構成時に`-DBUILD_PARALLEL_LEVEL=xxx`を使用して並列ビルド数を指定してください。
     - `nproc`コマンドは、システムで使用可能なCPUコア数を表示します。メモリー使用量が過大になる場合は、より小さい値を手動で指定してください。
 - 依存関係のデフォルトバージョンを以下に示します。バージョンを上書きするには、CMakeに`-Dxxxx_VERSION=yyyy`を渡します。
 - 外部依存関係の構成時にDoxygenが見つかった場合、ドキュメント表示用の追加ファイルとして`doxygen-awesome-css`を`./install/share/doxygen-awesome-css`以下にインストールします。
@@ -267,7 +267,7 @@ Redis 7.xの保守用設定については`cmake/dependencies/redis-server-7.cma
 <a id="versions-of-installed-external-dependencies"></a>
 ### インストールされる外部依存関係のバージョン
 
-| パッケージ                                                               | バージョン（デフォルト） | バージョン変更用CMakeオプション |
+| パッケージ                                                               | バージョン(デフォルト) | バージョン変更用CMakeオプション |
 | :--                                                                      | :--                      | :--                              |
 | [ZeroMQ(libzmq)](https://github.com/zeromq/libzmq)                       | 4.3.5                    | `ZeroMQ_VERSION`                 |
 | [Boost](https://github.com/boostorg/boost)                               | 1.85.0                   | `Boost_VERSION`                  |
@@ -284,7 +284,7 @@ Redis 7.xの保守用設定については`cmake/dependencies/redis-server-7.cma
 <a id="redis-server-and-modules"></a>
 ##### Redis serverとmodule
 
-Redis Stack（`redis-server`、`redis-cli`、Redis modulesなど）は外部依存関係
+Redis Stack(`redis-server`、`redis-cli`、Redis modulesなど)は外部依存関係
 ビルドに含まれ、デフォルトではソースからビルドしてインストールします。
 Redisモジュールは`REDIS_BUILD_REDISBLOOM`、`REDIS_BUILD_REDISEARCH`、
 `REDIS_BUILD_REDISJSON`、`REDIS_BUILD_REDISTIMESERIES`を使用して個別に
@@ -303,7 +303,7 @@ RediSearchが`<ranges>`などのC++20機能を使用するため、
 デフォルトのRedisモジュールバージョンは、Redis 8.2.7ソースツリーが選択するモジュールの
 リリースタグに従います。
 
-| パッケージ                                                               | バージョン（デフォルト） | CMakeオプション |
+| パッケージ                                                               | バージョン(デフォルト) | CMakeオプション |
 | :--                                                                      | :--                      | :--             |
 | [Redis](https://github.com/redis/redis)                                  | 8.2.7                    | `Redis_VERSION` |
 | [RedisBloom](https://github.com/RedisBloom/RedisBloom)                   | 8.2.12                   | `RedisBloom_VERSION`, `REDIS_BUILD_REDISBLOOM` |
@@ -327,7 +327,7 @@ cmake --install ./build
 ```
 
 - 上記の例では、NestDAQメインパッケージと外部依存関係の両方を同じディレクトリ
-  （`./install`）にインストールします。外部依存関係を別の場所にインストールした
+  (`./install`)にインストールします。外部依存関係を別の場所にインストールした
   場合は、`-DCMAKE_PREFIX_PATH=xxx`でそのディレクトリを指定してください。
 - `doxygen-awesome-css`が利用できる場合、生成したドキュメントとともに
   `./install/share/doc/nestdaq/doxygen-awesome-css`へインストールします。
@@ -405,9 +405,9 @@ Podmanでは、同じComposeファイルを`podman compose`で使用します。
   Grafanaで表示します。
 - [`clickhouse/`](share/otel-collector-compose/clickhouse/README.ja.md):
   ログ、メトリクス、トレースをClickStack/ClickHouseへ保存し、ClickStackユーザーインターフェース
-  （UI）で表示します。
+  (UI)で表示します。
 
-デフォルトでは、ComposeスタックはOpenTelemetry Protocol（OTLP）gRPCを
+デフォルトでは、ComposeスタックはOpenTelemetry Protocol(OTLP)gRPCを
 `localhost:4317`、OTLP HTTPを`localhost:4318`で公開します。ポート、ボリューム、
 認証情報、SELinux、rootless Podmanに関する注意事項は、
 [`share/otel-collector-compose/README.ja.md`](share/otel-collector-compose/README.ja.md)

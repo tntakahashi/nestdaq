@@ -6,7 +6,7 @@
 
 scriptは`latest`ではなく固定されたimage tagを使用します。
 
-- 開発用Redis Stack（RedisInsightを含む）: `docker.io/redis/redis-stack:7.4.0-v8`
+- 開発用Redis Stack(RedisInsightを含む): `docker.io/redis/redis-stack:7.4.0-v8`
 - production向けRedis Stack Serverのみ: `docker.io/redis/redis-stack-server:7.4.0-v8`
 - 公式Redis 8.2.7 image: `docker.io/library/redis:8.2.7`
 - RedisInsightを含むRedis Stack 7.2: `docker.io/redis/redis-stack:7.2.0-v20`
@@ -106,7 +106,7 @@ dataはscriptの隣にある`redis-stack-server-data`からcontainer内の`/data
 同名のcontainerがすでに存在する場合にscriptを失敗させるには、`REDIS_CONTAINER_REPLACE=0`を設定します。
 
 <a id="7-security-enhanced-linux-selinux"></a>
-## 7. Security-Enhanced Linux（SELinux）
+## 7. Security-Enhanced Linux(SELinux)
 
 SELinux label optionは`REDIS_VOLUME_MODE=bind`の場合に限り使用されます。SELinuxが有効なhostでcontainerがdata directoryへ書き込めるよう、bind mountではデフォルトで`:Z` label optionを使用します。同じdata directoryを複数のcontainerで共有する必要がある場合は、`REDIS_VOLUME_LABEL=z`を設定します。label optionを完全に省略するには、`REDIS_VOLUME_LABEL=`を設定します。RedisInsightを含むhelperでは、RedisとRedisInsightの両方のbind mountに同じlabel optionが適用されます。
 
@@ -115,7 +115,7 @@ SELinux label optionは`REDIS_VOLUME_MODE=bind`の場合に限り使用されま
 
 デフォルトでは、scriptを実行したhost userとしてbind mount用data directoryを作成し、directory permissionは変更しません。rootless Podmanでは通常、container rootがcontainerを実行するhost userに対応付けられるため、作成されたdirectoryは追加のpermission変更なしで書き込み可能です。
 
-SELinux labelingとUnix permissionは別のものです。`:Z` mount labelはSELinuxが有効なhostでcontainerからdirectoryへのaccessを許可しますが、user identifier/group identifier（uid/gid）のpermission不一致は解消しません。rootful containerは、bind mountしたdirectoryにhost root所有のfileを作成する場合があります。bind mountしたdirectoryに書き込めない場合は、このhelper scriptの外部でhost側のownershipまたはpermissionを明示的に調整してください。
+SELinux labelingとUnix permissionは別のものです。`:Z` mount labelはSELinuxが有効なhostでcontainerからdirectoryへのaccessを許可しますが、user identifier/group identifier(uid/gid)のpermission不一致は解消しません。rootful containerは、bind mountしたdirectoryにhost root所有のfileを作成する場合があります。bind mountしたdirectoryに書き込めない場合は、このhelper scriptの外部でhost側のownershipまたはpermissionを明示的に調整してください。
 
 <a id="9-named-volumes"></a>
 ## 9. 名前付きボリューム

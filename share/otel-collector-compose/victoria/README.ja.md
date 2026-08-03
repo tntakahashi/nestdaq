@@ -1,4 +1,4 @@
-# Victoria OpenTelemetry（OTel）バックエンド
+# Victoria OpenTelemetry(OTel)バックエンド
 
 [English](README.md) | [日本語](README.ja.md)
 
@@ -23,7 +23,7 @@ podman compose -f compose-victoria.yaml up
 <a id="1-components"></a>
 ## 1. コンポーネント
 
-- `otel-collector`: OpenTelemetry Protocol（OTLP）のログ、メトリクス、トレースを受信します。
+- `otel-collector`: OpenTelemetry Protocol(OTLP)のログ、メトリクス、トレースを受信します。
 - `victoriametrics`: メトリクスを保存します。
 - `victorialogs`: ログを保存します。
 - `victoriatraces`: トレースを保存します。
@@ -50,8 +50,8 @@ http://victoriatraces:10428/insert/opentelemetry/v1/traces
 - VictoriaLogs: `http://localhost:9428`
 - VictoriaTraces: `http://localhost:10428`
 - Grafana: `http://localhost:3000`
-- OTLP Google remote procedure call（gRPC）receiver: `localhost:4317`
-- OTLP Hypertext Transfer Protocol（HTTP）receiver: `http://localhost:4318`
+- OTLP Google remote procedure call(gRPC)receiver: `localhost:4317`
+- OTLP Hypertext Transfer Protocol(HTTP)receiver: `http://localhost:4318`
 
 ホストプロセスは上記の`localhost` endpointを使用します。同じcompose network内のNestDAQ device containerまたは`daq-webctl` containerは、OTLP gRPCには`otel-collector:4317`を、OTLP HTTPには`http://otel-collector:4318`を使用してください。
 

@@ -2,15 +2,15 @@
 
 [English](README.md) | [日本語](README.ja.md)
 
-NestDAQテレメトリーは、FairMQベースのdeviceおよびcontroller process向けに、必要に応じて有効にできるOpenTelemetry統合です。application executableはOpenTelemetryへ直接linkしません。代わりに、NestDAQは単一のtelemetry plugin `libnestdaq_otel.so`を`dlopen()`で動的loadし、小さなC application binary interface（ABI）を解決します。
+NestDAQテレメトリーは、FairMQベースのdeviceおよびcontroller process向けに、必要に応じて有効にできるOpenTelemetry統合です。application executableはOpenTelemetryへ直接linkしません。代わりに、NestDAQは単一のtelemetry plugin `libnestdaq_otel.so`を`dlopen()`で動的loadし、小さなC application binary interface(ABI)を解決します。
 
 pluginは3種類のOpenTelemetry signalをexportできます。
 
 | Signal | デフォルト | NestDAQ内のsource |
 | --- | --- | --- |
 | Logs | `console` exporter | FairLogger custom sink、有効化した場合のspdlog sink |
-| Metrics | 無効 | `nestdaq::telemetry::Telemetry` counter/histogram/gauge application programming interface（API） |
-| Traces | 無効 | `nestdaq::telemetry::TelemetrySpan` resource acquisition is initialization（RAII）API |
+| Metrics | 無効 | `nestdaq::telemetry::Telemetry` counter/histogram/gauge application programming interface(API) |
+| Traces | 無効 | `nestdaq::telemetry::TelemetrySpan` resource acquisition is initialization(RAII)API |
 
 `libnestdaq_otel.so`は、CMake configure時に`opentelemetry-cpp`が見つかった場合にのみbuildおよびinstallされます。
 
@@ -42,7 +42,7 @@ logs、metrics、tracesは1つのOpenTelemetry resourceを共有します。Nest
 | `fairmq.session` | NestDAQ/FairMQ custom | FairMQ session。 |
 | `fairmq.transport` | NestDAQ/FairMQ custom | FairMQ transport。 |
 
-詳細なNestDAQおよびFairMQのbuild/git metadataはresource attributeではなく、構造化したstartup log bodyとして出力されます。OpenTelemetry software development kit（SDK）は独自のSDK resource attributeを別途追加する場合があります。この表はNestDAQが明示的に設定するattributeを示します。
+詳細なNestDAQおよびFairMQのbuild/git metadataはresource attributeではなく、構造化したstartup log bodyとして出力されます。OpenTelemetry software development kit(SDK)は独自のSDK resource attributeを別途追加する場合があります。この表はNestDAQが明示的に設定するattributeを示します。
 
 <a id="3-fairlogger-log-records"></a>
 ## 3. FairLoggerログレコード
@@ -185,20 +185,20 @@ OpenTelemetryは正規化したlog levelをLogRecordの`SeverityNumber`および
 | `--otel-trace-headers` | `NESTDAQ_OTEL_TRACE_HEADERS` | 空 | comma区切りの`key=value` trace exporter header。 |
 | `--otel-log-severity` | `NESTDAQ_OTEL_LOG_SEVERITY` | `info` | exportするFairLoggerの最低severity。 |
 | `--otel-log-required` | `NESTDAQ_OTEL_LOG_REQUIRED` | `false` | telemetryをloadまたは初期化できない場合に起動失敗とする。 |
-| `--otel-timeout-ms` | なし | `5000` | force-flush、shutdown、exporter timeout（milliseconds）。 |
+| `--otel-timeout-ms` | なし | `5000` | force-flush、shutdown、exporter timeout(milliseconds)。 |
 | `--spdlog-console-pattern` | `NESTDAQ_SPDLOG_CONSOLE_PATTERN` | `[%Y-%m-%d %H:%M:%S.%e] [%n] [%l] %v` | spdlog native console sink pattern。 |
 | `--spdlog-native-console` | `NESTDAQ_SPDLOG_NATIVE_CONSOLE` | `true` | OTel spdlog sinkとは独立してspdlog native console outputを有効化。 |
 | `--spdlog-async` | `NESTDAQ_SPDLOG_ASYNC` | `false` | NestDAQ helper loggerに`spdlog::async_logger`を使用。 |
 | `--spdlog-async-queue-size` | `NESTDAQ_SPDLOG_ASYNC_QUEUE_SIZE` | `8192` | async spdlog helper loggerのqueue size。 |
 | `--spdlog-async-thread-count` | `NESTDAQ_SPDLOG_ASYNC_THREAD_COUNT` | `1` | async spdlog helper loggerのworker thread count。 |
 | `--spdlog-async-overflow-policy` | `NESTDAQ_SPDLOG_ASYNC_OVERFLOW_POLICY` | `block` | queue overflow policy：`block`、`overrun_oldest`、`discard_new`。 |
-| `--otel-metric-export-interval-ms` | なし | `1000` | 定期metric export interval（milliseconds）。 |
-| `--otel-log-http-json` | なし | `true` | OTLP HTTP logsでJavaScript Object Notation（JSON）content typeを使用。 |
+| `--otel-metric-export-interval-ms` | なし | `1000` | 定期metric export interval(milliseconds)。 |
+| `--otel-log-http-json` | なし | `true` | OTLP HTTP logsでJavaScript Object Notation(JSON)content typeを使用。 |
 | `--otel-metric-http-json` | なし | `true` | OTLP HTTP metricsでJSON content typeを使用。 |
 | `--otel-trace-http-json` | なし | `true` | OTLP HTTP tracesでJSON content typeを使用。 |
 | `--otel-service-name` | なし | caller default | `service.name` resource attribute。FairMQ device wrapperは`--service-name`をdefaultとし、`--service-name`未設定時はexecutable basenameを使用します。collector pipelineがOpenSearch index nameにこの値を使用する場合があるため、NestDAQはASCII uppercase letterをlowercaseへ変換します。 |
 | `--otel-service-namespace` | なし | `nestdaq` | `service.namespace` resource attribute。 |
-| `--otel-service-instance-id` | なし | 生成したuniversally unique identifier（UUID） | `service.instance.id` resource attribute。FairMQ device wrapperは、このoption未設定時に`--uuid`を使用し、それ以外の場合はUUIDを生成します。 |
+| `--otel-service-instance-id` | なし | 生成したuniversally unique identifier(UUID) | `service.instance.id` resource attribute。FairMQ device wrapperは、このoption未設定時に`--uuid`を使用し、それ以外の場合はUUIDを生成します。 |
 | `--otel-fairmq-id` | なし | 空 | `fairmq.id` resource attribute。 |
 | `--otel-fairmq-device` | なし | 空 | `fairmq.device` resource attribute。 |
 | `--otel-fairmq-session` | なし | 空 | `fairmq.session` resource attribute。 |

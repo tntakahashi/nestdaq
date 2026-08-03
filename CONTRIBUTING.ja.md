@@ -16,6 +16,33 @@
 - 自身のfork内の作業ブランチから、upstreamの`develop`ブランチを対象としてPull RequestまたはDraft Pull Requestを作成してください。
 - 変更が最終レビューの準備段階にない場合でも、早期のフィードバックが有用であればDraft Pull Requestを使用してください。
 
+upstream repositoryはNestDAQの基準となるrepositoryです。forkは自身のGitHub accountに
+置くcopyであり、自身がpushするbranchを保持します。local PC上のcloneは、branchを
+checkoutしてfileの編集、build、checkを行う作業用copyです。
+
+```mermaid
+flowchart LR
+  subgraph Upstream["Upstream repository<br/>spadi-alliance/nestdaq"]
+    UpstreamDevelop["develop branch"]
+  end
+
+  subgraph Fork["自身のGitHub fork<br/>your-account/nestdaq"]
+    ForkDevelop["develop branch"]
+    ForkWorking["working branch"]
+  end
+
+  subgraph Local["Local PC<br/>作業用clone"]
+    LocalClone["自身のforkのclone"]
+    LocalWorking["checkoutしたworking branch"]
+  end
+
+  UpstreamDevelop -->|forkまたは同期| ForkDevelop
+  ForkDevelop -->|git clone| LocalClone
+  LocalClone -->|git checkout -b| LocalWorking
+  LocalWorking -->|git push| ForkWorking
+  ForkWorking -->|Pull Request| UpstreamDevelop
+```
+
 <a id="commits-and-pull-requests"></a>
 ## コミットとPull Request
 
@@ -59,8 +86,8 @@
 - `using` aliasは命名規則の対象外です。局所的な可読性、外部libraryの規約、または一般的な短縮形に従って構いません。
 - `public struct`のdata field: `snake_case`。
 - `private`および`protected`の`class` data member: `fPascalCase`。
-- `static` data member: `fg`で開始します（例: `fgPascalCase`）。
-- `static` variable: `g`で開始します（例: `gPascalCase`）。
+- `static` data member: `fg`で開始します(例: `fgPascalCase`)。
+- `static` variable: `g`で開始します(例: `gPascalCase`)。
 - constant: `k`で開始する`kPascalCase`、または`SCREAMING_SNAKE_CASE`を使用します。
 - macro名: `SCREAMING_SNAKE_CASE`。
 - enum constant: `kPascalCase`、`PascalCase` / `UpperCamelCase`、または`SCREAMING_SNAKE_CASE`。

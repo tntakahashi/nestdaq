@@ -1,10 +1,10 @@
-# データ収集（DAQ）Webコントローラー実装
+# データ収集(DAQ)Webコントローラー実装
 
 [English](README.md) | [日本語](README.ja.md)
 
 このディレクトリには、NestDAQ web controller process `daq-webctl`の
-実装があります。ブラウザuser interface（UI）用Hypertext Transfer
-Protocol（HTTP）server、対話的client用WebSocket session、および
+実装があります。ブラウザuser interface(UI)用Hypertext Transfer
+Protocol(HTTP)server、対話的client用WebSocket session、および
 RedisをbackendとするDAQ device制御操作を提供します。
 
 `daq-webctl`が配信するstatic browser assetについては、
@@ -28,10 +28,10 @@ DAQ制御操作に変換され、state updateは接続中のWebSocket clientへ�
 | :-- | :-- |
 | `run_daq-webctl.cxx` | executable entry point、command-line parsing、logging、telemetry、Redis設定、server起動。 |
 | `HttpWebSocketServer` | Boost.Asio I/O context、signal handling、listener、worker threadを所有します。 |
-| `Listener` | Transmission Control Protocol（TCP）connectionを受け付け、HTTP sessionを開始します。 |
+| `Listener` | Transmission Control Protocol(TCP)connectionを受け付け、HTTP sessionを開始します。 |
 | `HttpSession` | HTTP requestを処理し、WebSocket requestをupgradeします。 |
 | `WebSocketSession` | 1つのWebSocket client connectionを管理します。 |
-| `WebSocketHandle` | WebSocket clientから受信したJavaScript Object Notation（JSON）messageをdispatchします。 |
+| `WebSocketHandle` | WebSocket clientから受信したJavaScript Object Notation(JSON)messageをdispatchします。 |
 | `WebGui` | RedisをbackendとするDAQ制御、state polling、command publishを実装します。 |
 | `beast_tools` | 共通のBoost.Beast HTTP response helperを提供します。 |
 | `DaqWebControlDefaultDocRootPath.h.in` | `--doc-root`で使用する、インストール済みdefault document root pathを生成します。 |
@@ -98,7 +98,7 @@ data-channel trafficは別経路であり、`daq-webctl`を経由しません。
 `daq-webctl`は以下のoptionを受け付けます。OpenTelemetry optionも、
 `daq-webctl` component用の共通NestDAQ telemetry option helperを通じて
 利用できます。`--otel-service-instance-id`を指定しない場合、
-`daq-webctl`は生成したuniversally unique identifier（UUID）をOpenTelemetryの
+`daq-webctl`は生成したuniversally unique identifier(UUID)をOpenTelemetryの
 `service.instance.id` resource attributeへ記録します。OpenTelemetry optionの
 完全な一覧は
 [`nestdaq/telemetry/README.md`](../nestdaq/telemetry/README.ja.md)を参照してください。
@@ -106,7 +106,7 @@ data-channel trafficは別経路であり、`daq-webctl`を経由しません。
 | Option | 既定値 | 説明 |
 | :-- | :-- | :-- |
 | `--help`, `-h` | none | command-line helpを表示して終了します。 |
-| `--http-uri` | `http://0.0.0.0:8080` | `scheme://address:port`形式のHTTP server uniform resource identifier（URI）。 |
+| `--http-uri` | `http://0.0.0.0:8080` | `scheme://address:port`形式のHTTP server uniform resource identifier(URI)。 |
 | `--threads` | `1` | HTTP server worker thread数。 |
 | `--doc-root` | installed controller document root | HTMLとstatic fileを配信するdirectory。 |
 | `--pre-run` | `echo "pre-run command"` | `RUN`をpublishする前に実行するscript pathまたはcommand line。 |
@@ -178,7 +178,7 @@ attributeの詳細は
 ## 6. Redisコマンドインターフェース
 
 `daq-webctl`は`daq_service` pluginが実装するRedis command interfaceを
-使用します。DAQ command key、`daqctl` Publish/Subscribe（Pub/Sub）channel、
+使用します。DAQ command key、`daqctl` Publish/Subscribe(Pub/Sub)channel、
 message形式、受け付けるcommand value、`RUN`/`STOP` sequenceについては
 [`plugins/README.md`](../plugins/README.ja.md#24-daq-command-publishsubscribe-pubsub)
 に記載されています。

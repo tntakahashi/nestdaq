@@ -22,6 +22,34 @@ to NestDAQ.
 - Use Draft Pull Requests when the change is not ready for final review but
   early feedback is useful.
 
+The upstream repository is the canonical NestDAQ repository. Your fork is your
+personal GitHub copy and holds branches that you push. The local clone on your
+PC is the working copy where you check out a branch, edit files, build, and run
+checks.
+
+```mermaid
+flowchart LR
+  subgraph Upstream["Upstream repository<br/>spadi-alliance/nestdaq"]
+    UpstreamDevelop["develop branch"]
+  end
+
+  subgraph Fork["Your GitHub fork<br/>your-account/nestdaq"]
+    ForkDevelop["develop branch"]
+    ForkWorking["working branch"]
+  end
+
+  subgraph Local["Local PC<br/>working clone"]
+    LocalClone["clone of your fork"]
+    LocalWorking["checked-out working branch"]
+  end
+
+  UpstreamDevelop -->|fork or synchronize| ForkDevelop
+  ForkDevelop -->|git clone| LocalClone
+  LocalClone -->|git checkout -b| LocalWorking
+  LocalWorking -->|git push| ForkWorking
+  ForkWorking -->|Pull Request| UpstreamDevelop
+```
+
 ## Commits and Pull Requests
 
 - Avoid combining several unrelated changes into one large commit.

@@ -5,7 +5,7 @@
 pluginの使用方法を示すexample集です。scriptは任意のdirectoryへcopyできます。scriptを実行する前にRedis serverを起動する必要があります。
 
 <a id="1-helper-script-to-launch-a-data-acquisition-daq-process"></a>
-## 1. データ収集（DAQ）プロセス起動用ヘルパースクリプト
+## 1. データ収集(DAQ)プロセス起動用ヘルパースクリプト
 
 <a id="11-start_devicesh"></a>
 ### 1.1. start_device.sh
@@ -54,7 +54,7 @@ var+=$CONFIG_PLUGIN
 
 `-P`はloadするpluginを選択します。plugin load orderは最終command line上の`-P` optionの順序に従います。生成済み`start_device.sh`は`daq_service`、`metrics`、`parameter_config`の順で渡します。`-S`の後へdirectoryを追加するとsearch priorityは変わりますが、loadするpluginやload orderは変わりません。それらは`-P` entryで制御されます。
 
-生成済みscriptはOpenTelemetry（OTel）logをOpenTelemetry Protocol（OTLP）gRPCでlocal OpenTelemetry Collectorへ送信します。default endpointは`localhost:4317`で、`NESTDAQ_OTLP_GRPC_ENDPOINT`により変更できます。
+生成済みscriptはOpenTelemetry(OTel)logをOpenTelemetry Protocol(OTLP)gRPCでlocal OpenTelemetry Collectorへ送信します。default endpointは`localhost:4317`で、`NESTDAQ_OTLP_GRPC_ENDPOINT`により変更できます。
 
 scriptはOTel log optionを次のように構築します。
 
@@ -101,7 +101,7 @@ NESTDAQ_FAIRLOGGER_CONSOLE_SEVERITY=debug4 NESTDAQ_START_DEVICE_OTEL_LOG_SEVERIT
   ./start_device.sh /your-fairmq-install-path/bin/fairmq-splitter
 ```
 
-別のservice name（`A-Sampler`）で`Sampler`を起動し、`ConditionalRun()`の実行rateを1秒に1回へ制限する例です。
+別のservice name(`A-Sampler`)で`Sampler`を起動し、`ConditionalRun()`の実行rateを1秒に1回へ制限する例です。
 
 ```bash
 ./start_device.sh Sampler --service-name A-Sampler --rate 1
@@ -155,9 +155,9 @@ endpoint parameterのdefault valueは次のとおりです。
 | portRangeMin | 22000 |
 | portRangeMax | 32000 |
 | autoBind | true |
-| numSockets | 0（pluginが自動計算） |
+| numSockets | 0(pluginが自動計算) |
 | autoSubChannel | false |
-| bound | （userは設定しない） |
+| bound | (userは設定しない) |
 | waitForPeerConnection | true |
 
 最後の3 parameterはNestDAQ固有で、その他はFairMQで定義されています。
@@ -321,7 +321,7 @@ structured group/instance parameter keyを含む全Redis key patternは、[`plug
 <a id="4-device-skeleton-generation"></a>
 ## 4. デバイススケルトン生成
 
-`generate-device-skeleton.py`はscriptに組み込まれたtemplateから最小構成のNestDAQ FairMQ device projectを作成します。defaultではinput、output、data quality monitor（DQM）channel codeを生成し、各channel nameに`in`、`out`、`dqm`を使用します。
+`generate-device-skeleton.py`はscriptに組み込まれたtemplateから最小構成のNestDAQ FairMQ device projectを作成します。defaultではinput、output、data quality monitor(DQM)channel codeを生成し、各channel nameに`in`、`out`、`dqm`を使用します。
 
 ```bash
 ./generate-device-skeleton.py MyDevice --output ./MyDevice
@@ -447,7 +447,7 @@ input pollingを生成する場合、skeletonは`Receive()`前にFairMQ poller�
 
 | 生成device command-line option | デフォルト | 説明 |
 | :-- | :-- | :-- |
-| `poll-timeout-ms` | `100` | FairMQ poll timeout（milliseconds）。 |
+| `poll-timeout-ms` | `100` | FairMQ poll timeout(milliseconds)。 |
 | `drain-timeout-ms` | `100` | input drainで使用するreceive timeout。負値は`0`として扱う。 |
 | `drain-max-timeout-count` | `20` | 最後にdrainしたmessage以降、この回数だけ連続でreceive timeoutしたらinput drainを停止。正値必須。 |
 

@@ -52,7 +52,7 @@ module source treeを展開するために`FetchContent`も使用します。
 | `dependencies/opentelemetry-cpp.cmake` | opentelemetry-cppと、選択した機能に応じたtransport dependencyをビルドします。 |
 | `dependencies/spdlog.cmake` | spdlogをビルドします。C++17 dependency buildでは、`dependencies/fmt.cmake`を通じて`fmt`も取得します。 |
 | `dependencies/fmt.cmake` | spdlogで必要な場合、またはdependency optionで明示的に選択した場合にfmtをビルドします。 |
-| `dependencies/redis-stack.cmake` | Redis 8以降向けRedis Stack component（Redis、RedisBloom、RediSearch、RedisJSON、RedisTimeSeries）をビルドします。defaultのRedis 8.2.7 module versionはRedis 8.2.7自身が選択しているrelease tagに従います。 |
+| `dependencies/redis-stack.cmake` | Redis 8以降向けRedis Stack component(Redis、RedisBloom、RediSearch、RedisJSON、RedisTimeSeries)をビルドします。defaultのRedis 8.2.7 module versionはRedis 8.2.7自身が選択しているrelease tagに従います。 |
 | `dependencies/redis-server-7.cmake` | standalone RedisTimeSeriesとともにRedis 7.x serverをビルドします。defaultでは、Redis 7.4はRedis 7.4.9とRedisTimeSeries 1.12.14を使用し、Redis 7.2はRedis 7.2.14とRedisTimeSeries 1.10.24を使用します。 |
 | `dependencies/doxygen-awesome-css.cmake` | 生成ドキュメントで使用するdoxygen-awesome-css assetをビルドまたはインストールします。 |
 | `dependencies/patch_redisearch.cmake` | Redis Stack dependency build中に、ローカルのRediSearch CMake互換patchを適用します。 |
