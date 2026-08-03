@@ -10,37 +10,80 @@
 - `main`ブランチには、NestDAQの最新リリース版が含まれます。
 - `develop`ブランチには、NestDAQの最新開発版が含まれます。
 - 開発を始める前に、upstreamの`spadi-alliance/nestdaq`リポジトリを自身のGitHub accountへforkしてください。
-- 自身のforkをupstreamの`develop`ブランチと同期し、fork内の`develop`を基点として作業ブランチを作成してください。
+- 自身のforkをupstreamの`develop`ブランチと同期し、forkの`develop`を基点として、使用したい任意のbranch nameでlocal working treeを準備してください。既存のworking treeを使用する場合は`git switch`、別の作業directoryを作成する場合は`git worktree add`を使用します。local branch nameには`develop`も使用できます。
 - 自身のfork内では作業ブランチを自由に作成できます。upstreamリポジトリには作業ブランチを作成しないでください。
 - upstreamの`main`および`develop`ブランチは保護されており、直接pushできません。
-- 自身のfork内の作業ブランチから、upstreamの`develop`ブランチを対象としてPull RequestまたはDraft Pull Requestを作成してください。
+- commitを自身のforkへpushしてください。push先にはworking branchまたはforkの`develop`を使用できます。
+- 自身のfork内のそのbranchから、upstreamの`develop`ブランチを対象としてPull RequestまたはDraft Pull Requestを作成してください。
+- upstreamの`main`ブランチへ変更を反映できるのは、権限を持つmaintainerだけです。upstreamの`main`を対象とするPull Requestはupstreamの`develop`ブランチから作成するものだけを許可し、forkやその他のbranchからupstreamの`main`へのPull Requestは受け付けません。
 - 変更が最終レビューの準備段階にない場合でも、早期のフィードバックが有用であればDraft Pull Requestを使用してください。
 
 upstream repositoryはNestDAQの基準となるrepositoryです。forkは自身のGitHub accountに
 置くcopyであり、自身がpushするbranchを保持します。local PC上のcloneは、branchを
-checkoutしてfileの編集、build、checkを行う作業用copyです。
+選択してfileの編集、build、checkを行うworking treeを保持します。
 
 ```mermaid
-flowchart LR
-  subgraph Upstream["Upstream repository<br/>spadi-alliance/nestdaq"]
-    UpstreamDevelop["develop branch"]
-  end
+flowchart TB
+  subgraph GitHub["GitHub repositories"]
+    direction LR
 
-  subgraph Fork["自身のGitHub fork<br/>your-account/nestdaq"]
-    ForkDevelop["develop branch"]
-    ForkWorking["working branch"]
+    subgraph Upstream["Upstream repository<br/>spadi-alliance/nestdaq"]
+      UpstreamDevelop["develop branch"]
+      UpstreamMain["main branch"]
+    end
+
+    subgraph Fork["自身のGitHub fork<br/>your-account/nestdaq"]
+      ForkDevelop["develop branch"]
+      ForkWorking["PR source branch<br/>developまたはworking branch"]
+    end
   end
 
   subgraph Local["Local PC<br/>作業用clone"]
+    direction LR
     LocalClone["自身のforkのclone"]
-    LocalWorking["checkoutしたworking branch"]
+    LocalWorking["working tree<br/>developが基点のbranch"]
   end
 
   UpstreamDevelop -->|forkまたは同期| ForkDevelop
   ForkDevelop -->|git clone| LocalClone
-  LocalClone -->|git checkout -b| LocalWorking
+  LocalClone -->|git switchまたはgit worktree add| LocalWorking
   LocalWorking -->|git push| ForkWorking
   ForkWorking -->|Pull Request| UpstreamDevelop
+  UpstreamDevelop -->|権限を持つmaintainerのPull Request| UpstreamMain
+```
+
+例えば、自身のforkをcloneし、`git switch`を使用して既存のworking treeに別名の
+branchを作成します。
+
+```sh
+git clone https://github.com/<your-account>/nestdaq.git
+cd nestdaq
+
+# forkのdevelopを基点として、別名のworking branchを使用する場合
+git switch -c <working-branch> origin/develop
+```
+
+別の作業directoryを使用する場合は、`git worktree add`でbranchとworking treeを
+作成します。
+
+```sh
+git worktree add -b <working-branch> ../nestdaq-<working-branch> origin/develop
+```
+
+forkの`develop`で直接作業する場合は、代わりに次を実行します。
+
+```sh
+git switch develop
+git pull --ff-only origin develop
+```
+
+fileを編集してcommitした後、選択したbranchを自身のforkへpushします。branch nameには
+上で選択した名前を指定し、`develop`も使用できます。
+
+```sh
+git add <changed-files>
+git commit -m "<commit-message>"
+git push -u origin <branch-name>
 ```
 
 <a id="commits-and-pull-requests"></a>
