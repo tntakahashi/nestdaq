@@ -6,7 +6,7 @@
 `find_package(NestDAQ)` package、および独立した外部依存関係ビルド
 プロジェクトで使用するCMake fileがあります。ビルドコマンド、依存関係の
 バージョン、user向けoptionについては
-[`INSTALL.md`](../INSTALL.md)を参照してください。
+[`INSTALL.ja.md`](../INSTALL.ja.md)を参照してください。
 
 <a id="1-top-level-build-helpers"></a>
 ## 1. トップレベルビルドヘルパー
@@ -14,7 +14,7 @@
 | ファイル | 用途 |
 | :-- | :-- |
 | `common.cmake` | main projectとdependency projectで共有する共通ビルド設定。C++ standard check、warning flag、install directory、`Threads`、および`ExternalProject_Add`用CMake互換引数を設定します。 |
-| `NestDAQBuildSettings.cmake` | 任意の`clang-tidy`連携とinstall RPATH設定のhelper function。 |
+| `NestDAQBuildSettings.cmake` | 必要に応じて有効にできる`clang-tidy`連携とinstall RPATH設定のhelper function。 |
 | `GitHelper.cmake` | project versionの導出に使用するGit tag、commit、branch、dirty state、remote metadataを読み取ります。 |
 | `NestDAQExamplesStandalone.cmake` | `examples/`を独立したCMake projectとしてconfigureするときに使用する共通設定。 |
 | `PatchDoxygenAwesomeCssRefs.cmake` | 生成されたDoxygen HTMLを後処理し、pageがインストール済みの`doxygen-awesome-css` asset pathを参照するようにします。 |
@@ -49,7 +49,7 @@ module source treeを展開するために`FetchContent`も使用します。
 | `dependencies/nlohmann_json.cmake` | nlohmann/jsonを検索またはビルドします。 |
 | `dependencies/hiredis.cmake` | hiredisを検索またはビルドします。 |
 | `dependencies/redis_plus_plus.cmake` | redis-plus-plusを検索またはビルドします。 |
-| `dependencies/opentelemetry-cpp.cmake` | opentelemetry-cppと、その任意のtransport dependencyをビルドします。 |
+| `dependencies/opentelemetry-cpp.cmake` | opentelemetry-cppと、選択した機能に応じたtransport dependencyをビルドします。 |
 | `dependencies/spdlog.cmake` | spdlogをビルドします。C++17 dependency buildでは、`dependencies/fmt.cmake`を通じて`fmt`も取得します。 |
 | `dependencies/fmt.cmake` | spdlogで必要な場合、またはdependency optionで明示的に選択した場合にfmtをビルドします。 |
 | `dependencies/redis-stack.cmake` | Redis 8以降向けRedis Stack component（Redis、RedisBloom、RediSearch、RedisJSON、RedisTimeSeries）をビルドします。defaultのRedis 8.2.7 module versionはRedis 8.2.7自身が選択しているrelease tagに従います。 |
@@ -63,4 +63,4 @@ module source treeを展開するために`FetchContent`も使用します。
 defaultのdependency versionと、`WITH_REDIS_STACK`、
 `WITH_REDIS_SERVER_7`、`WITH_OTEL_CPP`、`WITH_SPDLOG`、
 `BUILD_PARALLEL_LEVEL`などのoptionについては
-[`INSTALL.md`](../INSTALL.md)に記載されています。
+[`INSTALL.ja.md`](../INSTALL.ja.md)に記載されています。

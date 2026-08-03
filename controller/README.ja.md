@@ -18,7 +18,7 @@ WebSocket clientを受け付けます。ブラウザからのcommandはRedisをb
 DAQ制御操作に変換され、state updateは接続中のWebSocket clientへ返されます。
 
 起動時に`daq-webctl`はFairLogger出力を設定し、共通telemetry loaderを通じて
-任意のNestDAQ OpenTelemetry pluginをloadできます。controllerはOpenTelemetryへ
+必要に応じてNestDAQ OpenTelemetry pluginをloadできます。controllerはOpenTelemetryへ
 直接linkしません。
 
 <a id="2-main-components"></a>
@@ -204,7 +204,7 @@ Redis操作を実行するか、Redis pub/sub messageをpublishします。
 | `{"command":"redis-get","value":"run_number"}` | `run_info{sep}run_number`と`run_info{sep}latest_run_number`を読み取ります。 |
 | `{"command":"redis-incr","value":"run_number"}` | `run_info{sep}run_number`をincrementします。 |
 | `{"command":"redis-set","name":"wait-ready","value":"true"}` | 既知の`run_info` valueの1つを設定します。有効なnameは`run_number`、`wait-device-ready`、`wait-ready`です。 |
-| `{"command":"redis-publish","value":"RUN","services":["Sampler"],"instances":["Sampler-0"]}` | 任意のprerequisite command処理とともにDAQ commandを`daqctl`へpublishします。 |
+| `{"command":"redis-publish","value":"RUN","services":["Sampler"],"instances":["Sampler-0"]}` | 設定に応じたprerequisite command処理とともにDAQ commandを`daqctl`へpublishします。 |
 
 controllerはbrowser clientへJSON messageを返します。
 

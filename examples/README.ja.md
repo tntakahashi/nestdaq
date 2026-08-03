@@ -17,7 +17,7 @@ NestDAQのmain buildにも含まれます。`NestDAQ_BUILD_EXAMPLES`のdefault�
 
 各executableは`NestDAQ::NestDAQ`へlinkします。これによりNestDAQ
 `runDevice.h`連携、FairMQ/FairLogger依存関係、plugin search path、
-任意のtelemetry loader supportが提供されます。
+必要に応じて利用できるtelemetry loader supportが提供されます。
 
 `Sampler`と`Sink`は、OpenTelemetry headerをincludeせずにtrace spanとmetricsを
 示すためNestDAQ telemetry facadeを使用します。たとえば
@@ -411,7 +411,7 @@ NestDAQ user deviceは、実際にdataを生成、消費、変換するprocess�
 - FairLoggerはFairMQとこれらのexampleが`LOG(info)`、`LOG(error)`などの
   macroを通じて使用するlogging systemです。
 - NestDAQは`nestdaq/runDevice.h`、Redisをbackendとするplugin、DAQ command
-  integration、plugin search path、任意のtelemetry設定を提供します。
+  integration、plugin search path、必要に応じて有効にできるtelemetry設定を提供します。
 - RedisはNestDAQ pluginが使用するruntime service information、topology設定、
   parameter設定、DAQ command、metricsを保存します。
 

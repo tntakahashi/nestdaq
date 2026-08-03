@@ -2,28 +2,32 @@
 
 [English](README.md) | [日本語](README.ja.md)
 
-素粒子計測向けストリーミングデータ収集（DAQ）実装
+NestDAQは、粒子線計測向けのストリーミングデータ収集（DAQ）アプリケーションを
+構築するためのフレームワークです。このリポジトリのコードをビルド・インストールすると
+共通機能とツールを利用できますが、それだけでは実際の回路に接続して動作するDAQ
+アプリケーションにはなりません。計測対象や回路に応じたデバイス処理とハードウェア連携を
+別途実装する必要があります。
 
 <a id="1-project-guide"></a>
 ## 1. プロジェクトガイド
 
 | パス / ドキュメント | 用途 |
 | :-- | :-- |
-| [INSTALL.md](INSTALL.md) | 前提条件、外部依存関係のバージョンとビルドオプション、NestDAQのビルドオプション、ランタイムサービスの選択肢、example、任意のドキュメント生成。 |
-| [examples/](examples/README.ja.md) | `Sampler`、`Sink`、`NullDevice`などのexample device。詳細なローカル実行手順と[カスタムuser deviceの作成](examples/README.ja.md#4-creating-your-own-user-device)についてはREADMEを参照してください。 |
-| [scripts/](scripts/README.ja.md) | ランタイム起動・topology補助スクリプトと、device skeleton generator `generate-device-skeleton.py`。 |
-| [controller/](controller/README.ja.md) | `daq-webctl` HTTP/WebSocket server、Redis制御、telemetry設定。 |
-| [share/controller/](share/controller/README.ja.md) | `daq-webctl`が配信するブラウザasset。 |
-| `nestdaq/` | NestDAQの公開headerとランタイムhelper。 |
-| [nestdaq/telemetry/](nestdaq/telemetry/README.ja.md) | 任意のOpenTelemetry連携。 |
-| [plugins/](plugins/README.ja.md) | DAQ service、metrics、parameter設定用のFairMQ plugin。 |
-| [cmake/](cmake/README.ja.md) | CMake helper、インストールされるpackage file、外部依存関係のビルドプロジェクト。 |
-| [tests/](tests/) | C++ testとtest support file。 |
-| `share/` | NestDAQとともにインストールされるランタイム・設定asset。 |
-| [share/otel-collector-compose/](share/otel-collector-compose/README.ja.md) | ローカルOpenTelemetry Collectorと、[OpenSearch](share/otel-collector-compose/opensearch/README.ja.md)、[Victoria](share/otel-collector-compose/victoria/README.ja.md)、[ClickStack](share/otel-collector-compose/clickhouse/README.ja.md)用backend Compose stack。 |
-| [share/redis-stack-container/](share/redis-stack-container/README.ja.md) | Redis Stack container補助スクリプト。 |
-| [share/installers/](share/installers/README.ja.md) | `apt`または`dnf`を使用するランタイムサービス用host package installer補助スクリプト。 |
-| [CONTRIBUTING.md](CONTRIBUTING.md) | contribution workflow、formatting、static analysis、naming rule。 |
+| [INSTALL.ja.md](INSTALL.ja.md) | この文書では、前提条件、依存関係のバージョンとビルドオプション、NestDAQのビルドオプション、実行時に使用する外部サービスの選択肢、example、ドキュメント生成について説明します。 |
+| [examples/](examples/README.ja.md) | このディレクトリでは、`Sampler`、`Sink`、`NullDevice`などのdevice例、詳細なローカル実行手順、[カスタムuser deviceの作成方法](examples/README.ja.md#4-creating-your-own-user-device)を説明します。 |
+| [scripts/](scripts/README.ja.md) | このディレクトリには、プロセス起動・topology補助スクリプトと、device skeleton generator `generate-device-skeleton.py`があります。 |
+| [controller/](controller/README.ja.md) | このディレクトリでは、`daq-webctl` HTTP/WebSocket server、Redis制御、telemetry設定を実装しています。 |
+| [share/controller/](share/controller/README.ja.md) | このディレクトリには、`daq-webctl`が配信するWebブラウザー向けファイルがあります。 |
+| `nestdaq/` | このディレクトリには、NestDAQの公開headerとアプリケーション実行中に使用するhelperがあります。 |
+| [nestdaq/telemetry/](nestdaq/telemetry/README.ja.md) | このディレクトリでは、必要に応じて有効にできるOpenTelemetry連携を提供します。 |
+| [plugins/](plugins/README.ja.md) | このディレクトリでは、DAQ service、metrics、parameter設定用のFairMQ pluginを提供します。 |
+| [cmake/](cmake/README.ja.md) | このディレクトリには、CMake helper、インストールされるpackage file、外部依存関係をビルドするprojectがあります。 |
+| [tests/](tests/) | このディレクトリには、C++ testとtest用の補助ファイルがあります。 |
+| `share/` | このディレクトリには、NestDAQとともにインストールされる設定ファイルと補助ファイルがあります。 |
+| [share/otel-collector-compose/](share/otel-collector-compose/README.ja.md) | このディレクトリでは、ローカルOpenTelemetry Collectorと、[OpenSearch](share/otel-collector-compose/opensearch/README.ja.md)、[Victoria](share/otel-collector-compose/victoria/README.ja.md)、[ClickStack](share/otel-collector-compose/clickhouse/README.ja.md)用backend Compose stackを提供します。 |
+| [share/redis-stack-container/](share/redis-stack-container/README.ja.md) | このディレクトリでは、Redis Stack containerを実行する補助スクリプトを提供します。 |
+| [share/installers/](share/installers/README.ja.md) | このディレクトリでは、実行時に使用する外部サービスをhostへインストールする`apt`・`dnf`用補助スクリプトを提供します。 |
+| [CONTRIBUTING.ja.md](CONTRIBUTING.ja.md) | この文書では、ブランチ運用方針、contribution workflow、formatting、static analysis、naming ruleを説明します。 |
 
 <a id="2-tested-systems"></a>
 ## 2. 検証済みシステム
@@ -41,8 +45,9 @@
 <a id="3-dependencies"></a>
 ## 3. 依存関係
 
-NestDAQはBoost、FairLogger、FairMQ、hiredis、redis-plus-plus、および
-opentelemetry-cppやspdlogなどの任意のtelemetry/logging依存関係を使用します。
+NestDAQはBoost、FairLogger、FairMQ、hiredis、redis-plus-plusを使用します。
+対応機能を有効にした場合は、opentelemetry-cppやspdlogなどの
+telemetry/logging依存関係も使用します。
 前提package、依存関係のdefault version、CMake override option、
-ランタイムサービスの選択肢、platform固有のビルド上の注意事項については
-[INSTALL.md](INSTALL.md)を参照してください。
+実行時に使用する外部サービスの選択肢、platform固有のビルド上の注意事項については
+[INSTALL.ja.md](INSTALL.ja.md)を参照してください。

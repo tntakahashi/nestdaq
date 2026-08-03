@@ -2,13 +2,13 @@
 
 [English](README.md) | [日本語](README.ja.md)
 
-NestDAQテレメトリーは、FairMQベースのdeviceおよびcontroller process向けの、任意で使用できるOpenTelemetry統合です。application executableはOpenTelemetryへ直接linkしません。代わりに、NestDAQは単一のruntime plugin `libnestdaq_otel.so`を`dlopen()`で読み込み、小さなC application binary interface（ABI）を解決します。
+NestDAQテレメトリーは、FairMQベースのdeviceおよびcontroller process向けに、必要に応じて有効にできるOpenTelemetry統合です。application executableはOpenTelemetryへ直接linkしません。代わりに、NestDAQは単一のruntime plugin `libnestdaq_otel.so`を`dlopen()`で読み込み、小さなC application binary interface（ABI）を解決します。
 
 pluginは3種類のOpenTelemetry signalをexportできます。
 
 | Signal | デフォルト | NestDAQ内のsource |
 | --- | --- | --- |
-| Logs | `console` exporter | FairLogger custom sink、任意のspdlog sink |
+| Logs | `console` exporter | FairLogger custom sink、有効化した場合のspdlog sink |
 | Metrics | 無効 | `nestdaq::telemetry::Telemetry` counter/histogram/gauge application programming interface（API） |
 | Traces | 無効 | `nestdaq::telemetry::TelemetrySpan` resource acquisition is initialization（RAII）API |
 
@@ -125,7 +125,7 @@ spdlog sinkは以下のOpenTelemetry fieldとattributeを記録します。
 
 OpenTelemetryは正規化したlog levelをLogRecordの`SeverityNumber`および`SeverityText` fieldへ保存します。元のlogging library levelは、FairLogger recordでは`fairlogger.severity.*`、spdlog recordでは`spdlog.level`として別に保持されます。logging libraryのenum整数はOpenTelemetry `SeverityNumber`値ではありません。正規化したseverityのqueryにはOpenTelemetry fieldを使用してください。
 
-`--otel-log-severity`はFairLogger sink filterです。OpenTelemetry logsへexportするFairLoggerの最低severityを制御します。任意のspdlog sinkから出力されるrecordはfilterしません。spdlogのfilteringは引き続きspdlog loggerおよびsink levelで制御します。
+`--otel-log-severity`はFairLogger sink filterです。OpenTelemetry logsへexportするFairLoggerの最低severityを制御します。有効化したspdlog sinkから出力されるrecordはfilterしません。spdlogのfilteringは引き続きspdlog loggerおよびsink levelで制御します。
 
 <a id="51-fairlogger-severity-mapping"></a>
 ### 5.1. FairLogger severityの対応

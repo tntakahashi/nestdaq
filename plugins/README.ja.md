@@ -159,7 +159,7 @@ serviceをまたいで選択したinstanceを対象にします。
 
 最後のmessageも全`daqctl` subscriberへ配信されます。例えば`Sampler-2`と`Sink-1`もmessageを受信しますが、long instance idが`instances`にないため無視します。
 
-web controllerが`RUN`を要求すると、`run_info{sep}run_number`を`run_info{sep}latest_run_number`へcopyし、`run_info{sep}wait-device-ready`と`run_info{sep}wait-ready`に応じて任意の前提`CONNECT`と`INIT TASK` commandをpublishし、`RUN`をpublishして設定済みpre/post hookを実行します。`STOP`要求時は`STOP`をpublishし、設定済みpre/post hookを実行します。
+web controllerが`RUN`を要求すると、`run_info{sep}run_number`を`run_info{sep}latest_run_number`へcopyし、`run_info{sep}wait-device-ready`と`run_info{sep}wait-ready`に応じて、設定に応じた前提`CONNECT`と`INIT TASK` commandをpublishし、`RUN`をpublishして設定済みpre/post hookを実行します。`STOP`要求時は`STOP`をpublishし、設定済みpre/post hookを実行します。
 
 web controllerの前提wait logicも同じtarget intentを使用します。`services: ["all"]`は既知の全service/instance state keyを待ち、`instances: ["all"]`は選択service配下の全instanceを待ちます。
 

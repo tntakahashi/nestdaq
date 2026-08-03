@@ -1,5 +1,7 @@
 # Installation
 
+[English](INSTALL.md) | [日本語](INSTALL.ja.md)
+
 ## Installation flow
 
 ```mermaid

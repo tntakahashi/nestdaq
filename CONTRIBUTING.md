@@ -1,14 +1,19 @@
 # Contribution Guidelines
 
+[English](CONTRIBUTING.md) | [日本語](CONTRIBUTING.ja.md)
+
 This document describes recommended and prohibited practices for contributing
 to NestDAQ.
 
 ## Forking workflow
 
-- Do not push directly to the upstream NestDAQ repository.
-- Push changes to your own fork.
-- Open a Pull Request or Draft Pull Request from your fork to the upstream
-  repository.
+- The `main` branch contains the latest released version of NestDAQ.
+- The `develop` branch contains the latest development version. Base development
+  work on `develop`.
+- Direct pushes to the protected `main` and `develop` branches are not allowed.
+- Create a working branch from `develop` and push that branch to your own fork.
+- Open a Pull Request or Draft Pull Request from your working branch to the
+  upstream `develop` branch.
 - Use Draft Pull Requests when the change is not ready for final review but
   early feedback is useful.
 

@@ -120,7 +120,7 @@ SELinux labelingとUnix permissionは別のものです。`:Z` mount labelはSEL
 <a id="9-named-volumes"></a>
 ## 9. 名前付きボリューム
 
-named volumeは任意です。helper scriptのdirectory外でDockerまたはPodmanにRedis dataを管理させる場合は、`REDIS_VOLUME_MODE=volume`を使用します。
+named volumeの使用は必須ではありません。helper scriptのdirectory外でDockerまたはPodmanにRedis dataを管理させる場合は、`REDIS_VOLUME_MODE=volume`を使用します。
 
 volumeを確認します。
 
