@@ -166,18 +166,38 @@ Debian/Ubuntu共通の一覧に含めています。
 次のコマンドはZeroMQ、Boost、FairLogger、FairMQ、Catch2、nlohmann/json、
 hiredis、redis++、Redis Stackをインストールします。
 
-```bash
-# ソースコードをダウンロード
-git clone https://github.com/spadi-alliance/nestdaq
+このガイドのデフォルト手順では、upstreamの`main`ブランチにある最新の安定リリース版を
+ビルドします。`main`を明示的にcloneします。
 
-# 構成
+```bash
+# 最新の安定リリース版のsource codeをdownload
+git clone --branch main https://github.com/spadi-alliance/nestdaq.git
+```
+
+NestDAQ開発者は、最初に`spadi-alliance/nestdaq`を自身のGitHub accountへforkします。
+最新開発版をビルドする場合は、自身のforkをcloneし、upstream repositoryを追加して、
+upstreamの`develop`ブランチをcheckoutします。
+
+```bash
+git clone https://github.com/<your-github-account>/nestdaq.git
+git -C nestdaq remote add upstream https://github.com/spadi-alliance/nestdaq.git
+git -C nestdaq fetch upstream
+git -C nestdaq switch --create develop --track upstream/develop
+```
+
+source codeを変更する前に、自身のfork内で作業ブランチを作成してください。詳細は
+[`CONTRIBUTING.ja.md`](CONTRIBUTING.ja.md)を参照してください。以下のコマンドは、
+`nestdaq`でcheckoutされているbranchをビルドします。
+
+```bash
+# configure
 cmake \
   -DCMAKE_INSTALL_PREFIX=./install \
   -DBUILD_PARALLEL_LEVEL=$(nproc) \
   -B ./build-external \
   -S nestdaq/cmake
 
-# ビルドとインストールの両方を実行
+# 外部依存関係をbuild・install
 cmake --build ./build-external
 ```
 

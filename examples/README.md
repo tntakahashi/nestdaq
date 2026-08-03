@@ -2,24 +2,33 @@
 
 [English](README.md) | [日本語](README.ja.md)
 
-This directory contains small NestDAQ device examples. The examples are a
-standalone CMake project, and are also included in the main NestDAQ build when
-`NestDAQ_BUILD_EXAMPLES=ON` is set. `NestDAQ_BUILD_EXAMPLES` defaults to `ON`.
+This directory contains small NestDAQ device examples. They are included in the
+main NestDAQ build by default because `NestDAQ_BUILD_EXAMPLES` defaults to
+`ON`. Set `NestDAQ_BUILD_EXAMPLES=OFF` to exclude them from the main build; they
+can then be built separately as a standalone CMake project after NestDAQ is
+installed.
 
 ## 1. Example Devices
 
 | Executable | Purpose |
 | :-- | :-- |
 | `NullDevice` | Minimal FairMQ device that exercises the NestDAQ `runDevice.h` entry point and lifecycle hooks without data channels. |
-| `Sampler` | Sends text messages through an output channel and demonstrates custom command-line options, spans, and metrics. |
-| `Sink` | Receives single-part or multipart messages through an input channel and demonstrates channel callback setup, spans, and metrics. |
+| `Sampler` | Sends text messages through a FairMQ output channel and demonstrates custom command-line options. It also demonstrates OpenTelemetry spans and metrics. |
+| `Sink` | Receives single-part or multipart messages through a FairMQ input channel and demonstrates channel callback setup. It also demonstrates OpenTelemetry spans and metrics. |
+
+A lifecycle hook is a member function that the FairMQ state machine calls at a
+defined stage of a device's lifecycle. For example, `Init()` and `InitTask()`
+initialize the device, `PreRun()` prepares it for a run, and `PostRun()` performs
+post-run work. A device overrides only the hooks needed for its processing and
+resource management. `NullDevice` logs these calls so their order can be
+observed without setting up data channels.
 
 Each executable links to `NestDAQ::NestDAQ`, which provides the NestDAQ
 `runDevice.h` integration, FairMQ/FairLogger dependencies, plugin search paths,
 and optional telemetry loader support.
 
 `Sampler` and `Sink` use the NestDAQ telemetry facade to demonstrate trace spans
-and metrics without including OpenTelemetry headers. Enable them via
+and metrics without directly including OpenTelemetry headers. Enable them via
 command-line options when starting the device, for example
 `--otel-metric-protocol=console` and `--otel-trace-protocol=console`.
 
@@ -61,14 +70,14 @@ NullDevice --help
 ### 3.1. Local Run Sequence
 
 The commands below assume that NestDAQ was installed under
-`<install-prefix>`. Run long-lived processes in separate terminals.
+`<install-prefix>`.
 
 ```mermaid
 flowchart TD
   Otel[A. Start OTel Collector backend<br/>if needed]
   Redis[B. Start Redis]
   WebCtl[C. Start daq-webctl]
-  Browser[D. Open browser controller<br/>http://localhost:8080/]
+  Browser[D. Open the daq-webctl Web UI<br/>http://localhost:8080/]
   Config[E. Register topology and parameters<br/>topology-*.sh, mq-param.sh]
   UserDevices[F. Start user device processes<br/>NullDevice, Sink, Sampler]
   RunNumber[G. Set run number if missing]
@@ -89,7 +98,7 @@ Perform the run start operation last. Steps E and F may be reordered as long as
 they are done after Redis is available and before step H. The browser can be
 opened as soon as `daq-webctl` starts; devices may not appear until the topology
 and parameter settings are registered and the user devices are running. Steps G
-and H are browser-controller operations. Run-start commands require the target
+and H are operations performed in the `daq-webctl` Web UI. Run-start commands require the target
 devices to be running. `daq-webctl` and the user devices use Redis and can
 export OpenTelemetry logs to the collector.
 
@@ -201,10 +210,16 @@ C. Start `daq-webctl`.
      --otel-service-name=daq-webctl
    ```
 
-   The OpenTelemetry options send controller logs to the local collector
+   `daq-webctl` is the server process: it provides an HTTP/WebSocket endpoint and
+   acts as a Redis client that reads DAQ state and configuration and publishes
+   commands for user devices. The `daq-webctl` Web UI is the browser interface
+   served by this process, not a separate controller service. The browser
+   communicates with `daq-webctl`; it does not connect directly to Redis.
+
+   The OpenTelemetry options send `daq-webctl` logs to the local collector
    started above. Replace `--redis-uri` and `--otel-log-endpoint-grpc` when
    Redis or the collector are not reachable at the example host endpoints. See
-   [`controller/README.md`](../controller/README.md) for controller options
+   [`controller/README.md`](../controller/README.md) for `daq-webctl` options
    and Redis command behavior, and
    [`nestdaq/telemetry/README.md`](../nestdaq/telemetry/README.md) for the full
    telemetry option list.
@@ -214,10 +229,10 @@ C. Start `daq-webctl`.
    instead. In the same ClickStack compose network, use
    `--otel-log-endpoint-grpc=clickstack:4317`.
 
-D. Open the browser controller.
+D. Open the `daq-webctl` Web UI.
 
-   Open `http://localhost:8080/` in a browser. At this point the controller may
-   not show user devices yet. They become available after topology and
+   Open `http://localhost:8080/` in a browser. At this point the Web UI may not
+   show user devices yet. They become available after topology and
    parameter registration and after the user device processes start.
 
 E. Register topology and parameter settings.
@@ -275,25 +290,26 @@ F. Start the user devices with `start_device.sh`.
 G. Set the run number if it is missing.
 
    If Redis does not already contain `run_info:run_number`, set or increment the
-   run number from the browser controller before starting a run. The controller
-   reads and writes this value through Redis and uses it when publishing `RUN`.
+   run number from the `daq-webctl` Web UI before starting a run. In response to
+   the Web UI operation, the `daq-webctl` process reads or writes this value in
+   Redis and uses it when publishing `RUN`.
    See [`controller/README.md`](../controller/README.md#6-redis-command-interface)
    and [`plugins/README.md`](../plugins/README.md#23-redis-keys-written-or-read)
    for the Redis command interface and run information keys.
 
-H. Start the run from the browser controller.
+H. Start the run from the `daq-webctl` Web UI.
 
-   Use the browser controller to move the selected user devices through the
+   Use the `daq-webctl` Web UI to move the selected user devices through the
    required state-machine transitions and publish `RUN` to start the run. When
-   `RUN` is requested, the controller copies `run_info:run_number` to
+   `RUN` is requested, the `daq-webctl` process copies `run_info:run_number` to
    `run_info:latest_run_number` and publishes the run-start command sequence.
    See [`plugins/README.md`](../plugins/README.md#24-daq-command-publishsubscribe-pubsub)
    for the accepted DAQ commands and `RUN` sequencing.
 
 ### 3.2. Stop the Local Services
 
-Use the browser controller to end the user device processes before stopping the
-controller and shared services.
+Use the `daq-webctl` Web UI to end the user device processes before stopping the
+`daq-webctl` process and shared services.
 
 ```mermaid
 flowchart TD
@@ -309,7 +325,7 @@ flowchart TD
 The diagram shows the recommended shutdown order. If the user devices have
 already exited after `END PROCESS`, skip the terminal fallback step.
 
-S-A. Select the target user devices in the browser controller and click
+S-A. Select the target user devices in the `daq-webctl` Web UI and click
    `END PROCESS`. This publishes the DAQ `END` command to the selected devices.
 
 S-B. If a user device does not exit, stop it from the terminal where it is

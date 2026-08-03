@@ -2,9 +2,11 @@
 
 [English](README.md) | [日本語](README.ja.md)
 
-このディレクトリには、小規模なNestDAQ device exampleがあります。exampleは
-独立したCMake projectであり、`NestDAQ_BUILD_EXAMPLES=ON`を設定した場合は
-NestDAQのmain buildにも含まれます。`NestDAQ_BUILD_EXAMPLES`のdefaultは`ON`です。
+このディレクトリには、小規模なNestDAQ device exampleがあります。
+`NestDAQ_BUILD_EXAMPLES`のdefaultは`ON`であるため、exampleはデフォルトでNestDAQの
+main buildに含まれます。main buildから除外するには
+`NestDAQ_BUILD_EXAMPLES=OFF`を設定します。除外したexampleは、NestDAQのinstall後に
+独立したCMake projectとして別途buildできます。
 
 <a id="1-example-devices"></a>
 ## 1. デバイス例
@@ -12,14 +14,20 @@ NestDAQのmain buildにも含まれます。`NestDAQ_BUILD_EXAMPLES`のdefault�
 | 実行ファイル | 用途 |
 | :-- | :-- |
 | `NullDevice` | data channelを使用せず、NestDAQ `runDevice.h` entry pointとlifecycle hookを実行する最小限のFairMQ device。 |
-| `Sampler` | output channelを通じてtext messageを送信し、custom command-line option、span、metricsを示します。 |
-| `Sink` | input channelを通じてsingle-partまたはmultipart messageを受信し、channel callback設定、span、metricsを示します。 |
+| `Sampler` | FairMQ output channelを通じてtext messageを送信し、custom command-line optionを示します。OpenTelemetry spanとmetricsの計装例も示します。 |
+| `Sink` | FairMQ input channelを通じてsingle-partまたはmultipart messageを受信し、channel callback設定を示します。OpenTelemetry spanとmetricsの計装例も示します。 |
+
+lifecycle hookは、deviceのlifecycleにおける所定の段階でFairMQ state machineが
+呼び出すmember functionです。例えば、`Init()`と`InitTask()`はdeviceを初期化し、
+`PreRun()`はrunの準備、`PostRun()`はrun終了後の処理を行います。deviceは自身の処理や
+resource管理に必要なhookだけをoverrideします。`NullDevice`はdata channelを設定せずに
+呼出順を確認できるよう、これらの呼出しをlogへ記録します。
 
 各executableは`NestDAQ::NestDAQ`へlinkします。これによりNestDAQ
 `runDevice.h`連携、FairMQ/FairLogger依存関係、plugin search path、
 必要に応じて利用できるtelemetry loader supportが提供されます。
 
-`Sampler`と`Sink`は、OpenTelemetry headerをincludeせずにtrace spanとmetricsを
+`Sampler`と`Sink`は、OpenTelemetry headerを直接includeせずにtrace spanとmetricsを
 示すためNestDAQ telemetry facadeを使用します。たとえばdevice起動時に
 `--otel-metric-protocol=console`と`--otel-trace-protocol=console`などの
 command-line optionを指定して有効化します。
@@ -66,14 +74,14 @@ NullDevice --help
 ### 3.1. ローカル実行シーケンス
 
 以下のcommandはNestDAQが`<install-prefix>`以下へインストールされていると
-仮定しています。長時間動作するprocessは別々のterminalで実行してください。
+仮定しています。
 
 ```mermaid
 flowchart TD
   Otel[A. 必要な場合はOTel Collector backendを起動]
   Redis[B. Redisを起動]
   WebCtl[C. daq-webctlを起動]
-  Browser[D. browser controllerを開く<br/>http://localhost:8080/]
+  Browser[D. daq-webctl Web UIを開く<br/>http://localhost:8080/]
   Config[E. topologyとparameterを登録<br/>topology-*.sh, mq-param.sh]
   UserDevices[F. user device processを起動<br/>NullDevice, Sink, Sampler]
   RunNumber[G. 未設定ならrun numberを設定]
@@ -93,7 +101,7 @@ packageなど、使用中のローカルdeployment方法で起動します。run
 行います。step EとFは、Redisが利用可能になった後かつstep Hより前であれば
 順序を入れ替えられます。`daq-webctl`起動後すぐにブラウザを開けますが、
 topologyとparameter設定が登録されuser deviceが動作するまでdeviceが表示されない
-場合があります。step GとHはbrowser-controller操作です。run-start commandを
+場合があります。step GとHは`daq-webctl` Web UIで行う操作です。run-start commandを
 実行するには対象deviceが動作中でなければなりません。`daq-webctl`とuser deviceは
 Redisを使用し、OpenTelemetry logをcollectorへexportできます。
 
@@ -201,9 +209,15 @@ C. `daq-webctl`を起動します。
      --otel-service-name=daq-webctl
    ```
 
-   OpenTelemetry optionはcontroller logを上で起動したローカルcollectorへ送信します。
+   `daq-webctl`はHTTP/WebSocket endpointを提供するserver processであり、DAQ stateと
+   configurationを読み取り、user device向けcommandをpublishするRedis clientでも
+   あります。`daq-webctl` Web UIは、このprocessがbrowserへ配信するinterfaceであり、
+   別のcontroller serviceではありません。browserは`daq-webctl`と通信し、Redisへ
+   直接接続しません。
+
+   OpenTelemetry optionは`daq-webctl` logを上で起動したローカルcollectorへ送信します。
    Redisやcollectorへ例のhost endpointで到達できない場合は、`--redis-uri`と
-   `--otel-log-endpoint-grpc`を変更します。controller optionとRedis commandの
+   `--otel-log-endpoint-grpc`を変更します。`daq-webctl` optionとRedis commandの
    動作は[`controller/README.md`](../controller/README.ja.md)、telemetry optionの
    完全な一覧は
    [`nestdaq/telemetry/README.md`](../nestdaq/telemetry/README.ja.md)を参照してください。
@@ -213,9 +227,9 @@ C. `daq-webctl`を起動します。
    使用します。同じClickStack compose network内では
    `--otel-log-endpoint-grpc=clickstack:4317`を使用します。
 
-D. browser controllerを開きます。
+D. `daq-webctl` Web UIを開きます。
 
-   ブラウザで`http://localhost:8080/`を開きます。この時点ではcontrollerに
+   ブラウザで`http://localhost:8080/`を開きます。この時点ではWeb UIに
    user deviceがまだ表示されない場合があります。topologyとparameterの登録後、
    user device processが起動すると利用可能になります。
 
@@ -273,18 +287,19 @@ F. `start_device.sh`でuser deviceを起動します。
 G. run numberがない場合は設定します。
 
    Redisに`run_info:run_number`がまだない場合、runを開始する前に
-   browser controllerからrun numberを設定またはincrementします。controllerは
-   Redisを通じてこの値を読み書きし、`RUN`のpublish時に使用します。Redis
+   `daq-webctl` Web UIからrun numberを設定またはincrementします。Web UIでの操作に
+   応じて`daq-webctl` processがRedis上のこの値を読み書きし、`RUN`のpublish時に
+   使用します。Redis
    command interfaceとrun information keyについては
    [`controller/README.md`](../controller/README.ja.md#6-redis-command-interface)と
    [`plugins/README.md`](../plugins/README.ja.md#23-redis-keys-written-or-read)を
    参照してください。
 
-H. browser controllerからrunを開始します。
+H. `daq-webctl` Web UIからrunを開始します。
 
-   browser controllerを使用して選択したuser deviceを必要なstate-machine
+   `daq-webctl` Web UIを使用して選択したuser deviceを必要なstate-machine
    transitionで遷移させ、`RUN`をpublishしてrunを開始します。`RUN`を要求すると、
-   controllerは`run_info:run_number`を`run_info:latest_run_number`へcopyし、
+   `daq-webctl` processは`run_info:run_number`を`run_info:latest_run_number`へcopyし、
    run-start command sequenceをpublishします。受け付けるDAQ commandと`RUN`
    sequenceについては
    [`plugins/README.md`](../plugins/README.ja.md#24-daq-command-publishsubscribe-pubsub)
@@ -293,8 +308,8 @@ H. browser controllerからrunを開始します。
 <a id="32-stop-the-local-services"></a>
 ### 3.2. ローカルサービスの停止
 
-controllerと共通serviceを停止する前に、browser controllerを使用してuser device
-processを終了します。
+`daq-webctl` processと共通serviceを停止する前に、`daq-webctl` Web UIを使用して
+user device processを終了します。
 
 ```mermaid
 flowchart TD
@@ -310,7 +325,7 @@ flowchart TD
 この図は推奨する停止順序を示します。`END PROCESS`後にuser deviceがすでに
 終了している場合、terminalでのfallback stepは省略します。
 
-S-A. browser controllerで対象user deviceを選択し、`END PROCESS`をclickします。
+S-A. `daq-webctl` Web UIで対象user deviceを選択し、`END PROCESS`をclickします。
    選択したdeviceへDAQ `END` commandがpublishされます。
 
 S-B. user deviceが終了しない場合、たとえばCtrl-Cを使用して実行中のterminalから

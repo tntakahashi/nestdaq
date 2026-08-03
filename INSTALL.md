@@ -159,18 +159,38 @@ needs it for the dependency build.
 The following command installs ZeroMQ, Boost, FairLogger, FairMQ, Catch2,
 nlohmann/json, hiredis, redis++, and Redis Stack.
 
-```bash
-# download the source code
-git clone https://github.com/spadi-alliance/nestdaq
+The default procedure in this guide builds the latest stable release from the
+upstream `main` branch. Clone `main` explicitly:
 
-# configure
+```bash
+# Download the latest stable release source
+git clone --branch main https://github.com/spadi-alliance/nestdaq.git
+```
+
+NestDAQ developers should first fork `spadi-alliance/nestdaq` to their own
+GitHub account. To build the latest development version, clone that fork, add
+the upstream repository, and check out the upstream `develop` branch:
+
+```bash
+git clone https://github.com/<your-github-account>/nestdaq.git
+git -C nestdaq remote add upstream https://github.com/spadi-alliance/nestdaq.git
+git -C nestdaq fetch upstream
+git -C nestdaq switch --create develop --track upstream/develop
+```
+
+Create a working branch in your fork before modifying the source; see
+[`CONTRIBUTING.md`](CONTRIBUTING.md). The remaining commands build whichever
+branch is checked out in `nestdaq`.
+
+```bash
+# Configure
 cmake \
   -DCMAKE_INSTALL_PREFIX=./install \
   -DBUILD_PARALLEL_LEVEL=$(nproc) \
   -B ./build-external \
   -S nestdaq/cmake
 
-# Both the build and install steps are executed
+# Build and install external dependencies
 cmake --build ./build-external
 ```
 
