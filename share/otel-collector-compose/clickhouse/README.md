@@ -8,6 +8,9 @@ opens them in the ClickStack user interface (UI).
 
 This backend is experimental and not yet fully verified.
 
+Use either Docker Compose (`docker compose`) or Podman Compose
+(`podman compose`) to manage this stack.
+
 Start from this directory:
 
 ```bash

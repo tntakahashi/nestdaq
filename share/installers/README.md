@@ -4,7 +4,7 @@
 
 This directory contains helper scripts that can install and update external
 services with the host package manager instead of using the local Compose
-examples.
+examples run with `docker compose` or `podman compose`.
 
 The scripts are intended for administrator-controlled hosts. They use `sudo`
 unless they are run as root. They install packages into system-managed

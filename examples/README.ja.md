@@ -107,10 +107,10 @@ Redisを使用し、OpenTelemetry logをcollectorへexportできます。
 
 A. OpenTelemetry Collector backendを起動します。
 
-   backendには、ローカルCompose設定、hostへインストールした
-   `otelcol-contrib` service、またはNestDAQ processから到達可能な別のcollectorを
-   使用できます。example deviceからOpenTelemetry Protocol(OTLP)dataを受信し、
-   設定されたlog、metric、trace storageへ転送します。
+   backendには、`docker compose`または`podman compose`で実行するローカルCompose設定、
+   hostへインストールした`otelcol-contrib` service、またはNestDAQ processから到達可能な
+   別のcollectorを使用できます。example deviceからOpenTelemetry Protocol(OTLP)dataを
+   受信し、設定されたlog、metric、trace storageへ転送します。
 
    以下のローカル検証例ではOpenSearch Compose backendを使用します。logとtraceを
    OpenSearchへ保存し、OpenSearch Dashboardsで利用できるようにします。

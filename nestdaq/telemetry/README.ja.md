@@ -334,7 +334,7 @@ telemetry.AddCounter(
 low-level attribute arrayとそのstring storageはcallerが所有します。NestDAQはtelemetry call中にのみ読み取ります。C++20 buildでは、同等のoverloadが`std::span<const nestdaq_otel_attribute>`も受け取り、同じlow-level implementationへforwardします。
 
 <a id="8-collector-compose-setup"></a>
-## 8. Collector Compose構成
+## 8. Collector Compose構成(`docker compose`または`podman compose`)
 
 local OpenTelemetry Collector、OpenSearch、OpenSearch Dashboards環境については、[OpenTelemetry Collector Compose setup](../../share/otel-collector-compose/README.ja.md)を参照してください。
 

@@ -1,8 +1,8 @@
-# OpenTelemetry Collector Compose構成
+# OpenTelemetry Collectorコンテナ構成
 
 [English](README.md) | [日本語](README.ja.md)
 
-このディレクトリには、OpenTelemetry CollectorでOpenTelemetryデータを受信し、選択したバックエンドに保存するためのローカル検証用Compose構成が含まれています。
+このディレクトリには、`docker compose`または`podman compose`で実行し、OpenTelemetry CollectorでOpenTelemetryデータを受信して選択したバックエンドに保存するためのローカル検証用Compose構成が含まれています。
 
 これらのスタックはローカル検証専用です。ホスト上にサービスポートを公開し、該当する場合は簡易なローカル認証情報を使用するため、公開ネットワークや共有ネットワークには公開しないでください。
 

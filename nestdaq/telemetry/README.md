@@ -398,7 +398,7 @@ only reads it during the telemetry call. In C++20 builds, equivalent overloads
 also accept `std::span<const nestdaq_otel_attribute>` and forward to the same
 low-level implementation.
 
-## 8. Collector Compose Setup
+## 8. Collector Compose Setup (`docker compose` or `podman compose`)
 
 For a local OpenTelemetry Collector, OpenSearch, and OpenSearch Dashboards
 environment, see [OpenTelemetry Collector Compose Setup](../../share/otel-collector-compose/README.md).

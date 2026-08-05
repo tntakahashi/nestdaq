@@ -6,6 +6,9 @@
 
 このバックエンドは実験的で、まだ十分に検証されていません。
 
+このstackはDocker Compose(`docker compose`)またはPodman Compose
+(`podman compose`)で管理します。
+
 このディレクトリから起動します。
 
 ```bash

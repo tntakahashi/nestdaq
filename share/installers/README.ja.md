@@ -2,7 +2,7 @@
 
 [English](README.md) | [日本語](README.ja.md)
 
-このディレクトリには、ローカルのCompose例を使用せず、hostのpackage managerで外部サービスをインストールおよび更新するときに使用できる補助スクリプトが含まれています。
+このディレクトリには、`docker compose`または`podman compose`で実行するローカルのCompose例を使用せず、hostのpackage managerで外部サービスをインストールおよび更新するときに使用できる補助スクリプトが含まれています。
 
 これらのスクリプトは、管理者が管理するhostでの利用を想定しています。rootとして実行しない場合は`sudo`を使用します。packageは`/usr`、`/etc`、package managerのrepository directory、systemd unit directoryなど、systemが管理する場所にインストールされるため、root権限が必要です。
 

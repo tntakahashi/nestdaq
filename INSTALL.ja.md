@@ -166,12 +166,24 @@ Debian/Ubuntu共通の一覧に含めています。
 次のコマンドはZeroMQ、Boost、FairLogger、FairMQ、Catch2、nlohmann/json、
 hiredis、redis++、Redis Stackをインストールします。
 
-このガイドのデフォルト手順では、upstreamの`main`ブランチにある最新の安定リリース版を
-ビルドします。`main`を明示的にcloneします。
+このガイドでupstream repositoryとは、
+[github.com/spadi-alliance/nestdaq](https://github.com/spadi-alliance/nestdaq)を
+指します。デフォルト手順では、その`main`ブランチにある最新の安定リリース版を
+ビルドします。これはNestDAQを開発しない利用者などが通常選択する方法です。`main`を
+明示的にcloneします。
 
 ```bash
 # 最新の安定リリース版のsource codeをdownload
 git clone --branch main https://github.com/spadi-alliance/nestdaq.git
+```
+
+特定のリリース版をビルドする場合は、repositoryのReleasesまたはTags pageにある
+必要なtagで`<release-tag>`を置き換えます。NestDAQ versionを固定する場合や、buildの
+再現性が必要な場合はrelease tagを指定してください。
+
+```bash
+git clone --branch <release-tag> --depth 1 \
+  https://github.com/spadi-alliance/nestdaq.git
 ```
 
 NestDAQ開発者は、最初に`spadi-alliance/nestdaq`を自身のGitHub accountへforkします。
@@ -369,7 +381,8 @@ VERBOSE=1 cmake --build ./build
 ## ローカルのOpenTelemetry Collectorおよびバックエンドコンテナの実行
 
 NestDAQはOpenTelemetryのログ、メトリクス、トレースをOpenTelemetry Collectorへ
-エクスポートできます。リポジトリには、必要に応じて利用できるローカル検証用Compose構成を
+エクスポートできます。リポジトリには、`docker compose`または`podman compose`で
+実行するローカル検証用Compose構成を
 [`share/otel-collector-compose/`](share/otel-collector-compose/README.ja.md)以下に
 用意しています。OpenTelemetry Collector Contrib、OpenSearch、OpenSearch Dashboards
 など、ローカル運用で使用するサービスをコンテナで実行します。これらのサービスとツールは

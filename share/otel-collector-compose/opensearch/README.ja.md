@@ -4,6 +4,9 @@
 
 このローカル検証用スタックは、OpenTelemetry CollectorでOpenTelemetryのログとトレースを受信し、OpenSearchに保存して、OpenSearch Dashboardsで表示します。
 
+このstackはDocker Compose(`docker compose`)またはPodman Compose
+(`podman compose`)で管理します。
+
 このディレクトリから起動します。
 
 ```bash

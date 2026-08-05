@@ -7,9 +7,14 @@
 <a id="forking-workflow"></a>
 ## フォークを使用した開発手順
 
-- `main`ブランチには、NestDAQの最新リリース版が含まれます。
+このドキュメントでupstream repositoryとは、
+[github.com/spadi-alliance/nestdaq](https://github.com/spadi-alliance/nestdaq)を
+指します。
+
+- `main`ブランチにはNestDAQの最新リリース版が含まれ、利用者やその他の非開発者が
+  通常使用します。
 - `develop`ブランチには、NestDAQの最新開発版が含まれます。
-- 開発を始める前に、upstreamの`spadi-alliance/nestdaq`リポジトリを自身のGitHub accountへforkしてください。
+- 開発を始める前に、upstream repositoryを自身のGitHub accountへforkしてください。
 - 開発を始める前に、自身のforkをupstreamの`develop`ブランチと同期してください。
 - 自身のforkで変更を行い、commitを自身のforkへpushしてください。upstreamリポジトリには作業ブランチを作成しないでください。
 - upstreamの`main`および`develop`ブランチは保護されており、直接pushできません。

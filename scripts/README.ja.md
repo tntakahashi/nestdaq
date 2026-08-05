@@ -15,7 +15,7 @@ pluginの使用方法を示すexample集です。scriptは任意のdirectoryへc
 一般的なlocal validationでは、`start_device.sh`でdeviceを起動する前に外部serviceを起動し、必要な設定を登録します。
 
 - Redis serverを起動します。
-- `share/otel-collector-compose`配下のCompose setupなど、OpenTelemetry Collector backendを起動します。
+- `share/otel-collector-compose`配下にある、`docker compose`または`podman compose`で実行するCompose setupなどのOpenTelemetry Collector backendを起動します。
 - browser user interfaceからdeviceを制御する場合は`daq-webctl`を起動します。
 - `topology-*.sh` scriptでtopology設定をRedisへ登録します。
 - exampleが`parameter_config` pluginからparameterを読み取る場合は、`mq-param.sh`でparameter設定をRedisへ登録します。

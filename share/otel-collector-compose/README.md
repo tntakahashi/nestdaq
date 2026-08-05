@@ -1,10 +1,10 @@
-# OpenTelemetry Collector Compose Setups
+# OpenTelemetry Collector Container Setups
 
 [English](README.md) | [日本語](README.ja.md)
 
-This directory contains local validation Compose setups for receiving
-OpenTelemetry data with OpenTelemetry Collector and storing it in one selected
-backend.
+This directory contains local validation Compose setups, run with
+`docker compose` or `podman compose`, for receiving OpenTelemetry data with
+OpenTelemetry Collector and storing it in one selected backend.
 
 These stacks are intended for local validation only. They publish service ports
 on the host, use simple local credentials where applicable, and should not be

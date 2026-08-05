@@ -24,7 +24,7 @@ NestDAQは、粒子線計測向けのストリーミングデータ収集(DAQ)�
 | [cmake/](cmake/README.ja.md) | このディレクトリには、CMake helper、インストールされるpackage file、外部依存関係をビルドするprojectがあります。 |
 | [tests/](tests/) | このディレクトリには、C++ testとtest用の補助ファイルがあります。 |
 | `share/` | このディレクトリには、NestDAQとともにインストールされる設定ファイルと補助ファイルがあります。 |
-| [share/otel-collector-compose/](share/otel-collector-compose/README.ja.md) | このディレクトリでは、ローカルOpenTelemetry Collectorと、[OpenSearch](share/otel-collector-compose/opensearch/README.ja.md)、[Victoria](share/otel-collector-compose/victoria/README.ja.md)、[ClickStack](share/otel-collector-compose/clickhouse/README.ja.md)用backend Compose stackを提供します。 |
+| [share/otel-collector-compose/](share/otel-collector-compose/README.ja.md) | このディレクトリでは、`docker compose`または`podman compose`で実行するローカルOpenTelemetry Collectorと、[OpenSearch](share/otel-collector-compose/opensearch/README.ja.md)、[Victoria](share/otel-collector-compose/victoria/README.ja.md)、[ClickStack](share/otel-collector-compose/clickhouse/README.ja.md)用backend Compose stackを提供します。 |
 | [share/redis-stack-container/](share/redis-stack-container/README.ja.md) | このディレクトリでは、Redis Stack containerを実行する補助スクリプトを提供します。 |
 | [share/installers/](share/installers/README.ja.md) | このディレクトリでは、実行時に使用する外部サービスをhostへインストールする`apt`・`dnf`用補助スクリプトを提供します。 |
 | [CONTRIBUTING.ja.md](CONTRIBUTING.ja.md) | この文書では、ブランチ運用方針、contribution workflow、formatting、static analysis、naming ruleを説明します。 |

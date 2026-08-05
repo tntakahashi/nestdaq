@@ -159,12 +159,24 @@ needs it for the dependency build.
 The following command installs ZeroMQ, Boost, FairLogger, FairMQ, Catch2,
 nlohmann/json, hiredis, redis++, and Redis Stack.
 
-The default procedure in this guide builds the latest stable release from the
-upstream `main` branch. Clone `main` explicitly:
+In this guide, the upstream repository means
+[github.com/spadi-alliance/nestdaq](https://github.com/spadi-alliance/nestdaq).
+The default procedure builds the latest stable release from its `main` branch.
+This is the normal choice for users and other people who are not developing
+NestDAQ. Clone `main` explicitly:
 
 ```bash
 # Download the latest stable release source
 git clone --branch main https://github.com/spadi-alliance/nestdaq.git
+```
+
+To build a specific released version, replace `<release-tag>` with the required
+tag from the repository's Releases or Tags page. Use a release tag when the
+NestDAQ version must be fixed or the build must be reproducible.
+
+```bash
+git clone --branch <release-tag> --depth 1 \
+  https://github.com/spadi-alliance/nestdaq.git
 ```
 
 NestDAQ developers should first fork `spadi-alliance/nestdaq` to their own
@@ -349,8 +361,9 @@ VERBOSE=1 cmake --build ./build
 ## Run local OpenTelemetry Collector and backend containers
 
 NestDAQ can export OpenTelemetry logs, metrics, and traces to an OpenTelemetry
-Collector. The repository provides optional Compose setups for local validation
-under [`share/otel-collector-compose/`](share/otel-collector-compose/README.md).
+Collector. The repository provides optional Compose setups, run with
+`docker compose` or `podman compose`, for local validation under
+[`share/otel-collector-compose/`](share/otel-collector-compose/README.md).
 They run services used for local operation, such as OpenTelemetry Collector
 Contrib, OpenSearch, and OpenSearch Dashboards, in containers. These services
 and tools are not build dependencies and are not intended for production

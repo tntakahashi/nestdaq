@@ -160,6 +160,9 @@ daq-webctl \
 
 Choose the OTLP endpoint according to where `daq-webctl` runs:
 
+Here, Compose means a container setup managed with `docker compose` or
+`podman compose`.
+
 - Host process to a compose-published collector port: `localhost:4317`.
 - `daq-webctl` container in the same OpenSearch or Victoria compose network:
   `otel-collector:4317`.

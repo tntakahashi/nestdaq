@@ -6,6 +6,9 @@ This local validation stack receives OpenTelemetry logs and traces with
 OpenTelemetry Collector, stores them in OpenSearch, and opens them in
 OpenSearch Dashboards.
 
+Use either Docker Compose (`docker compose`) or Podman Compose
+(`podman compose`) to manage this stack.
+
 Start from this directory:
 
 ```bash

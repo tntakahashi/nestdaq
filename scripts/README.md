@@ -19,8 +19,8 @@ For a typical local validation run, start the supporting services and register
 the required configuration before starting devices with `start_device.sh`:
 
 - Start a Redis server.
-- Start an OpenTelemetry Collector backend, for example the Compose setup under
-  `share/otel-collector-compose`.
+- Start an OpenTelemetry Collector backend, for example the Compose setup run
+  with `docker compose` or `podman compose` under `share/otel-collector-compose`.
 - Start `daq-webctl` if you want to control devices from the browser user
   interface.
 - Register topology settings in Redis with a `topology-*.sh` script.

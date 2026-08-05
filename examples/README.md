@@ -104,10 +104,11 @@ export OpenTelemetry logs to the collector.
 
 A. Start an OpenTelemetry Collector backend.
 
-   The backend can be the local Compose setup, a host-installed
-   `otelcol-contrib` service, or another collector reachable from the NestDAQ
-   processes. It receives OpenTelemetry Protocol (OTLP) data from the example
-   devices and forwards it to the configured log, metric, or trace storage.
+   The backend can be the local Compose setup, run with `docker compose` or
+   `podman compose`, a host-installed `otelcol-contrib` service, or another
+   collector reachable from the NestDAQ processes. It receives OpenTelemetry
+   Protocol (OTLP) data from the example devices and forwards it to the
+   configured log, metric, or trace storage.
 
    The local validation example below uses the OpenSearch Compose backend. It
    stores logs and traces in OpenSearch and makes them available in OpenSearch

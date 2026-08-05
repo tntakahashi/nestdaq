@@ -23,7 +23,7 @@ hardware-specific DAQ application code is outside the scope of this repository.
 | [cmake/](cmake/README.md) | This directory provides CMake helpers, installed package files, and the external dependency build project. |
 | [tests/](tests/) | This directory contains C++ tests and test support files. |
 | `share/` | This directory contains configuration files and helper files installed with NestDAQ. |
-| [share/otel-collector-compose/](share/otel-collector-compose/README.md) | This directory provides local OpenTelemetry Collector and backend Compose stacks for [OpenSearch](share/otel-collector-compose/opensearch/README.md), [Victoria](share/otel-collector-compose/victoria/README.md), and [ClickStack](share/otel-collector-compose/clickhouse/README.md). |
+| [share/otel-collector-compose/](share/otel-collector-compose/README.md) | This directory provides local OpenTelemetry Collector and backend Compose stacks, run with `docker compose` or `podman compose`, for [OpenSearch](share/otel-collector-compose/opensearch/README.md), [Victoria](share/otel-collector-compose/victoria/README.md), and [ClickStack](share/otel-collector-compose/clickhouse/README.md). |
 | [share/redis-stack-container/](share/redis-stack-container/README.md) | This directory provides helper scripts for running Redis Stack containers. |
 | [share/installers/](share/installers/README.md) | This directory provides `apt` and `dnf` helper scripts for installing external services on the host. |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | This document explains the branch policy, contribution workflow, formatting, static analysis, and naming rules. |

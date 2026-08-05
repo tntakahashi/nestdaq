@@ -161,6 +161,9 @@ daq-webctl \
 
 `daq-webctl`の実行場所に応じてOTLP endpointを選択します。
 
+ここでComposeとは、`docker compose`または`podman compose`で管理するcontainer構成を
+指します。
+
 - host processからComposeでpublishされたcollector portへ接続:
   `localhost:4317`。
 - 同じOpenSearchまたはVictoria Compose network内の`daq-webctl` container:

@@ -7,10 +7,14 @@ to NestDAQ.
 
 ## Forking workflow
 
-- The `main` branch contains the latest released version of NestDAQ.
+In this document, the upstream repository means
+[github.com/spadi-alliance/nestdaq](https://github.com/spadi-alliance/nestdaq).
+
+- The `main` branch contains the latest released version of NestDAQ and is the
+  normal choice for users and other non-developers.
 - The `develop` branch contains the latest development version.
-- Before starting development, fork the upstream `spadi-alliance/nestdaq`
-  repository to your own GitHub account.
+- Before starting development, fork the upstream repository to your own GitHub
+  account.
 - Synchronize your fork with the upstream `develop` branch before starting
   development.
 - Make changes in your fork and push commits to your fork. Do not create
