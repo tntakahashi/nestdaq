@@ -163,11 +163,12 @@ In this guide, the upstream repository means
 [github.com/spadi-alliance/nestdaq](https://github.com/spadi-alliance/nestdaq).
 The default procedure builds the latest stable release from its `main` branch.
 This is the normal choice for users and other people who are not developing
-NestDAQ. Clone `main` explicitly:
+NestDAQ. Because `main` is the repository's default branch, a normal clone
+checks it out:
 
 ```bash
 # Download the latest stable release source
-git clone --branch main https://github.com/spadi-alliance/nestdaq.git
+git clone https://github.com/spadi-alliance/nestdaq.git
 ```
 
 To build a specific released version, replace `<release-tag>` with the required
@@ -178,6 +179,18 @@ NestDAQ version must be fixed or the build must be reproducible.
 git clone --branch <release-tag> --depth 1 \
   https://github.com/spadi-alliance/nestdaq.git
 ```
+
+Alternatively, switch an existing normal clone to the release tag. A tag is
+not a development branch, so `git switch --detach` checks it out in detached
+HEAD state.
+
+```bash
+cd nestdaq
+git fetch --tags
+git switch --detach <release-tag>
+```
+
+`git checkout <release-tag>` is the equivalent form using `git checkout`.
 
 NestDAQ developers should first fork `spadi-alliance/nestdaq` to their own
 GitHub account. To build the latest development version, clone that fork, add

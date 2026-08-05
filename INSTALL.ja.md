@@ -169,12 +169,12 @@ hiredis、redis++、Redis Stackをインストールします。
 このガイドでupstream repositoryとは、
 [github.com/spadi-alliance/nestdaq](https://github.com/spadi-alliance/nestdaq)を
 指します。デフォルト手順では、その`main`ブランチにある最新の安定リリース版を
-ビルドします。これはNestDAQを開発しない利用者などが通常選択する方法です。`main`を
-明示的にcloneします。
+ビルドします。これはNestDAQを開発しない利用者などが通常選択する方法です。`main`は
+repositoryのdefault branchであるため、通常のcloneでcheckoutされます。
 
 ```bash
 # 最新の安定リリース版のsource codeをdownload
-git clone --branch main https://github.com/spadi-alliance/nestdaq.git
+git clone https://github.com/spadi-alliance/nestdaq.git
 ```
 
 特定のリリース版をビルドする場合は、repositoryのReleasesまたはTags pageにある
@@ -185,6 +185,17 @@ git clone --branch main https://github.com/spadi-alliance/nestdaq.git
 git clone --branch <release-tag> --depth 1 \
   https://github.com/spadi-alliance/nestdaq.git
 ```
+
+または、通常のcloneをrelease tagへ切り替えます。tagは開発用branchではないため、
+`git switch --detach`を使用してdetached HEAD状態でcheckoutします。
+
+```bash
+cd nestdaq
+git fetch --tags
+git switch --detach <release-tag>
+```
+
+`git checkout`を使用する場合、同等のcommandは`git checkout <release-tag>`です。
 
 NestDAQ開発者は、最初に`spadi-alliance/nestdaq`を自身のGitHub accountへforkします。
 最新開発版をビルドする場合は、自身のforkをcloneし、upstream repositoryを追加して、
