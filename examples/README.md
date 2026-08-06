@@ -2,11 +2,9 @@
 
 [English](README.md) | [日本語](README.ja.md)
 
-This directory contains small NestDAQ device examples. They are included in the
-main NestDAQ build by default because `NestDAQ_BUILD_EXAMPLES` defaults to
-`ON`. Set `NestDAQ_BUILD_EXAMPLES=OFF` to exclude them from the main build; they
-can then be built separately as a standalone CMake project after NestDAQ is
-installed.
+This directory contains small NestDAQ device examples.
+The main NestDAQ build includes them because `NestDAQ_BUILD_EXAMPLES` defaults to `ON`.
+Set `NestDAQ_BUILD_EXAMPLES=OFF` to exclude the examples from the main build and build them separately as a standalone CMake project after installing NestDAQ.
 
 ## 1. Example Devices
 
@@ -16,29 +14,23 @@ installed.
 | `Sampler` | Sends text messages through a FairMQ output channel and demonstrates custom command-line options. It also demonstrates OpenTelemetry spans and metrics. |
 | `Sink` | Receives single-part or multipart messages through a FairMQ input channel and demonstrates channel callback setup. It also demonstrates OpenTelemetry spans and metrics. |
 
-A lifecycle hook is a member function that the FairMQ state machine calls at a
-defined stage of a device's lifecycle. For example, `Init()` and `InitTask()`
-initialize the device, `PreRun()` prepares it for a run, and `PostRun()` performs
-post-run work. A device overrides only the hooks needed for its processing and
-resource management. `NullDevice` logs these calls so their order can be
-observed without setting up data channels.
+A **lifecycle hook** is a member function that the FairMQ state machine calls at a defined stage of a device's lifecycle.
+For example, `Init()` and `InitTask()` initialize the device, `PreRun()` prepares it for a run, and `PostRun()` performs post-run work.
+A device overrides only the hooks needed for its processing and resource management.
+`NullDevice` logs these calls so that their order can be observed without setting up data channels.
 
-Each executable links to `NestDAQ::NestDAQ`, which provides the NestDAQ
-`runDevice.h` integration, FairMQ/FairLogger dependencies, plugin search paths,
-and optional telemetry loader support.
+Each executable links to `NestDAQ::NestDAQ`.
+This target provides the NestDAQ `runDevice.h` integration, FairMQ/FairLogger dependencies, plugin search paths, and optional telemetry loader support.
 
-`Sampler` and `Sink` use the NestDAQ telemetry facade to demonstrate trace spans
-and metrics without directly including OpenTelemetry headers. Enable them via
-command-line options when starting the device, for example
-`--otel-metric-protocol=console` and `--otel-trace-protocol=console`.
+`Sampler` and `Sink` use the NestDAQ telemetry facade to demonstrate trace spans and metrics without directly including OpenTelemetry headers.
+Enable the telemetry examples with command-line options such as `--otel-metric-protocol=console` and `--otel-trace-protocol=console` when starting the device.
 
 ## 2. Build
 
-The main NestDAQ build builds and installs these examples by default. Configure
-with `-DNestDAQ_BUILD_EXAMPLES=OFF` to skip them.
+The main NestDAQ build builds and installs these examples by default.
+Configure with `-DNestDAQ_BUILD_EXAMPLES=OFF` to skip them.
 
-For a separate examples build, install NestDAQ first, then configure the
-examples with the NestDAQ install prefix in `CMAKE_PREFIX_PATH`.
+To build the examples separately, install NestDAQ first and then configure the examples with the NestDAQ install prefix in `CMAKE_PREFIX_PATH`.
 
 ```sh
 cmake \
@@ -50,16 +42,14 @@ cmake --build ./build-examples --parallel
 cmake --install ./build-examples
 ```
 
-The examples do not need to be installed into the same prefix as NestDAQ, but
-the dynamic linker must be able to find NestDAQ, FairMQ, Boost, and related
-libraries. The example CMake project sets an install RPATH relative to the
-example install prefix and uses link paths discovered through `NestDAQ::NestDAQ`.
+The examples do not need to use the same install prefix as NestDAQ.
+However, the dynamic linker must be able to find NestDAQ, FairMQ, Boost, and related libraries.
+The example CMake project sets an install RPATH relative to the example install prefix and uses link paths discovered through `NestDAQ::NestDAQ`.
 
 ## 3. Running
 
-Use the installed helper scripts or invoke the binaries directly with FairMQ
-channel options. A typical local validation run starts Redis, an OpenTelemetry
-Collector backend, `daq-webctl`, and then the example devices.
+Use the installed helper scripts, or invoke the binaries directly with FairMQ channel options.
+A typical local validation run starts Redis, an OpenTelemetry Collector backend, `daq-webctl`, and then the example devices.
 
 ```sh
 Sampler --help
@@ -69,8 +59,7 @@ NullDevice --help
 
 ### 3.1. Local Run Sequence
 
-The commands below assume that NestDAQ was installed under
-`<install-prefix>`.
+The commands below assume that NestDAQ was installed under `<install-prefix>`.
 
 ```mermaid
 flowchart TD
@@ -88,19 +77,17 @@ flowchart TD
 ```
 
 The diagram shows a typical local run sequence, not a strict dependency graph.
-Start the OpenTelemetry Collector backend first when logs, metrics, or traces
-should be exported and no suitable collector/backend is already running. If
-telemetry is disabled, console-only telemetry is used, or an existing collector
-is already available, treat step A as already complete. Redis is required; start
-it using the local deployment method in use, such as a local `redis-server`, a
-containerized Redis/Redis Stack instance, or a host package managed by systemd.
-Perform the run start operation last. Steps E and F may be reordered as long as
-they are done after Redis is available and before step H. The browser can be
-opened as soon as `daq-webctl` starts; devices may not appear until the topology
-and parameter settings are registered and the user devices are running. Steps G
-and H are operations performed in the `daq-webctl` Web UI. Run-start commands require the target
-devices to be running. `daq-webctl` and the user devices use Redis and can
-export OpenTelemetry logs to the collector.
+Start the OpenTelemetry Collector backend first when logs, metrics, or traces should be exported and no suitable collector/backend is already running.
+If telemetry is disabled, console-only telemetry is used, or an existing collector is available, treat step A as complete.
+
+Redis is required.
+Start it with the deployment method used by the local environment, such as a local `redis-server`, a containerized Redis/Redis Stack instance, or a host package managed by systemd.
+Steps E and F may be reordered as long as both occur after Redis is available and before step H.
+
+The browser can be opened as soon as `daq-webctl` starts, but devices may not appear until the topology and parameter settings are registered and the user devices are running.
+Steps G and H are operations in the `daq-webctl` Web UI.
+Run-start commands require the target devices to be running, so perform step H last.
+`daq-webctl` and the user devices use Redis and can export OpenTelemetry logs to the collector.
 
 A. Start an OpenTelemetry Collector backend.
 
@@ -211,11 +198,10 @@ C. Start `daq-webctl`.
      --otel-service-name=daq-webctl
    ```
 
-   `daq-webctl` is the server process: it provides an HTTP/WebSocket endpoint and
-   acts as a Redis client that reads DAQ state and configuration and publishes
-   commands for user devices. The `daq-webctl` Web UI is the browser interface
-   served by this process, not a separate controller service. The browser
-   communicates with `daq-webctl`; it does not connect directly to Redis.
+   `daq-webctl` is the server process.
+   It provides an HTTP/WebSocket endpoint and acts as a Redis client that reads DAQ state and configuration and publishes commands for user devices.
+   The `daq-webctl` Web UI is the browser interface served by this process, not a separate controller service.
+   The browser communicates with `daq-webctl`; it does not connect directly to Redis.
 
    The OpenTelemetry options send `daq-webctl` logs to the local collector
    started above. Replace `--redis-uri` and `--otel-log-endpoint-grpc` when
@@ -416,9 +402,8 @@ For script-based launch examples, see [`scripts/README.md`](../scripts/README.md
 
 ## 4. Creating Your Own User Device
 
-A NestDAQ user device is the process that actually produces, consumes, or
-transforms data. In C++ it is implemented as a class derived from
-`fair::mq::Device`.
+A NestDAQ user device is a process that produces, consumes, or transforms data.
+In C++, it is implemented as a class derived from `fair::mq::Device`.
 
 The main pieces are:
 
@@ -433,7 +418,7 @@ The main pieces are:
 
 ### 4.1. Start From the Skeleton Generator
 
-The recommended first step is to generate a small project and then edit it.
+A practical first step is to generate a small project and then edit the generated files.
 
 ```sh
 <install-prefix>/scripts/generate-device-skeleton.py MyDevice \
@@ -507,9 +492,9 @@ auto getDevice(const fair::mq::ProgOptions& /*config*/) -> std::unique_ptr<fair:
 }
 ```
 
-`addCustomOptions()` adds command-line options. `getDevice()` creates the
-actual device object. `nestdaq/runDevice.h` supplies the NestDAQ-aware main
-program wrapper, so the generated source does not need to define `main()`.
+`addCustomOptions()` adds command-line options.
+`getDevice()` creates the device object.
+`nestdaq/runDevice.h` supplies the NestDAQ-aware main program wrapper, so the generated source does not need to define `main()`.
 
 `addCustomOptions()` uses Boost.Program_options syntax. `options.add_options()`
 returns an object that accepts option descriptions by chaining calls:
@@ -524,9 +509,8 @@ options.add_options()
      "Help text for option N");
 ```
 
-The middle option descriptions are connected by writing the next `(...)`
-immediately after the previous one. The semicolon is written only once, after
-the final option description.
+Chain the option descriptions by writing each `(...)` immediately after the previous one.
+Write the semicolon once, after the final option description.
 
 Each option description has three parts:
 
@@ -585,9 +569,8 @@ auto MyDevice::InitTask() -> void
 }
 ```
 
-This keeps command-line, Redis parameter injection, and generated code behavior
-consistent. If a numeric option is invalid, let the conversion fail early or
-catch the exception and log a clear error.
+This approach keeps command-line handling, Redis parameter injection, and generated code behavior consistent.
+If a numeric option is invalid, let the conversion fail early or catch the exception and log a clear error.
 
 ### 4.4. Choosing OnData(), ConditionalRun(), or Run()
 
@@ -657,15 +640,12 @@ Unlike `OnData()`, `ConditionalRun()` and `Run()` do not receive messages
 automatically. If either function should consume input, write the `Receive()`,
 polling, and timeout handling in the device code.
 
-In practice, implement one of `OnData()`, `ConditionalRun()`, or `Run()` as the
-main processing style. You do not need to implement all three for one device.
-Do not write an infinite wait inside an `OnData()` callback, `ConditionalRun()`,
-or `Run()`. If you add a loop, retry, or wait in any of them, check
-`NewStatePending()` so the device can react to state transition commands. The
-FairMQ input-handling path used by `OnData()` and the FairMQ loop around
-`ConditionalRun()` already check `NewStatePending()`, but user code must still
-avoid blocking forever before returning to those loops. Returning to the FairMQ
-loop promptly makes state transitions more responsive.
+Implement one of `OnData()`, `ConditionalRun()`, or `Run()` as the main processing style.
+One device does not need to implement all three.
+Do not wait indefinitely inside an `OnData()` callback, `ConditionalRun()`, or `Run()`.
+If any of them contains a loop, retry, or wait, check `NewStatePending()` so that the device can react to state transition commands.
+The FairMQ input-handling path used by `OnData()` and the FairMQ loop around `ConditionalRun()` already check `NewStatePending()`, but user code must still return control instead of blocking indefinitely.
+Returning to the FairMQ loop promptly improves responsiveness to state transitions.
 
 For a callback-based sink:
 
@@ -752,7 +732,7 @@ prefix.
 
 ### 4.6. Running the New Device
 
-Use the same supporting services described in the local run sequence above:
+Use the supporting services described in the local run sequence above.
 
 If an existing local validation environment is already running, skip the
 matching steps below. For example, you do not need to start another Redis

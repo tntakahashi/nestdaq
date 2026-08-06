@@ -2,11 +2,9 @@
 
 [English](README.md) | [日本語](README.ja.md)
 
-NestDAQ telemetry is an optional OpenTelemetry integration for FairMQ-based
-devices and controller processes. The application executable does not link
-OpenTelemetry directly. Instead, NestDAQ dynamically loads a single telemetry
-plugin, `libnestdaq_otel.so`, with `dlopen()` and resolves a small C application
-binary interface (ABI).
+NestDAQ telemetry provides optional OpenTelemetry integration for FairMQ-based devices and controller processes.
+The application executable does not link OpenTelemetry directly.
+Instead, NestDAQ loads the single telemetry plugin `libnestdaq_otel.so` dynamically with `dlopen()` and resolves a small C application binary interface (ABI).
 
 The plugin can export three OpenTelemetry signals:
 
@@ -16,38 +14,33 @@ The plugin can export three OpenTelemetry signals:
 | Metrics | disabled           | `nestdaq::telemetry::Telemetry` counter/histogram/gauge application programming interface (API) |
 | Traces  | disabled           | `nestdaq::telemetry::TelemetrySpan` resource acquisition is initialization (RAII) API |
 
-`libnestdaq_otel.so` is built and installed only when `opentelemetry-cpp` is
-found at CMake configure time.
+`libnestdaq_otel.so` is built and installed only when CMake finds `opentelemetry-cpp` during configuration.
 
 <a id="1-runtime-model"></a>
 ## 1. Telemetry Plugin Loading Model
 
-NestDAQ installs process-wide OpenTelemetry providers inside the telemetry
-plugin. FairLogger logs are captured by a process-wide custom sink. spdlog logs
-are exported only from loggers that explicitly attach the NestDAQ spdlog sink.
-Metrics and traces are recorded through the NestDAQ thin wrapper API, which
-does not expose OpenTelemetry C++ headers.
+NestDAQ installs process-wide OpenTelemetry providers inside the telemetry plugin.
+A process-wide custom sink captures FairLogger logs.
+Only loggers that explicitly attach the NestDAQ spdlog sink export spdlog logs.
+The NestDAQ thin wrapper API records metrics and traces without exposing OpenTelemetry C++ headers.
 
-The dynamically loaded telemetry plugin keeps the public C ABI in
-`OpenTelemetryInitializer.cxx` and
-organizes the implementation internally by signal area: logs, metrics, traces,
-and shared telemetry helpers. Applications should use `TelemetryLibrary`,
-`Telemetry`, `Counter`, `Histogram`, `Gauge`, `TelemetrySpan`, and
-`GetTelemetry()` instead of depending on those internal implementation files.
+The dynamically loaded telemetry plugin defines the public C ABI in `OpenTelemetryInitializer.cxx`.
+Internally, it organizes the implementation into logs, metrics, traces, and shared telemetry helpers.
+Applications should use `TelemetryLibrary`, `Telemetry`, `Counter`, `Histogram`, `Gauge`, `TelemetrySpan`, and `GetTelemetry()` instead of depending on the internal implementation files.
 
-Each signal accepts a comma-separated protocol list. Supported protocols are
-`console`, `otlp-http`, and `otlp-grpc`. OTLP means OpenTelemetry Protocol,
-HTTP means Hypertext Transfer Protocol, and gRPC means Google remote procedure
-call. The aliases `http`, `otlp_http`, `grpc`, and `otlp_grpc` are also
-accepted by the plugin. An empty protocol disables the signal.
+Each signal accepts a comma-separated protocol list.
+The supported protocols are `console`, `otlp-http`, and `otlp-grpc`.
+OTLP means OpenTelemetry Protocol, HTTP means Hypertext Transfer Protocol, and gRPC means Google remote procedure call.
+The plugin also accepts the aliases `http`, `otlp_http`, `grpc`, and `otlp_grpc`.
+An empty protocol disables the signal.
 
 ## 2. Resource Attributes
 
-Logs, metrics, and traces share one OpenTelemetry resource. NestDAQ sets these
-resource attributes when values are available. The `service.*` and `host.*`
-keys below are OpenTelemetry semantic convention attributes. `OTel` is used
-below as the common abbreviation for OpenTelemetry. The `nestdaq.*`
-and `fairmq.*` keys are NestDAQ-specific attributes.
+Logs, metrics, and traces share one OpenTelemetry resource.
+NestDAQ sets the following resource attributes when their values are available.
+The `service.*` and `host.*` keys are OpenTelemetry semantic convention attributes.
+This document uses `OTel` as the common abbreviation for OpenTelemetry.
+The `nestdaq.*` and `fairmq.*` keys are NestDAQ-specific attributes.
 
 | Attribute | Origin | Value |
 | --------- | ------ | ----- |
@@ -63,16 +56,13 @@ and `fairmq.*` keys are NestDAQ-specific attributes.
 | `fairmq.session` | NestDAQ/FairMQ custom | FairMQ session. |
 | `fairmq.transport` | NestDAQ/FairMQ custom | FairMQ transport. |
 
-Detailed NestDAQ and FairMQ build/git metadata is emitted as structured startup
-log bodies, not as resource attributes. The OpenTelemetry software development
-kit (SDK) may add its own SDK resource attributes independently; this table
-lists attributes explicitly set by NestDAQ.
+Detailed NestDAQ and FairMQ build and Git metadata is emitted in structured startup log bodies rather than as resource attributes.
+The OpenTelemetry software development kit (SDK) may add its own resource attributes independently.
+The table lists only attributes that NestDAQ sets explicitly.
 
 ## 3. FairLogger Log Records
 
-The FairLogger custom sink converts each emitted FairLogger message into an
-OpenTelemetry LogRecord when the FairLogger severity is at or above
-`--otel-log-severity`.
+The FairLogger custom sink converts each emitted FairLogger message into an OpenTelemetry LogRecord when its severity is at or above `--otel-log-severity`.
 
 | LogRecord field or attribute | Origin | Source |
 | ---------------------------- | ------ | ------ |
@@ -92,28 +82,22 @@ OpenTelemetry LogRecord when the FairLogger severity is at or above
 | `nestdaq.instance.index` | NestDAQ custom | Numeric suffix parsed from an instance id ending in `-<number>`. |
 | `process.name` | NestDAQ/FairLogger custom | FairLogger process name metadata. This is not the OTel `process.executable.name` resource attribute. |
 
-The instrumentation scope uses logger/library name `FairLogger` and library
-version `FAIRLOGGER_VERSION`. NestDAQ does not add a custom
-`log.severity.text` attribute; `SeverityText` is the standard OpenTelemetry
-LogRecord field.
+The instrumentation scope uses `FairLogger` as the logger and library name and `FAIRLOGGER_VERSION` as the library version.
+NestDAQ does not add a custom `log.severity.text` attribute because `SeverityText` is the standard OpenTelemetry LogRecord field.
 
-FairMQ throughput log lines are parsed for framework metrics before the log
-severity filter is applied. A throughput sample can therefore update framework
-metrics even when the original log message is below the exported log severity.
-Metrics and traces are initialized only after the FairMQ device id is known so
-their resource contains `nestdaq.instance.id`. Logs are initialized at process
-startup with `nestdaq.instance.id.status=unresolved`, then reinitialized with
-`nestdaq.instance.id.status=resolved` when the id becomes available.
+FairMQ throughput log lines are parsed for framework metrics before the log severity filter is applied.
+Therefore, a throughput sample can update framework metrics even when the original log message is below the exported log severity.
+Metrics and traces are initialized only after the FairMQ device id is known so that their resource contains `nestdaq.instance.id`.
+Logs are initialized at process startup with `nestdaq.instance.id.status=unresolved` and reinitialized with `nestdaq.instance.id.status=resolved` when the id becomes available.
 
 ## 4. spdlog Log Records
 
 The spdlog OpenTelemetry sink is experimental and not yet fully verified.
 
-When NestDAQ is built with both `opentelemetry-cpp` and spdlog available,
-`nestdaq/telemetry/SpdlogOpenTelemetrySink.h` is installed. The spdlog
-instrumentation is independent from FairLogger instrumentation: NestDAQ does not
-change spdlog's default logger, registry, or log level. Applications attach the
-returned sink to each spdlog logger that should export OpenTelemetry records.
+When both `opentelemetry-cpp` and spdlog are available during the NestDAQ build, NestDAQ installs `nestdaq/telemetry/SpdlogOpenTelemetrySink.h`.
+The spdlog instrumentation is independent of the FairLogger instrumentation.
+NestDAQ does not change spdlog's default logger, registry, or log level.
+Applications attach the returned sink to each spdlog logger that should export OpenTelemetry records.
 
 ```cpp
 #include <nestdaq/telemetry/SpdlogOpenTelemetrySink.h>
@@ -127,10 +111,8 @@ auto logger = spdlog::logger{
 logger.info("event accepted");
 ```
 
-The usual spdlog member functions, such as `logger.info(...)` and
-`logger.warn(...)`, do not automatically attach source location metadata. Use
-the standard spdlog macros when OpenTelemetry records should include file path,
-line number, and function name:
+The usual spdlog member functions, such as `logger.info(...)` and `logger.warn(...)`, do not automatically attach source-location metadata.
+Use the standard spdlog macros when OpenTelemetry records should include the file path, line number, and function name:
 
 ```cpp
 SPDLOG_LOGGER_INFO(&logger, "accepted event {}", eventId);
@@ -162,17 +144,15 @@ The spdlog sink records these OpenTelemetry fields and attributes:
 
 ## 5. Log Severity Mapping
 
-OpenTelemetry stores the normalized log level in the LogRecord
-`SeverityNumber` and `SeverityText` fields. The original logging-library level
-is kept separately as `fairlogger.severity.*` for FairLogger records and
-`spdlog.level` for spdlog records.
-The logging-library enum integers are not OpenTelemetry `SeverityNumber`
-values; use the OpenTelemetry fields for normalized severity queries.
+OpenTelemetry stores the normalized log level in the LogRecord `SeverityNumber` and `SeverityText` fields.
+The original logging-library level is stored separately as `fairlogger.severity.*` for FairLogger records and `spdlog.level` for spdlog records.
+The logging-library enum integers are not OpenTelemetry `SeverityNumber` values.
+Use the OpenTelemetry fields for normalized severity queries.
 
-`--otel-log-severity` is a FairLogger sink filter. It controls the minimum
-FairLogger severity exported to OpenTelemetry logs. It does not filter records
-emitted through the optional spdlog sink; spdlog filtering remains controlled by
-the spdlog logger and sink levels.
+`--otel-log-severity` is a FairLogger sink filter.
+It controls the minimum FairLogger severity exported to OpenTelemetry logs.
+It does not filter records emitted through the optional spdlog sink.
+The spdlog logger and sink levels continue to control spdlog filtering.
 
 ### 5.1. FairLogger Severity Mapping
 
@@ -195,9 +175,8 @@ the spdlog logger and sink levels.
 | `critical` | `14` | `18` | `ERROR2` | `fairlogger.severity.*` |
 | `fatal` | `15` | `21` | `FATAL` | `fairlogger.severity.*` |
 
-`warning` is accepted as a `--otel-log-severity` alias for `warn`; FairLogger
-records themselves use the FairLogger level names. The alias has the same
-`fair::Severity` value as `warn`, `10`.
+`warning` is accepted as a `--otel-log-severity` alias for `warn`, while FairLogger records use the FairLogger level names.
+The alias has the same `fair::Severity` value as `warn`, `10`.
 
 ### 5.2. spdlog Severity Mapping
 
@@ -250,14 +229,11 @@ records themselves use the FairLogger level names. The alias has the same
 | `--otel-fairmq-session` | none | empty | `fairmq.session` resource attribute. |
 | `--otel-fairmq-transport` | none | empty | `fairmq.transport` resource attribute. |
 
-Severity names are `nolog`, `trace`, `debug4`, `debug3`, `debug2`, `debug1`,
-`debug`, `detail`, `info`, `state`, `warn`, `warning`, `important`, `alarm`,
-`error`, `critical`, and `fatal`.
+Severity names are `nolog`, `trace`, `debug4`, `debug3`, `debug2`, `debug1`, `debug`, `detail`, `info`, `state`, `warn`, `warning`, `important`, `alarm`, `error`, `critical`, and `fatal`.
 
 ## 7. Examples
 
-Default operation exports logs to the console exporter and leaves metrics and
-traces disabled:
+By default, NestDAQ exports logs to the console exporter and leaves metrics and traces disabled:
 
 ```sh
 my-device
@@ -281,9 +257,8 @@ Disable logs explicitly by passing the protocol option without a value:
 my-device --otel-log-protocol
 ```
 
-Use spdlog's native console sink with a custom pattern by setting the spdlog
-pattern. The native console sink is enabled by default and can run alongside
-the OTel spdlog sink:
+Set the spdlog pattern to use its native console sink with a custom pattern.
+The native console sink is enabled by default and can run alongside the OTel spdlog sink:
 
 ```sh
 my-device \
@@ -291,8 +266,7 @@ my-device \
   --spdlog-console-pattern '[%n] [%l] %v'
 ```
 
-Disable only the native spdlog console output while keeping OTel spdlog export
-enabled:
+Disable only the native spdlog console output while keeping OTel spdlog export enabled:
 
 ```sh
 my-device \
@@ -300,9 +274,8 @@ my-device \
   --spdlog-native-console=false
 ```
 
-NestDAQ helper loggers are synchronous by default and use spdlog multi-thread
-safe sinks. Enable async mode when logging frequency is high enough that caller
-threads should hand records to a background worker:
+NestDAQ helper loggers are synchronous by default and use spdlog multi-thread-safe sinks.
+Enable async mode when the logging frequency is high enough that caller threads should hand records to a background worker:
 
 ```sh
 my-device \
@@ -312,11 +285,10 @@ my-device \
   --spdlog-async-overflow-policy=block
 ```
 
-The `block` overflow policy avoids losing log records but can make caller
-threads wait when the queue is full. `overrun_oldest` drops old queued records,
-and `discard_new` drops newly submitted records when the queue is full. Async
-queue size and worker count are used when async helper loggers are created;
-changing them later does not modify existing loggers.
+The `block` overflow policy avoids losing log records but can make caller threads wait when the queue is full.
+`overrun_oldest` drops old queued records, and `discard_new` drops newly submitted records when the queue is full.
+The async queue size and worker count are applied when an async helper logger is created.
+Changing these settings later does not modify existing loggers.
 
 Use the C++ thin API from an application that manages telemetry explicitly:
 
@@ -358,14 +330,11 @@ span.SetAttribute({
 });
 ```
 
-The recommended application-facing form is the `Attribute` wrapper used by
-`events.Add(...)`, `queueDepth.Record(...)`, and `StartSpan(..., { ... })`. It
-keeps string storage alive while NestDAQ converts attributes to the C ABI form
-and is the form examples should normally use.
+The recommended application-facing form is the `Attribute` wrapper used by `events.Add(...)`, `queueDepth.Record(...)`, and `StartSpan(..., { ... })`.
+It keeps string storage alive while NestDAQ converts attributes to the C ABI form and is the form that examples should normally use.
 
-Advanced code can pass prebuilt C ABI attributes directly. This avoids the
-temporary `Attribute` wrapper conversion and is useful for hot paths or code
-that already owns a `nestdaq_otel_attribute` buffer:
+Advanced code can pass prebuilt C ABI attributes directly.
+This form avoids the temporary `Attribute` wrapper conversion and is useful for hot paths or code that already owns a `nestdaq_otel_attribute` buffer:
 
 ```cpp
 std::array<nestdaq_otel_attribute, 2> attributes{{
@@ -393,23 +362,18 @@ telemetry.AddCounter(
     "events.total", 1, "1", "Total processed events", attributes.data(), attributes.size());
 ```
 
-The caller owns the low-level attribute array and its string storage. NestDAQ
-only reads it during the telemetry call. In C++20 builds, equivalent overloads
-also accept `std::span<const nestdaq_otel_attribute>` and forward to the same
-low-level implementation.
+The caller owns the low-level attribute array and its string storage.
+NestDAQ reads the array only during the telemetry call.
+In C++20 builds, equivalent overloads also accept `std::span<const nestdaq_otel_attribute>` and forward to the same low-level implementation.
 
 ## 8. Collector Compose Setup (`docker compose` or `podman compose`)
 
-For a local OpenTelemetry Collector, OpenSearch, and OpenSearch Dashboards
-environment, see [OpenTelemetry Collector Compose Setup](../../share/otel-collector-compose/README.md).
+For a local environment with OpenTelemetry Collector, OpenSearch, and OpenSearch Dashboards, see [OpenTelemetry Collector Compose Setup](../../share/otel-collector-compose/README.md).
 
 ## 9. Troubleshooting
 
-- If `--otel-library` cannot be loaded, check `LD_LIBRARY_PATH`, install rpath,
-  or pass an absolute path.
-- If the library loads but initialization fails, inspect
-  `TelemetryLibrary::GetLastError()`.
-- Unsupported protocol names, invalid config size, invalid severity values, and
-  empty metric/span names are reported through the plugin last-error string.
-- A disabled metric signal makes metric recording a successful no-op. A disabled
-  trace signal returns an inactive span.
+- If `--otel-library` cannot be loaded, check `LD_LIBRARY_PATH`, install rpath, or pass an absolute path.
+- If the library loads but initialization fails, inspect `TelemetryLibrary::GetLastError()`.
+- Unsupported protocol names, invalid config size, invalid severity values, and empty metric or span names are reported through the plugin last-error string.
+- A disabled metric signal makes metric recording a successful no-op.
+  A disabled trace signal returns an inactive span.

@@ -2,12 +2,11 @@
 
 [English](README.md) | [日本語](README.ja.md)
 
-This local validation stack receives OpenTelemetry logs and traces with
-OpenTelemetry Collector, stores them in OpenSearch, and opens them in
-OpenSearch Dashboards.
+This local validation stack uses OpenTelemetry Collector to receive OpenTelemetry logs and traces.
+It stores the data in OpenSearch and displays it in OpenSearch Dashboards.
 
-Use either Docker Compose (`docker compose`) or Podman Compose
-(`podman compose`) to manage this stack.
+In this document, **Compose** means either Docker Compose (`docker compose`) or Podman Compose (`podman compose`).
+Use either implementation to manage this stack.
 
 Start from this directory:
 
@@ -21,28 +20,22 @@ For Podman:
 podman compose -f compose-opensearch.yaml up
 ```
 
-`podman compose` requires a Compose provider such as `podman-compose` or the
-Docker Compose plugin to be installed and discoverable in `PATH`.
+`podman compose` requires a Compose provider such as `podman-compose` or the Docker Compose plugin.
+The provider must be installed and discoverable in `PATH`.
 
 ## 1. Components
 
-- `otel-collector`: receives OpenTelemetry Protocol (OTLP) logs and traces over
-  Google remote procedure call (gRPC) and Hypertext Transfer Protocol (HTTP).
+- `otel-collector`: receives OpenTelemetry Protocol (OTLP) logs and traces over Google remote procedure call (gRPC) and Hypertext Transfer Protocol (HTTP).
 - `opensearch`: stores logs and traces exported by the collector.
 - `opensearch-dashboards`: provides the web user interface (UI) for OpenSearch.
-- `opensearch-dashboards-setup`: creates initial Data Views for logs and
-  traces if they do not already exist.
+- `opensearch-dashboards-setup`: creates initial Data Views for logs and traces if they do not already exist.
 
-OpenSearch 2.12 and later, including OpenSearch 3.x, requires
-`OPENSEARCH_INITIAL_ADMIN_PASSWORD` when the bundled demo security
-configuration is installed. This local validation compose disables that demo
-configuration installer and the Security plugin, so no OpenSearch admin
-password is required for this stack.
+OpenSearch 2.12 and later, including OpenSearch 3.x, requires `OPENSEARCH_INITIAL_ADMIN_PASSWORD` when the bundled demo security configuration is installed.
+This local validation Compose setup disables the demo configuration installer and the Security plugin, so this stack does not require an OpenSearch admin password.
 
-Open `http://localhost:5601/app/discover` after the stack starts. The setup
-service creates Data Views for `otel-logs-*` and `otel-traces-*`, and sets
-`otel-logs-*` as the default only when no default Data View is already
-configured.
+After the stack starts, open `http://localhost:5601/app/discover`.
+The setup service creates Data Views for `otel-logs-*` and `otel-traces-*`.
+It sets `otel-logs-*` as the default only when no default Data View is already configured.
 
 ## 2. Collector Pipelines
 
@@ -58,10 +51,10 @@ It stores traces in indices named:
 otel-traces-%{service.name}-yyyy.MM.dd
 ```
 
-If `service.name` is missing, `unknown-service` is used. OpenSearch requires
-lowercase index names. NestDAQ telemetry lowercases ASCII uppercase letters in
-`service.name` before export; external OTLP clients should also send lowercase
-`service.name` values when using this compose setup.
+If `service.name` is missing, the collector uses `unknown-service`.
+OpenSearch requires lowercase index names.
+NestDAQ telemetry converts ASCII uppercase letters in `service.name` to lowercase before export.
+External OTLP clients should also send lowercase `service.name` values when using this Compose setup.
 
 ## 3. Ports
 
@@ -70,17 +63,14 @@ lowercase index names. NestDAQ telemetry lowercases ASCII uppercase letters in
 - OTLP gRPC receiver: `localhost:4317`
 - OTLP HTTP receiver: `http://localhost:4318`
 
-Host processes use the `localhost` endpoints above. A NestDAQ device container
-or `daq-webctl` container in the same compose network should use
-`otel-collector:4317` for OTLP gRPC, or `http://otel-collector:4318` for OTLP
-HTTP.
+Host processes use the `localhost` endpoints above.
+A NestDAQ device container or `daq-webctl` container in the same Compose network should use `otel-collector:4317` for OTLP gRPC or `http://otel-collector:4318` for OTLP HTTP.
 
 ## 4. Rootless Podman
 
-OpenSearch runs as container `uid=1000,gid=1000`. Here `uid/gid` means user
-identifier/group identifier. With rootless Podman, the host directory
-bind-mounted to `/usr/share/opensearch/data` must be readable and writable by
-that container uid/gid as seen from the Podman user namespace:
+OpenSearch runs as container `uid=1000,gid=1000`.
+Here, `uid/gid` means user identifier/group identifier.
+With rootless Podman, the host directory bind-mounted to `/usr/share/opensearch/data` must be readable and writable by that container uid/gid as seen from the Podman user namespace:
 
 ```bash
 mkdir -p ./opensearch-data
@@ -89,8 +79,7 @@ podman unshare chmod -R u+rwX ./opensearch-data
 podman compose -f compose-opensearch.yaml up
 ```
 
-Alternatively, map the container's `1000:1000` user to the host user that
-starts Podman Compose:
+Alternatively, map the container's `1000:1000` user to the host user that starts Podman Compose:
 
 ```bash
 mkdir -p ./opensearch-data
@@ -98,9 +87,8 @@ PODMAN_USERNS="keep-id:uid=1000,gid=1000" \
 podman compose --in-pod=false -f compose-opensearch.yaml up
 ```
 
-The `PODMAN_USERNS` setting changes the user namespace mapping. It does not
-change the user ID of the OpenSearch container process, which remains
-`uid=1000,gid=1000` inside the container.
+The `PODMAN_USERNS` setting changes the user namespace mapping.
+It does not change the user ID of the OpenSearch container process, which remains `uid=1000,gid=1000` inside the container.
 
 <a id="5-runtime-options"></a>
 ## 5. Environment Variables
@@ -133,20 +121,17 @@ For Podman:
 podman compose -f compose-opensearch.yaml down
 ```
 
-The OpenSearch data directory is not deleted by `down`. By default it is
-`./opensearch-data`, bind-mounted to `/usr/share/opensearch/data`. If you start
-this compose setup again with the same `OPENSEARCH_DATA_DIR`, OpenSearch reuses
-the previous data.
+The `down` command does not delete the OpenSearch data directory.
+By default, `./opensearch-data` is bind-mounted to `/usr/share/opensearch/data`.
+If you start this Compose setup again with the same `OPENSEARCH_DATA_DIR`, OpenSearch reuses the previous data.
 
-Delete the OpenSearch data directory only when you want to discard the stored
-logs, traces, indexes, and OpenSearch metadata:
+Delete the OpenSearch data directory only when you want to discard the stored logs, traces, indexes, and OpenSearch metadata:
 
 ```bash
 rm -rf ./opensearch-data
 ```
 
-For rootless Podman, file ownership may require removal through the user
-namespace:
+For rootless Podman, file ownership may require removal through the user namespace:
 
 ```bash
 podman unshare rm -rf ./opensearch-data

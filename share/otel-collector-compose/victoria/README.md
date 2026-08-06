@@ -2,14 +2,13 @@
 
 [English](README.md) | [日本語](README.ja.md)
 
-This local validation stack receives OpenTelemetry logs, metrics, and traces
-with OpenTelemetry Collector, stores them in Victoria stack services, and opens
-them in Grafana.
+This local validation stack uses OpenTelemetry Collector to receive OpenTelemetry logs, metrics, and traces.
+It stores the data in Victoria stack services and displays it in Grafana.
 
 This backend is experimental and not yet fully verified.
 
-Use either Docker Compose (`docker compose`) or Podman Compose
-(`podman compose`) to manage this stack.
+In this document, **Compose** means either Docker Compose (`docker compose`) or Podman Compose (`podman compose`).
+Use either implementation to manage this stack.
 
 Start from this directory:
 
@@ -23,27 +22,25 @@ For Podman:
 podman compose -f compose-victoria.yaml up
 ```
 
-`podman compose` requires a Compose provider such as `podman-compose` or the
-Docker Compose plugin to be installed and discoverable in `PATH`.
+`podman compose` requires a Compose provider such as `podman-compose` or the Docker Compose plugin.
+The provider must be installed and discoverable in `PATH`.
 
 ## 1. Components
 
-- `otel-collector`: receives OpenTelemetry Protocol (OTLP) logs, metrics, and
-  traces.
+- `otel-collector`: receives OpenTelemetry Protocol (OTLP) logs, metrics, and traces.
 - `victoriametrics`: stores metrics.
 - `victorialogs`: stores logs.
 - `victoriatraces`: stores traces.
 - `grafana`: provides Explore views and dashboards for the Victoria services.
 
-Grafana is provisioned with VictoriaMetrics, VictoriaLogs, and VictoriaTraces
-datasources. VictoriaTraces is configured through Grafana's built-in Jaeger
-datasource using:
+Grafana is provisioned with VictoriaMetrics, VictoriaLogs, and VictoriaTraces data sources.
+VictoriaTraces uses Grafana's built-in Jaeger data source with the following URL:
 
 ```text
 http://victoriatraces:10428/select/jaeger
 ```
 
-The collector exports logs, metrics, and traces to these endpoints:
+The collector exports logs, metrics, and traces to the following endpoints:
 
 ```text
 http://victorialogs:9428/insert/opentelemetry/v1/logs
@@ -60,10 +57,8 @@ http://victoriatraces:10428/insert/opentelemetry/v1/traces
 - OTLP Google remote procedure call (gRPC) receiver: `localhost:4317`
 - OTLP Hypertext Transfer Protocol (HTTP) receiver: `http://localhost:4318`
 
-Host processes use the `localhost` endpoints above. A NestDAQ device container
-or `daq-webctl` container in the same compose network should use
-`otel-collector:4317` for OTLP gRPC, or `http://otel-collector:4318` for OTLP
-HTTP.
+Host processes use the `localhost` endpoints above.
+A NestDAQ device container or `daq-webctl` container in the same Compose network should use `otel-collector:4317` for OTLP gRPC or `http://otel-collector:4318` for OTLP HTTP.
 
 <a id="3-runtime-options"></a>
 ## 3. Environment Variables
@@ -103,12 +98,10 @@ For Podman:
 podman compose -f compose-victoria.yaml down
 ```
 
-The Victoria and Grafana data directories are not deleted by `down`. If you
-start this compose setup again with the same data directories, the previous
-logs, metrics, traces, and Grafana state are reused.
+The `down` command does not delete the Victoria and Grafana data directories.
+If you start this Compose setup again with the same data directories, the previous logs, metrics, traces, and Grafana state are reused.
 
-Delete the data directories only when you want to discard the stored backend
-data:
+Delete the data directories only when you want to discard the stored backend data:
 
 ```bash
 rm -rf ./victoriametrics-data \
@@ -117,8 +110,7 @@ rm -rf ./victoriametrics-data \
        ./grafana-data
 ```
 
-For rootless Podman, file ownership may require removal through the user
-namespace:
+For rootless Podman, file ownership may require removal through the user namespace:
 
 ```bash
 podman unshare rm -rf ./victoriametrics-data \

@@ -2,31 +2,29 @@
 
 [English](README.md) | [日本語](README.ja.md)
 
-NestDAQ is a framework for building streaming data acquisition (DAQ)
-applications for particle-beam measurements. Building and installing this
-repository provides common components and tools, but does not by itself create
-a DAQ application that works with real detector electronics. Detector- and
-hardware-specific DAQ application code is outside the scope of this repository.
+NestDAQ is a framework for building streaming data acquisition (DAQ) applications for particle-beam measurements.
+Building and installing this repository provides common components and tools, but does not by itself create a DAQ application that works with real detector electronics.
+DAQ application code for specific detectors and hardware is outside the scope of this repository.
 
 ## 1. Project guide
 
 | Path / document | Purpose |
 | :-- | :-- |
-| [INSTALL.md](INSTALL.md) | This document explains prerequisites, dependency versions and build options, NestDAQ build options, external service choices, examples, and documentation generation. |
-| [examples/](examples/README.md) | This directory provides example devices such as `Sampler`, `Sink`, and `NullDevice`, detailed local run steps, and guidance for [creating custom user devices](examples/README.md#4-creating-your-own-user-device). |
-| [scripts/](scripts/README.md) | This directory provides process startup and topology helper scripts, and the `generate-device-skeleton.py` device skeleton generator. |
-| [controller/](controller/README.md) | This directory implements the `daq-webctl` HTTP/WebSocket server, Redis control, and telemetry setup. |
-| [share/controller/](share/controller/README.md) | This directory contains the browser files served by `daq-webctl`. |
-| `nestdaq/` | This directory contains the NestDAQ core headers and telemetry code, including the version header template and `runDevice.h`, which provides the FairMQ device application entry point and `main()`. |
-| [nestdaq/telemetry/](nestdaq/telemetry/README.md) | This directory provides OpenTelemetry integration that can be enabled when needed. |
-| [plugins/](plugins/README.md) | This directory provides FairMQ plugins for DAQ services, metrics, and parameter configuration. |
-| [cmake/](cmake/README.md) | This directory provides CMake helpers, installed package files, and the external dependency build project. |
-| [tests/](tests/) | This directory contains C++ tests and test support files. |
-| `share/` | This directory contains configuration files and helper files installed with NestDAQ. |
-| [share/otel-collector-compose/](share/otel-collector-compose/README.md) | This directory provides local OpenTelemetry Collector and backend Compose stacks, run with `docker compose` or `podman compose`, for [OpenSearch](share/otel-collector-compose/opensearch/README.md), [Victoria](share/otel-collector-compose/victoria/README.md), and [ClickStack](share/otel-collector-compose/clickhouse/README.md). |
-| [share/redis-stack-container/](share/redis-stack-container/README.md) | This directory provides helper scripts for running Redis Stack containers. |
-| [share/installers/](share/installers/README.md) | This directory provides `apt` and `dnf` helper scripts for installing external services on the host. |
-| [CONTRIBUTING.md](CONTRIBUTING.md) | This document explains the branch policy, contribution workflow, formatting, static analysis, and naming rules. |
+| [INSTALL.md](INSTALL.md) | Prerequisites, dependency versions and build options, NestDAQ build options, external services, examples, and documentation generation. |
+| [examples/](examples/README.md) | Example devices such as `Sampler`, `Sink`, and `NullDevice`, detailed local run procedures, and guidance for [creating custom user devices](examples/README.md#4-creating-your-own-user-device). |
+| [scripts/](scripts/README.md) | Process startup and topology helper scripts, including the `generate-device-skeleton.py` device skeleton generator. |
+| [controller/](controller/README.md) | The `daq-webctl` HTTP/WebSocket server, Redis control, and telemetry setup. |
+| [share/controller/](share/controller/README.md) | Browser files served by `daq-webctl`. |
+| `nestdaq/` | Core headers and telemetry code, including the version header template and `runDevice.h`, which provides the FairMQ device application entry point and `main()`. |
+| [nestdaq/telemetry/](nestdaq/telemetry/README.md) | OpenTelemetry integration that can be enabled when needed. |
+| [plugins/](plugins/README.md) | FairMQ plugins for DAQ services, metrics, and parameter configuration. |
+| [cmake/](cmake/README.md) | CMake helpers, installed package files, and the external dependency build project. |
+| [tests/](tests/) | C++ tests and test support files. |
+| `share/` | Configuration and helper files installed with NestDAQ. |
+| [share/otel-collector-compose/](share/otel-collector-compose/README.md) | Local OpenTelemetry Collector and backend Compose stacks, run with `docker compose` or `podman compose`, for [OpenSearch](share/otel-collector-compose/opensearch/README.md), [Victoria](share/otel-collector-compose/victoria/README.md), and [ClickStack](share/otel-collector-compose/clickhouse/README.md). |
+| [share/redis-stack-container/](share/redis-stack-container/README.md) | Helper scripts for running Redis Stack containers. |
+| [share/installers/](share/installers/README.md) | `apt` and `dnf` helper scripts for installing external services on the host. |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | Branch policy, contribution workflow, formatting, static analysis, and naming rules. |
 
 ## 2. Tested systems
 | Distro    | Version | Compiler    | CMake  | FairMQ |
@@ -42,9 +40,6 @@ hardware-specific DAQ application code is outside the scope of this repository.
 
 ## 3. Dependencies
 
-NestDAQ uses Boost, FairLogger, FairMQ, hiredis, redis-plus-plus, and
-telemetry/logging dependencies such as opentelemetry-cpp and spdlog when their
-features are enabled. See
-[INSTALL.md](INSTALL.md) for prerequisite packages, default dependency
-versions, CMake override options, external service choices, and platform-specific
-build caveats.
+NestDAQ uses Boost, FairLogger, FairMQ, hiredis, and redis-plus-plus.
+When the corresponding features are enabled, NestDAQ also uses telemetry and logging dependencies such as opentelemetry-cpp and spdlog.
+See [INSTALL.md](INSTALL.md) for prerequisite packages, default dependency versions, CMake override options, external service choices, and platform-specific build limitations.

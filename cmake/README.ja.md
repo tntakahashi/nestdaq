@@ -2,11 +2,8 @@
 
 [English](README.md) | [日本語](README.ja.md)
 
-このディレクトリには、NestDAQのビルド、インストール済みの
-`find_package(NestDAQ)` package、および独立した外部依存関係ビルド
-プロジェクトで使用するCMake fileがあります。ビルドコマンド、依存関係の
-バージョン、user向けoptionについては
-[`INSTALL.ja.md`](../INSTALL.ja.md)を参照してください。
+このディレクトリには、NestDAQのビルド、インストール済みの`find_package(NestDAQ)` package、および独立した外部依存関係projectで使用するCMake fileがあります。
+ビルドコマンド、依存関係のバージョン、user向けoptionについては[`INSTALL.ja.md`](../INSTALL.ja.md)を参照してください。
 
 <a id="1-top-level-build-helpers"></a>
 ## 1. トップレベルビルドヘルパー
@@ -22,8 +19,7 @@
 <a id="2-installed-package-files"></a>
 ## 2. インストールされるパッケージファイル
 
-これらのfileはNestDAQとともにインストールされ、
-`find_package(NestDAQ REQUIRED CONFIG)`を呼び出すdownstream projectで使用されます。
+これらのfileはNestDAQとともにインストールされ、`find_package(NestDAQ REQUIRED CONFIG)`を呼び出すdownstream projectで使用されます。
 
 | ファイル | 用途 |
 | :-- | :-- |
@@ -34,10 +30,9 @@
 <a id="3-external-dependency-project"></a>
 ## 3. 外部依存関係プロジェクト
 
-`cmake/CMakeLists.txt`は、NestDAQが使用する外部依存関係をビルド・
-インストールする独立したprojectです。主にCMakeの`ExternalProject_Add`を
-使用して`cmake/dependencies/`内のfileをincludeします。Redis Stackでは
-module source treeを展開するために`FetchContent`も使用します。
+`cmake/CMakeLists.txt`は、NestDAQが使用する外部依存関係をビルドおよびインストールする独立したprojectです。
+このprojectは`cmake/dependencies/`内のfileをincludeし、主にCMakeの`ExternalProject_Add`を使用します。
+Redis Stackのビルドでは、module source treeを展開するために`FetchContent`も使用します。
 
 | ファイル | 用途 |
 | :-- | :-- |
@@ -60,7 +55,4 @@ module source treeを展開するために`FetchContent`も使用します。
 | `dependencies/build_redis-stack_with_temp_rust.sh` | 必要な場合に一時的なRust toolchain環境を提供する、Redis Stack build用wrapper。 |
 | `dependencies/build_redis-server-7_with_redistimeseries.sh` | Redis 7.x build pathで使用するwrapper。module sourceをRedis source treeにcopyせず、RedisTimeSeriesをstandalone moduleとしてビルドします。 |
 
-defaultのdependency versionと、`WITH_REDIS_STACK`、
-`WITH_REDIS_SERVER_7`、`WITH_OTEL_CPP`、`WITH_SPDLOG`、
-`BUILD_PARALLEL_LEVEL`などのoptionについては
-[`INSTALL.ja.md`](../INSTALL.ja.md)に記載されています。
+defaultのdependency versionと、`WITH_REDIS_STACK`、`WITH_REDIS_SERVER_7`、`WITH_OTEL_CPP`、`WITH_SPDLOG`、`BUILD_PARALLEL_LEVEL`などのoptionについては[`INSTALL.ja.md`](../INSTALL.ja.md)に記載されています。

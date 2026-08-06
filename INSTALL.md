@@ -14,12 +14,14 @@ flowchart TD
   Prerequisites --> Dependencies --> NestDAQ --> Examples
 ```
 
-The main NestDAQ build builds and installs the examples by default when
-`NestDAQ_BUILD_EXAMPLES=ON`. Run the separate examples build only when examples
-were disabled in the main build, or when a separate examples build directory or
-install prefix is needed.
+The main NestDAQ build builds and installs the examples by default when `NestDAQ_BUILD_EXAMPLES=ON`.
+Build the examples separately only when they were disabled in the main build or when they require a separate build directory or install prefix.
 
 ## 1. Install prerequisites
+
+Prerequisites are the compilers, build tools, development headers, and libraries that must be available before building NestDAQ and its external dependencies.
+Install them as operating-system packages with the package manager provided by each Linux distribution: `dnf` on AlmaLinux and `apt` on Debian and Ubuntu.
+The commands in this section install these operating-system packages; they do not install NestDAQ itself.
 
 ### AlmaLinux 9 and 10
 
@@ -106,8 +108,8 @@ dnf -y install \
     python3.11-pip
 ```
 
-AlmaLinux 8 uses `powertools` instead of `crb`. Use the Python 3.11 packages
-shown above instead of `python3`, `python3-devel`, and `python3-pip`.
+AlmaLinux 8 uses `powertools` instead of `crb`.
+Use the Python 3.11 packages shown above instead of `python3`, `python3-devel`, and `python3-pip`.
 
 ### Debian 12/13 and Ubuntu 22.04/24.04/26.04
 
@@ -152,37 +154,32 @@ apt install -y \
 # apt install -y jq clang-tools clang-format doxygen graphviz astyle tmux
 ```
 
-`pkg-config` is included in the common Debian/Ubuntu list because Ubuntu 22.04
-needs it for the dependency build.
+`pkg-config` is included in the common Debian and Ubuntu list because the dependency build requires it on Ubuntu 22.04.
 
 ## 2. Build and install external dependencies
-The following command installs ZeroMQ, Boost, FairLogger, FairMQ, Catch2,
-nlohmann/json, hiredis, redis++, and Redis Stack.
 
-In this guide, the upstream repository means
-[github.com/spadi-alliance/nestdaq](https://github.com/spadi-alliance/nestdaq).
+The following procedure installs ZeroMQ, Boost, FairLogger, FairMQ, Catch2, nlohmann/json, hiredis, redis++, and Redis Stack.
+
+In this guide, the **upstream repository** is [github.com/spadi-alliance/nestdaq](https://github.com/spadi-alliance/nestdaq).
 The default procedure builds the latest stable release from its `main` branch.
-This is the normal choice for users and other people who are not developing
-NestDAQ. Because `main` is the repository's default branch, a normal clone
-checks it out:
+This is the normal choice for users and other people who are not developing NestDAQ.
+Because `main` is the repository's default branch, a normal clone checks it out.
 
 ```bash
 # Download the latest stable release source
 git clone https://github.com/spadi-alliance/nestdaq.git
 ```
 
-To build a specific released version, replace `<release-tag>` with the required
-tag from the repository's Releases or Tags page. Use a release tag when the
-NestDAQ version must be fixed or the build must be reproducible.
+To build a specific released version, replace `<release-tag>` with the required tag from the repository's Releases or Tags page.
+Use a release tag when the NestDAQ version must be fixed or the build must be reproducible.
 
 ```bash
 git clone --branch <release-tag> --depth 1 \
   https://github.com/spadi-alliance/nestdaq.git
 ```
 
-Alternatively, switch an existing normal clone to the release tag. A tag is
-not a development branch, so `git switch --detach` checks it out in detached
-HEAD state.
+Alternatively, switch an existing clone to the release tag.
+A tag is not a development branch, so `git switch --detach` checks it out in detached HEAD state.
 
 ```bash
 cd nestdaq
@@ -192,20 +189,25 @@ git switch --detach <release-tag>
 
 `git checkout <release-tag>` is the equivalent form using `git checkout`.
 
-NestDAQ developers should first fork `spadi-alliance/nestdaq` to their own
-GitHub account. To build the latest development version, clone that fork, add
-the upstream repository, and check out the upstream `develop` branch:
+NestDAQ developers should first fork `spadi-alliance/nestdaq` to their own GitHub account.
+To build the latest development version, clone the fork, add the upstream repository, and create a local `develop` branch that tracks the fork's `origin/develop`.
+Pull updates from upstream, but push only to the branch in the fork (`origin`).
 
 ```bash
 git clone https://github.com/<your-github-account>/nestdaq.git
-git -C nestdaq remote add upstream https://github.com/spadi-alliance/nestdaq.git
-git -C nestdaq fetch upstream
-git -C nestdaq switch --create develop --track upstream/develop
+cd nestdaq
+git remote add upstream https://github.com/spadi-alliance/nestdaq.git
+git fetch upstream
+git switch --create develop --track origin/develop
+git pull --rebase upstream develop
+git push origin develop
+cd ..
 ```
 
-Create a working branch in your fork before modifying the source; see
-[`CONTRIBUTING.md`](CONTRIBUTING.md). The remaining commands build whichever
-branch is checked out in `nestdaq`.
+Do not push development branches to the upstream repository.
+
+Create a working branch in your fork before modifying the source; see [`CONTRIBUTING.md`](CONTRIBUTING.md).
+The remaining commands build whichever branch is checked out in `nestdaq`.
 
 ```bash
 # Configure
@@ -219,35 +221,31 @@ cmake \
 cmake --build ./build-external
 ```
 
-Redis Stack is an external service required while NestDAQ applications run,
-not a direct library dependency. The following ways to provide it are supported:
+Redis Stack is an external service required while NestDAQ applications run, not a direct library dependency.
+Use one of the following methods to provide Redis Stack:
 
-- Build and install Redis Stack from source with the external dependency build
-  shown above. This is the default when `WITH_REDIS_STACK=ON`.
-- Build and install Redis 7.x server plus standalone RedisTimeSeries from
-  source with `-DWITH_REDIS_STACK=OFF -DWITH_REDIS_SERVER_7=ON`.
-- Run Redis Stack in a container with the helper scripts in
-  [`share/redis-stack-container/README.md`](share/redis-stack-container/README.md).
-- Install Redis and Redis Stack modules as a host package with the installer helper scripts
-  in [`share/installers/README.md`](share/installers/README.md).
+- Build and install Redis Stack from source with the external dependency build shown above.
+  This is the default when `WITH_REDIS_STACK=ON`.
+- Build and install Redis 7.x server plus standalone RedisTimeSeries from source with `-DWITH_REDIS_STACK=OFF -DWITH_REDIS_SERVER_7=ON`.
+- Run Redis Stack in a container with the helper scripts in [`share/redis-stack-container/README.md`](share/redis-stack-container/README.md).
+- Install Redis and Redis Stack modules as host packages with the installer helper scripts in [`share/installers/README.md`](share/installers/README.md).
 
-If Redis Stack is provided by a container or host package, add
-`-DWITH_REDIS_STACK=OFF` to the external dependency configure command.
+If a container or host package provides Redis Stack, add `-DWITH_REDIS_STACK=OFF` to the external dependency configure command.
 
-The Redis Stack CMake files and helper shell scripts under
-`cmake/dependencies/` are intended for Redis 8 or later. Redis 7.x uses a
-separate CMake path because RedisTimeSeries 1.x is built as a standalone module
-rather than through the Redis 8 `redis/modules` tree.
+The Redis Stack CMake files and helper shell scripts under `cmake/dependencies/` are intended for Redis 8 or later.
+Redis 7.x uses a separate CMake path because RedisTimeSeries 1.x is built as a standalone module rather than through the Redis 8 `redis/modules` tree.
 
-- In the command example above, CMake’s `ExternalProject` is used to perform `git clone`, build, and install.
-  - In this case, the `--parallel` (or `-j`) option passed to cmake --build does not control the inner ExternalProject builds, so please specify the parallel build level during the initial configuration using `-DBUILD_PARALLEL_LEVEL=xxx`.
-    - The `nproc` command prints the number of available CPU cores on the system. If this causes excessive memory usage, specify a smaller value manually.
-- The default dependency versions are listed below. To override a version, pass `-Dxxxx_VERSION=yyyy` to CMake.
+- The command above uses CMake's `ExternalProject` to clone, build, and install each dependency.
+  The `--parallel` (or `-j`) option passed to `cmake --build` does not control nested `ExternalProject` builds.
+  Set their parallel build level during the initial configuration with `-DBUILD_PARALLEL_LEVEL=xxx`.
+  The `nproc` command prints the number of available CPU cores; specify a smaller value if the build consumes too much memory.
+- The default dependency versions are listed below.
+  To override a version, pass `-Dxxxx_VERSION=yyyy` to CMake.
 - If Doxygen is found during the external dependency configure step, `doxygen-awesome-css` is installed as an optional documentation asset under `./install/share/doxygen-awesome-css`.
 - To use Ninja instead of Make, add `-G Ninja` to the CMake options.
-- To use `mold` instead of the system `ld`.
-  - GCC 12.1 or later: Add `-DCMAKE_EXE_LINKER_FLAGS="-fuse-ld=mold"` and `-DCMAKE_SHARED_LINKER_FLAGS="-fuse-ld=mold"` to the CMake options
-  - GCC 12.0 or earlier: Add `-DCMAKE_EXE_LINKER_FLAGS="-B<path-to-mold>"` and `-DCMAKE_SHARED_LINKER_FLAGS="-B<path-to-mold>"`
+- To use `mold` instead of the system `ld`, add the linker flags appropriate for the GCC version:
+  - GCC 12.1 or later: add `-DCMAKE_EXE_LINKER_FLAGS="-fuse-ld=mold"` and `-DCMAKE_SHARED_LINKER_FLAGS="-fuse-ld=mold"` to the CMake options.
+  - GCC 12.0 or earlier: add `-DCMAKE_EXE_LINKER_FLAGS="-B<path-to-mold>"` and `-DCMAKE_SHARED_LINKER_FLAGS="-B<path-to-mold>"`.
 
 ### External dependency build options
 
@@ -267,17 +265,14 @@ rather than through the Redis 8 `redis/modules` tree.
 | `Redis7_VERSION` | series-specific | Override the Redis 7.x version selected by `REDIS_SERVER_7_SERIES`. |
 | `RedisTimeSeries7_VERSION` | series-specific | Override the RedisTimeSeries standalone version selected by `REDIS_SERVER_7_SERIES`. |
 
-The default `FairMQ_VERSION` depends on the GNU compiler version. GCC 9.1 or
-later uses FairMQ 1.10.0 by default; older GCC releases use FairMQ 1.9.2. Pass
-`-DFairMQ_VERSION=...` to override this selection explicitly.
+The default `FairMQ_VERSION` depends on the GNU compiler version.
+GCC 9.1 or later uses FairMQ 1.10.0 by default; older GCC releases use FairMQ 1.9.2.
+Pass `-DFairMQ_VERSION=...` to override this selection.
 
-When all `REDIS_BUILD_*` module options are set to `OFF`, the dependency build
-installs Redis server tools only. Redis Stack also exposes low-level cache
-variables such as Redis build TLS, allocator, and temporary Rust toolchain
-paths. These are intended for dependency build maintenance; inspect the CMake
-cache or `cmake/dependencies/redis-stack.cmake` when those knobs are needed.
-For Redis 7.x maintenance knobs, inspect
-`cmake/dependencies/redis-server-7.cmake`.
+When all `REDIS_BUILD_*` module options are set to `OFF`, the dependency build installs only the Redis server tools.
+Redis Stack also exposes low-level cache variables for settings such as TLS, the allocator, and temporary Rust toolchain paths.
+These variables are intended for dependency build maintenance; inspect the CMake cache or `cmake/dependencies/redis-stack.cmake` when they are needed.
+For Redis 7.x maintenance settings, inspect `cmake/dependencies/redis-server-7.cmake`.
 
 ### Versions of installed external dependencies
 
@@ -297,24 +292,18 @@ For Redis 7.x maintenance knobs, inspect
 
 <a id="external-runtime-components"></a>
 ##### Redis Server and Modules
-Redis Stack (`redis-server`, `redis-cli`, Redis modules, etc.) is included in
-the external dependency build and is built and installed from source by default.
-The Redis modules can be disabled individually with `REDIS_BUILD_REDISBLOOM`,
-`REDIS_BUILD_REDISEARCH`, `REDIS_BUILD_REDISJSON`, and
-`REDIS_BUILD_REDISTIMESERIES`. Redis is required while NestDAQ applications
-are running, but it is not a direct library dependency. It may also be provided
-by a container or by the host package installer scripts. The package installer
-default is Redis 8.2.7 with Redis Stack modules, without RedisInsight; use the
-Redis Stack container helper or `REDIS_PACKAGE=redis-stack` with
-`REDIS_VERSION=latest` when RedisInsight is needed and the repository provides
-that package.
-RediSearch requires a compiler with C++20 support. Builds with
-`REDIS_BUILD_REDISEARCH=ON` fail with AlmaLinux 8 GCC 8.5 because RediSearch
-uses C++20 features such as `<ranges>`. For AlmaLinux 8 dependency builds with
-GCC 8.5, pass `-DREDIS_BUILD_REDISEARCH=OFF` unless using a newer compiler
-toolchain that supports the required C++20 features.
-The default Redis module versions follow the module release tags selected by
-the Redis 8.2.7 source tree.
+
+Redis Stack (`redis-server`, `redis-cli`, Redis modules, and related tools) is included in the external dependency build and is built and installed from source by default.
+Disable individual Redis modules with `REDIS_BUILD_REDISBLOOM`, `REDIS_BUILD_REDISEARCH`, `REDIS_BUILD_REDISJSON`, and `REDIS_BUILD_REDISTIMESERIES`.
+Redis is required while NestDAQ applications run, but it is not a direct library dependency.
+A container or the host package installer scripts can provide Redis instead.
+By default, the package installer installs Redis 8.2.7 with Redis Stack modules but without RedisInsight.
+When RedisInsight is required and the repository provides the package, use the Redis Stack container helper or set `REDIS_PACKAGE=redis-stack` and `REDIS_VERSION=latest`.
+
+RediSearch requires a compiler with C++20 support.
+On AlmaLinux 8 with GCC 8.5, builds with `REDIS_BUILD_REDISEARCH=ON` fail because RediSearch uses C++20 features such as `<ranges>`.
+For an AlmaLinux 8 dependency build with GCC 8.5, pass `-DREDIS_BUILD_REDISEARCH=OFF` unless a newer compiler toolchain provides the required C++20 support.
+The default Redis module versions follow the module release tags selected by the Redis 8.2.7 source tree.
 
 | Package                                                                  | Version (default) | CMake options |
 | :--                                                                      | :--               | :--            |
@@ -328,6 +317,7 @@ the Redis 8.2.7 source tree.
 
 
 ## 3. Build and install NestDAQ library
+
 ```bash
 cmake \
   -DCMAKE_PREFIX_PATH=./install \
@@ -338,16 +328,15 @@ cmake --build ./build --parallel $(nproc)
 cmake --install ./build
 ```
 
-- In the example above, both the main NestDAQ package and the external dependencies are installed in the same directory (`./install`).
-  If the external dependencies are installed in a different location, specify that directory with `-DCMAKE_PREFIX_PATH=xxx`.
+- The example installs both the main NestDAQ package and its external dependencies in `./install`.
+  If the external dependencies are installed elsewhere, specify their location with `-DCMAKE_PREFIX_PATH=xxx`.
 - When `doxygen-awesome-css` is available, it is installed with the generated documentation under `./install/share/doc/nestdaq/doxygen-awesome-css`.
 - When `-DNestDAQ_BUILD_DOCS=ON` and Doxygen is available, the HTML documentation is generated under `./build/docs/html` and installed under `./install/share/doc/nestdaq/html`.
 
 ### Verbose CMake builds
 
-To show the underlying compiler and linker commands, add `--verbose` to the
-`cmake --build` command. This is useful when checking include paths, compiler
-options, or link flags.
+To show the compiler and linker commands, add `--verbose` to `cmake --build`.
+Use this output to inspect include paths, compiler options, and linker flags.
 
 ```bash
 cmake --build ./build-external --verbose
@@ -373,17 +362,13 @@ VERBOSE=1 cmake --build ./build
 
 ## Run local OpenTelemetry Collector and backend containers
 
-NestDAQ can export OpenTelemetry logs, metrics, and traces to an OpenTelemetry
-Collector. The repository provides optional Compose setups, run with
-`docker compose` or `podman compose`, for local validation under
-[`share/otel-collector-compose/`](share/otel-collector-compose/README.md).
-They run services used for local operation, such as OpenTelemetry Collector
-Contrib, OpenSearch, and OpenSearch Dashboards, in containers. These services
-and tools are not build dependencies and are not intended for production
-deployment as-is.
+NestDAQ can export OpenTelemetry logs, metrics, and traces to an OpenTelemetry Collector.
+The repository provides Compose setups for local validation under [`share/otel-collector-compose/`](share/otel-collector-compose/README.md).
+Here, **Compose** means either `docker compose` or `podman compose`.
+The setups run services such as OpenTelemetry Collector Contrib, OpenSearch, and OpenSearch Dashboards in containers.
+These services and tools are not build dependencies and the supplied configurations are not intended for production deployment as-is.
 
-External services required while NestDAQ applications run can be provided
-either by containers or by host packages:
+Containers or host packages can provide the external services required while NestDAQ applications run.
 
 | External service | Source build | Container helper | Host package installer |
 | :-- | :-- | :-- | :-- |
@@ -392,8 +377,7 @@ either by containers or by host packages:
 | OpenSearch | not built by NestDAQ | [`share/otel-collector-compose/opensearch/`](share/otel-collector-compose/opensearch/README.md) | [`share/installers/`](share/installers/README.md) |
 | OpenSearch Dashboards | not built by NestDAQ | [`share/otel-collector-compose/opensearch/`](share/otel-collector-compose/opensearch/README.md) | [`share/installers/`](share/installers/README.md) |
 
-After installing NestDAQ, copy the installed setup to a working directory and
-start one backend stack:
+After installing NestDAQ, copy the installed configuration to a working directory and start one backend stack.
 
 ```bash
 cp -a <install-prefix>/share/otel-collector-compose ./otel-collector-compose
@@ -403,34 +387,24 @@ docker compose -f compose-opensearch.yaml up
 
 For Podman, use the same Compose files with `podman compose`.
 
-Available local backend setups are:
+The following local backend setups are available:
 
-- [`opensearch/`](share/otel-collector-compose/opensearch/README.md): logs and
-  traces in OpenSearch, viewed with OpenSearch Dashboards.
-- [`victoria/`](share/otel-collector-compose/victoria/README.md): logs,
-  metrics, and traces in VictoriaLogs, VictoriaMetrics, and VictoriaTraces,
-  viewed with Grafana.
-- [`clickhouse/`](share/otel-collector-compose/clickhouse/README.md): logs,
-  metrics, and traces in ClickStack/ClickHouse, viewed with the ClickStack user
-  interface (UI).
+- [`opensearch/`](share/otel-collector-compose/opensearch/README.md): stores logs and traces in OpenSearch and displays them in OpenSearch Dashboards.
+- [`victoria/`](share/otel-collector-compose/victoria/README.md): stores logs, metrics, and traces in VictoriaLogs, VictoriaMetrics, and VictoriaTraces and displays them in Grafana.
+- [`clickhouse/`](share/otel-collector-compose/clickhouse/README.md): stores logs, metrics, and traces in ClickStack/ClickHouse and displays them in the ClickStack user interface (UI).
 
-By default, the Compose stacks expose OpenTelemetry Protocol (OTLP) gRPC on
-`localhost:4317` and OTLP HTTP on `localhost:4318`. See
-[`share/otel-collector-compose/README.md`](share/otel-collector-compose/README.md)
-and the backend-specific README files for ports, volumes, credentials,
-SELinux, and rootless Podman notes.
+By default, the Compose stacks expose OpenTelemetry Protocol (OTLP) gRPC on `localhost:4317` and OTLP HTTP on `localhost:4318`.
+See [`share/otel-collector-compose/README.md`](share/otel-collector-compose/README.md) and the backend-specific README files for information about ports, volumes, credentials, SELinux, and rootless Podman.
 
-For host package installation and systemd-managed services, use
-[`share/installers/README.md`](share/installers/README.md). Those scripts use
-`apt-get` on Debian/Ubuntu systems and `dnf` or `yum` on RHEL-family systems,
-and install into system-managed locations such as `/usr` and `/etc`.
+For host package installation and systemd-managed services, use [`share/installers/README.md`](share/installers/README.md).
+Those scripts use `apt-get` on Debian and Ubuntu systems and `dnf` or `yum` on RHEL-family systems.
+They install files in system-managed locations such as `/usr` and `/etc`.
 
 ## 4. Build and install examples
 
-The examples are included in the main NestDAQ build by default. They can also be
-built as a separate CMake project after installing NestDAQ. For a separate
-examples build, configure the examples with `find_package(NestDAQ)` using the
-NestDAQ install prefix.
+The main NestDAQ build includes the examples by default.
+After installing NestDAQ, the examples can also be built as a separate CMake project.
+For a separate build, use the NestDAQ install prefix when configuring the examples with `find_package(NestDAQ)`.
 
 ```bash
 cmake \
@@ -442,5 +416,5 @@ cmake --build ./build-examples --parallel $(nproc)
 cmake --install ./build-examples
 ```
 
-- `-DCMAKE_PREFIX_PATH=./install` must point to the directory where NestDAQ was installed.
+- `-DCMAKE_PREFIX_PATH=./install` must point to the NestDAQ installation directory.
 - The installed example binaries are placed under `./install/bin`.

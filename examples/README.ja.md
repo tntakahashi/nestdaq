@@ -3,10 +3,9 @@
 [English](README.md) | [日本語](README.ja.md)
 
 このディレクトリには、小規模なNestDAQ device exampleがあります。
-`NestDAQ_BUILD_EXAMPLES`のdefaultは`ON`であるため、exampleはデフォルトでNestDAQの
-main buildに含まれます。main buildから除外するには
-`NestDAQ_BUILD_EXAMPLES=OFF`を設定します。除外したexampleは、NestDAQのinstall後に
-独立したCMake projectとして別途buildできます。
+`NestDAQ_BUILD_EXAMPLES`のdefaultは`ON`であるため、NestDAQのmain buildはexampleを含みます。
+main buildから除外するには`NestDAQ_BUILD_EXAMPLES=OFF`を設定します。
+除外したexampleは、NestDAQのinstall後に独立したCMake projectとしてbuildできます。
 
 <a id="1-example-devices"></a>
 ## 1. デバイス例
@@ -17,29 +16,25 @@ main buildに含まれます。main buildから除外するには
 | `Sampler` | FairMQ output channelを通じてtext messageを送信し、custom command-line optionを示します。OpenTelemetry spanとmetricsの計装例も示します。 |
 | `Sink` | FairMQ input channelを通じてsingle-partまたはmultipart messageを受信し、channel callback設定を示します。OpenTelemetry spanとmetricsの計装例も示します。 |
 
-lifecycle hookは、deviceのlifecycleにおける所定の段階でFairMQ state machineが
-呼び出すmember functionです。例えば、`Init()`と`InitTask()`はdeviceを初期化し、
-`PreRun()`はrunの準備、`PostRun()`はrun終了後の処理を行います。deviceは自身の処理や
-resource管理に必要なhookだけをoverrideします。`NullDevice`はdata channelを設定せずに
-呼出順を確認できるよう、これらの呼出しをlogへ記録します。
+**lifecycle hook**は、deviceのlifecycleにおける所定の段階でFairMQ state machineが呼び出すmember functionです。
+例えば、`Init()`と`InitTask()`はdeviceを初期化し、`PreRun()`はrunの準備、`PostRun()`はrun終了後の処理を行います。
+deviceは自身の処理やresource管理に必要なhookだけをoverrideします。
+`NullDevice`は、data channelを設定せずに呼出順を確認できるよう、これらの呼出しをlogへ記録します。
 
-各executableは`NestDAQ::NestDAQ`へlinkします。これによりNestDAQ
-`runDevice.h`連携、FairMQ/FairLogger依存関係、plugin search path、
-必要に応じて利用できるtelemetry loader supportが提供されます。
+各executableは`NestDAQ::NestDAQ`へlinkします。
+このtargetは、NestDAQ `runDevice.h`連携、FairMQ/FairLogger依存関係、plugin search path、および必要に応じて利用できるtelemetry loader supportを提供します。
 
-`Sampler`と`Sink`は、OpenTelemetry headerを直接includeせずにtrace spanとmetricsを
-示すためNestDAQ telemetry facadeを使用します。たとえばdevice起動時に
-`--otel-metric-protocol=console`と`--otel-trace-protocol=console`などの
-command-line optionを指定して有効化します。
+`Sampler`と`Sink`は、OpenTelemetry headerを直接includeせずにtrace spanとmetricsを示すため、NestDAQ telemetry facadeを使用します。
+device起動時に`--otel-metric-protocol=console`と`--otel-trace-protocol=console`などのcommand-line optionを指定すると、これらの計装例が有効になります。
 
 <a id="2-build"></a>
 ## 2. ビルド
 
-NestDAQのmain buildはdefaultでこれらのexampleをビルド・インストールします。
+NestDAQのmain buildはdefaultでこれらのexampleをビルドしてインストールします。
 除外するには`-DNestDAQ_BUILD_EXAMPLES=OFF`を指定してconfigureします。
 
-exampleを別にビルドする場合は、先にNestDAQをインストールし、NestDAQの
-install prefixを`CMAKE_PREFIX_PATH`に設定してexampleをconfigureします。
+exampleを別にbuildする場合は、先にNestDAQをinstallします。
+次に、NestDAQのinstall prefixを`CMAKE_PREFIX_PATH`へ設定してexampleをconfigureします。
 
 ```sh
 cmake \
@@ -51,18 +46,15 @@ cmake --build ./build-examples --parallel
 cmake --install ./build-examples
 ```
 
-exampleはNestDAQと同じprefixへインストールする必要はありませんが、動的リンカーが
-NestDAQ、FairMQ、Boost、および関連libraryを見つけられる必要があります。
-example CMake projectは、example install prefixからの相対的なinstall RPATHを
-設定し、`NestDAQ::NestDAQ`を通じて検出したlink pathを
-使用します。
+exampleをNestDAQと同じprefixへinstallする必要はありません。
+ただし、動的linkerがNestDAQ、FairMQ、Boost、および関連libraryを見つけられる必要があります。
+example CMake projectは、example install prefixからの相対的なinstall RPATHを設定し、`NestDAQ::NestDAQ`を通じて検出したlink pathを使用します。
 
 <a id="3-running"></a>
 ## 3. 実行
 
-インストール済みhelper scriptを使用するか、FairMQ channel optionを指定して
-binaryを直接実行します。一般的なローカル検証ではRedis、OpenTelemetry Collector
-backend、`daq-webctl`、example deviceの順に起動します。
+install済みhelper scriptを使用するか、FairMQ channel optionを指定してbinaryを直接実行します。
+一般的なローカル検証ではRedis、OpenTelemetry Collector backend、`daq-webctl`、example deviceの順に起動します。
 
 ```sh
 Sampler --help
@@ -73,8 +65,7 @@ NullDevice --help
 <a id="31-local-run-sequence"></a>
 ### 3.1. ローカル実行シーケンス
 
-以下のcommandはNestDAQが`<install-prefix>`以下へインストールされていると
-仮定しています。
+以下のcommandは、NestDAQが`<install-prefix>`以下へinstallされていると仮定しています。
 
 ```mermaid
 flowchart TD
@@ -91,19 +82,18 @@ flowchart TD
   RunNumber --> StartRun
 ```
 
-この図は一般的なローカル実行sequenceであり、厳密なdependency graphでは
-ありません。log、metrics、tracesをexportし、利用可能なcollector/backendが
-まだ動作していない場合は、最初にOpenTelemetry Collector backendを起動します。
-telemetryが無効、console-only telemetryを使用、または既存collectorが利用可能な
-場合は、step Aが完了済みとみなします。Redisは必須です。ローカル
-`redis-server`、container化したRedis/Redis Stack instance、systemd管理のhost
-packageなど、使用中のローカルdeployment方法で起動します。run開始操作は最後に
-行います。step EとFは、Redisが利用可能になった後かつstep Hより前であれば
-順序を入れ替えられます。`daq-webctl`起動後すぐにブラウザを開けますが、
-topologyとparameter設定が登録されuser deviceが動作するまでdeviceが表示されない
-場合があります。step GとHは`daq-webctl` Web UIで行う操作です。run-start commandを
-実行するには対象deviceが動作中でなければなりません。`daq-webctl`とuser deviceは
-Redisを使用し、OpenTelemetry logをcollectorへexportできます。
+この図は一般的なローカル実行sequenceであり、厳密なdependency graphではありません。
+log、metrics、tracesをexportし、利用可能なcollector/backendがまだ動作していない場合は、最初にOpenTelemetry Collector backendを起動します。
+telemetryが無効、console-only telemetryを使用、または既存collectorが利用可能な場合は、step Aが完了済みとみなします。
+
+Redisは必須です。
+ローカル`redis-server`、container化したRedis/Redis Stack instance、systemd管理のhost packageなど、使用中のローカルdeployment方法で起動します。
+step EとFは、Redisが利用可能になった後かつstep Hより前であれば、順序を入れ替えられます。
+
+`daq-webctl`起動後すぐにブラウザを開けますが、topologyとparameter設定が登録され、user deviceが動作するまでdeviceが表示されない場合があります。
+step GとHは`daq-webctl` Web UIで行う操作です。
+run-start commandの実行には対象deviceが動作中である必要があるため、step Hは最後に行います。
+`daq-webctl`とuser deviceはRedisを使用し、OpenTelemetry logをcollectorへexportできます。
 
 A. OpenTelemetry Collector backendを起動します。
 
@@ -123,15 +113,15 @@ A. OpenTelemetry Collector backendを起動します。
 
    Podmanでは同じfileを`podman compose`で使用します。port、rootless Podmanの
    注意事項、dashboard設定の詳細は
-   [`share/otel-collector-compose/opensearch/README.md`](../share/otel-collector-compose/opensearch/README.ja.md)
-   を参照してください。defaultのOTLP gRPC endpointは`localhost:4317`です。
+   [`share/otel-collector-compose/opensearch/README.ja.md`](../share/otel-collector-compose/opensearch/README.ja.md)を参照してください。
+   defaultのOTLP gRPC endpointは`localhost:4317`です。
    exportされたlogとtraceを確認するには、OpenSearch Dashboardsの
-   `http://localhost:5601/app/discover`を開きます。setup serviceが初期log・trace
+   `http://localhost:5601/app/discover`を開きます。setup serviceが初期logとtrace
    Data Viewを作成します。
 
    代わりにhost package managerで`otelcol-contrib`をインストールする場合は、
    collector設定を編集し、`systemd`でserviceを起動します。
-   [`share/installers/README.md`](../share/installers/README.ja.md)を参照してください。
+   [`share/installers/README.ja.md`](../share/installers/README.ja.md)を参照してください。
    collectorの実行場所に合うOTLP endpointを使用します。host processでは通常
    `localhost:4317`を使用し、同じCompose network内のprocessでは通常
    `otel-collector:4317`や`clickstack:4317`などのcollector service nameを
@@ -144,7 +134,7 @@ B. Redisを起動します。
    containerを使用できます。このstepのRedis endpointを、`daq-webctl`、
    `start_device.sh`、topology/parameter helper scriptで一貫して使用します。
 
-   外部依存関係とともにRedis Stackをビルド・インストールした場合、Redis Stack
+   外部依存関係とともにRedis Stackをビルドしてインストールした場合、Redis Stack
    moduleを指定してインストール済みRedis serverを起動します。
 
    ```sh
@@ -185,8 +175,9 @@ B. Redisを起動します。
 
    defaultのRedis endpointは`localhost:6379`です。
 
-   Redis Stackはcontainerでも実行できます。以下を参照してください。
-   [`share/redis-stack-container/README.md`](../share/redis-stack-container/README.ja.md)
+   Redis Stackはcontainerでも実行できます。
+   以下を参照してください。
+   [`share/redis-stack-container/README.ja.md`](../share/redis-stack-container/README.ja.md)
    にはDocker、Podman、volume、RedisInsight optionが記載されています。
    RedisInsight対応Redis Stack helper(`run-redis-stack.sh`)を使用する場合、
    `http://localhost:8001`でRedisInsightを開きます。Redis Stack Serverのみの
@@ -194,7 +185,7 @@ B. Redisを起動します。
 
    host package managerでRedis Stackをインストールした場合、インストール済み
    serviceを`systemd`で起動します。
-   [`share/installers/README.md`](../share/installers/README.ja.md)を参照してください。
+   [`share/installers/README.ja.md`](../share/installers/README.ja.md)を参照してください。
    Redis unit nameはpackageやdistributionにより異なるため、先に確認します。
 
 C. `daq-webctl`を起動します。
@@ -209,18 +200,17 @@ C. `daq-webctl`を起動します。
      --otel-service-name=daq-webctl
    ```
 
-   `daq-webctl`はHTTP/WebSocket endpointを提供するserver processであり、DAQ stateと
-   configurationを読み取り、user device向けcommandをpublishするRedis clientでも
-   あります。`daq-webctl` Web UIは、このprocessがbrowserへ配信するinterfaceであり、
-   別のcontroller serviceではありません。browserは`daq-webctl`と通信し、Redisへ
-   直接接続しません。
+   `daq-webctl`はserver processです。
+   HTTP/WebSocket endpointを提供し、DAQ stateとconfigurationを読み取ってuser device向けcommandをpublishするRedis clientとしても動作します。
+   `daq-webctl` Web UIは、このprocessがbrowserへ配信するinterfaceであり、別のcontroller serviceではありません。
+   browserは`daq-webctl`と通信し、Redisへ直接接続しません。
 
    OpenTelemetry optionは`daq-webctl` logを上で起動したローカルcollectorへ送信します。
    Redisやcollectorへ例のhost endpointで到達できない場合は、`--redis-uri`と
    `--otel-log-endpoint-grpc`を変更します。`daq-webctl` optionとRedis commandの
-   動作は[`controller/README.md`](../controller/README.ja.md)、telemetry optionの
+   動作は[`controller/README.ja.md`](../controller/README.ja.md)、telemetry optionの
    完全な一覧は
-   [`nestdaq/telemetry/README.md`](../nestdaq/telemetry/README.ja.md)を参照してください。
+   [`nestdaq/telemetry/README.ja.md`](../nestdaq/telemetry/README.ja.md)を参照してください。
 
    `daq-webctl`を同じOpenSearchまたはVictoria compose network内のcontainerとして
    実行する場合は、代わりに`--otel-log-endpoint-grpc=otel-collector:4317`を
@@ -254,7 +244,7 @@ F. `start_device.sh`でuser deviceを起動します。
    場合は`NESTDAQ_REDIS_SERVER`と`NESTDAQ_OTLP_GRPC_ENDPOINT`を設定します。
    scriptではmetricsとtracesがdefaultで無効です。有効化またはtelemetryを
    consoleへ出力する方法は
-   [`scripts/README.md`](../scripts/README.ja.md)を参照してください。
+   [`scripts/README.ja.md`](../scripts/README.ja.md)を参照してください。
 
    device nameより後のoptionは、deviceまたはNestDAQ pluginが設定するdefault値を
    overrideします。異なるtopology、parameter set、service groupingにdefault値を
@@ -262,7 +252,7 @@ F. `start_device.sh`でuser deviceを起動します。
    `--in-chan-name`などを指定します。繰り返し実行する場合は、小さなwrapper
    shell scriptへoverrideを記述しても構いません。`--service-name`または
    `--id`が空の場合に使用する`daq_service`のdefaultについては
-   [`plugins/README.md#22-daq-service-identity-defaults`](../plugins/README.ja.md#22-daq-service-identity-defaults)
+   [`plugins/README.ja.md#22-daq-service-identity-defaults`](../plugins/README.ja.md#22-daq-service-identity-defaults)
    を参照してください。
 
    `NullDevice`にはdata channelがありませんが、同じscriptとRedisをbackendとする
@@ -291,8 +281,8 @@ G. run numberがない場合は設定します。
    応じて`daq-webctl` processがRedis上のこの値を読み書きし、`RUN`のpublish時に
    使用します。Redis
    command interfaceとrun information keyについては
-   [`controller/README.md`](../controller/README.ja.md#6-redis-command-interface)と
-   [`plugins/README.md`](../plugins/README.ja.md#23-redis-keys-written-or-read)を
+   [`controller/README.ja.md`](../controller/README.ja.md#6-redis-command-interface)と
+   [`plugins/README.ja.md`](../plugins/README.ja.md#23-redis-keys-written-or-read)を
    参照してください。
 
 H. `daq-webctl` Web UIからrunを開始します。
@@ -302,7 +292,7 @@ H. `daq-webctl` Web UIからrunを開始します。
    `daq-webctl` processは`run_info:run_number`を`run_info:latest_run_number`へcopyし、
    run-start command sequenceをpublishします。受け付けるDAQ commandと`RUN`
    sequenceについては
-   [`plugins/README.md`](../plugins/README.ja.md#24-daq-command-publishsubscribe-pubsub)
+   [`plugins/README.ja.md`](../plugins/README.ja.md#24-daq-command-publishsubscribe-pubsub)
    を参照してください。
 
 <a id="32-stop-the-local-services"></a>
@@ -351,7 +341,8 @@ S-C. `daq-webctl`を停止します。`END PROCESS` buttonは`daq-webctl`自体�
    `daq-webctl`はcleanなHTTP/WebSocket server shutdownのためSIGINTとSIGTERMを
    処理します。
 
-S-D. Redisを停止します。Redisの起動方法に合った停止手順を使用してください。
+S-D. Redisを停止します。
+   Redisの起動方法に合った停止手順を使用してください。
    ローカルにインストールしたRedis serverの場合:
 
    ```sh
@@ -359,7 +350,7 @@ S-D. Redisを停止します。Redisの起動方法に合った停止手順を�
    ```
 
    container-based Redis Stackでは、
-   [`share/redis-stack-container/README.md`](../share/redis-stack-container/README.ja.md)
+   [`share/redis-stack-container/README.ja.md`](../share/redis-stack-container/README.ja.md)
    の停止手順を使用します。
 
    `systemd`管理のhost packageではRedis serviceを停止します。unit nameは
@@ -392,7 +383,7 @@ S-E. OpenTelemetry backendを停止します。collectorとbackendの起動方�
    sudo systemctl stop otelcol-contrib
    ```
 
-   Compose `down` commandはローカル検証用containerとnetworkを停止・削除します。
+   Compose `down` commandはローカル検証用containerとnetworkを停止して削除します。
    OpenSearch data directoryは削除しません。同じdata directoryを指定して同じ
    backendを再度起動すると、以前のOpenSearch dataが再利用されます。data
    directory nameと明示的な破棄commandはbackend READMEを参照してください。
@@ -400,8 +391,8 @@ S-E. OpenTelemetry backendを停止します。collectorとbackendの起動方�
 <a id="33-example-specific-options"></a>
 ### 3.3. サンプル固有オプション
 
-exampleはFairMQ option、NestDAQ plugin option、NestDAQ telemetry optionも
-受け付けます。完全なoption setは各executableの`--help`で確認してください。
+exampleはFairMQ option、NestDAQ plugin option、NestDAQ telemetry optionも受け付けます。
+完全なoption setは各executableの`--help`で確認してください。
 
 | 実行ファイル | Option | 既定値 | 説明 |
 | :-- | :-- | :-- | :-- |
@@ -411,13 +402,13 @@ exampleはFairMQ option、NestDAQ plugin option、NestDAQ telemetry optionも
 | `Sink` | `--in-chan-name` | `in` | consumerが使用するinput channel name。 |
 | `Sink` | `--multipart` | `true` | incoming dataをmultipart messageとして処理します。 |
 
-script-basedの起動例は[`scripts/README.md`](../scripts/README.ja.md)を参照してください。
+script-basedの起動例は[`scripts/README.ja.md`](../scripts/README.ja.md)を参照してください。
 
 <a id="4-creating-your-own-user-device"></a>
 ## 4. 独自ユーザーデバイスの作成
 
-NestDAQ user deviceは、実際にdataを生成、消費、変換するprocessです。C++では
-`fair::mq::Device`から派生するclassとして実装します。
+NestDAQ user deviceは、dataを生成、消費、変換するprocessです。
+C++では`fair::mq::Device`から派生するclassとして実装します。
 
 主な構成要素は次のとおりです。
 
@@ -433,17 +424,16 @@ NestDAQ user deviceは、実際にdataを生成、消費、変換するprocess�
 <a id="41-start-from-the-skeleton-generator"></a>
 ### 4.1. スケルトン生成ツールから始める
 
-最初に小さなprojectを生成し、それを編集する方法を推奨します。
+最初の手順として、小さなprojectを生成し、生成されたfileを編集する方法を推奨します。
 
 ```sh
 <install-prefix>/scripts/generate-device-skeleton.py MyDevice \
   --output ./MyDevice
 ```
 
-これにより`MyDevice.h`、`MyDevice.cxx`、`CMakeLists.txt`、`README.md`が
-作成されます。`--force`を指定しない限り既存fileは上書きされません。defaultの
-skeletonには`in`、`out`、`dqm`という名前のinput、output、DQM channelが
-含まれます。
+これにより`MyDevice.h`、`MyDevice.cxx`、`CMakeLists.txt`、`README.md`が作成されます。
+`--force`を指定しない限り既存fileは上書きされません。
+defaultのskeletonには`in`、`out`、`dqm`という名前のinput、output、DQM channelが含まれます。
 
 便利なvariant:
 
@@ -476,7 +466,7 @@ initialization、polling、processing codeをすべて削除することもで�
 生成時にchannelを除外する方が簡単です。
 
 generator optionの一覧は
-[`scripts/README.md#4-device-skeleton-generation`](../scripts/README.ja.md#4-device-skeleton-generation)
+[`scripts/README.ja.md#4-device-skeleton-generation`](../scripts/README.ja.md#4-device-skeleton-generation)
 を参照してください。
 
 <a id="42-c-device-structure"></a>
@@ -510,9 +500,9 @@ auto getDevice(const fair::mq::ProgOptions& /*config*/) -> std::unique_ptr<fair:
 }
 ```
 
-`addCustomOptions()`はcommand-line optionを追加します。`getDevice()`は実際の
-device objectを作成します。`nestdaq/runDevice.h`がNestDAQ対応main program
-wrapperを提供するため、生成sourceで`main()`を定義する必要はありません。
+`addCustomOptions()`はcommand-line optionを追加します。
+`getDevice()`はdevice objectを作成します。
+`nestdaq/runDevice.h`がNestDAQ対応main program wrapperを提供するため、生成sourceで`main()`を定義する必要はありません。
 
 `addCustomOptions()`はBoost.Program_optionsのsyntaxを使用します。
 `options.add_options()`は、call chainによりoption descriptionを受け付ける
@@ -528,8 +518,8 @@ options.add_options()
      "Help text for option N");
 ```
 
-途中のoption descriptionは、直前のものに続けて次の `(...)` を書くことで
-接続します。semicolonは最後のoption descriptionの後に一度だけ書きます。
+各option descriptionは、直前のものに続けて次の `(...)` を書くことで接続します。
+semicolonは、最後のoption descriptionの後に一度だけ書きます。
 
 各option descriptionは3つの部分からなります。
 
@@ -589,9 +579,8 @@ auto MyDevice::InitTask() -> void
 }
 ```
 
-これによりcommand-line、Redis parameter injection、生成codeの動作が一貫します。
-数値optionが不正な場合は変換を早い段階で失敗させるか、exceptionをcatchして
-明確なerrorをlogへ記録します。
+この方法により、command-line処理、Redis parameter injection、および生成codeの動作が一貫します。
+数値optionが不正な場合は、変換を早い段階で失敗させるか、exceptionをcatchして明確なerrorをlogへ記録します。
 
 <a id="44-choosing-ondata-conditionalrun-or-run"></a>
 ### 4.4. OnData()、ConditionalRun()、Run()の選択
@@ -649,10 +638,9 @@ deviceのmain processing styleには、次のうち1つを使用します。
   唯一のstyleです。callbackには受信messageに対する操作を書き、再度
   `Receive()`を呼び出さないでください。`OnData()` callbackを登録すると、
   FairMQはcallback pathを処理し、`ConditionalRun()` / `Run()` pathへ入りません。
-- source device、polling receiver、単純なprocessorには`ConditionalRun()`を
-  使用します。最もdebugしやすいstyleです。FairMQは各iteration前に
-  `NewStatePending()`を確認するloopから呼び出すため、`STOP`や`END`などの
-  state transitionがpendingになるとloopを終了します。
+- source device、polling receiver、単純なprocessorには`ConditionalRun()`を使用します。
+  最もdebugしやすいstyleです。
+  FairMQは各iteration前に`NewStatePending()`を確認するloopから呼び出すため、`STOP`や`END`などのstate transitionがpendingになるとloopを終了します。
 - `ConditionalRun()` modelに合わないcustom loopが必要な場合は`Run()`を
   使用します。`ConditionalRun()`がすぐに`false`を返すと、FairMQは同じ
   RUNNING transitionから`Run()`を呼び出します。
@@ -661,15 +649,13 @@ deviceのmain processing styleには、次のうち1つを使用します。
 受信しません。いずれかのfunctionでinputを消費する場合、device codeに
 `Receive()`、polling、timeout handlingを記述します。
 
-実際には`OnData()`、`ConditionalRun()`、`Run()`のいずれか1つをmain
-processing styleとして実装します。1つのdeviceに3つすべてを実装する必要は
-ありません。`OnData()` callback、`ConditionalRun()`、`Run()`の内部に
-無限waitを書かないでください。loop、retry、waitを追加する場合、deviceがstate
-transition commandへ応答できるよう`NewStatePending()`を確認します。`OnData()`が
-使用するFairMQ input-handling pathと`ConditionalRun()`を囲むFairMQ loopは
-すでに`NewStatePending()`を確認しますが、user codeもそれらのloopへ戻る前に
-永久blockしないようにする必要があります。FairMQ loopへ速やかに戻ることで
-state transitionの応答性が向上します。
+`OnData()`、`ConditionalRun()`、`Run()`のいずれか1つをmain processing styleとして実装します。
+1つのdeviceに3つすべてを実装する必要はありません。
+`OnData()` callback、`ConditionalRun()`、`Run()`の内部で無期限にwaitしないでください。
+loop、retry、waitを追加する場合は、deviceがstate transition commandへ応答できるよう`NewStatePending()`を確認します。
+`OnData()`が使用するFairMQ input-handling pathと`ConditionalRun()`を囲むFairMQ loopは、すでに`NewStatePending()`を確認します。
+ただし、user codeも無期限にblockせず、それらのloopへ制御を戻す必要があります。
+FairMQ loopへ速やかに戻ることで、state transitionへの応答性が向上します。
 
 callback-based sinkの例:
 
@@ -739,7 +725,7 @@ packageを検索します。`NestDAQ::NestDAQ`はNestDAQ、FairMQ、FairLogger�
 関連依存関係の実行に必要なinclude directory、link library、link設定、
 library search設定を伝播します。
 
-生成projectをout-of-sourceでビルド・インストールします。
+生成projectをout-of-sourceでビルドしてインストールします。
 
 ```sh
 cmake -S ./MyDevice -B ./build-MyDevice \
@@ -791,7 +777,7 @@ defaultがtopologyとすでに一致する場合はそのまま使用し、特�
 serviceまたはchannel nameが必要な場合はcommand lineかwrapper shell scriptで
 overrideします。`--service-name`または`--id`が空の場合に使用する
 `daq_service`のdefaultについては
-[`plugins/README.md#22-daq-service-identity-defaults`](../plugins/README.ja.md#22-daq-service-identity-defaults)
+[`plugins/README.ja.md#22-daq-service-identity-defaults`](../plugins/README.ja.md#22-daq-service-identity-defaults)
 を参照してください。
 
 service nameとchannel nameはRedisへ登録したtopologyと一致する必要があります。
@@ -808,10 +794,10 @@ deviceでexample `Sink`を置き換える場合、serviceとinput channelを一�
 いずれかをcopyし、serviceとchannelのendpoint/link entryを追加します。topology
 scriptは、存在するFairMQ channelとservice間の接続方法を`daq_service` pluginへ
 伝えるRedis keyを書き込みます。Redis keyとchannel動作については
-[`scripts/README.md#2-topology-configuration`](../scripts/README.ja.md#2-topology-configuration)
-および[`plugins/README.md`](../plugins/README.ja.md)を参照してください。
+[`scripts/README.ja.md#2-topology-configuration`](../scripts/README.ja.md#2-topology-configuration)
+および[`plugins/README.ja.md`](../plugins/README.ja.md)を参照してください。
 
 telemetry optionについては
-[`nestdaq/telemetry/README.md`](../nestdaq/telemetry/README.ja.md)を参照してください。
+[`nestdaq/telemetry/README.ja.md`](../nestdaq/telemetry/README.ja.md)を参照してください。
 完全に動作するproducer/consumer実装については、生成codeとこのディレクトリの
 `Sampler.cxx`および`Sink.cxx`を比較してください。

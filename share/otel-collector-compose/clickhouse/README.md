@@ -2,14 +2,13 @@
 
 [English](README.md) | [日本語](README.ja.md)
 
-This local validation stack receives OpenTelemetry logs, metrics, and traces
-with the ClickStack OpenTelemetry Collector, stores them in ClickHouse, and
-opens them in the ClickStack user interface (UI).
+This local validation stack uses the ClickStack OpenTelemetry Collector to receive OpenTelemetry logs, metrics, and traces.
+It stores the data in ClickHouse and displays it in the ClickStack user interface (UI).
 
 This backend is experimental and not yet fully verified.
 
-Use either Docker Compose (`docker compose`) or Podman Compose
-(`podman compose`) to manage this stack.
+In this document, **Compose** means either Docker Compose (`docker compose`) or Podman Compose (`podman compose`).
+Use either implementation to manage this stack.
 
 Start from this directory:
 
@@ -23,21 +22,19 @@ For Podman:
 podman compose -f compose-clickhouse.yaml up
 ```
 
-`podman compose` requires a Compose provider such as `podman-compose` or the
-Docker Compose plugin to be installed and discoverable in `PATH`.
+`podman compose` requires a Compose provider such as `podman-compose` or the Docker Compose plugin.
+The provider must be installed and discoverable in `PATH`.
 
 ## 1. Components
 
-- `clickstack`: runs the ClickStack UI, OpenTelemetry Collector, and
-  ClickHouse in one container.
+- `clickstack`: runs the ClickStack UI, OpenTelemetry Collector, and ClickHouse in one container.
 
-Open the ClickStack UI at `http://localhost:8080`. On first use, create the UI
-user. ClickStack connects to the local ClickHouse instance and prepares data
-sources for logs, metrics, and traces.
+Open the ClickStack UI at `http://localhost:8080`.
+On first use, create the UI user.
+ClickStack connects to the local ClickHouse instance and prepares data sources for logs, metrics, and traces.
 
-This stack is intended for local validation. Production deployments should use
-explicit credentials, retention policy, backup policy, and a deployment topology
-managed outside this sample compose file.
+This stack is intended for local validation.
+Production deployments should use explicit credentials, retention and backup policies, and a deployment topology managed outside this sample Compose file.
 
 ## 2. Ports
 
@@ -48,10 +45,8 @@ managed outside this sample compose file.
 
 ## 3. NestDAQ Telemetry Endpoint Examples
 
-Host processes use `localhost:4317` for OTLP/gRPC or
-`http://localhost:4318` for OTLP/HTTP. A NestDAQ device container or
-`daq-webctl` container in the same compose network should use
-`clickstack:4317` for OTLP gRPC, or `http://clickstack:4318` for OTLP HTTP.
+Host processes use `localhost:4317` for OTLP/gRPC or `http://localhost:4318` for OTLP/HTTP.
+A NestDAQ device container or `daq-webctl` container in the same Compose network should use `clickstack:4317` for OTLP gRPC or `http://clickstack:4318` for OTLP HTTP.
 
 For example, HTTP endpoints use these paths:
 
@@ -89,12 +84,10 @@ For Podman:
 podman compose -f compose-clickhouse.yaml down
 ```
 
-The ClickStack and ClickHouse data/log directories are not deleted by `down`.
-If you start this compose setup again with the same directories, the previous
-backend data is reused.
+The `down` command does not delete the ClickStack and ClickHouse data and log directories.
+If you start this Compose setup again with the same directories, the previous backend data is reused.
 
-Delete the data and log directories only when you want to discard the stored
-backend data:
+Delete the data and log directories only when you want to discard the stored backend data:
 
 ```bash
 rm -rf ./clickstack-db \
@@ -102,8 +95,7 @@ rm -rf ./clickstack-db \
        ./clickstack-clickhouse-logs
 ```
 
-For rootless Podman, file ownership may require removal through the user
-namespace:
+For rootless Podman, file ownership may require removal through the user namespace:
 
 ```bash
 podman unshare rm -rf ./clickstack-db \

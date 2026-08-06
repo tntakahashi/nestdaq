@@ -2,18 +2,16 @@
 
 [English](README.md) | [日本語](README.ja.md)
 
-Set of examples of how to use the plugins.
-The scripts can be copied to your favorite directory. 
-Redis server must be started before executing the scripts. 
+This directory contains scripts that demonstrate how to use the NestDAQ plugins.
+You can copy the scripts to another working directory.
+Start a Redis server before running scripts that register or read configuration.
 
 ## 1. Helper script to launch a data acquisition (DAQ) process
 
 ### 1.1. start_device.sh
-This example shows how to start FairMQDevice with the custom plugins. 
-The device must be those provided by the present repository or those which contains `fairmq-` in the path. 
-Arguments after the device name are passed through to the device and FairMQ, so
-plugin options such as `--service-name` and device-specific options such as
-`--max-iterations` can be specified on the same command line.
+This script starts a FairMQ device with the NestDAQ plugins.
+Specify either a device provided by this repository or an executable whose path contains `fairmq-`.
+Arguments after the device name are passed to the device and FairMQ, so plugin options such as `--service-name` and device-specific options such as `--max-iterations` can appear on the same command line.
 
 For a typical local validation run, start the supporting services and register
 the required configuration before starting devices with `start_device.sh`:
@@ -27,13 +25,11 @@ the required configuration before starting devices with `start_device.sh`:
 - Register parameter settings in Redis with `mq-param.sh` when the examples
   should read parameters from the `parameter_config` plugin.
 
-See [`examples/README.md`](../examples/README.md) for the full local run
-sequence.
+See [`examples/README.md`](../examples/README.md) for the complete local run sequence.
 
-The generated script uses `NESTDAQ_REDIS_SERVER` for all NestDAQ Redis
-connections. The default is `127.0.0.1:6379`. It maps the DAQ service registry
-to Redis database `0`, metrics to database `1`, and parameter configuration to
-database `2`.
+The generated script uses `NESTDAQ_REDIS_SERVER` for all NestDAQ Redis connections.
+The default is `127.0.0.1:6379`.
+The script maps the DAQ service registry to Redis database `0`, metrics to database `1`, and parameter configuration to database `2`.
 
 The relevant part of the script is:
 
@@ -45,9 +41,9 @@ METRICS_URI=" --metrics-uri tcp://${NESTDAQ_REDIS_SERVER}/1"
 CONFIG_URI=" --parameter-config-uri tcp://${NESTDAQ_REDIS_SERVER}/2"
 ```
 
-`daq_service` uses DB 0 for the service registry, DAQ commands, and topology
-metadata. The `metrics` plugin uses DB 1. The `parameter_config` plugin reads
-device option values from DB 2.
+`daq_service` uses DB 0 for the service registry, DAQ commands, and topology metadata.
+The `metrics` plugin uses DB 1.
+The `parameter_config` plugin reads device option values from DB 2.
 
 The script also sets the plugin search path and the plugin load order:
 
@@ -63,19 +59,17 @@ var+=$METRICS_PLUGIN
 var+=$CONFIG_PLUGIN
 ```
 
-`-S` adds a directory to the FairMQ plugin search path. In this script,
-`-S '<$PLUGIN_LIBDIR'` prepends the installed NestDAQ plugin directory to that
-search path. It only controls where plugin libraries are searched.
+`-S` adds a directory to the FairMQ plugin search path.
+In this script, `-S '<$PLUGIN_LIBDIR'` prepends the installed NestDAQ plugin directory to that search path.
+This option controls only where FairMQ searches for plugin libraries.
 
-`-P` selects a plugin to load. The plugin load order follows the order of the
-`-P` options on the final command line. The generated `start_device.sh` passes
-them as `daq_service`, then `metrics`, then `parameter_config`. Adding more
-directories after `-S` changes search priority, but it does not change which
-plugins are loaded or their load order; that is controlled by the `-P` entries.
+`-P` selects a plugin to load.
+FairMQ loads the plugins in the order of the `-P` options on the final command line.
+The generated `start_device.sh` passes them as `daq_service`, then `metrics`, then `parameter_config`.
+Adding directories with `-S` changes search priority but does not change which plugins FairMQ loads or their order; the `-P` entries control those decisions.
 
-The generated script sends OpenTelemetry (OTel) logs to a local OpenTelemetry
-Collector with OpenTelemetry Protocol (OTLP) gRPC. The default endpoint is
-`localhost:4317` and can be changed with `NESTDAQ_OTLP_GRPC_ENDPOINT`.
+The generated script sends OpenTelemetry (OTel) logs to a local OpenTelemetry Collector with OpenTelemetry Protocol (OTLP) gRPC.
+The default endpoint is `localhost:4317`; set `NESTDAQ_OTLP_GRPC_ENDPOINT` to use another endpoint.
 
 The script builds the OTel log options like this:
 
@@ -103,14 +97,12 @@ Choose the endpoint according to where the process runs:
 NESTDAQ_OTLP_GRPC_ENDPOINT=host.containers.internal:4317 ./start_device.sh Sampler
 ```
 
-OTel metrics and traces are disabled by default. Uncomment the metric and trace
-examples in `start_device.sh` to export them by OTLP gRPC or to print them to
-the console exporter for debugging.
+OTel metrics and traces are disabled by default.
+Uncomment the metric and trace examples in `start_device.sh` to export them by OTLP gRPC or print them through the console exporter for debugging.
 
 FairLogger console output is disabled by default with `--severity nolog`.
-Change `NESTDAQ_FAIRLOGGER_CONSOLE_SEVERITY` to enable it. OTel log export uses
-the separate `NESTDAQ_START_DEVICE_OTEL_LOG_SEVERITY` threshold and still sends
-logs to the collector when FairLogger console output is disabled.
+Set `NESTDAQ_FAIRLOGGER_CONSOLE_SEVERITY` to enable it.
+OTel log export uses the separate `NESTDAQ_START_DEVICE_OTEL_LOG_SEVERITY` threshold, so it continues to send logs to the collector when FairLogger console output is disabled.
 
 ```bash
 NESTDAQ_FAIRLOGGER_CONSOLE_SEVERITY=${NESTDAQ_FAIRLOGGER_CONSOLE_SEVERITY:-nolog}
@@ -131,7 +123,7 @@ NESTDAQ_FAIRLOGGER_CONSOLE_SEVERITY=debug4 NESTDAQ_START_DEVICE_OTEL_LOG_SEVERIT
   ./start_device.sh /your-fairmq-install-path/bin/fairmq-splitter
 ```
 
-An example of launching a `Sampler` with a different service name (`A-Sampler`) and limiting the execution rate of `ConditionalRun()` to once per second. 
+The following example starts a `Sampler` with the service name `A-Sampler` and limits the execution rate of `ConditionalRun()` to once per second.
 ```bash
 ./start_device.sh Sampler --service-name A-Sampler --rate 1
 ```
@@ -171,7 +163,7 @@ flowchart TB
 
 ## 2. Topology configuration
 
-Default value for endpoint parameter
+The following table lists the default endpoint parameters.
 
 | field                 | default value                              | 
 | --                    | --                                         | 
@@ -193,7 +185,7 @@ Default value for endpoint parameter
 | bound                 | (Do not set by the user)                   |
 | waitForPeerConnection | true                                       | 
 
-The last three parameters are specific to nestdaq.
+The last three parameters are specific to NestDAQ.
 The rest are defined in FairMQ.
 
 `autoSubChannel` controls whether a peer written without `[subindex]` means
@@ -278,9 +270,9 @@ between two endpoint definitions. The topology plugin reads these definitions
 when each device starts and turns them into concrete FairMQ channel properties.
 
 ### 2.2. topology-1-1.sh
-A simple topology of **Sampler** and **Sink** with the **PUSH-PULL** pattern. 
-If _N_ Samplers and _N_ Sinks are started, they form _N_ pairs of Sampler and Sink.
-Each Sampler sends data to one Sink with the same instance index. 
+This script defines a simple **PUSH-PULL** topology between **Sampler** and **Sink**.
+When _N_ Samplers and _N_ Sinks start, they form _N_ Sampler/Sink pairs.
+Each Sampler sends data to the Sink with the same instance index.
 
 ```bash
   ./topology-1-1.sh
@@ -307,11 +299,10 @@ graph LR
 ```
 
 ### 2.3. topology-n-n-m.sh
-A simple topology of _N_-**Sampler**s, _N_-**fairmq-splitter**s, and _M_-**Sink**s with the **PUSH-PULL** pattern. 
-Each Sampler sends data to one fairmq-splitter with the same instance index. 
-Then, the fairmq-splitter sends the data to Sinks. 
-The `autoSubChannel true` flag is used to give each sub-socket a different `address:port` and to distinguish them by index.
-The fairmq-splitter determines the destination by the number of messages sent in a round-robin fashion.
+This script defines a **PUSH-PULL** topology with _N_ **Sampler** processes, _N_ **fairmq-splitter** processes, and _M_ **Sink** processes.
+Each Sampler sends data to the fairmq-splitter with the same instance index, and the fairmq-splitter forwards the data to the Sinks.
+The `autoSubChannel true` flag gives each sub-socket a different `address:port` and distinguishes the sub-sockets by index.
+The fairmq-splitter selects destinations in round-robin order according to the number of messages sent.
 
 ```bash
   ./topology-n-n-m.sh
@@ -365,7 +356,7 @@ graph LR
 ## 3. Parameter configuration
 
 ### 3.1. mq-param.sh
-This example shows how to configure parameters via Redis. 
+This example configures parameters through Redis.
 
 ```bash
   ./mq-param.sh
@@ -487,10 +478,8 @@ Processing modes:
 For how to choose between `OnData()`, `ConditionalRun()`, and `Run()`, see
 [`examples/README.md#44-choosing-ondata-conditionalrun-or-run`](../examples/README.md#44-choosing-ondata-conditionalrun-or-run).
 
-Channel options passed to the generator are not the final device command-line
-options. The generator creates all three channels by default; these options
-override how the corresponding device command-line options are generated in
-C++:
+Channel options passed to the generator are not command-line options for the generated device.
+The generator creates all three channels by default; these options change how it generates the corresponding device command-line options in C++:
 
 ```bash
 ./generate-device-skeleton.py MyProcessor \
@@ -577,10 +566,9 @@ to generate single-message examples instead. `SendOutputMessage()` and
 payload and only handle channel readiness, `Send()`, and success/failure
 checks.
 
-The options in the table above are generator options, not device command-line
-options of the generated device. The generated C++ custom options are
-registered as strings. Numeric members are assigned in `InitTask()` by
-converting those strings:
+The options in the table above control the generator; they are not command-line options for the generated device.
+The generated C++ code registers custom options as strings.
+`InitTask()` converts the strings before assigning numeric members.
 
 | Generated device command-line option | Default | Description |
 | :-- | :-- | :-- |
@@ -624,5 +612,5 @@ cmake --install ./build-MyDevice
 
 The installed executable is placed under `<device-install-prefix>/bin/MyDevice`.
 
-The skeleton is intentionally minimal. Use the `Sampler` and `Sink` examples
-for data-channel handling and telemetry instrumentation examples.
+The skeleton is intentionally minimal.
+Use the `Sampler` and `Sink` examples for data-channel handling and telemetry instrumentation.

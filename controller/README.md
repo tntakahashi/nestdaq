@@ -2,25 +2,19 @@
 
 [English](README.md) | [日本語](README.ja.md)
 
-This directory contains the implementation of `daq-webctl`, the NestDAQ web
-controller process. It provides a Hypertext Transfer Protocol (HTTP) server for
-the browser user interface (UI), WebSocket sessions for interactive clients, and
-Redis-backed control operations for DAQ devices.
+This directory contains the implementation of `daq-webctl`, the NestDAQ web controller process.
+It provides a Hypertext Transfer Protocol (HTTP) server for the browser user interface (UI), WebSocket sessions for interactive clients, and Redis-backed control operations for DAQ devices.
 
-The static browser assets served by `daq-webctl` are documented separately in
-[`share/controller/README.md`](../share/controller/README.md).
+The static browser assets served by `daq-webctl` are documented separately in [`share/controller/README.md`](../share/controller/README.md).
 
 <a id="1-runtime-role"></a>
 ## 1. Controller Responsibilities
 
-`daq-webctl` listens on an HTTP endpoint, serves the configured document root,
-and accepts WebSocket clients. Commands from the browser are translated into
-Redis-backed DAQ control operations, while state updates are sent back to
-connected WebSocket clients.
+`daq-webctl` listens on an HTTP endpoint, serves the configured document root, and accepts WebSocket clients.
+It translates browser commands into Redis-backed DAQ control operations and sends state updates to connected WebSocket clients.
 
-At startup, `daq-webctl` configures FairLogger output and can load the optional
-NestDAQ OpenTelemetry plugin through the shared telemetry loader. The controller
-does not link OpenTelemetry directly.
+At startup, `daq-webctl` configures FairLogger output and can load the optional NestDAQ OpenTelemetry plugin through the shared telemetry loader.
+The controller does not link OpenTelemetry directly.
 
 ## 2. Main Components
 
@@ -42,21 +36,17 @@ does not link OpenTelemetry directly.
 daq-webctl --http-uri=http://0.0.0.0:8080 --redis-uri=tcp://127.0.0.1:6379
 ```
 
-Open `http://localhost:8080/` or `http://localhost:8080/daq-webctl.html` after
-the process starts. The Redis server and DAQ devices must be available for
-control operations to succeed. Set the run number before entering the Running
-state.
+After the process starts, open `http://localhost:8080/` or `http://localhost:8080/daq-webctl.html`.
+The Redis server and DAQ devices must be available for control operations to succeed.
+Set the run number before entering the Running state.
 
-Use `daq-webctl --help` to inspect the available HTTP, Redis, FairLogger, and
-OpenTelemetry options.
+Use `daq-webctl --help` to inspect the available HTTP, Redis, FairLogger, and OpenTelemetry options.
 
 ## 4. Communication Flow
 
-The browser never connects to Redis or user device processes directly.
-`daq-webctl` has two roles: it is the browser-facing HTTP/WebSocket server, and
-it is the Redis-facing client for command publication, key access, Pub/Sub
-subscription, and state polling. User device processes communicate with Redis
-through the `daq_service` plugin.
+The browser never connects directly to Redis or user device processes.
+`daq-webctl` is the browser-facing HTTP/WebSocket server and the Redis client that publishes commands, accesses keys, subscribes to Pub/Sub channels, and polls state.
+User device processes communicate with Redis through the `daq_service` plugin.
 
 ```mermaid
 sequenceDiagram
@@ -88,19 +78,15 @@ sequenceDiagram
   WebCtl-->>Browser: WebSocket JSON state update
 ```
 
-The diagram shows the control and status path. FairMQ data-channel traffic
-between user device processes is separate and is not routed through
-`daq-webctl`.
+The diagram shows the control and status path.
+FairMQ data-channel traffic between user device processes follows a separate path and is not routed through `daq-webctl`.
 
 ## 5. Command-Line Options
 
-`daq-webctl` accepts the following options. OpenTelemetry options are also
-available through the shared NestDAQ telemetry option helper for the
-`daq-webctl` component. When `--otel-service-instance-id` is not specified,
-`daq-webctl` records a generated universally unique identifier (UUID) in the OpenTelemetry
-`service.instance.id` resource attribute. See
-[`nestdaq/telemetry/README.md`](../nestdaq/telemetry/README.md) for the full
-OpenTelemetry option list.
+`daq-webctl` accepts the following options.
+OpenTelemetry options are available through the shared NestDAQ telemetry option helper for the `daq-webctl` component.
+When `--otel-service-instance-id` is not specified, `daq-webctl` records a generated universally unique identifier (UUID) in the OpenTelemetry `service.instance.id` resource attribute.
+See [`nestdaq/telemetry/README.md`](../nestdaq/telemetry/README.md) for the complete OpenTelemetry option list.
 
 | Option | Default | Description |
 | :-- | :-- | :-- |
@@ -123,10 +109,9 @@ OpenTelemetry option list.
 
 ### 5.1. OpenTelemetry Options
 
-`daq-webctl` uses the shared NestDAQ OpenTelemetry option helper with
-`daq-webctl` as the default `service.name`. The controller does not link
-OpenTelemetry directly; it dynamically loads the telemetry library when the
-process starts if `--otel-library` is non-empty and the library can be found.
+`daq-webctl` uses the shared NestDAQ OpenTelemetry option helper with `daq-webctl` as the default `service.name`.
+The controller does not link OpenTelemetry directly.
+If `--otel-library` is non-empty and the library can be found, the controller loads the telemetry library dynamically when the process starts.
 
 Common controller telemetry options are:
 
@@ -145,8 +130,7 @@ Common controller telemetry options are:
 | `--otel-metric-protocol` | empty | Metric exporters; empty disables metrics. Useful for `console` debugging. |
 | `--otel-trace-protocol` | empty | Trace exporters; empty disables traces. Useful for `console` debugging. |
 
-Example for sending `daq-webctl` logs to a local OpenTelemetry Collector by
-OTLP gRPC:
+The following example sends `daq-webctl` logs to a local OpenTelemetry Collector by OTLP gRPC:
 
 ```sh
 daq-webctl \
@@ -158,10 +142,8 @@ daq-webctl \
   --otel-service-name=daq-webctl
 ```
 
-Choose the OTLP endpoint according to where `daq-webctl` runs:
-
-Here, Compose means a container setup managed with `docker compose` or
-`podman compose`.
+Choose the OTLP endpoint according to where `daq-webctl` runs.
+Here, Compose means a container setup managed with `docker compose` or `podman compose`.
 
 - Host process to a compose-published collector port: `localhost:4317`.
 - `daq-webctl` container in the same OpenSearch or Victoria compose network:
@@ -169,32 +151,23 @@ Here, Compose means a container setup managed with `docker compose` or
 - `daq-webctl` container in the same ClickStack compose network:
   `clickstack:4317`.
 
-Metrics and traces are disabled by default. For local debugging without a
-collector, use console exporters such as `--otel-metric-protocol=console` or
-`--otel-trace-protocol=console`. See
-[`nestdaq/telemetry/README.md`](../nestdaq/telemetry/README.md) for the full
-OpenTelemetry option list and resource attribute details.
+Metrics and traces are disabled by default.
+For local debugging without a collector, use console exporters such as `--otel-metric-protocol=console` or `--otel-trace-protocol=console`.
+See [`nestdaq/telemetry/README.md`](../nestdaq/telemetry/README.md) for the complete OpenTelemetry option list and resource attribute details.
 
 ## 6. Redis Command Interface
 
-`daq-webctl` uses the Redis command interface implemented by the `daq_service`
-plugin. DAQ command keys, the `daqctl` Publish/Subscribe (Pub/Sub) channel,
-message shape, accepted command values, and `RUN`/`STOP` sequencing are
-documented in
-[`plugins/README.md`](../plugins/README.md#24-daq-command-publishsubscribe-pubsub).
+`daq-webctl` uses the Redis command interface implemented by the `daq_service` plugin.
+DAQ command keys, the `daqctl` Publish/Subscribe (Pub/Sub) channel, message shape, accepted command values, and `RUN`/`STOP` sequencing are documented in [`plugins/README.md`](../plugins/README.md#24-daq-command-publishsubscribe-pubsub).
 
-At startup, `daq-webctl` sets Redis `notify-keyspace-events` to `AKE` so it can
-receive key-event notifications, including expired key events. It also polls
-`daq_service{sep}*{sep}*{sep}fair-mq-state` and
-`daq_service{sep}*{sep}*{sep}updatedTime` to build browser state summaries.
+At startup, `daq-webctl` sets Redis `notify-keyspace-events` to `AKE` so that it can receive key-event notifications, including expired key events.
+It also polls `daq_service{sep}*{sep}*{sep}fair-mq-state` and `daq_service{sep}*{sep}*{sep}updatedTime` to build browser state summaries.
 
 ## 7. WebSocket Messages
 
-Browser clients send JSON commands to the WebSocket endpoint. The controller
-executes Redis operations or publishes Redis pub/sub messages.
-For `redis-publish`, the Redis Pub/Sub command message shape, accepted command
-values, and `services` / `instances` target selection rules are documented in
-[`plugins/README.md`](../plugins/README.md#24-daq-command-publishsubscribe-pubsub).
+Browser clients send JSON commands to the WebSocket endpoint.
+The controller executes Redis operations or publishes Redis Pub/Sub messages.
+For `redis-publish`, [`plugins/README.md`](../plugins/README.md#24-daq-command-publishsubscribe-pubsub) documents the Redis Pub/Sub command message shape, accepted command values, and `services` / `instances` target selection rules.
 
 | Client message | Effect |
 | :-- | :-- |
@@ -223,10 +196,8 @@ The `state-summary-table` message contains:
 
 ## 8. State Polling and Expiration
 
-`daq-webctl` polls `daq_service{sep}*{sep}*{sep}fair-mq-state` and
-`daq_service{sep}*{sep}*{sep}updatedTime` every `--poll-interval` milliseconds.
+`daq-webctl` polls `daq_service{sep}*{sep}*{sep}fair-mq-state` and `daq_service{sep}*{sep}*{sep}updatedTime` every `--poll-interval` milliseconds.
 The resulting summary is broadcast to all connected WebSocket clients.
 
-Redis expired key events are processed separately. When a `presence` key expires,
-the controller derives the service and instance from the key name and updates
-connected clients so the UI can reflect disappeared instances.
+Redis expired key events are processed separately.
+When a `presence` key expires, the controller derives the service and instance from the key name and updates connected clients so that the UI reflects the missing instance.

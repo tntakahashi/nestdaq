@@ -2,7 +2,11 @@
 
 [English](README.md) | [日本語](README.ja.md)
 
-このディレクトリには、NestDAQのローカル検証用にRedis Stack containerを起動する小さなhelper scriptが含まれています。これらはhost上にportを公開し、デフォルトではRedis authenticationを有効にしないため、公開ネットワークや共有ネットワークには公開しないでください。開発やローカルでの確認にはRedisInsightを含むRedis Stack imageを使用してください。production deploymentではRedis Stack Serverを推奨します。
+このディレクトリには、NestDAQのローカル検証用にRedis Stack containerを起動するhelper scriptが含まれています。
+これらのcontainerはhost上にportを公開し、デフォルトではRedis authenticationを有効にしません。
+公開ネットワークや共有ネットワークには公開しないでください。
+開発やローカルでの確認にはRedisInsightを含むRedis Stack imageを使用してください。
+production deploymentではRedis Stack Serverを推奨します。
 
 scriptは`latest`ではなく固定されたimage tagを使用します。
 
@@ -30,7 +34,8 @@ redis-cli -p 6379 INFO server
 redis-cli -p 6379 MODULE LIST
 ```
 
-Redis Stack 7.2のimage tagはStack release tagであり、Redis serverの正確なpatch version tagではありません。Redis serverの正確なpatch versionが重要な場合は、起動後に上記のコマンドを使用してください。
+Redis Stack 7.2のimage tagはStack releaseを示しており、Redis serverの正確なpatch versionを示すtagではありません。
+Redis serverの正確なpatch versionが必要な場合は、起動後に上記のコマンドで確認してください。
 
 <a id="2-start-redis-827"></a>
 ## 2. Redis 8.2.7の起動
@@ -45,7 +50,8 @@ Redis Stack 7.2のimage tagはStack release tagであり、Redis serverの正確
 
 - Redis: `localhost:6379`
 
-dataはscriptの隣にある`redis-8.2.7-data`からcontainer内の`/data`へbind mountされます。このhelperは公式Redis imageを使用するため、`REDIS_ARGS`に指定した追加のRedis server argumentはcontainer commandのargumentとして渡されます。
+scriptは、scriptの隣にある`redis-8.2.7-data`をcontainer内の`/data`へbind mountします。
+このhelperは公式Redis imageを使用するため、`REDIS_ARGS`に指定した追加のRedis server argumentをcontainer commandのargumentとして渡します。
 
 <a id="3-start-redis-stack-72"></a>
 ## 3. Redis Stack 7.2の起動
@@ -81,7 +87,9 @@ Redis Stack Serverだけを実行します。
 - Redis: `localhost:6379`
 - RedisInsight: `http://localhost:8001`
 
-Redis server dataはscriptの隣にある`redis-stack-data`からcontainer内の`/data`へbind mountされます。RedisInsight dataは`redisinsight-data`から`/redisinsight`へbind mountされるため、RedisInsightはmountされたdirectory内に内部subdirectoryを作成できます。
+scriptは、scriptの隣にある`redis-stack-data`をcontainer内の`/data`へbind mountします。
+さらに、`redisinsight-data`を`/redisinsight`へbind mountします。
+RedisInsightは、mountされたdirectory内に内部subdirectoryを作成できます。
 
 <a id="5-start-redis-stack-server-only"></a>
 ## 5. Redis Stack Serverのみの起動
@@ -96,31 +104,43 @@ Redis server dataはscriptの隣にある`redis-stack-data`からcontainer内の
 
 - Redis: `localhost:6379`
 
-dataはscriptの隣にある`redis-stack-server-data`からcontainer内の`/data`へbind mountされます。
+scriptは、scriptの隣にある`redis-stack-server-data`をcontainer内の`/data`へbind mountします。
 
 <a id="6-rerun-behavior"></a>
 ## 6. 再実行時の動作
 
-デフォルトでは、各scriptは新しいcontainerを起動する前に、設定されたcontainer nameと同じ名前の既存containerを削除します。このため、以前のterminalが中断された場合や、同名のcontainerが残っていた場合でも安全に再実行できます。永続化されたRedis dataは、設定されたbind mount用data directoryまたはnamed volumeに残ります。
+デフォルトでは、各scriptは新しいcontainerを起動する前に、設定されたcontainer nameと同じ名前の既存containerを削除します。
+そのため、以前の実行が中断された場合や同名のcontainerが残っている場合でも、scriptを再実行できます。
+永続化されたRedis dataは、設定されたbind mount用data directoryまたはnamed volumeに残ります。
 
 同名のcontainerがすでに存在する場合にscriptを失敗させるには、`REDIS_CONTAINER_REPLACE=0`を設定します。
 
 <a id="7-security-enhanced-linux-selinux"></a>
 ## 7. Security-Enhanced Linux(SELinux)
 
-SELinux label optionは`REDIS_VOLUME_MODE=bind`の場合に限り使用されます。SELinuxが有効なhostでcontainerがdata directoryへ書き込めるよう、bind mountではデフォルトで`:Z` label optionを使用します。同じdata directoryを複数のcontainerで共有する必要がある場合は、`REDIS_VOLUME_LABEL=z`を設定します。label optionを完全に省略するには、`REDIS_VOLUME_LABEL=`を設定します。RedisInsightを含むhelperでは、RedisとRedisInsightの両方のbind mountに同じlabel optionが適用されます。
+SELinux label optionは`REDIS_VOLUME_MODE=bind`の場合に限り使用されます。
+SELinuxが有効なhostでcontainerがdata directoryへ書き込めるよう、bind mountではデフォルトで`:Z` label optionを使用します。
+同じdata directoryを複数のcontainerで共有する場合は、`REDIS_VOLUME_LABEL=z`を設定します。
+label optionを省略するには、`REDIS_VOLUME_LABEL=`を設定します。
+RedisInsightを含むhelperは、RedisとRedisInsightの両方のbind mountに同じlabel optionを適用します。
 
 <a id="8-directory-permissions"></a>
 ## 8. ディレクトリ権限
 
-デフォルトでは、scriptを実行したhost userとしてbind mount用data directoryを作成し、directory permissionは変更しません。rootless Podmanでは通常、container rootがcontainerを実行するhost userに対応付けられるため、作成されたdirectoryは追加のpermission変更なしで書き込み可能です。
+デフォルトでは、scriptを実行したhost userとしてbind mount用data directoryを作成し、directory permissionは変更しません。
+rootless Podmanでは通常、container rootがcontainerを実行するhost userに対応付けられます。
+そのため、作成されたdirectoryは追加のpermission変更なしで書き込み可能です。
 
-SELinux labelingとUnix permissionは別のものです。`:Z` mount labelはSELinuxが有効なhostでcontainerからdirectoryへのaccessを許可しますが、user identifier/group identifier(uid/gid)のpermission不一致は解消しません。rootful containerは、bind mountしたdirectoryにhost root所有のfileを作成する場合があります。bind mountしたdirectoryに書き込めない場合は、このhelper scriptの外部でhost側のownershipまたはpermissionを明示的に調整してください。
+SELinux labelingとUnix permissionは、それぞれ独立した制御です。
+`:Z` mount labelはSELinuxが有効なhostでcontainerからdirectoryへのaccessを許可しますが、user identifierまたはgroup identifier(uid/gid)のpermission不一致は解消しません。
+rootful containerは、bind mountしたdirectoryにhost root所有のfileを作成する場合があります。
+bind mountしたdirectoryに書き込めない場合は、このhelper scriptの外部でhost側のownershipまたはpermissionを明示的に調整してください。
 
 <a id="9-named-volumes"></a>
 ## 9. 名前付きボリューム
 
-named volumeの使用は必須ではありません。helper scriptのdirectory外でDockerまたはPodmanにRedis dataを管理させる場合は、`REDIS_VOLUME_MODE=volume`を使用します。
+named volumeの使用は必須ではありません。
+helper scriptのdirectory外でDockerまたはPodmanにRedis dataを管理させる場合は、`REDIS_VOLUME_MODE=volume`を使用します。
 
 volumeを確認します。
 
@@ -158,7 +178,9 @@ REDIS_VOLUME_MODE=volume ./run-redis-stack.sh
 <a id="10-environment-variables"></a>
 ## 10. 環境変数
 
-すべてのscriptは、scriptが置かれているdirectoryを`THIS_SCRIPT_DIR`として使用します。bind mount用data directoryはこのdirectoryからの相対pathであるため、インストール済みscriptをコピーしても、bind mountされたdataはコピー先のscriptの隣に保持されます。
+各scriptは、scriptが置かれているdirectoryを`THIS_SCRIPT_DIR`として使用します。
+bind mount用data directoryは`THIS_SCRIPT_DIR`からの相対pathです。
+そのため、インストール済みscriptをコピーした場合も、bind mountされたdataはコピー先のscriptの隣に保持されます。
 
 | 変数 | デフォルト | 説明 |
 | -------- | ------- | ----------- |
@@ -193,4 +215,5 @@ Podmanの場合:
 CONTAINER_RUNTIME=podman ./run-redis-stack-server.sh
 ```
 
-foreground containerはCtrl-Cで停止します。終了時にcontainerは削除されますが、bind mountしたdata directoryまたはnamed volumeは保持されます。
+foreground containerはCtrl-Cで停止します。
+終了時にcontainerは削除されますが、bind mountしたdata directoryまたはnamed volumeは保持されます。

@@ -2,11 +2,11 @@
 
 [English](README.md) | [日本語](README.ja.md)
 
-This directory contains small helper scripts for starting Redis Stack containers
-for local NestDAQ validation. They publish ports on the host and do not enable
-Redis authentication by default, so do not expose them on a public or shared
-network. Use the RedisInsight-enabled Redis Stack image for development and
-local inspection. Prefer Redis Stack Server for production deployments.
+This directory contains helper scripts for starting Redis Stack containers for local NestDAQ validation.
+The containers publish ports on the host and do not enable Redis authentication by default.
+Do not expose them on a public or shared network.
+Use the RedisInsight-enabled Redis Stack image for development and local inspection.
+Prefer Redis Stack Server for production deployments.
 
 The scripts use pinned image tags instead of `latest`:
 
@@ -33,9 +33,8 @@ redis-cli -p 6379 INFO server
 redis-cli -p 6379 MODULE LIST
 ```
 
-The Redis Stack 7.2 image tags are Stack release tags, not exact Redis server
-patch-version tags. Use the commands above after startup when the precise Redis
-server patch version matters.
+The Redis Stack 7.2 image tags identify Stack releases, not exact Redis server patch versions.
+When the exact Redis server patch version matters, verify it with the commands above after startup.
 
 ## 2. Start Redis 8.2.7
 
@@ -49,9 +48,8 @@ Default endpoint:
 
 - Redis: `localhost:6379`
 
-Data is bind-mounted from `redis-8.2.7-data` next to the script to `/data` in
-the container. This helper uses the official Redis image, so extra Redis server
-arguments in `REDIS_ARGS` are passed as container command arguments.
+The script bind-mounts `redis-8.2.7-data`, located next to the script, at `/data` in the container.
+Because this helper uses the official Redis image, it passes additional Redis server arguments from `REDIS_ARGS` as container command arguments.
 
 ## 3. Start Redis Stack 7.2
 
@@ -85,10 +83,8 @@ Default endpoints:
 - Redis: `localhost:6379`
 - RedisInsight: `http://localhost:8001`
 
-Redis server data is bind-mounted from `redis-stack-data` next to the script to
-`/data` in the container. RedisInsight data is bind-mounted from
-`redisinsight-data` to `/redisinsight`, so RedisInsight can create its internal
-subdirectories under that mounted directory.
+The script bind-mounts `redis-stack-data`, located next to the script, at `/data` in the container.
+It also bind-mounts `redisinsight-data` at `/redisinsight`, allowing RedisInsight to create its internal subdirectories within that directory.
 
 ## 5. Start Redis Stack Server Only
 
@@ -102,48 +98,39 @@ Default endpoint:
 
 - Redis: `localhost:6379`
 
-Data is bind-mounted from `redis-stack-server-data` next to the script to
-`/data` in the container.
+The script bind-mounts `redis-stack-server-data`, located next to the script, at `/data` in the container.
 
 ## 6. Rerun Behavior
 
-By default, each script removes any existing container with the configured
-container name before starting a new one. This makes repeated invocations safe
-after a previous terminal was interrupted or a same-name container was left
-behind. Persistent Redis data remains in the configured bind-mounted data directory
-or named volume.
+By default, each script removes an existing container with the configured name before starting a new container.
+This behavior allows the script to run again after an interrupted invocation or when a same-name container remains.
+Persistent Redis data remains in the configured bind-mounted data directory or named volume.
 
-Set `REDIS_CONTAINER_REPLACE=0` to make the script fail instead when a
-same-name container already exists.
+Set `REDIS_CONTAINER_REPLACE=0` to make the script fail when a same-name container already exists.
 
 ## 7. Security-Enhanced Linux (SELinux)
 
-SELinux label options are only used with `REDIS_VOLUME_MODE=bind`. Bind mounts
-use the `:Z` label option by default so the container can write to the data
-directory on SELinux-enabled hosts. Set `REDIS_VOLUME_LABEL=z` when the same
-data directory must be shared by multiple containers. Set `REDIS_VOLUME_LABEL=`
-to omit the label option entirely. In RedisInsight-enabled helpers, the same
-label option is applied to both Redis and RedisInsight bind mounts.
+SELinux label options apply only when `REDIS_VOLUME_MODE=bind`.
+By default, bind mounts use the `:Z` label option so that the container can write to the data directory on an SELinux-enabled host.
+Set `REDIS_VOLUME_LABEL=z` when multiple containers must share the same data directory.
+Set `REDIS_VOLUME_LABEL=` to omit the label option.
+RedisInsight-enabled helpers apply the same label option to both the Redis and RedisInsight bind mounts.
 
 ## 8. Directory Permissions
 
-By default, the scripts create bind-mounted data directories as the host user
-running the script and do not change directory permissions.
-On rootless Podman, container root normally maps to the host user running the
-container, so the created directories are usually writable without extra
-permission changes.
+By default, the scripts create bind-mounted data directories as the host user running the script and do not change their permissions.
+On rootless Podman, container root normally maps to the host user running the container.
+The created directories are therefore usually writable without additional permission changes.
 
-SELinux labeling and Unix permissions are separate. The `:Z` mount label lets
-the container access the directory on SELinux-enabled hosts, but it does not
-fix user identifier/group identifier (uid/gid) permission mismatches. Rootful
-containers may create files owned by host root in the bind-mounted directories.
-If a bind-mounted directory is not writable, adjust host-side ownership or
-permissions explicitly outside these helper scripts.
+SELinux labeling and Unix permissions are independent controls.
+The `:Z` mount label allows the container to access the directory on an SELinux-enabled host, but it does not resolve user identifier or group identifier (uid/gid) permission mismatches.
+Rootful containers may create files owned by host root in bind-mounted directories.
+If a bind-mounted directory is not writable, adjust its host-side ownership or permissions outside these helper scripts.
 
 ## 9. Named Volumes
 
-Named volumes are optional. Use `REDIS_VOLUME_MODE=volume` when you want Docker
-or Podman to manage Redis data outside the helper script directory.
+Named volumes are optional.
+Use `REDIS_VOLUME_MODE=volume` to have Docker or Podman manage Redis data outside the helper script directory.
 
 Inspect volumes with:
 
@@ -172,8 +159,7 @@ podman volume rm nestdaq-redis-7.2-stack-data nestdaq-redis-7.2-stack-redisinsig
 podman volume rm nestdaq-redis-7.2-stack-server-data
 ```
 
-Use named volumes when you do not want Redis data directories next to the
-helper scripts:
+Use named volumes when Redis data directories should not be stored next to the helper scripts:
 
 ```sh
 REDIS_VOLUME_MODE=volume ./run-redis-stack.sh
@@ -182,9 +168,8 @@ REDIS_VOLUME_MODE=volume ./run-redis-stack.sh
 <a id="10-runtime-options"></a>
 ## 10. Environment Variables
 
-Both scripts use the directory containing the script as `THIS_SCRIPT_DIR`.
-Bind-mount data directories are relative to that directory, so copied installed
-scripts keep bind-mounted data next to the copied scripts.
+Each script uses its containing directory as `THIS_SCRIPT_DIR`.
+Bind-mounted data directories are relative to `THIS_SCRIPT_DIR`, so a copied installed script stores its data next to the copied script.
 
 | Variable | Default | Description |
 | -------- | ------- | ----------- |
@@ -219,5 +204,5 @@ For Podman:
 CONTAINER_RUNTIME=podman ./run-redis-stack-server.sh
 ```
 
-Stop the foreground container with Ctrl-C. The container is removed on exit, but
-the bind-mounted data directory or named volume is kept.
+Stop the foreground container with Ctrl-C.
+The container is removed on exit, but the bind-mounted data directory or named volume is retained.

@@ -2,12 +2,13 @@
 
 [English](README.md) | [日本語](README.ja.md)
 
-このローカル検証用スタックは、ClickStack OpenTelemetry CollectorでOpenTelemetryのログ、メトリクス、トレースを受信し、ClickHouseに保存して、ClickStackユーザーインターフェース(UI)で表示します。
+このローカル検証用スタックは、ClickStack OpenTelemetry CollectorでOpenTelemetryのログ、メトリクス、トレースを受信します。
+受信したデータをClickHouseに保存し、ClickStackユーザーインターフェース(UI)で表示します。
 
 このバックエンドは実験的で、まだ十分に検証されていません。
 
-このstackはDocker Compose(`docker compose`)またはPodman Compose
-(`podman compose`)で管理します。
+この文書で**Compose**とは、Docker Compose (`docker compose`)またはPodman Compose (`podman compose`)を指します。
+どちらかを使用してこのスタックを管理します。
 
 このディレクトリから起動します。
 
@@ -21,31 +22,36 @@ Podmanの場合:
 podman compose -f compose-clickhouse.yaml up
 ```
 
-`podman compose`を使用するには、`podman-compose`やDocker Compose pluginなどのCompose providerがインストールされ、`PATH`から見つけられる必要があります。
+`podman compose`を使用するには、`podman-compose`やDocker Compose pluginなどのCompose providerが必要です。
+Compose providerをインストールし、`PATH`から検出できるようにしてください。
 
 <a id="1-components"></a>
 ## 1. コンポーネント
 
-- `clickstack`: ClickStack UI、OpenTelemetry Collector、ClickHouseを1つのcontainerで実行します。
+- `clickstack`: ClickStack UI、OpenTelemetry Collector、ClickHouseを1つのコンテナーで実行します。
 
-ClickStack UIを`http://localhost:8080`で開いてください。初回利用時にUI userを作成します。ClickStackはlocalのClickHouse instanceに接続し、ログ、メトリクス、トレース用のdata sourceを準備します。
+ClickStack UIを`http://localhost:8080`で開いてください。
+初回利用時にUIユーザーを作成します。
+ClickStackはローカルのClickHouse instanceに接続し、ログ、メトリクス、トレース用のdata sourceを準備します。
 
-このスタックはローカル検証用です。production deploymentでは、明示的な認証情報、retention policy、backup policy、およびこのsample compose fileの外部で管理されるdeployment topologyを使用してください。
+このスタックはローカル検証用です。
+production環境では、明示的な認証情報、retention policy、backup policy、およびこのsample Composeファイルの外部で管理するdeployment topologyを使用してください。
 
 <a id="2-ports"></a>
 ## 2. ポート
 
 - ClickStack UI: `http://localhost:8080`
 - ClickHouse HTTP: `http://localhost:8123`
-- OpenTelemetry Protocol(OTLP)Google remote procedure call(gRPC)receiver: `localhost:4317`
-- OTLP Hypertext Transfer Protocol(HTTP)receiver: `http://localhost:4318`
+- OpenTelemetry Protocol(OTLP) Google remote procedure call(gRPC) receiver: `localhost:4317`
+- OTLP Hypertext Transfer Protocol(HTTP) receiver: `http://localhost:4318`
 
 <a id="3-nestdaq-telemetry-endpoint-examples"></a>
 ## 3. NestDAQテレメトリーエンドポイントの例
 
-ホストプロセスはOTLP/gRPCに`localhost:4317`、OTLP/HTTPに`http://localhost:4318`を使用します。同じcompose network内のNestDAQ device containerまたは`daq-webctl` containerは、OTLP gRPCに`clickstack:4317`、OTLP HTTPに`http://clickstack:4318`を使用してください。
+ホストプロセスはOTLP/gRPCに`localhost:4317`、OTLP/HTTPに`http://localhost:4318`を使用します。
+同じComposeネットワーク内のNestDAQ deviceコンテナーまたは`daq-webctl`コンテナーは、OTLP gRPCに`clickstack:4317`、OTLP HTTPに`http://clickstack:4318`を使用してください。
 
-例えば、HTTP endpointでは次のpathを使用します。
+例えば、HTTPエンドポイントでは次のパスを使用します。
 
 ```text
 http://localhost:4318/v1/logs
@@ -58,19 +64,19 @@ http://localhost:4318/v1/traces
 
 | 変数 | デフォルト | 説明 |
 | :-- | :-- | :-- |
-| `CLICKSTACK_IMAGE` | `docker.io/clickhouse/clickstack-all-in-one:2` | ClickStack all-in-one image。 |
-| `CLICKSTACK_UI_PORT` | `8080` | ClickStack UIに割り当てるhost port。 |
-| `CLICKHOUSE_HTTP_PORT` | `8123` | ClickHouse HTTPに割り当てるhost port。 |
-| `OTEL_COLLECTOR_GRPC_PORT` | `4317` | OTLP gRPCに割り当てるhost port。 |
-| `OTEL_COLLECTOR_HTTP_PORT` | `4318` | OTLP HTTPに割り当てるhost port。 |
-| `CLICKSTACK_DB_DIR` | `./clickstack-db` | `/data/db`にbind mountするhost directory。 |
-| `CLICKSTACK_CLICKHOUSE_DATA_DIR` | `./clickstack-clickhouse-data` | `/var/lib/clickhouse`にbind mountするhost directory。 |
-| `CLICKSTACK_CLICKHOUSE_LOG_DIR` | `./clickstack-clickhouse-logs` | `/var/log/clickhouse-server`にbind mountするhost directory。 |
+| `CLICKSTACK_IMAGE` | `docker.io/clickhouse/clickstack-all-in-one:2` | ClickStack all-in-oneイメージ。 |
+| `CLICKSTACK_UI_PORT` | `8080` | ClickStack UIに割り当てるホストポート。 |
+| `CLICKHOUSE_HTTP_PORT` | `8123` | ClickHouse HTTPに割り当てるホストポート。 |
+| `OTEL_COLLECTOR_GRPC_PORT` | `4317` | OTLP gRPCに割り当てるホストポート。 |
+| `OTEL_COLLECTOR_HTTP_PORT` | `4318` | OTLP HTTPに割り当てるホストポート。 |
+| `CLICKSTACK_DB_DIR` | `./clickstack-db` | `/data/db`にbind mountするホストディレクトリ。 |
+| `CLICKSTACK_CLICKHOUSE_DATA_DIR` | `./clickstack-clickhouse-data` | `/var/lib/clickhouse`にbind mountするホストディレクトリ。 |
+| `CLICKSTACK_CLICKHOUSE_LOG_DIR` | `./clickstack-clickhouse-logs` | `/var/log/clickhouse-server`にbind mountするホストディレクトリ。 |
 
 <a id="5-stop"></a>
 ## 5. 停止
 
-ローカル検証用containerとnetworkを停止して削除します。
+ローカル検証用コンテナーとネットワークを停止して削除します。
 
 ```bash
 docker compose -f compose-clickhouse.yaml down
@@ -82,9 +88,10 @@ Podmanの場合:
 podman compose -f compose-clickhouse.yaml down
 ```
 
-ClickStackとClickHouseのdata/log directoryは`down`では削除されません。同じdirectoryでこのcompose構成を再び起動すると、以前のbackend dataが再利用されます。
+`down`ではClickStackとClickHouseのデータディレクトリおよびログディレクトリを削除しません。
+同じディレクトリでこのCompose構成を再び起動すると、以前のバックエンドデータが再利用されます。
 
-保存されたbackend dataを破棄したい場合に限り、data directoryとlog directoryを削除してください。
+保存されたバックエンドデータを破棄したい場合に限り、データディレクトリとログディレクトリを削除してください。
 
 ```bash
 rm -rf ./clickstack-db \
@@ -92,7 +99,7 @@ rm -rf ./clickstack-db \
        ./clickstack-clickhouse-logs
 ```
 
-rootless Podmanでは、file ownershipのためuser namespace経由で削除する必要がある場合があります。
+rootless Podmanでは、ファイル所有権のためユーザー名前空間経由で削除する必要がある場合があります。
 
 ```bash
 podman unshare rm -rf ./clickstack-db \

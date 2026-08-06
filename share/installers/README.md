@@ -2,25 +2,22 @@
 
 [English](README.md) | [日本語](README.ja.md)
 
-This directory contains helper scripts that can install and update external
-services with the host package manager instead of using the local Compose
-examples run with `docker compose` or `podman compose`.
+This directory contains helper scripts for installing and updating external services with the host package manager.
+They provide an alternative to the local **Compose** examples, where Compose means either `docker compose` or `podman compose`.
 
-The scripts are intended for administrator-controlled hosts. They use `sudo`
-unless they are run as root. They install packages into system-managed
-locations such as `/usr`, `/etc`, package-manager repository directories, and
-systemd unit directories, so root privileges are required.
+The scripts are intended for hosts managed by an administrator.
+They use `sudo` unless run as root.
+Because they install packages into system-managed locations such as `/usr`, `/etc`, package-manager repository directories, and systemd unit directories, they require root privileges.
 
-On Debian and Ubuntu systems, the scripts use `apt-get`. On RHEL-family
-systems such as AlmaLinux, Rocky Linux, RHEL, CentOS, and Fedora, the scripts
-prefer `dnf` and fall back to `yum` when `dnf` is not available.
+On Debian and Ubuntu systems, the scripts use `apt-get`.
+On RHEL-family systems such as AlmaLinux, Rocky Linux, RHEL, CentOS, and Fedora, the scripts prefer `dnf` and fall back to `yum` when `dnf` is unavailable.
 
 ## 1. Scripts
 
 | Script | Installs or updates |
 | :-- | :-- |
 | `install-redis-stack.sh` | Redis server and Redis Stack modules from the Redis package repository. |
-| `install-otelcol-contrib.sh` | OpenTelemetry Collector Contrib from the upstream release package. |
+| `install-otelcol-contrib.sh` | OpenTelemetry Collector Contrib from the official OpenTelemetry release package. |
 | `install-opensearch.sh` | OpenSearch from the OpenSearch 2.x package repository. |
 | `install-opensearch-dashboards.sh` | OpenSearch Dashboards from the OpenSearch 2.x package repository. |
 
@@ -35,18 +32,16 @@ Run a script with one of these actions:
 ./install-redis-stack.sh --help
 ```
 
-`install` is the default action. `upgrade` uses the same package source and asks
-the package manager to update the installed package. `uninstall` removes the
-package with the host package manager.
+`install` is the default action.
+`upgrade` uses the same package source and asks the package manager to update the installed package.
+`uninstall` removes the package with the host package manager.
 
-The uninstall action is intentionally conservative: it does not delete package
-repository files, service configuration, logs, Redis persistence files, or
-OpenSearch data paths. Review those files manually before deleting them. If a
-service is managed by `systemd`, stop and disable it before uninstalling the
-package; see <a href="#6-systemd-management">systemd Management</a>.
+The `uninstall` action does not delete package repository files, service configuration, logs, Redis persistence files, or OpenSearch data paths.
+Review these files manually before deleting them.
+If `systemd` manages a service, stop and disable the service before uninstalling its package.
+See <a href="#6-systemd-management">systemd Management</a>.
 
-Set `SUDO=` when running as root or when you want to provide your own privilege
-wrapper:
+Set `SUDO=` when running as root or when providing a custom privilege wrapper:
 
 ```sh
 SUDO=doas ./install-opensearch.sh install
@@ -54,9 +49,9 @@ SUDO=doas ./install-opensearch.sh install
 
 ## 3. Redis
 
-The Redis script registers `packages.redis.io` and installs Redis `8.2.7` by
-default. For Redis 8 packages, the default package name is `redis`. It installs
-Redis server and Redis Stack modules, but it does not include RedisInsight.
+The Redis script registers `packages.redis.io` and installs Redis `8.2.7` by default.
+For Redis 8 packages, the default package name is `redis`.
+This package installs Redis server and Redis Stack modules, but it does not include RedisInsight.
 The Redis 8.2.7 package includes modules such as:
 
 ```text
@@ -66,59 +61,43 @@ The Redis 8.2.7 package includes modules such as:
 /usr/lib/redis/modules/rejson.so
 ```
 
-Use `REDIS_VERSION=latest` when you want the package manager to install or
-upgrade to the latest version currently published by the Redis repository:
+Use `REDIS_VERSION=latest` to install or upgrade to the latest version currently published by the Redis repository:
 
 ```sh
 REDIS_VERSION=latest ./install-redis-stack.sh install
 ```
 
-Use `REDIS_PACKAGE=redis-stack` only when the Redis repository for your
-distribution provides that package and you want the RedisInsight-inclusive
-Redis Stack package:
+Use `REDIS_PACKAGE=redis-stack` only when the Redis repository for the host distribution provides that package and RedisInsight is required:
 
 ```sh
 REDIS_PACKAGE=redis-stack ./install-redis-stack.sh install
 ```
 
-Version pinning with `REDIS_VERSION=8.2.7` is supported for the default
-`REDIS_PACKAGE=redis` package. On Debian and Ubuntu, pinned installs follow the
-official Redis APT package set and install `redis`, `redis-server`,
-`redis-sentinel`, and `redis-tools` with the same package version. Set
-`REDIS_VERSION=latest` when using a legacy package name such as
-`redis-stack-server` or `redis-stack`.
+The default `REDIS_PACKAGE=redis` package supports version pinning with `REDIS_VERSION=8.2.7`.
+On Debian and Ubuntu, a pinned installation follows the official Redis APT package set and installs `redis`, `redis-server`, `redis-sentinel`, and `redis-tools` at the same package version.
+Set `REDIS_VERSION=latest` when using a legacy package name such as `redis-stack-server` or `redis-stack`.
 
-RedisInsight is not installed by the default `redis` package. Use a separate
-RedisInsight package or the Redis Stack container helper in
-[`../redis-stack-container/`](../redis-stack-container/README.md) when
-RedisInsight is needed.
+The default `redis` package does not install RedisInsight.
+When RedisInsight is required, use a separate RedisInsight package or the Redis Stack container helper in [`../redis-stack-container/`](../redis-stack-container/README.md).
 
-Redis publishes packages per distribution codename or RPM repository. If the
-configured Redis repository does not publish `REDIS_VERSION`, the installer
-fails before installing a different Redis version.
+Redis publishes packages for specific distribution codenames or RPM repositories.
+If the configured Redis repository does not publish `REDIS_VERSION`, the installer fails rather than installing a different Redis version.
 
-For Debian and Ubuntu systems, the Redis official APT repository publishes
-packages per distribution codename. Debian 12 (`bookworm`), Debian 13
-(`trixie`), Ubuntu 22.04 (`jammy`), and Ubuntu 24.04 (`noble`) can install
-Redis `7.2.14`, `7.4.9`, and `8.2.7` with the pinned package set. Ubuntu 26.04
-(`resolute`) currently does not provide those versions; only newer Redis
-packages such as `8.8.0` are available, so pinned installs for `7.2.14`,
-`7.4.9`, and `8.2.7` fail there.
+For Debian and Ubuntu systems, the official Redis APT repository publishes packages for each distribution codename.
+Debian 12 (`bookworm`), Debian 13 (`trixie`), Ubuntu 22.04 (`jammy`), and Ubuntu 24.04 (`noble`) can install Redis `7.2.14`, `7.4.9`, and `8.2.7` with the pinned package set.
+Ubuntu 26.04 (`resolute`) currently provides only newer Redis packages such as `8.8.0`.
+Pinned installations of `7.2.14`, `7.4.9`, and `8.2.7` therefore fail on Ubuntu 26.04.
 
-For AlmaLinux/RHEL-family systems, the installer uses the Redis official RPM
-repository for the matching Rocky Linux major version. The Redis official
-Rocky Linux repositories do not provide Redis 7.x packages. AlmaLinux 9
-standard AppStream provides Redis `7.2.14` through the `redis:7` module, but
-that package is not used by this installer because the installer targets the
-Redis official repository. AlmaLinux 8 and 9 can install Redis `8.2.7` from the
-Redis official RPM repository. AlmaLinux 10 currently does not provide Redis
-`8.2.7` there; only newer Redis packages such as `8.8.0` are available, so the
-default `REDIS_VERSION=8.2.7` install fails on AlmaLinux 10.
+For AlmaLinux and other RHEL-family systems, the installer uses the official Redis RPM repository for the matching Rocky Linux major version.
+The official Redis repositories for Rocky Linux do not provide Redis 7.x packages.
+AlmaLinux 9 AppStream provides Redis `7.2.14` through the `redis:7` module, but this installer does not use that package because it targets the official Redis repository.
+AlmaLinux 8 and 9 can install Redis `8.2.7` from the official Redis RPM repository.
+AlmaLinux 10 currently provides only newer Redis packages such as `8.8.0` in that repository.
+The default `REDIS_VERSION=8.2.7` installation therefore fails on AlmaLinux 10.
 
-This installer does not install Redis from AlmaLinux AppStream modules. On
-RHEL-family systems it always configures the Redis official RPM repository and
-disables the distribution Redis module so package resolution uses
-`packages.redis.io`. The AppStream row below is informational only.
+This installer does not install Redis from AlmaLinux AppStream modules.
+On RHEL-family systems, it always configures the official Redis RPM repository and disables the distribution Redis module so that package resolution uses `packages.redis.io`.
+The AppStream row below is for reference only.
 
 Verified Redis package availability:
 
@@ -142,19 +121,17 @@ Official install instructions:
 ## 4. OpenTelemetry Collector Contrib
 
 The OpenTelemetry project publishes Linux packages with each GitHub release.
-There is no apt or dnf repository configured by this helper. The script
-downloads the selected release package and installs it through `apt` or `dnf`.
+This helper does not configure an apt or dnf repository.
+The script downloads the selected release package and installs it through `apt` or `dnf`.
 
-Use `OTELCOL_CONTRIB_VERSION` to choose a version. The default follows the
-version used by the local Compose examples.
+Use `OTELCOL_CONTRIB_VERSION` to select a version.
+The default matches the version used by the local Compose examples.
 
 ```sh
 OTELCOL_CONTRIB_VERSION=0.155.0 ./install-otelcol-contrib.sh install
 ```
 
-After installation, place or edit the collector configuration in the package's
-configured location, commonly `/etc/otelcol-contrib/config.yaml`, before
-starting the service.
+Before starting the service, create or edit the collector configuration in the location configured by the package, commonly `/etc/otelcol-contrib/config.yaml`.
 
 Official install and release instructions:
 
@@ -163,18 +140,13 @@ Official install and release instructions:
 
 ## 5. OpenSearch
 
-The OpenSearch scripts register the OpenSearch 2.x package repositories and
-install OpenSearch `2.19.5` and OpenSearch Dashboards `2.19.5` by default. Use
-`OPENSEARCH_VERSION=latest` or `OPENSEARCH_DASHBOARDS_VERSION=latest` when you
-want the package manager to install or upgrade to the latest version currently
-published by the repository.
+The OpenSearch scripts register the OpenSearch 2.x package repositories.
+By default, they install OpenSearch `2.19.5` and OpenSearch Dashboards `2.19.5`.
+Use `OPENSEARCH_VERSION=latest` or `OPENSEARCH_DASHBOARDS_VERSION=latest` to install or upgrade to the latest version currently published by the repository.
 
-By default, `install-opensearch.sh` passes
-`DISABLE_INSTALL_DEMO_CONFIG=true` and `DISABLE_SECURITY_PLUGIN=true` during
-installation so the package can be installed without a demo admin password. Set
-`OPENSEARCH_INSTALL_SECURITY=demo` and provide
-`OPENSEARCH_INITIAL_ADMIN_PASSWORD` if you want the package installer to set up
-the demo security configuration.
+By default, `install-opensearch.sh` passes `DISABLE_INSTALL_DEMO_CONFIG=true` and `DISABLE_SECURITY_PLUGIN=true` during installation.
+These settings allow the package to be installed without a demo administrator password.
+To configure demo security, set `OPENSEARCH_INSTALL_SECURITY=demo` and provide `OPENSEARCH_INITIAL_ADMIN_PASSWORD`.
 
 ```sh
 OPENSEARCH_VERSION=2.19.5 ./install-opensearch.sh install
@@ -185,9 +157,8 @@ OPENSEARCH_INITIAL_ADMIN_PASSWORD='change-this-strong-password' \
 ./install-opensearch.sh install
 ```
 
-These scripts install packages only. Review and edit service configuration
-under `/etc/opensearch/` and `/etc/opensearch-dashboards/` before exposing the
-services on a network.
+These scripts install packages only.
+Before exposing the services on a network, review and edit the service configuration under `/etc/opensearch/` and `/etc/opensearch-dashboards/`.
 
 Official install instructions:
 
@@ -199,8 +170,8 @@ Official install instructions:
 <a id="6-systemd-management"></a>
 ## 6. systemd Management
 
-The package scripts install software only. Review service configuration before
-enabling or starting services with `systemd`.
+The package scripts install software only.
+Review the service configuration before enabling or starting services with `systemd`.
 
 Common service commands:
 
@@ -236,14 +207,11 @@ systemctl list-unit-files 'redis*'
 sudo systemctl enable --now redis-server
 ```
 
-If you install the RedisInsight-inclusive `redis-stack` package, check the
-installed unit names before enabling services. The Redis Stack container helper
-`run-redis-stack.sh` also includes RedisInsight, but it is separate from these
-host package installer scripts.
+If you install the RedisInsight-inclusive `redis-stack` package, check the installed unit names before enabling services.
+The Redis Stack container helper `run-redis-stack.sh` also includes RedisInsight, but it is separate from these host package installer scripts.
 
-Before uninstalling a package that is managed by `systemd`, stop and disable
-the service explicitly. The installer scripts' `uninstall` action only removes
-the package with the host package manager; it does not run `systemctl`.
+Before uninstalling a package managed by `systemd`, explicitly stop and disable its service.
+The installer scripts' `uninstall` action only removes the package with the host package manager; it does not run `systemctl`.
 
 ```sh
 sudo systemctl stop <service>
@@ -253,8 +221,7 @@ sudo systemctl daemon-reload
 systemctl list-unit-files '<service-pattern>'
 ```
 
-For Redis, confirm the installed unit name first because it can differ between
-packages and distributions:
+For Redis, confirm the installed unit name first because the name can differ between packages and distributions:
 
 ```sh
 systemctl list-unit-files 'redis*'

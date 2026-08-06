@@ -15,12 +15,16 @@ flowchart TD
   Prerequisites --> Dependencies --> NestDAQ --> Examples
 ```
 
-NestDAQのメインビルドでは、`NestDAQ_BUILD_EXAMPLES=ON`の場合、デフォルトでサンプルも
-ビルドしてインストールします。メインビルドでサンプルを無効にした場合、またはサンプル用に
-別のビルドディレクトリやインストールプレフィックスが必要な場合にのみ、サンプルを個別にビルドしてください。
+NestDAQのメインビルドでは、`NestDAQ_BUILD_EXAMPLES=ON`の場合、デフォルトでサンプルもビルドしてインストールします。
+メインビルドでサンプルを無効にした場合、またはサンプル用に別のビルドディレクトリやインストールプレフィックスが必要な場合にのみ、サンプルを個別にビルドしてください。
 
 <a id="1-install-prerequisites"></a>
 ## 1. 前提パッケージのインストール
+
+ここでいう前提パッケージとは、NestDAQとその外部依存関係をビルドする前に必要なcompiler、build tool、開発用header、libraryを指します。
+各Linux distributionが提供するpackage managerを使い、OS packageとしてインストールします。
+AlmaLinuxでは`dnf`、DebianおよびUbuntuでは`apt`を使用します。
+この節のcommandはこれらのOS packageをインストールするものであり、NestDAQ本体はインストールしません。
 
 <a id="almalinux-9-and-10"></a>
 ### AlmaLinux 9および10
@@ -59,7 +63,7 @@ dnf -y install \
     python3-pip
 
 # 必要に応じてインストールするツール:
-# - jq: コマンドラインツールのJSON出力を整形・確認します。
+# - jq: コマンドラインツールのJSON出力を整形して確認します。
 # - clang-tools-extra: clang-tidy、clang-format、および関連するClangツールを提供します。
 # - doxygen: APIドキュメントを生成します。
 # - graphviz: Doxygenの図に使用するdotコマンドを提供します。
@@ -109,9 +113,8 @@ dnf -y install \
     python3.11-pip
 ```
 
-AlmaLinux 8では`crb`の代わりに`powertools`を使用します。`python3`、
-`python3-devel`、`python3-pip`の代わりに、上記のPython 3.11パッケージを
-使用してください。
+AlmaLinux 8では`crb`の代わりに`powertools`を使用します。
+`python3`、`python3-devel`、`python3-pip`の代わりに、上記のPython 3.11パッケージを使用してください。
 
 <a id="debian-1213-and-ubuntu-220424042604"></a>
 ### Debian 12/13およびUbuntu 22.04/24.04/26.04
@@ -147,7 +150,7 @@ apt install -y \
     python3-pip
 
 # 必要に応じてインストールするツール:
-# - jq: コマンドラインツールのJSON出力を整形・確認します。
+# - jq: コマンドラインツールのJSON出力を整形して確認します。
 # - clang-tools: clang-tidyおよび関連するLLVM/Clangツールを提供します。
 # - clang-format: DebianおよびUbuntuではclang-toolsとは別パッケージとしてclang-formatを提供します。
 # - doxygen: APIドキュメントを生成します。
@@ -157,37 +160,33 @@ apt install -y \
 # apt install -y jq clang-tools clang-format doxygen graphviz astyle tmux
 ```
 
-Ubuntu 22.04で依存関係をビルドする際に必要となるため、`pkg-config`を
-Debian/Ubuntu共通の一覧に含めています。
+Ubuntu 22.04で依存関係をビルドする際に必要となるため、`pkg-config`をDebianおよびUbuntu共通の一覧に含めています。
 
 <a id="2-build-and-install-external-dependencies"></a>
 ## 2. 外部依存関係のビルドとインストール
 
-次のコマンドはZeroMQ、Boost、FairLogger、FairMQ、Catch2、nlohmann/json、
-hiredis、redis++、Redis Stackをインストールします。
+次の手順では、ZeroMQ、Boost、FairLogger、FairMQ、Catch2、nlohmann/json、hiredis、redis++、Redis Stackをインストールします。
 
-このガイドでupstream repositoryとは、
-[github.com/spadi-alliance/nestdaq](https://github.com/spadi-alliance/nestdaq)を
-指します。デフォルト手順では、その`main`ブランチにある最新の安定リリース版を
-ビルドします。これはNestDAQを開発しない利用者などが通常選択する方法です。`main`は
-repositoryのdefault branchであるため、通常のcloneでcheckoutされます。
+このガイドで**upstream repository**とは、[github.com/spadi-alliance/nestdaq](https://github.com/spadi-alliance/nestdaq)を指します。
+デフォルト手順では、その`main`ブランチにある最新の安定リリース版をビルドします。
+これは、NestDAQを開発しない利用者などが通常選択する方法です。
+`main`はrepositoryのdefault branchであるため、通常のcloneでcheckoutされます。
 
 ```bash
 # 最新の安定リリース版のsource codeをdownload
 git clone https://github.com/spadi-alliance/nestdaq.git
 ```
 
-特定のリリース版をビルドする場合は、repositoryのReleasesまたはTags pageにある
-必要なtagで`<release-tag>`を置き換えます。NestDAQ versionを固定する場合や、buildの
-再現性が必要な場合はrelease tagを指定してください。
+特定のリリース版をビルドする場合は、repositoryのReleasesまたはTags pageにある必要なtagで`<release-tag>`を置き換えます。
+NestDAQ versionを固定する場合や、ビルドの再現性が必要な場合はrelease tagを指定してください。
 
 ```bash
 git clone --branch <release-tag> --depth 1 \
   https://github.com/spadi-alliance/nestdaq.git
 ```
 
-または、通常のcloneをrelease tagへ切り替えます。tagは開発用branchではないため、
-`git switch --detach`を使用してdetached HEAD状態でcheckoutします。
+または、既存のcloneをrelease tagへ切り替えます。
+tagは開発用branchではないため、`git switch --detach`を使用してdetached HEAD状態でcheckoutします。
 
 ```bash
 cd nestdaq
@@ -198,19 +197,25 @@ git switch --detach <release-tag>
 `git checkout`を使用する場合、同等のcommandは`git checkout <release-tag>`です。
 
 NestDAQ開発者は、最初に`spadi-alliance/nestdaq`を自身のGitHub accountへforkします。
-最新開発版をビルドする場合は、自身のforkをcloneし、upstream repositoryを追加して、
-upstreamの`develop`ブランチをcheckoutします。
+最新開発版をビルドする場合は、自身のforkをcloneし、upstream repositoryを追加して、forkの`origin/develop`をtrackするlocal `develop`ブランチを作成します。
+更新はupstreamからpullしますが、push先は自身のfork (`origin`)にあるbranchだけにします。
 
 ```bash
 git clone https://github.com/<your-github-account>/nestdaq.git
-git -C nestdaq remote add upstream https://github.com/spadi-alliance/nestdaq.git
-git -C nestdaq fetch upstream
-git -C nestdaq switch --create develop --track upstream/develop
+cd nestdaq
+git remote add upstream https://github.com/spadi-alliance/nestdaq.git
+git fetch upstream
+git switch --create develop --track origin/develop
+git pull --rebase upstream develop
+git push origin develop
+cd ..
 ```
 
-source codeを変更する前に、自身のfork内で作業ブランチを作成してください。詳細は
-[`CONTRIBUTING.ja.md`](CONTRIBUTING.ja.md)を参照してください。以下のコマンドは、
-`nestdaq`でcheckoutされているbranchをビルドします。
+開発用branchをupstream repositoryへpushしないでください。
+
+source codeを変更する前に、自身のfork内で作業ブランチを作成してください。
+詳細は[`CONTRIBUTING.ja.md`](CONTRIBUTING.ja.md)を参照してください。
+以下のコマンドは、`nestdaq`でcheckoutされているbranchをビルドします。
 
 ```bash
 # configure
@@ -220,41 +225,35 @@ cmake \
   -B ./build-external \
   -S nestdaq/cmake
 
-# 外部依存関係をbuild・install
+# 外部依存関係をbuildしてinstall
 cmake --build ./build-external
 ```
 
-Redis Stackは、NestDAQアプリケーションの稼働中に必要となる外部サービスであり、
-直接のライブラリ依存関係ではありません。Redis Stackを用意する方法として、
-次の選択肢をサポートしています。
+Redis StackはNestDAQアプリケーションの稼働中に必要となる外部サービスであり、直接のライブラリ依存関係ではありません。
+次のいずれかの方法でRedis Stackを用意します。
 
 - 上記の外部依存関係ビルドでRedis Stackをソースからビルドしてインストールします。
   `WITH_REDIS_STACK=ON`の場合のデフォルトです。
-- `-DWITH_REDIS_STACK=OFF -DWITH_REDIS_SERVER_7=ON`を指定し、Redis 7.x
-  サーバーとスタンドアロンRedisTimeSeriesをソースからビルドしてインストールします。
-- [`share/redis-stack-container/README.ja.md`](share/redis-stack-container/README.ja.md)の
-  ヘルパースクリプトを使用して、Redis Stackをコンテナで実行します。
-- [`share/installers/README.ja.md`](share/installers/README.ja.md)のインストーラー
-  ヘルパースクリプトを使用して、RedisとRedis Stackモジュールをホストパッケージとして
-  インストールします。
+- `-DWITH_REDIS_STACK=OFF -DWITH_REDIS_SERVER_7=ON`を指定し、Redis 7.xサーバーとstandalone RedisTimeSeriesをソースからビルドしてインストールします。
+- [`share/redis-stack-container/README.ja.md`](share/redis-stack-container/README.ja.md)のhelper scriptを使用して、Redis Stackをコンテナで実行します。
+- [`share/installers/README.ja.md`](share/installers/README.ja.md)のinstaller helper scriptを使用して、RedisとRedis Stack moduleをhost packageとしてインストールします。
 
-Redis Stackをコンテナまたはホストパッケージで用意する場合は、外部依存関係の
-構成コマンドに`-DWITH_REDIS_STACK=OFF`を追加してください。
+Redis Stackをコンテナまたはhost packageで用意する場合は、外部依存関係のconfigure commandに`-DWITH_REDIS_STACK=OFF`を追加してください。
 
-`cmake/dependencies/`以下にあるRedis Stack用CMakeファイルとヘルパーシェル
-スクリプトは、Redis 8以降を対象としています。Redis 7.xではRedisTimeSeries 1.xを
-Redis 8の`redis/modules`ツリー経由ではなくスタンドアロンモジュールとしてビルドするため、
-別のCMake経路を使用します。
+`cmake/dependencies/`以下にあるRedis Stack用CMake fileとhelper shell scriptは、Redis 8以降を対象としています。
+Redis 7.xではRedisTimeSeries 1.xをRedis 8の`redis/modules`tree経由ではなくstandalone moduleとしてビルドするため、別のCMake経路を使用します。
 
-- 上記のコマンド例では、CMakeの`ExternalProject`を使用して`git clone`、ビルド、インストールを行います。
-  - この場合、cmake --buildに渡す`--parallel`(または`-j`)オプションでは内部のExternalProjectビルドを制御できません。そのため、初回構成時に`-DBUILD_PARALLEL_LEVEL=xxx`を使用して並列ビルド数を指定してください。
-    - `nproc`コマンドは、システムで使用可能なCPUコア数を表示します。メモリー使用量が過大になる場合は、より小さい値を手動で指定してください。
-- 依存関係のデフォルトバージョンを以下に示します。バージョンを上書きするには、CMakeに`-Dxxxx_VERSION=yyyy`を渡します。
+- 上記のcommandでは、CMakeの`ExternalProject`を使用して各依存関係をclone、build、installします。
+  `cmake --build`に渡す`--parallel`(または`-j`)optionでは、内部の`ExternalProject` buildを制御できません。
+  初回configure時に`-DBUILD_PARALLEL_LEVEL=xxx`を使用して、内部ビルドの並列数を指定してください。
+  `nproc`commandはsystemで使用可能なCPU core数を表示するため、メモリー使用量が過大になる場合は、より小さい値を指定してください。
+- 依存関係のデフォルトバージョンを以下に示します。
+  バージョンを上書きするには、CMakeに`-Dxxxx_VERSION=yyyy`を渡します。
 - 外部依存関係の構成時にDoxygenが見つかった場合、ドキュメント表示用の追加ファイルとして`doxygen-awesome-css`を`./install/share/doxygen-awesome-css`以下にインストールします。
 - Makeの代わりにNinjaを使用するには、CMakeオプションに`-G Ninja`を追加します。
-- システムの`ld`の代わりに`mold`を使用する場合:
-  - GCC 12.1以降: CMakeオプションに`-DCMAKE_EXE_LINKER_FLAGS="-fuse-ld=mold"`と`-DCMAKE_SHARED_LINKER_FLAGS="-fuse-ld=mold"`を追加します。
-  - GCC 12.0以前: CMakeオプションに`-DCMAKE_EXE_LINKER_FLAGS="-B<path-to-mold>"`と`-DCMAKE_SHARED_LINKER_FLAGS="-B<path-to-mold>"`を追加します。
+- systemの`ld`の代わりに`mold`を使用する場合は、GCC versionに応じたlinker flagを追加します。
+  - GCC 12.1以降: CMake optionに`-DCMAKE_EXE_LINKER_FLAGS="-fuse-ld=mold"`と`-DCMAKE_SHARED_LINKER_FLAGS="-fuse-ld=mold"`を追加します。
+  - GCC 12.0以前: CMake optionに`-DCMAKE_EXE_LINKER_FLAGS="-B<path-to-mold>"`と`-DCMAKE_SHARED_LINKER_FLAGS="-B<path-to-mold>"`を追加します。
 
 <a id="external-dependency-build-options"></a>
 ### 外部依存関係のビルドオプション
@@ -275,17 +274,15 @@ Redis 8の`redis/modules`ツリー経由ではなくスタンドアロンモジ�
 | `Redis7_VERSION` | 系列固有 | `REDIS_SERVER_7_SERIES`で選択したRedis 7.xのバージョンを上書きします。 |
 | `RedisTimeSeries7_VERSION` | 系列固有 | `REDIS_SERVER_7_SERIES`で選択したスタンドアロンRedisTimeSeriesのバージョンを上書きします。 |
 
-デフォルトの`FairMQ_VERSION`はGNUコンパイラーのバージョンに依存します。
-GCC 9.1以降ではデフォルトでFairMQ 1.10.0を使用し、それより古いGCCではFairMQ 1.9.2を
-使用します。この選択を明示的に上書きするには`-DFairMQ_VERSION=...`を渡してください。
+デフォルトの`FairMQ_VERSION`はGNU compilerのversionに依存します。
+GCC 9.1以降ではFairMQ 1.10.0を使用し、それより古いGCCではFairMQ 1.9.2を使用します。
+この選択を上書きするには`-DFairMQ_VERSION=...`を渡してください。
 
-すべての`REDIS_BUILD_*`モジュールオプションを`OFF`にすると、依存関係ビルドでは
-Redisサーバーツールだけをインストールします。Redis Stackには、RedisビルドのTLS、
-アロケーター、一時的なRustツールチェーンパスなどの低レベルキャッシュ変数もあります。これらは
-依存関係ビルドの保守用です。必要な場合はCMake cacheまたは
-`cmake/dependencies/redis-stack.cmake`を確認してください。
-Redis 7.xの保守用設定については`cmake/dependencies/redis-server-7.cmake`を
-確認してください。
+すべての`REDIS_BUILD_*` module optionを`OFF`にすると、依存関係ビルドではRedis server toolだけをインストールします。
+Redis Stackには、TLS、allocator、一時的なRust toolchain pathなどを設定する低levelのcache variableもあります。
+これらのvariableは依存関係ビルドの保守用です。
+必要な場合はCMake cacheまたは`cmake/dependencies/redis-stack.cmake`を確認してください。
+Redis 7.xの保守用設定については`cmake/dependencies/redis-server-7.cmake`を確認してください。
 
 <a id="versions-of-installed-external-dependencies"></a>
 ### インストールされる外部依存関係のバージョン
@@ -307,24 +304,17 @@ Redis 7.xの保守用設定については`cmake/dependencies/redis-server-7.cma
 <a id="redis-server-and-modules"></a>
 ##### Redis serverとmodule
 
-Redis Stack(`redis-server`、`redis-cli`、Redis modulesなど)は外部依存関係
-ビルドに含まれ、デフォルトではソースからビルドしてインストールします。
-Redisモジュールは`REDIS_BUILD_REDISBLOOM`、`REDIS_BUILD_REDISEARCH`、
-`REDIS_BUILD_REDISJSON`、`REDIS_BUILD_REDISTIMESERIES`を使用して個別に
-無効化できます。NestDAQアプリケーションの稼働中にはRedisが必要ですが、直接の
-ライブラリ依存関係ではありません。コンテナまたはホストパッケージ用インストーラースクリプトで
-用意することもできます。パッケージインストーラーのデフォルトはRedis Stackモジュールを
-含むRedis 8.2.7で、RedisInsightは含みません。RedisInsightが必要でリポジトリに
-該当パッケージがある場合は、Redis Stackコンテナヘルパー、または
-`REDIS_PACKAGE=redis-stack`と`REDIS_VERSION=latest`を使用してください。
+Redis Stack(`redis-server`、`redis-cli`、Redis moduleなど)は外部依存関係ビルドに含まれ、デフォルトではソースからビルドしてインストールします。
+Redis moduleは`REDIS_BUILD_REDISBLOOM`、`REDIS_BUILD_REDISEARCH`、`REDIS_BUILD_REDISJSON`、`REDIS_BUILD_REDISTIMESERIES`を使用して個別に無効化できます。
+NestDAQアプリケーションの稼働中にはRedisが必要ですが、直接のライブラリ依存関係ではありません。
+Redisはコンテナまたはhost package用installer scriptで用意することもできます。
+package installerは、デフォルトでRedis Stack moduleを含むRedis 8.2.7をインストールしますが、RedisInsightは含みません。
+RedisInsightが必要でrepositoryに該当packageがある場合は、Redis Stack container helper、または`REDIS_PACKAGE=redis-stack`と`REDIS_VERSION=latest`を使用してください。
 
-RediSearchにはC++20をサポートするコンパイラーが必要です。AlmaLinux 8のGCC 8.5では、
-RediSearchが`<ranges>`などのC++20機能を使用するため、
-`REDIS_BUILD_REDISEARCH=ON`のビルドは失敗します。AlmaLinux 8でGCC 8.5を使用して
-依存関係をビルドする場合、必要なC++20機能をサポートする新しいコンパイラーツールチェーンを
-使用しない限り、`-DREDIS_BUILD_REDISEARCH=OFF`を渡してください。
-デフォルトのRedisモジュールバージョンは、Redis 8.2.7ソースツリーが選択するモジュールの
-リリースタグに従います。
+RediSearchにはC++20をサポートするcompilerが必要です。
+AlmaLinux 8のGCC 8.5では、RediSearchが`<ranges>`などのC++20機能を使用するため、`REDIS_BUILD_REDISEARCH=ON`のビルドは失敗します。
+AlmaLinux 8でGCC 8.5を使用して依存関係をビルドする場合は、必要なC++20機能をサポートする新しいcompiler toolchainを使用しない限り、`-DREDIS_BUILD_REDISEARCH=OFF`を渡してください。
+デフォルトのRedis module versionは、Redis 8.2.7 source treeが選択するmoduleのrelease tagに従います。
 
 | パッケージ                                                               | バージョン(デフォルト) | CMakeオプション |
 | :--                                                                      | :--                      | :--             |
@@ -349,21 +339,16 @@ cmake --build ./build --parallel $(nproc)
 cmake --install ./build
 ```
 
-- 上記の例では、NestDAQメインパッケージと外部依存関係の両方を同じディレクトリ
-  (`./install`)にインストールします。外部依存関係を別の場所にインストールした
-  場合は、`-DCMAKE_PREFIX_PATH=xxx`でそのディレクトリを指定してください。
-- `doxygen-awesome-css`が利用できる場合、生成したドキュメントとともに
-  `./install/share/doc/nestdaq/doxygen-awesome-css`へインストールします。
-- `-DNestDAQ_BUILD_DOCS=ON`でDoxygenが利用できる場合、HTMLドキュメントを
-  `./build/docs/html`に生成し、`./install/share/doc/nestdaq/html`へ
-  インストールします。
+- 上記の例では、NestDAQ main packageと外部依存関係の両方を`./install`にインストールします。
+  外部依存関係を別の場所にインストールした場合は、`-DCMAKE_PREFIX_PATH=xxx`でそのディレクトリを指定してください。
+- `doxygen-awesome-css`が利用できる場合は、生成したdocumentとともに`./install/share/doc/nestdaq/doxygen-awesome-css`へインストールします。
+- `-DNestDAQ_BUILD_DOCS=ON`でDoxygenが利用できる場合は、HTML documentを`./build/docs/html`に生成し、`./install/share/doc/nestdaq/html`へインストールします。
 
 <a id="verbose-cmake-builds"></a>
 ### CMakeビルドの詳細表示
 
-内部で実行されるコンパイラーおよびリンカーコマンドを表示するには、`cmake --build`
-コマンドに`--verbose`を追加します。インクルードパス、コンパイラーオプション、リンクフラグを
-確認する場合に便利です。
+compilerおよびlinker commandを表示するには、`cmake --build`に`--verbose`を追加します。
+この出力からinclude path、compiler option、linker flagを確認できます。
 
 ```bash
 cmake --build ./build-external --verbose
@@ -391,16 +376,13 @@ VERBOSE=1 cmake --build ./build
 <a id="run-local-opentelemetry-collector-and-backend-containers"></a>
 ## ローカルのOpenTelemetry Collectorおよびバックエンドコンテナの実行
 
-NestDAQはOpenTelemetryのログ、メトリクス、トレースをOpenTelemetry Collectorへ
-エクスポートできます。リポジトリには、`docker compose`または`podman compose`で
-実行するローカル検証用Compose構成を
-[`share/otel-collector-compose/`](share/otel-collector-compose/README.ja.md)以下に
-用意しています。OpenTelemetry Collector Contrib、OpenSearch、OpenSearch Dashboards
-など、ローカル運用で使用するサービスをコンテナで実行します。これらのサービスとツールは
-ビルド依存関係ではなく、そのまま本番環境へデプロイすることを意図していません。
+NestDAQはOpenTelemetryのlog、metrics、traceをOpenTelemetry Collectorへexportできます。
+repositoryには、ローカル検証用のCompose構成を[`share/otel-collector-compose/`](share/otel-collector-compose/README.ja.md)以下に用意しています。
+ここで**Compose**とは、`docker compose`または`podman compose`を指します。
+この構成では、OpenTelemetry Collector Contrib、OpenSearch、OpenSearch Dashboardsなどをコンテナで実行します。
+これらのserviceとtoolはビルド依存関係ではなく、提供される構成をそのままproduction環境へdeployすることは意図していません。
 
-NestDAQアプリケーションの稼働中に必要となる外部サービスは、コンテナまたは
-ホストパッケージで用意できます。
+NestDAQアプリケーションの稼働中に必要となる外部serviceは、コンテナまたはhost packageで用意できます。
 
 | 外部サービス | ソースビルド | コンテナヘルパー | ホストパッケージインストーラー |
 | :-- | :-- | :-- | :-- |
@@ -409,8 +391,7 @@ NestDAQアプリケーションの稼働中に必要となる外部サービス�
 | OpenSearch | NestDAQではビルドしません | [`share/otel-collector-compose/opensearch/`](share/otel-collector-compose/opensearch/README.ja.md) | [`share/installers/`](share/installers/README.ja.md) |
 | OpenSearch Dashboards | NestDAQではビルドしません | [`share/otel-collector-compose/opensearch/`](share/otel-collector-compose/opensearch/README.ja.md) | [`share/installers/`](share/installers/README.ja.md) |
 
-NestDAQをインストールした後、インストール済みの構成を作業ディレクトリへコピーし、
-バックエンドスタックを1つ起動します。
+NestDAQをインストールした後、インストール済みの構成を作業ディレクトリへcopyし、backend stackを1つ起動します。
 
 ```bash
 cp -a <install-prefix>/share/otel-collector-compose ./otel-collector-compose
@@ -420,36 +401,25 @@ docker compose -f compose-opensearch.yaml up
 
 Podmanでは、同じComposeファイルを`podman compose`で使用します。
 
-利用可能なローカルバックエンド構成は次のとおりです。
+次のローカルbackend構成を利用できます。
 
-- [`opensearch/`](share/otel-collector-compose/opensearch/README.ja.md):
-  ログとトレースをOpenSearchへ保存し、OpenSearch Dashboardsで表示します。
-- [`victoria/`](share/otel-collector-compose/victoria/README.ja.md):
-  ログ、メトリクス、トレースをVictoriaLogs、VictoriaMetrics、VictoriaTracesへ保存し、
-  Grafanaで表示します。
-- [`clickhouse/`](share/otel-collector-compose/clickhouse/README.ja.md):
-  ログ、メトリクス、トレースをClickStack/ClickHouseへ保存し、ClickStackユーザーインターフェース
-  (UI)で表示します。
+- [`opensearch/`](share/otel-collector-compose/opensearch/README.ja.md): logとtraceをOpenSearchへ保存し、OpenSearch Dashboardsで表示します。
+- [`victoria/`](share/otel-collector-compose/victoria/README.ja.md): log、metrics、traceをVictoriaLogs、VictoriaMetrics、VictoriaTracesへ保存し、Grafanaで表示します。
+- [`clickhouse/`](share/otel-collector-compose/clickhouse/README.ja.md): log、metrics、traceをClickStack/ClickHouseへ保存し、ClickStack user interface (UI)で表示します。
 
-デフォルトでは、ComposeスタックはOpenTelemetry Protocol(OTLP)gRPCを
-`localhost:4317`、OTLP HTTPを`localhost:4318`で公開します。ポート、ボリューム、
-認証情報、SELinux、rootless Podmanに関する注意事項は、
-[`share/otel-collector-compose/README.ja.md`](share/otel-collector-compose/README.ja.md)
-およびバックエンド固有のREADMEを参照してください。
+デフォルトでは、Compose stackはOpenTelemetry Protocol (OTLP) gRPCを`localhost:4317`、OTLP HTTPを`localhost:4318`で公開します。
+port、volume、認証情報、SELinux、rootless Podmanに関する注意事項は、[`share/otel-collector-compose/README.ja.md`](share/otel-collector-compose/README.ja.md)およびbackend固有のREADMEを参照してください。
 
-ホストパッケージとしてインストールし、systemdで管理する場合は、
-[`share/installers/README.ja.md`](share/installers/README.ja.md)を使用してください。
-これらのスクリプトはDebian/Ubuntuシステムでは`apt-get`、RHEL系システムでは
-`dnf`または`yum`を使用し、`/usr`や`/etc`などのシステム管理領域へ
-インストールします。
+host packageとしてインストールし、systemdで管理する場合は、[`share/installers/README.ja.md`](share/installers/README.ja.md)を使用してください。
+これらのscriptはDebianおよびUbuntu systemでは`apt-get`、RHEL系systemでは`dnf`または`yum`を使用します。
+fileは`/usr`や`/etc`などのsystem管理領域へインストールされます。
 
 <a id="4-build-and-install-examples"></a>
 ## 4. サンプルのビルドとインストール
 
-サンプルはデフォルトでNestDAQのメインビルドに含まれます。NestDAQをインストールした
-後に、別のCMakeプロジェクトとしてビルドすることもできます。サンプルを個別にビルドする
-場合は、NestDAQのインストールプレフィックスを使用し、`find_package(NestDAQ)`でサンプルを
-構成します。
+サンプルはデフォルトでNestDAQのメインビルドに含まれます。
+NestDAQのインストール後に、別のCMake projectとしてビルドすることもできます。
+サンプルを個別にビルドする場合は、NestDAQのinstall prefixを使用し、`find_package(NestDAQ)`でサンプルをconfigureします。
 
 ```bash
 cmake \
@@ -461,6 +431,5 @@ cmake --build ./build-examples --parallel $(nproc)
 cmake --install ./build-examples
 ```
 
-- `-DCMAKE_PREFIX_PATH=./install`はNestDAQをインストールしたディレクトリを指す
-  必要があります。
+- `-DCMAKE_PREFIX_PATH=./install`はNestDAQをインストールしたディレクトリを指す必要があります。
 - インストールしたサンプルバイナリーは`./install/bin`以下に配置されます。

@@ -2,10 +2,8 @@
 
 [English](README.md) | [日本語](README.ja.md)
 
-This directory contains CMake files used by the NestDAQ build, the installed
-`find_package(NestDAQ)` package, and the separate external dependency build
-project. For build commands, dependency versions, and user-facing options, see
-[`INSTALL.md`](../INSTALL.md).
+This directory contains the CMake files used by the NestDAQ build, the installed `find_package(NestDAQ)` package, and the separate external dependency project.
+For build commands, dependency versions, and user-facing options, see [`INSTALL.md`](../INSTALL.md).
 
 ## 1. Top-Level Build Helpers
 
@@ -19,8 +17,7 @@ project. For build commands, dependency versions, and user-facing options, see
 
 ## 2. Installed Package Files
 
-These files are installed with NestDAQ and are used by downstream projects that
-call `find_package(NestDAQ REQUIRED CONFIG)`.
+These files are installed with NestDAQ for use by downstream projects that call `find_package(NestDAQ REQUIRED CONFIG)`.
 
 | File | Purpose |
 | :-- | :-- |
@@ -30,10 +27,9 @@ call `find_package(NestDAQ REQUIRED CONFIG)`.
 
 ## 3. External Dependency Project
 
-`cmake/CMakeLists.txt` is a standalone project for building and installing the
-external dependencies used by NestDAQ. It includes files from
-`cmake/dependencies/`, mostly using CMake `ExternalProject_Add`; Redis Stack
-also uses `FetchContent` to materialize module source trees.
+`cmake/CMakeLists.txt` defines a standalone project that builds and installs the external dependencies used by NestDAQ.
+It includes files from `cmake/dependencies/` and primarily uses CMake `ExternalProject_Add`.
+The Redis Stack build also uses `FetchContent` to materialize module source trees.
 
 | File | Purpose |
 | :-- | :-- |
@@ -56,6 +52,4 @@ also uses `FetchContent` to materialize module source trees.
 | `dependencies/build_redis-stack_with_temp_rust.sh` | Wrapper used by the Redis Stack build to provide a temporary Rust toolchain environment when needed. |
 | `dependencies/build_redis-server-7_with_redistimeseries.sh` | Wrapper used by the Redis 7.x build path. It builds RedisTimeSeries as a standalone module instead of copying module sources into the Redis source tree. |
 
-The default dependency versions and options such as `WITH_REDIS_STACK`,
-`WITH_REDIS_SERVER_7`, `WITH_OTEL_CPP`, `WITH_SPDLOG`, and
-`BUILD_PARALLEL_LEVEL` are documented in [`INSTALL.md`](../INSTALL.md).
+The default dependency versions and options such as `WITH_REDIS_STACK`, `WITH_REDIS_SERVER_7`, `WITH_OTEL_CPP`, `WITH_SPDLOG`, and `BUILD_PARALLEL_LEVEL` are documented in [`INSTALL.md`](../INSTALL.md).
