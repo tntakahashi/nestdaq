@@ -22,10 +22,12 @@ Build the examples separately only when they were disabled in the main build or 
 Prerequisites are the compilers, build tools, development headers, and libraries that must be available before building NestDAQ and its external dependencies.
 Install them as operating-system packages with the package manager provided by each Linux distribution: `dnf` on AlmaLinux and `apt` on Debian and Ubuntu.
 The commands in this section install these operating-system packages; they do not install NestDAQ itself.
+In shell command examples throughout this document, lines beginning with `#` are comments for the reader and are not executed by the shell.
 
 ### AlmaLinux 9 and 10
 
 ```bash
+# Update package metadata, enable the required repository, and install the build prerequisites
 dnf -y update && \
 dnf -y install \
     epel-release \
@@ -67,13 +69,14 @@ dnf -y install \
 # - tmux: keep long-running local validation sessions attached.
 # dnf -y install jq clang-tools-extra doxygen graphviz astyle tmux
 
-# If needed for AlmaLinux 9
+# Install the GCC 14 toolset when the system compiler is insufficient on AlmaLinux 9
 # dnf -y install gcc-toolset-14
 ```
 
 ### AlmaLinux 8
 
 ```bash
+# Update package metadata, enable PowerTools, and install the build prerequisites
 dnf -y update && \
 dnf -y install \
     epel-release \
@@ -114,6 +117,7 @@ Use the Python 3.11 packages shown above instead of `python3`, `python3-devel`, 
 ### Debian 12/13 and Ubuntu 22.04/24.04/26.04
 
 ```bash
+# Update package metadata and install the build prerequisites
 apt update && \
 apt install -y \
     bash-completion \
@@ -174,6 +178,7 @@ To build a specific released version, replace `<release-tag>` with the required 
 Use a release tag when the NestDAQ version must be fixed or the build must be reproducible.
 
 ```bash
+# Clone only the selected release tag
 git clone --branch <release-tag> --depth 1 \
   https://github.com/spadi-alliance/nestdaq.git
 ```
@@ -182,6 +187,7 @@ Alternatively, switch an existing clone to the release tag.
 A tag is not a development branch, so `git switch --detach` checks it out in detached HEAD state.
 
 ```bash
+# Fetch tags and check out the selected release in the existing clone
 cd nestdaq
 git fetch --tags
 git switch --detach <release-tag>
@@ -192,13 +198,18 @@ To build the latest development version, clone the fork, add the upstream reposi
 Pull updates from upstream, but push only to the branch in the fork (`origin`).
 
 ```bash
+# Clone the fork and configure its upstream remote and local development branch
 git clone https://github.com/<your-github-account>/nestdaq.git
 cd nestdaq
 git remote add upstream https://github.com/spadi-alliance/nestdaq.git
 git fetch upstream
 git switch --create develop --track origin/develop
+
+# Integrate upstream changes and publish the updated branch to the fork
 git pull --rebase upstream develop
 git push origin develop
+
+# Return to the directory that contains the clone
 cd ..
 ```
 
@@ -208,7 +219,7 @@ Create a working branch in your fork before modifying the source; see [`CONTRIBU
 The remaining commands build whichever branch is checked out in `nestdaq`.
 
 ```bash
-# Configure
+# Configure an out-of-source dependency build under ./build-external
 cmake \
   -DCMAKE_INSTALL_PREFIX=./install \
   -DBUILD_PARALLEL_LEVEL=$(nproc) \
@@ -317,12 +328,17 @@ The default Redis module versions follow the module release tags selected by the
 ## 3. Build and install NestDAQ library
 
 ```bash
+# Configure the NestDAQ library build
 cmake \
   -DCMAKE_PREFIX_PATH=./install \
   -DCMAKE_INSTALL_PREFIX=./install \
   -B ./build \
   -S nestdaq
+
+# Build the library and bundled components in parallel
 cmake --build ./build --parallel $(nproc)
+
+# Install the completed build
 cmake --install ./build
 ```
 
@@ -337,14 +353,20 @@ To show the compiler and linker commands, add `--verbose` to `cmake --build`.
 Use this output to inspect include paths, compiler options, and linker flags.
 
 ```bash
+# Show commands from the external dependency build
 cmake --build ./build-external --verbose
+
+# Show commands from the main NestDAQ build
 cmake --build ./build --parallel $(nproc) --verbose
+
+# Show commands from the separate examples build
 cmake --build ./build-examples --parallel $(nproc) --verbose
 ```
 
 The environment form is also supported:
 
 ```bash
+# Enable verbose output through the build tool's conventional environment variable
 VERBOSE=1 cmake --build ./build
 ```
 
@@ -378,7 +400,10 @@ Containers or host packages can provide the external services required while Nes
 After installing NestDAQ, copy the installed configuration to a working directory and start one backend stack.
 
 ```bash
+# Copy the installed Compose configuration into a writable working directory
 cp -a <install-prefix>/share/otel-collector-compose ./otel-collector-compose
+
+# Enter the OpenSearch setup and start its services
 cd ./otel-collector-compose/opensearch
 docker compose -f compose-opensearch.yaml up
 ```
@@ -405,12 +430,17 @@ After installing NestDAQ, the examples can also be built as a separate CMake pro
 For a separate build, use the NestDAQ install prefix when configuring the examples with `find_package(NestDAQ)`.
 
 ```bash
+# Configure a separate build against the installed NestDAQ package
 cmake \
   -DCMAKE_PREFIX_PATH=./install \
   -DCMAKE_INSTALL_PREFIX=./install \
   -B ./build-examples \
   -S nestdaq/examples
+
+# Build the examples in parallel
 cmake --build ./build-examples --parallel $(nproc)
+
+# Install the completed examples
 cmake --install ./build-examples
 ```
 

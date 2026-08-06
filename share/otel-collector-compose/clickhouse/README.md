@@ -11,14 +11,17 @@ In this document, **Compose** means either Docker Compose (`docker compose`) or 
 Use either implementation to manage this stack.
 
 Start from this directory:
+In the shell command examples below, lines beginning with `#` are explanatory comments for the reader and are not executed by the shell.
 
 ```bash
+# Start the ClickHouse validation stack with Docker Compose.
 docker compose -f compose-clickhouse.yaml up
 ```
 
 For Podman:
 
 ```bash
+# Start the ClickHouse validation stack with Podman Compose.
 podman compose -f compose-clickhouse.yaml up
 ```
 
@@ -75,12 +78,14 @@ http://localhost:4318/v1/traces
 Stop and remove the local validation container and network:
 
 ```bash
+# Stop and remove the Docker validation container and network.
 docker compose -f compose-clickhouse.yaml down
 ```
 
 For Podman:
 
 ```bash
+# Stop and remove the Podman validation container and network.
 podman compose -f compose-clickhouse.yaml down
 ```
 
@@ -90,6 +95,7 @@ If you start this Compose setup again with the same directories, the previous ba
 Delete the data and log directories only when you want to discard the stored backend data:
 
 ```bash
+# Permanently discard all ClickStack and ClickHouse data and logs.
 rm -rf ./clickstack-db \
        ./clickstack-clickhouse-data \
        ./clickstack-clickhouse-logs
@@ -98,6 +104,7 @@ rm -rf ./clickstack-db \
 For rootless Podman, file ownership may require removal through the user namespace:
 
 ```bash
+# Discard rootless Podman data and logs through its user namespace.
 podman unshare rm -rf ./clickstack-db \
                        ./clickstack-clickhouse-data \
                        ./clickstack-clickhouse-logs

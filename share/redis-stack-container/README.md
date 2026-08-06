@@ -27,9 +27,12 @@ The scripts use pinned image tags instead of `latest`:
 | `run-redis-stack-server.sh` | `docker.io/redis/redis-stack-server:7.4.0-v8` | no | Default Redis Stack server-only helper. |
 
 Check the running Redis version and loaded modules with:
+In shell command examples, lines beginning with `#` are comments for the reader and are not executed by the shell.
 
 ```sh
+# Report the running Redis server version.
 redis-cli -p 6379 INFO server
+# List the modules loaded by the Redis server.
 redis-cli -p 6379 MODULE LIST
 ```
 
@@ -41,6 +44,7 @@ When the exact Redis server patch version matters, verify it with the commands a
 Run:
 
 ```sh
+# Start the pinned Redis 8.2.7 container.
 ./run-redis-8.2.7.sh
 ```
 
@@ -56,12 +60,14 @@ Because this helper uses the official Redis image, it passes additional Redis se
 Run Redis Stack with RedisInsight:
 
 ```sh
+# Start Redis Stack 7.2 with RedisInsight.
 ./run-redis-7.2-stack.sh
 ```
 
 Run Redis Stack Server only:
 
 ```sh
+# Start the server-only Redis Stack 7.2 container.
 ./run-redis-7.2-stack-server.sh
 ```
 
@@ -75,6 +81,7 @@ Default endpoints:
 Run:
 
 ```sh
+# Start the default Redis Stack container with RedisInsight.
 ./run-redis-stack.sh
 ```
 
@@ -91,6 +98,7 @@ It also bind-mounts `redisinsight-data` at `/redisinsight`, allowing RedisInsigh
 Run:
 
 ```sh
+# Start the default server-only Redis Stack container.
 ./run-redis-stack-server.sh
 ```
 
@@ -135,13 +143,16 @@ Use `REDIS_VOLUME_MODE=volume` to have Docker or Podman manage Redis data outsid
 Inspect volumes with:
 
 ```sh
+# List volumes managed by Docker.
 docker volume ls
+# List volumes managed by Podman.
 podman volume ls
 ```
 
 Remove named volumes when you want to discard local Redis data:
 
 ```sh
+# Remove all Docker volumes created by these Redis helpers.
 docker volume rm nestdaq-redis-stack-data nestdaq-redis-stack-redisinsight
 docker volume rm nestdaq-redis-stack-server-data
 docker volume rm nestdaq-redis-8.2.7-data
@@ -152,6 +163,7 @@ docker volume rm nestdaq-redis-7.2-stack-server-data
 or:
 
 ```sh
+# Remove all Podman volumes created by these Redis helpers.
 podman volume rm nestdaq-redis-stack-data nestdaq-redis-stack-redisinsight
 podman volume rm nestdaq-redis-stack-server-data
 podman volume rm nestdaq-redis-8.2.7-data
@@ -162,6 +174,7 @@ podman volume rm nestdaq-redis-7.2-stack-server-data
 Use named volumes when Redis data directories should not be stored next to the helper scripts:
 
 ```sh
+# Store Redis data in a runtime-managed named volume.
 REDIS_VOLUME_MODE=volume ./run-redis-stack.sh
 ```
 
@@ -192,6 +205,7 @@ Bind-mounted data directories are relative to `THIS_SCRIPT_DIR`, so a copied ins
 Example:
 
 ```sh
+# Start Redis Stack on custom ports with password authentication.
 REDIS_PORT=16379 \
 REDIS_INSIGHT_PORT=18001 \
 REDIS_ARGS="--requirepass nestdaq" \
@@ -201,6 +215,7 @@ REDIS_ARGS="--requirepass nestdaq" \
 For Podman:
 
 ```sh
+# Start the server-only helper with Podman instead of Docker.
 CONTAINER_RUNTIME=podman ./run-redis-stack-server.sh
 ```
 

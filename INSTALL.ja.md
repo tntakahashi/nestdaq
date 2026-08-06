@@ -25,11 +25,13 @@ NestDAQのメインビルドでは、`NestDAQ_BUILD_EXAMPLES=ON`の場合、デ�
 各Linux distributionが提供するpackage managerを使い、OS packageとしてインストールします。
 AlmaLinuxでは`dnf`、DebianおよびUbuntuでは`apt`を使用します。
 この節のcommandはこれらのOS packageをインストールするものであり、NestDAQ本体はインストールしません。
+この文書のshell command例では、`#`で始まる行は読者向けのコメントであり、shellでは実行されません。
 
 <a id="almalinux-9-and-10"></a>
 ### AlmaLinux 9および10
 
 ```bash
+# package metadataを更新し、必要なrepositoryを有効化して、ビルドの前提パッケージをインストール
 dnf -y update && \
 dnf -y install \
     epel-release \
@@ -71,7 +73,7 @@ dnf -y install \
 # - tmux: 長時間実行するローカル検証セッションを維持します。
 # dnf -y install jq clang-tools-extra doxygen graphviz astyle tmux
 
-# AlmaLinux 9で必要な場合
+# AlmaLinux 9のsystem compilerでは不足する場合にGCC 14 toolsetをインストール
 # dnf -y install gcc-toolset-14
 ```
 
@@ -79,6 +81,7 @@ dnf -y install \
 ### AlmaLinux 8
 
 ```bash
+# package metadataを更新し、PowerToolsを有効化して、ビルドの前提パッケージをインストール
 dnf -y update && \
 dnf -y install \
     epel-release \
@@ -120,6 +123,7 @@ AlmaLinux 8では`crb`の代わりに`powertools`を使用します。
 ### Debian 12/13およびUbuntu 22.04/24.04/26.04
 
 ```bash
+# package metadataを更新して、ビルドの前提パッケージをインストール
 apt update && \
 apt install -y \
     bash-completion \
@@ -181,6 +185,7 @@ git clone https://github.com/spadi-alliance/nestdaq.git
 NestDAQ versionを固定する場合や、ビルドの再現性が必要な場合はrelease tagを指定してください。
 
 ```bash
+# 指定したrelease tagだけをclone
 git clone --branch <release-tag> --depth 1 \
   https://github.com/spadi-alliance/nestdaq.git
 ```
@@ -189,6 +194,7 @@ git clone --branch <release-tag> --depth 1 \
 tagは開発用branchではないため、`git switch --detach`を使用してdetached HEAD状態でcheckoutします。
 
 ```bash
+# tagを取得し、既存のcloneで指定したreleaseをcheckout
 cd nestdaq
 git fetch --tags
 git switch --detach <release-tag>
@@ -199,13 +205,18 @@ NestDAQ開発者は、最初に`spadi-alliance/nestdaq`を自身のGitHub accoun
 更新はupstreamからpullしますが、push先は自身のfork (`origin`)にあるbranchだけにします。
 
 ```bash
+# forkをcloneし、upstream remoteとlocal development branchを設定
 git clone https://github.com/<your-github-account>/nestdaq.git
 cd nestdaq
 git remote add upstream https://github.com/spadi-alliance/nestdaq.git
 git fetch upstream
 git switch --create develop --track origin/develop
+
+# upstreamの変更を取り込み、更新したbranchをforkへpush
 git pull --rebase upstream develop
 git push origin develop
+
+# cloneを含む親ディレクトリへ戻る
 cd ..
 ```
 
@@ -216,7 +227,7 @@ source codeを変更する前に、自身のfork内で作業ブランチを作�
 以下のコマンドは、`nestdaq`でcheckoutされているbranchをビルドします。
 
 ```bash
-# configure
+# ./build-externalにout-of-sourceの依存関係ビルドをconfigure
 cmake \
   -DCMAKE_INSTALL_PREFIX=./install \
   -DBUILD_PARALLEL_LEVEL=$(nproc) \
@@ -328,12 +339,17 @@ AlmaLinux 8でGCC 8.5を使用して依存関係をビルドする場合は、�
 ## 3. NestDAQライブラリのビルドとインストール
 
 ```bash
+# NestDAQ libraryのビルドをconfigure
 cmake \
   -DCMAKE_PREFIX_PATH=./install \
   -DCMAKE_INSTALL_PREFIX=./install \
   -B ./build \
   -S nestdaq
+
+# libraryと同梱componentを並列ビルド
 cmake --build ./build --parallel $(nproc)
+
+# 完了したビルドをインストール
 cmake --install ./build
 ```
 
@@ -349,14 +365,20 @@ compilerおよびlinker commandを表示するには、`cmake --build`に`--verb
 この出力からinclude path、compiler option、linker flagを確認できます。
 
 ```bash
+# 外部依存関係ビルドのcommandを表示
 cmake --build ./build-external --verbose
+
+# NestDAQメインビルドのcommandを表示
 cmake --build ./build --parallel $(nproc) --verbose
+
+# 個別のサンプルビルドのcommandを表示
 cmake --build ./build-examples --parallel $(nproc) --verbose
 ```
 
 環境変数を使用する形式もサポートしています。
 
 ```bash
+# build toolの標準的な環境変数で詳細出力を有効化
 VERBOSE=1 cmake --build ./build
 ```
 
@@ -392,7 +414,10 @@ NestDAQアプリケーションの稼働中に必要となる外部serviceは、
 NestDAQをインストールした後、インストール済みの構成を作業ディレクトリへcopyし、backend stackを1つ起動します。
 
 ```bash
+# インストール済みのCompose構成を書き込み可能な作業ディレクトリへcopy
 cp -a <install-prefix>/share/otel-collector-compose ./otel-collector-compose
+
+# OpenSearchの構成ディレクトリへ移動し、serviceを起動
 cd ./otel-collector-compose/opensearch
 docker compose -f compose-opensearch.yaml up
 ```
@@ -420,12 +445,17 @@ NestDAQのインストール後に、別のCMake projectとしてビルドする
 サンプルを個別にビルドする場合は、NestDAQのinstall prefixを使用し、`find_package(NestDAQ)`でサンプルをconfigureします。
 
 ```bash
+# インストール済みのNestDAQ packageを参照する個別ビルドをconfigure
 cmake \
   -DCMAKE_PREFIX_PATH=./install \
   -DCMAKE_INSTALL_PREFIX=./install \
   -B ./build-examples \
   -S nestdaq/examples
+
+# サンプルを並列ビルド
 cmake --build ./build-examples --parallel $(nproc)
+
+# 完了したサンプルをインストール
 cmake --install ./build-examples
 ```
 

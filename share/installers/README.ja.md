@@ -27,11 +27,16 @@ AlmaLinux、Rocky Linux、RHEL、CentOS、FedoraなどのRHEL系systemでは`dnf
 ## 2. 使用方法
 
 次のいずれかのactionを指定してscriptを実行します。
+shell commandの例で`#`から始まる行は読者向けのコメントであり、shellでは実行されません。
 
 ```sh
+# 設定済みのpackage sourceを使用してpackageをインストールします。
 ./install-redis-stack.sh install
+# 同じpackage sourceからpackageを更新します。
 ./install-redis-stack.sh upgrade
+# configurationとdataを残してpackageを削除します。
 ./install-redis-stack.sh uninstall
+# scriptで使用できるoptionとactionを表示します。
 ./install-redis-stack.sh --help
 ```
 
@@ -47,6 +52,7 @@ AlmaLinux、Rocky Linux、RHEL、CentOS、FedoraなどのRHEL系systemでは`dnf
 rootとして実行する場合、または独自のprivilege wrapperを指定する場合は`SUDO=`を設定します。
 
 ```sh
+# sudoの代わりにdoasを使用してinstallerを実行します。
 SUDO=doas ./install-opensearch.sh install
 ```
 
@@ -68,12 +74,14 @@ Redis 8.2.7 packageには、次のmoduleが含まれます。
 package managerでRedis repositoryが現在公開している最新versionをインストールまたは更新する場合は、`REDIS_VERSION=latest`を使用します。
 
 ```sh
+# repositoryで利用可能な最新のRedis versionをインストールします。
 REDIS_VERSION=latest ./install-redis-stack.sh install
 ```
 
 使用するdistributionのRedis repositoryがそのpackageを提供しており、RedisInsightを含むRedis Stack packageを使用する場合に限り、`REDIS_PACKAGE=redis-stack`を使用してください。
 
 ```sh
+# repositoryが提供している場合にRedis Stack packageをインストールします。
 REDIS_PACKAGE=redis-stack ./install-redis-stack.sh install
 ```
 
@@ -133,6 +141,7 @@ versionの選択には`OTELCOL_CONTRIB_VERSION`を使用します。
 デフォルトはローカルCompose例で使用するversionに合わせています。
 
 ```sh
+# 指定したOpenTelemetry Collector Contrib releaseをインストールします。
 OTELCOL_CONTRIB_VERSION=0.155.0 ./install-otelcol-contrib.sh install
 ```
 
@@ -155,9 +164,12 @@ repositoryで現在公開されている最新versionをpackage managerでイン
 package installerでdemo security configurationを設定する場合は、`OPENSEARCH_INSTALL_SECURITY=demo`を設定して`OPENSEARCH_INITIAL_ADMIN_PASSWORD`を指定してください。
 
 ```sh
+# 指定したOpenSearch releaseをインストールします。
 OPENSEARCH_VERSION=2.19.5 ./install-opensearch.sh install
+# 対応するOpenSearch Dashboards releaseをインストールします。
 OPENSEARCH_DASHBOARDS_VERSION=2.19.5 ./install-opensearch-dashboards.sh install
 
+# demo securityと必須のadmin passwordを指定してOpenSearchをインストールします。
 OPENSEARCH_INSTALL_SECURITY=demo \
 OPENSEARCH_INITIAL_ADMIN_PASSWORD='change-this-strong-password' \
 ./install-opensearch.sh install
@@ -182,10 +194,15 @@ package scriptはsoftwareのインストールだけを行います。
 一般的なservice command:
 
 ```sh
+# serviceの現在の状態を表示します。
 sudo systemctl status <service>
+# serviceをboot時に有効化し、すぐに起動します。
 sudo systemctl enable --now <service>
+# configurationの変更後に実行中のserviceを再起動します。
 sudo systemctl restart <service>
+# boot時の設定を変更せずにserviceを停止します。
 sudo systemctl stop <service>
+# serviceがboot時に自動起動しないようにします。
 sudo systemctl disable <service>
 ```
 
@@ -201,15 +218,20 @@ sudo systemctl disable <service>
 例:
 
 ```sh
+# OpenTelemetry Collector Contrib serviceを有効化して起動します。
 sudo systemctl enable --now otelcol-contrib
+# OpenSearch serviceを有効化して起動します。
 sudo systemctl enable --now opensearch
+# OpenSearch Dashboards serviceを有効化して起動します。
 sudo systemctl enable --now opensearch-dashboards
 ```
 
 Redisでは、まずpackageによってインストールされたunit nameを確認してください。
 
 ```sh
+# このhostにインストールされたRedis unit nameを確認します。
 systemctl list-unit-files 'redis*'
+# 一般的なunit nameのRedis serviceを有効化して起動します。
 sudo systemctl enable --now redis-server
 ```
 
@@ -220,20 +242,29 @@ Redis Stack container helperの`run-redis-stack.sh`にもRedisInsightが含ま�
 installer scriptの`uninstall` actionはhostのpackage managerでpackageを削除するだけで、`systemctl`は実行しません。
 
 ```sh
+# serviceを停止し、boot時に起動しないようにします。
 sudo systemctl stop <service>
 sudo systemctl disable <service>
+# installer helperでpackageを削除します。
 ./install-xxx.sh uninstall
+# packageによるunit fileの削除後にsystemdを再読み込みします。
 sudo systemctl daemon-reload
+# 一致するunit fileが残っているか確認します。
 systemctl list-unit-files '<service-pattern>'
 ```
 
 Redisではpackageやdistributionによってunit nameが異なる可能性があるため、最初にインストール済みのunit nameを確認してください。
 
 ```sh
+# このhostにインストールされたRedis unit nameを確認します。
 systemctl list-unit-files 'redis*'
+# Redisを停止し、boot時に起動しないようにします。
 sudo systemctl stop redis-server
 sudo systemctl disable redis-server
+# installer helperでRedis packageを削除します。
 ./install-redis-stack.sh uninstall
+# packageによるunit fileの削除後にsystemdを再読み込みします。
 sudo systemctl daemon-reload
+# Redis unit fileが残っているか確認します。
 systemctl list-unit-files 'redis*'
 ```

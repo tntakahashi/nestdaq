@@ -24,8 +24,10 @@
 
 インストール後、インストール済みの構成を作業ディレクトリへコピーします。
 `./otel-collector-compose`がすでに存在する場合は、先に削除するか別のコピー先を選択してください。
+以下のshellコマンド例では、`#`で始まる行は読者向けの説明コメントであり、shellでは実行されません。
 
 ```bash
+# インストール済みの構成をコピーし、作業用コピーへ移動します。
 cp -a <install-prefix>/share/otel-collector-compose ./otel-collector-compose
 cd ./otel-collector-compose
 ```
@@ -33,16 +35,19 @@ cd ./otel-collector-compose
 使用するバックエンドのディレクトリから、バックエンドスタックを1つ起動します。
 
 ```bash
+# OpenSearchディレクトリへ移動し、そのスタックを起動します。
 cd opensearch
 docker compose -f compose-opensearch.yaml up
 ```
 
 ```bash
+# Victoriaディレクトリへ移動し、そのスタックを起動します。
 cd victoria
 docker compose -f compose-victoria.yaml up
 ```
 
 ```bash
+# ClickHouseディレクトリへ移動し、そのスタックを起動します。
 cd clickhouse
 docker compose -f compose-clickhouse.yaml up
 ```
@@ -61,6 +66,7 @@ OTLPはOpenTelemetry Protocol、gRPCはGoogle remote procedure call、HTTPはHyp
 選択したバックエンドスタックを、そのバックエンドディレクトリから停止します。
 
 ```bash
+# OpenSearchの検証用コンテナーとネットワークを停止して削除します。
 docker compose -f compose-opensearch.yaml down
 ```
 

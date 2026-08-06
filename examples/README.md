@@ -32,13 +32,18 @@ Configure with `-DNestDAQ_BUILD_EXAMPLES=OFF` to skip them.
 
 To build the examples separately, install NestDAQ first and then configure the examples with the NestDAQ install prefix in `CMAKE_PREFIX_PATH`.
 
+Lines beginning with `#` inside shell command examples are comments for the reader and are not executed by the shell.
+
 ```sh
+# Configure an out-of-source build against the installed NestDAQ package.
 cmake \
   -DCMAKE_PREFIX_PATH=<nestdaq-install-prefix> \
   -DCMAKE_INSTALL_PREFIX=<examples-install-prefix> \
   -B ./build-examples \
   -S ./examples
+# Compile the configured examples in parallel.
 cmake --build ./build-examples --parallel
+# Install the example executables under the selected prefix.
 cmake --install ./build-examples
 ```
 
@@ -52,6 +57,7 @@ Use the installed helper scripts, or invoke the binaries directly with FairMQ ch
 A typical local validation run starts Redis, an OpenTelemetry Collector backend, `daq-webctl`, and then the example devices.
 
 ```sh
+# Display the command-line options supported by each example device.
 Sampler --help
 Sink --help
 NullDevice --help
@@ -421,6 +427,7 @@ The main pieces are:
 A practical first step is to generate a small project and then edit the generated files.
 
 ```sh
+# Generate a device project from the default skeleton.
 <install-prefix>/scripts/generate-device-skeleton.py MyDevice \
   --output ./MyDevice
 ```
@@ -717,11 +724,14 @@ FairMQ, FairLogger, and related dependencies.
 Build and install the generated project out of source:
 
 ```sh
+# Configure the generated device as an out-of-source build.
 cmake -S ./MyDevice -B ./build-MyDevice \
   -DCMAKE_PREFIX_PATH=<nestdaq-install-prefix> \
   -DCMAKE_INSTALL_PREFIX=<device-install-prefix>
 
+# Compile the configured device in parallel.
 cmake --build ./build-MyDevice --parallel
+# Install the device executable under the selected prefix.
 cmake --install ./build-MyDevice
 ```
 
@@ -752,6 +762,7 @@ new device's `--service-name` or channel names.
 Start the installed device with the NestDAQ helper script:
 
 ```sh
+# Start MyDevice with its own service identity and input channel.
 <nestdaq-install-prefix>/scripts/start_device.sh <device-install-prefix>/bin/MyDevice \
   --service-name MyDevice \
   --in-chan-name in
@@ -773,6 +784,7 @@ Redis. If your device should replace the example `Sink`, either run it with a
 matching service and input channel, or write a new topology script:
 
 ```sh
+# Start MyDevice as a replacement for the example Sink service.
 <nestdaq-install-prefix>/scripts/start_device.sh <device-install-prefix>/bin/MyDevice \
   --service-name Sink \
   --in-chan-name in

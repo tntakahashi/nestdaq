@@ -90,7 +90,10 @@ processの実行場所に応じてendpointを選択します。
 - ClickStack Compose network内のNestDAQ device container/`daq-webctl` container：`clickstack:4317`。
 - Compose network外のcontainerからhost公開collector portへ接続：Dockerでは通常`host.docker.internal:4317`、Podmanでは通常`host.containers.internal:4317`。
 
+以下のshell command例では、`#`で始まる行は読者向けのcommentであり、shellでは実行されません。
+
 ```bash
+# Podmanのhost alias経由でcollectorへ接続する。
 NESTDAQ_OTLP_GRPC_ENDPOINT=host.containers.internal:4317 ./start_device.sh Sampler
 ```
 
@@ -108,21 +111,25 @@ var+=" --severity ${NESTDAQ_FAIRLOGGER_CONSOLE_SEVERITY}"
 ```
 
 ```bash
+# FairLoggerとOTel exportの両方でdebug levelのmessageを出力する。
 NESTDAQ_FAIRLOGGER_CONSOLE_SEVERITY=debug4 NESTDAQ_START_DEVICE_OTEL_LOG_SEVERITY=debug4 ./start_device.sh Sampler
 ```
 
 ```bash
+  # install済みSamplerをdefault optionで起動する。
   # ./start_device.sh [device-name] [options ...]
   ./start_device.sh Sampler
 ```
 
 ```bash
+  # executable pathを指定してFairMQ deviceを起動する。
   ./start_device.sh /your-fairmq-install-path/bin/fairmq-splitter
 ```
 
 次の例は、`Sampler`をservice name `A-Sampler`で起動し、`ConditionalRun()`の実行rateを1秒に1回へ制限します。
 
 ```bash
+# rateを制限したSamplerを固有のservice nameで起動する。
 ./start_device.sh Sampler --service-name A-Sampler --rate 1
 ```
 
@@ -131,6 +138,7 @@ device name以降のoptionはFairMQおよびNestDAQ pluginへそのまま渡さ�
 `--service-name`または`--id`が空の場合に使用する`daq_service`のdefaultについては、[`plugins/README.ja.md#22-daq-service-identity-defaults`](../plugins/README.ja.md#22-daq-service-identity-defaults)を参照してください。
 
 ```bash
+# 2つのSampler processを別々のservice groupとして登録する。
 ./start_device.sh Sampler --service-name A-Sampler
 ./start_device.sh Sampler --service-name B-Sampler
 ```
@@ -221,6 +229,7 @@ stale connection metadataにより、後でdeviceを起動したときに意図�
 local validation environmentでは、新しいtopologyを登録する前に`daq_service` / `TopologyConfig`が使用するRedis databaseをflushします。
 
 ```sh
+# local Redis DB 0からstale topology/service dataを削除する。
 redis-cli -u redis://127.0.0.1:6379/0 FLUSHDB
 ```
 
@@ -228,6 +237,7 @@ redis-cli -u redis://127.0.0.1:6379/0 FLUSHDB
 local Redis instance全体をresetする場合は`FLUSHALL`を使用します。
 
 ```sh
+# local Redis instanceの全databaseを消去する。
 redis-cli -u redis://127.0.0.1:6379 FLUSHALL
 ```
 
@@ -256,6 +266,7 @@ _N_個のSamplerと_N_個のSinkを起動すると、_N_組のSampler/Sink pair�
 各Samplerは、同じinstance indexを持つ1つのSinkへdataを送信します。
 
 ```bash
+  # 1対1のSampler/Sink topologyをRedisへ登録する。
   ./topology-1-1.sh
 ```
 
@@ -287,6 +298,7 @@ graph LR
 fairmq-splitterは送信済みmessage数を用いたround-robinで送信先を決定します。
 
 ```bash
+  # sampler/splitter/sinkのfan-out topologyをRedisへ登録する。
   ./topology-n-n-m.sh
 ```
 
@@ -343,6 +355,7 @@ graph LR
 Redisを通じてparameterを設定する例です。
 
 ```bash
+  # example deviceのparameterをRedis DB 2へ登録する。
   ./mq-param.sh
 ```
 
@@ -383,6 +396,7 @@ structured group/instance parameter keyを含む全Redis key patternは、[`plug
 defaultではinput、output、data quality monitor(DQM)channel codeを生成し、各channel nameに`in`、`out`、`dqm`を使用します。
 
 ```bash
+# MyDevice projectを専用のoutput directoryへ生成する。
 ./generate-device-skeleton.py MyDevice --output ./MyDevice
 ```
 
@@ -404,6 +418,7 @@ flagを繰り返してもstateは再度toggleされません。
 `--no-*` flagが`off`の場合、対象機能はdefaultで有効です。
 
 ```bash
+# DQM channelを持たずsingle-message outputを持つconditional-run deviceを生成する。
 ./generate-device-skeleton.py MyDevice \
   --output ./MyDevice \
   --processing-mode conditional-run \
@@ -449,6 +464,7 @@ generatorへ渡すchannel optionは、生成deviceのcommand-line optionでは�
 generatorはdefaultで3 channelすべてを作成し、これらのoptionに従って、対応するdevice command-line optionをC++へ生成します。
 
 ```bash
+# input、output、DQM channel optionを明示したprocessorを生成する。
 ./generate-device-skeleton.py MyProcessor \
   --input-channel in-chan-name:in \
   --output-channel out-chan-name:out \
@@ -471,15 +487,18 @@ global namespaceへ生成するには`--no-namespace`を使用します。
 便利なvariant：
 
 ```bash
+# output channelだけを持つsourceを生成する。
 ./generate-device-skeleton.py MySource \
   --no-input-channel \
   --no-dqm-channel
 
+# 短縮channel specificationとdefault option keyを使用する。
 ./generate-device-skeleton.py MyShortFormProcessor \
   --input-channel :in \
   --output-channel data \
   --dqm-channel dqm
 
+# single-message output/DQM helperを生成する。
 ./generate-device-skeleton.py MySingleMessageProcessor \
   --input-channel :in \
   --output-channel data \
@@ -487,32 +506,39 @@ global namespaceへ生成するには`--no-namespace`を使用します。
   --single-output \
   --single-dqm
 
+# output/DQM channelを持たないOnData sinkを生成する。
 ./generate-device-skeleton.py MySink \
   --processing-mode on-data \
   --no-output-channel \
   --no-dqm-channel
 
+# multipart input処理を持つsinkを生成する。
 ./generate-device-skeleton.py MyMultipartSink \
   --processing-mode on-data \
   --no-output-channel \
   --no-dqm-channel \
   --multipart-input
 
+# output/DQM channelをpoll対象から外し、input drainを省略する。
 ./generate-device-skeleton.py MyDevice \
   --input-channel in-chan-name:in \
   --output-channel out-chan-name:out \
   --no-poll output,dqm \
   --no-drain-input
 
+# 生成classをglobal namespaceへ配置する。
 ./generate-device-skeleton.py MyGlobalDevice \
   --no-namespace
 
+# 既存buildへ統合するためCMake fileを省略する。
 ./generate-device-skeleton.py MyIntegratedDevice \
   --no-cmake
 
+# 生成projectのREADMEを省略する。
 ./generate-device-skeleton.py MyNoReadmeDevice \
   --no-readme
 
+# generation settingを対話形式で選択する。
 ./generate-device-skeleton.py --interactive
 ```
 
@@ -555,10 +581,13 @@ generatorは組み込みtemplateを読み、device固有placeholderを置換し�
 生成CMake projectはdefaultでC++17を使用し、C++17未満を拒否します。
 
 ```bash
+# NestDAQ installationを参照するout-of-source buildをconfigureする。
 cmake -S ./MyDevice -B ./build-MyDevice \
   -DCMAKE_PREFIX_PATH=<nestdaq-install-prefix> \
   -DCMAKE_INSTALL_PREFIX=<device-install-prefix>
+# 生成deviceをparallel buildする。
 cmake --build ./build-MyDevice --parallel
+# 選択したprefixへ生成deviceをinstallする。
 cmake --install ./build-MyDevice
 ```
 

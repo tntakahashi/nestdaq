@@ -11,14 +11,17 @@ In this document, **Compose** means either Docker Compose (`docker compose`) or 
 Use either implementation to manage this stack.
 
 Start from this directory:
+In the shell command examples below, lines beginning with `#` are explanatory comments for the reader and are not executed by the shell.
 
 ```bash
+# Start the Victoria validation stack with Docker Compose.
 docker compose -f compose-victoria.yaml up
 ```
 
 For Podman:
 
 ```bash
+# Start the Victoria validation stack with Podman Compose.
 podman compose -f compose-victoria.yaml up
 ```
 
@@ -89,12 +92,14 @@ A NestDAQ device container or `daq-webctl` container in the same Compose network
 Stop and remove the local validation containers and network:
 
 ```bash
+# Stop and remove the Docker validation containers and network.
 docker compose -f compose-victoria.yaml down
 ```
 
 For Podman:
 
 ```bash
+# Stop and remove the Podman validation containers and network.
 podman compose -f compose-victoria.yaml down
 ```
 
@@ -104,6 +109,7 @@ If you start this Compose setup again with the same data directories, the previo
 Delete the data directories only when you want to discard the stored backend data:
 
 ```bash
+# Permanently discard all Victoria and Grafana data.
 rm -rf ./victoriametrics-data \
        ./victorialogs-data \
        ./victoriatraces-data \
@@ -113,6 +119,7 @@ rm -rf ./victoriametrics-data \
 For rootless Podman, file ownership may require removal through the user namespace:
 
 ```bash
+# Discard rootless Podman data through its user namespace.
 podman unshare rm -rf ./victoriametrics-data \
                        ./victorialogs-data \
                        ./victoriatraces-data \

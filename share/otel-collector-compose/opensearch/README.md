@@ -9,14 +9,17 @@ In this document, **Compose** means either Docker Compose (`docker compose`) or 
 Use either implementation to manage this stack.
 
 Start from this directory:
+In the shell command examples below, lines beginning with `#` are explanatory comments for the reader and are not executed by the shell.
 
 ```bash
+# Start the OpenSearch validation stack with Docker Compose.
 docker compose -f compose-opensearch.yaml up
 ```
 
 For Podman:
 
 ```bash
+# Start the OpenSearch validation stack with Podman Compose.
 podman compose -f compose-opensearch.yaml up
 ```
 
@@ -73,15 +76,18 @@ Here, `uid/gid` means user identifier/group identifier.
 With rootless Podman, the host directory bind-mounted to `/usr/share/opensearch/data` must be readable and writable by that container uid/gid as seen from the Podman user namespace:
 
 ```bash
+# Prepare the data directory for the container's user in the Podman user namespace.
 mkdir -p ./opensearch-data
 podman unshare chown -R 1000:1000 ./opensearch-data
 podman unshare chmod -R u+rwX ./opensearch-data
+# Start the stack with the prepared data directory.
 podman compose -f compose-opensearch.yaml up
 ```
 
 Alternatively, map the container's `1000:1000` user to the host user that starts Podman Compose:
 
 ```bash
+# Create the data directory and start the stack with an explicit user mapping.
 mkdir -p ./opensearch-data
 PODMAN_USERNS="keep-id:uid=1000,gid=1000" \
 podman compose --in-pod=false -f compose-opensearch.yaml up
@@ -112,12 +118,14 @@ It does not change the user ID of the OpenSearch container process, which remain
 Stop and remove the local validation containers and network:
 
 ```bash
+# Stop and remove the Docker validation containers and network.
 docker compose -f compose-opensearch.yaml down
 ```
 
 For Podman:
 
 ```bash
+# Stop and remove the Podman validation containers and network.
 podman compose -f compose-opensearch.yaml down
 ```
 
@@ -128,11 +136,13 @@ If you start this Compose setup again with the same `OPENSEARCH_DATA_DIR`, OpenS
 Delete the OpenSearch data directory only when you want to discard the stored logs, traces, indexes, and OpenSearch metadata:
 
 ```bash
+# Permanently discard the stored OpenSearch data.
 rm -rf ./opensearch-data
 ```
 
 For rootless Podman, file ownership may require removal through the user namespace:
 
 ```bash
+# Discard rootless Podman data through its user namespace.
 podman unshare rm -rf ./opensearch-data
 ```

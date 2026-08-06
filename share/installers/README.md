@@ -24,11 +24,16 @@ On RHEL-family systems such as AlmaLinux, Rocky Linux, RHEL, CentOS, and Fedora,
 ## 2. Usage
 
 Run a script with one of these actions:
+In shell command examples, lines beginning with `#` are comments for the reader and are not executed by the shell.
 
 ```sh
+# Install the package using the configured package source.
 ./install-redis-stack.sh install
+# Upgrade the package from the same package source.
 ./install-redis-stack.sh upgrade
+# Remove the package while retaining configuration and data.
 ./install-redis-stack.sh uninstall
+# Display the script's supported options and actions.
 ./install-redis-stack.sh --help
 ```
 
@@ -44,6 +49,7 @@ See <a href="#6-systemd-management">systemd Management</a>.
 Set `SUDO=` when running as root or when providing a custom privilege wrapper:
 
 ```sh
+# Run the installer through doas instead of sudo.
 SUDO=doas ./install-opensearch.sh install
 ```
 
@@ -64,12 +70,14 @@ The Redis 8.2.7 package includes modules such as:
 Use `REDIS_VERSION=latest` to install or upgrade to the latest version currently published by the Redis repository:
 
 ```sh
+# Install the newest Redis version available from the repository.
 REDIS_VERSION=latest ./install-redis-stack.sh install
 ```
 
 Use `REDIS_PACKAGE=redis-stack` only when the Redis repository for the host distribution provides that package and RedisInsight is required:
 
 ```sh
+# Install the Redis Stack package when the repository provides it.
 REDIS_PACKAGE=redis-stack ./install-redis-stack.sh install
 ```
 
@@ -128,6 +136,7 @@ Use `OTELCOL_CONTRIB_VERSION` to select a version.
 The default matches the version used by the local Compose examples.
 
 ```sh
+# Install the selected OpenTelemetry Collector Contrib release.
 OTELCOL_CONTRIB_VERSION=0.155.0 ./install-otelcol-contrib.sh install
 ```
 
@@ -149,9 +158,12 @@ These settings allow the package to be installed without a demo administrator pa
 To configure demo security, set `OPENSEARCH_INSTALL_SECURITY=demo` and provide `OPENSEARCH_INITIAL_ADMIN_PASSWORD`.
 
 ```sh
+# Install the selected OpenSearch release.
 OPENSEARCH_VERSION=2.19.5 ./install-opensearch.sh install
+# Install the matching OpenSearch Dashboards release.
 OPENSEARCH_DASHBOARDS_VERSION=2.19.5 ./install-opensearch-dashboards.sh install
 
+# Install OpenSearch with demo security and the required administrator password.
 OPENSEARCH_INSTALL_SECURITY=demo \
 OPENSEARCH_INITIAL_ADMIN_PASSWORD='change-this-strong-password' \
 ./install-opensearch.sh install
@@ -176,10 +188,15 @@ Review the service configuration before enabling or starting services with `syst
 Common service commands:
 
 ```sh
+# Show the service's current status.
 sudo systemctl status <service>
+# Enable the service at boot and start it now.
 sudo systemctl enable --now <service>
+# Restart the running service after a configuration change.
 sudo systemctl restart <service>
+# Stop the service without changing its boot setting.
 sudo systemctl stop <service>
+# Prevent the service from starting automatically at boot.
 sudo systemctl disable <service>
 ```
 
@@ -195,15 +212,20 @@ Likely service names:
 Examples:
 
 ```sh
+# Enable and start the OpenTelemetry Collector Contrib service.
 sudo systemctl enable --now otelcol-contrib
+# Enable and start the OpenSearch service.
 sudo systemctl enable --now opensearch
+# Enable and start the OpenSearch Dashboards service.
 sudo systemctl enable --now opensearch-dashboards
 ```
 
 For Redis, check the unit name installed by your package first:
 
 ```sh
+# Find the Redis unit name installed on this host.
 systemctl list-unit-files 'redis*'
+# Enable and start the commonly named Redis service.
 sudo systemctl enable --now redis-server
 ```
 
@@ -214,20 +236,29 @@ Before uninstalling a package managed by `systemd`, explicitly stop and disable 
 The installer scripts' `uninstall` action only removes the package with the host package manager; it does not run `systemctl`.
 
 ```sh
+# Stop the service and prevent it from starting at boot.
 sudo systemctl stop <service>
 sudo systemctl disable <service>
+# Remove the package with its installer helper.
 ./install-xxx.sh uninstall
+# Reload systemd after the package removes its unit files.
 sudo systemctl daemon-reload
+# Confirm whether matching unit files remain.
 systemctl list-unit-files '<service-pattern>'
 ```
 
 For Redis, confirm the installed unit name first because the name can differ between packages and distributions:
 
 ```sh
+# Find the Redis unit name installed on this host.
 systemctl list-unit-files 'redis*'
+# Stop Redis and prevent it from starting at boot.
 sudo systemctl stop redis-server
 sudo systemctl disable redis-server
+# Remove the Redis package with the installer helper.
 ./install-redis-stack.sh uninstall
+# Reload systemd after the package removes its unit files.
 sudo systemctl daemon-reload
+# Confirm whether Redis unit files remain.
 systemctl list-unit-files 'redis*'
 ```

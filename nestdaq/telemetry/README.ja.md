@@ -243,13 +243,17 @@ severity nameは`nolog`、`trace`、`debug4`、`debug3`、`debug2`、`debug1`、
 
 デフォルト動作ではlogsをconsole exporterへexportし、metricsとtracesは無効です。
 
+shell command例の中で`#`から始まる行は読者向けのcommentであり、shellでは実行されません。
+
 ```sh
+# defaultのtelemetry exporterを使用してdeviceを起動します。
 my-device
 ```
 
 logs、metrics、tracesをOTLP HTTP collectorへ送信します。
 
 ```sh
+# deviceのlogs、metrics、tracesをOTLP HTTPでcollectorへexportします。
 my-device \
   --otel-log-protocol=otlp-http \
   --otel-metric-protocol=otlp-http \
@@ -262,6 +266,7 @@ my-device \
 protocol optionを値なしで渡してlogsを明示的に無効化します。
 
 ```sh
+# log exportを明示的に無効化してdeviceを起動します。
 my-device --otel-log-protocol
 ```
 
@@ -269,6 +274,7 @@ spdlog patternを設定し、custom patternのspdlog native console sinkを使�
 native console sinkはデフォルトで有効で、OTel spdlog sinkと同時に動作できます。
 
 ```sh
+# OTLP gRPCでlogをexportし、native console formatを変更します。
 my-device \
   --otel-log-protocol=otlp-grpc \
   --spdlog-console-pattern '[%n] [%l] %v'
@@ -277,6 +283,7 @@ my-device \
 OTel spdlog exportを有効に保ったまま、native spdlog console outputだけを無効化します。
 
 ```sh
+# OTLP gRPC log exportを維持し、native console outputを無効化します。
 my-device \
   --otel-log-protocol=otlp-grpc \
   --spdlog-native-console=false
@@ -286,6 +293,7 @@ NestDAQ helper loggerはデフォルトで同期動作し、spdlogのmulti-threa
 logging frequencyが高く、caller threadからbackground workerへrecordを渡したい場合はasync modeを有効にします。
 
 ```sh
+# helper loggerの処理を、上限付きqueueを使用する2つのbackground workerへ移します。
 my-device \
   --spdlog-async=true \
   --spdlog-async-queue-size=16384 \

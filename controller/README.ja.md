@@ -34,7 +34,10 @@ controllerはOpenTelemetryへ直接linkしません。
 <a id="3-typical-usage"></a>
 ## 3. 一般的な使用方法
 
+shell command例の中で`#`から始まる行は読者向けのcommentであり、shellでは実行されません。
+
 ```sh
+# ローカルのHTTP endpointとRedis endpointを使用してcontrollerを起動します。
 daq-webctl --http-uri=http://0.0.0.0:8080 --redis-uri=tcp://127.0.0.1:6379
 ```
 
@@ -138,6 +141,7 @@ controllerでよく使用するtelemetry optionは次のとおりです。
 次の例は、ローカルOpenTelemetry CollectorへOTLP gRPCで`daq-webctl` logを送信します。
 
 ```sh
+# controllerを起動し、OTLP gRPCでローカルcollectorへlogをexportします。
 daq-webctl \
   --http-uri=http://0.0.0.0:8080 \
   --redis-uri=tcp://127.0.0.1:6379 \

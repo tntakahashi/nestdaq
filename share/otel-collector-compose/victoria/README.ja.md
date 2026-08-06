@@ -11,14 +11,17 @@
 どちらかを使用してこのスタックを管理します。
 
 このディレクトリから起動します。
+以下のshellコマンド例では、`#`で始まる行は読者向けの説明コメントであり、shellでは実行されません。
 
 ```bash
+# Docker ComposeでVictoriaの検証用スタックを起動します。
 docker compose -f compose-victoria.yaml up
 ```
 
 Podmanの場合:
 
 ```bash
+# Podman ComposeでVictoriaの検証用スタックを起動します。
 podman compose -f compose-victoria.yaml up
 ```
 
@@ -92,12 +95,14 @@ http://victoriatraces:10428/insert/opentelemetry/v1/traces
 ローカル検証用コンテナーとネットワークを停止して削除します。
 
 ```bash
+# Dockerの検証用コンテナーとネットワークを停止して削除します。
 docker compose -f compose-victoria.yaml down
 ```
 
 Podmanの場合:
 
 ```bash
+# Podmanの検証用コンテナーとネットワークを停止して削除します。
 podman compose -f compose-victoria.yaml down
 ```
 
@@ -107,6 +112,7 @@ podman compose -f compose-victoria.yaml down
 保存されたバックエンドデータを破棄したい場合に限り、データディレクトリを削除してください。
 
 ```bash
+# VictoriaとGrafanaの全データを完全に破棄します。
 rm -rf ./victoriametrics-data \
        ./victorialogs-data \
        ./victoriatraces-data \
@@ -116,6 +122,7 @@ rm -rf ./victoriametrics-data \
 rootless Podmanでは、ファイル所有権のためユーザー名前空間経由で削除する必要がある場合があります。
 
 ```bash
+# rootless Podmanのデータをユーザー名前空間経由で破棄します。
 podman unshare rm -rf ./victoriametrics-data \
                        ./victorialogs-data \
                        ./victoriatraces-data \

@@ -28,9 +28,12 @@ scriptは`latest`ではなく固定されたimage tagを使用します。
 | `run-redis-stack-server.sh` | `docker.io/redis/redis-stack-server:7.4.0-v8` | なし | デフォルトのRedis Stack server-only helper。 |
 
 実行中のRedis versionと読み込まれたmoduleは、次のコマンドで確認できます。
+shell commandの例で`#`から始まる行は読者向けのコメントであり、shellでは実行されません。
 
 ```sh
+# 実行中のRedis server versionを表示します。
 redis-cli -p 6379 INFO server
+# Redis serverに読み込まれたmoduleを一覧表示します。
 redis-cli -p 6379 MODULE LIST
 ```
 
@@ -43,6 +46,7 @@ Redis serverの正確なpatch versionが必要な場合は、起動後に上記�
 実行:
 
 ```sh
+# 固定されたRedis 8.2.7 containerを起動します。
 ./run-redis-8.2.7.sh
 ```
 
@@ -59,12 +63,14 @@ scriptは、scriptの隣にある`redis-8.2.7-data`をcontainer内の`/data`へb
 RedisInsightを含むRedis Stackを実行します。
 
 ```sh
+# RedisInsightを含むRedis Stack 7.2を起動します。
 ./run-redis-7.2-stack.sh
 ```
 
 Redis Stack Serverだけを実行します。
 
 ```sh
+# server-onlyのRedis Stack 7.2 containerを起動します。
 ./run-redis-7.2-stack-server.sh
 ```
 
@@ -79,6 +85,7 @@ Redis Stack Serverだけを実行します。
 実行:
 
 ```sh
+# RedisInsightを含むデフォルトのRedis Stack containerを起動します。
 ./run-redis-stack.sh
 ```
 
@@ -97,6 +104,7 @@ RedisInsightは、mountされたdirectory内に内部subdirectoryを作成でき
 実行:
 
 ```sh
+# server-onlyのデフォルトRedis Stack containerを起動します。
 ./run-redis-stack-server.sh
 ```
 
@@ -145,13 +153,16 @@ helper scriptのdirectory外でDockerまたはPodmanにRedis dataを管理させ
 volumeを確認します。
 
 ```sh
+# Dockerが管理するvolumeを一覧表示します。
 docker volume ls
+# Podmanが管理するvolumeを一覧表示します。
 podman volume ls
 ```
 
 ローカルのRedis dataを破棄する場合はnamed volumeを削除します。
 
 ```sh
+# このRedis helperが作成したDocker volumeをすべて削除します。
 docker volume rm nestdaq-redis-stack-data nestdaq-redis-stack-redisinsight
 docker volume rm nestdaq-redis-stack-server-data
 docker volume rm nestdaq-redis-8.2.7-data
@@ -162,6 +173,7 @@ docker volume rm nestdaq-redis-7.2-stack-server-data
 または:
 
 ```sh
+# このRedis helperが作成したPodman volumeをすべて削除します。
 podman volume rm nestdaq-redis-stack-data nestdaq-redis-stack-redisinsight
 podman volume rm nestdaq-redis-stack-server-data
 podman volume rm nestdaq-redis-8.2.7-data
@@ -172,6 +184,7 @@ podman volume rm nestdaq-redis-7.2-stack-server-data
 helper scriptの隣にRedis data directoryを置かない場合は、named volumeを使用します。
 
 ```sh
+# Redis dataをruntimeが管理するnamed volumeに保存します。
 REDIS_VOLUME_MODE=volume ./run-redis-stack.sh
 ```
 
@@ -203,6 +216,7 @@ bind mount用data directoryは`THIS_SCRIPT_DIR`からの相対pathです。
 例:
 
 ```sh
+# custom portとpassword authenticationを指定してRedis Stackを起動します。
 REDIS_PORT=16379 \
 REDIS_INSIGHT_PORT=18001 \
 REDIS_ARGS="--requirepass nestdaq" \
@@ -212,6 +226,7 @@ REDIS_ARGS="--requirepass nestdaq" \
 Podmanの場合:
 
 ```sh
+# Dockerの代わりにPodmanでserver-only helperを起動します。
 CONTAINER_RUNTIME=podman ./run-redis-stack-server.sh
 ```
 

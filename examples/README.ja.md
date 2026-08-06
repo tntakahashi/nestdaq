@@ -36,13 +36,18 @@ NestDAQのmain buildはdefaultでこれらのexampleをビルドしてインス�
 exampleを別にbuildする場合は、先にNestDAQをinstallします。
 次に、NestDAQのinstall prefixを`CMAKE_PREFIX_PATH`へ設定してexampleをconfigureします。
 
+shell command例の中で`#`から始まる行は読者向けのcommentであり、shellでは実行されません。
+
 ```sh
+# install済みNestDAQ packageを使用するout-of-source buildをconfigureします。
 cmake \
   -DCMAKE_PREFIX_PATH=<nestdaq-install-prefix> \
   -DCMAKE_INSTALL_PREFIX=<examples-install-prefix> \
   -B ./build-examples \
   -S ./examples
+# configure済みexampleを並列buildします。
 cmake --build ./build-examples --parallel
+# 選択したprefix以下へexample executableをinstallします。
 cmake --install ./build-examples
 ```
 
@@ -57,6 +62,7 @@ install済みhelper scriptを使用するか、FairMQ channel optionを指定し
 一般的なローカル検証ではRedis、OpenTelemetry Collector backend、`daq-webctl`、example deviceの順に起動します。
 
 ```sh
+# 各example deviceが対応するcommand-line optionを表示します。
 Sampler --help
 Sink --help
 NullDevice --help
@@ -427,6 +433,7 @@ C++では`fair::mq::Device`から派生するclassとして実装します。
 最初の手順として、小さなprojectを生成し、生成されたfileを編集する方法を推奨します。
 
 ```sh
+# default skeletonからdevice projectを生成します。
 <install-prefix>/scripts/generate-device-skeleton.py MyDevice \
   --output ./MyDevice
 ```
@@ -728,11 +735,14 @@ library search設定を伝播します。
 生成projectをout-of-sourceでビルドしてインストールします。
 
 ```sh
+# 生成したdeviceをout-of-source buildとしてconfigureします。
 cmake -S ./MyDevice -B ./build-MyDevice \
   -DCMAKE_PREFIX_PATH=<nestdaq-install-prefix> \
   -DCMAKE_INSTALL_PREFIX=<device-install-prefix>
 
+# configure済みdeviceを並列buildします。
 cmake --build ./build-MyDevice --parallel
+# 選択したprefix以下へdevice executableをinstallします。
 cmake --install ./build-MyDevice
 ```
 
@@ -763,6 +773,7 @@ OpenTelemetry Collector backend、`daq-webctl` processを起動する必要は�
 NestDAQ helper scriptを使用してインストール済みdeviceを起動します。
 
 ```sh
+# MyDevice独自のservice identityとinput channelを指定して起動します。
 <nestdaq-install-prefix>/scripts/start_device.sh <device-install-prefix>/bin/MyDevice \
   --service-name MyDevice \
   --in-chan-name in
@@ -785,6 +796,7 @@ deviceでexample `Sink`を置き換える場合、serviceとinput channelを一�
 実行するか、新しいtopology scriptを作成します。
 
 ```sh
+# exampleのSink serviceを置き換えるMyDeviceを起動します。
 <nestdaq-install-prefix>/scripts/start_device.sh <device-install-prefix>/bin/MyDevice \
   --service-name Sink \
   --in-chan-name in

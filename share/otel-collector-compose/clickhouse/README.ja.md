@@ -11,14 +11,17 @@
 どちらかを使用してこのスタックを管理します。
 
 このディレクトリから起動します。
+以下のshellコマンド例では、`#`で始まる行は読者向けの説明コメントであり、shellでは実行されません。
 
 ```bash
+# Docker ComposeでClickHouseの検証用スタックを起動します。
 docker compose -f compose-clickhouse.yaml up
 ```
 
 Podmanの場合:
 
 ```bash
+# Podman ComposeでClickHouseの検証用スタックを起動します。
 podman compose -f compose-clickhouse.yaml up
 ```
 
@@ -79,12 +82,14 @@ http://localhost:4318/v1/traces
 ローカル検証用コンテナーとネットワークを停止して削除します。
 
 ```bash
+# Dockerの検証用コンテナーとネットワークを停止して削除します。
 docker compose -f compose-clickhouse.yaml down
 ```
 
 Podmanの場合:
 
 ```bash
+# Podmanの検証用コンテナーとネットワークを停止して削除します。
 podman compose -f compose-clickhouse.yaml down
 ```
 
@@ -94,6 +99,7 @@ podman compose -f compose-clickhouse.yaml down
 保存されたバックエンドデータを破棄したい場合に限り、データディレクトリとログディレクトリを削除してください。
 
 ```bash
+# ClickStackとClickHouseの全データおよびログを完全に破棄します。
 rm -rf ./clickstack-db \
        ./clickstack-clickhouse-data \
        ./clickstack-clickhouse-logs
@@ -102,6 +108,7 @@ rm -rf ./clickstack-db \
 rootless Podmanでは、ファイル所有権のためユーザー名前空間経由で削除する必要がある場合があります。
 
 ```bash
+# rootless Podmanのデータとログをユーザー名前空間経由で破棄します。
 podman unshare rm -rf ./clickstack-db \
                        ./clickstack-clickhouse-data \
                        ./clickstack-clickhouse-logs

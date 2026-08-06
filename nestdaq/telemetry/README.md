@@ -235,13 +235,17 @@ Severity names are `nolog`, `trace`, `debug4`, `debug3`, `debug2`, `debug1`, `de
 
 By default, NestDAQ exports logs to the console exporter and leaves metrics and traces disabled:
 
+Lines beginning with `#` inside shell command examples are comments for the reader and are not executed by the shell.
+
 ```sh
+# Start the device with the default telemetry exporters.
 my-device
 ```
 
 Send logs, metrics, and traces to an OTLP HTTP collector:
 
 ```sh
+# Export the device's logs, metrics, and traces to the collector over OTLP HTTP.
 my-device \
   --otel-log-protocol=otlp-http \
   --otel-metric-protocol=otlp-http \
@@ -254,6 +258,7 @@ my-device \
 Disable logs explicitly by passing the protocol option without a value:
 
 ```sh
+# Start the device with log export explicitly disabled.
 my-device --otel-log-protocol
 ```
 
@@ -261,6 +266,7 @@ Set the spdlog pattern to use its native console sink with a custom pattern.
 The native console sink is enabled by default and can run alongside the OTel spdlog sink:
 
 ```sh
+# Export logs over OTLP gRPC and customize the native console format.
 my-device \
   --otel-log-protocol=otlp-grpc \
   --spdlog-console-pattern '[%n] [%l] %v'
@@ -269,6 +275,7 @@ my-device \
 Disable only the native spdlog console output while keeping OTel spdlog export enabled:
 
 ```sh
+# Keep OTLP gRPC log export while disabling native console output.
 my-device \
   --otel-log-protocol=otlp-grpc \
   --spdlog-native-console=false
@@ -278,6 +285,7 @@ NestDAQ helper loggers are synchronous by default and use spdlog multi-thread-sa
 Enable async mode when the logging frequency is high enough that caller threads should hand records to a background worker:
 
 ```sh
+# Move helper-logger processing to two background workers with a bounded queue.
 my-device \
   --spdlog-async=true \
   --spdlog-async-queue-size=16384 \

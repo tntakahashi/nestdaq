@@ -93,7 +93,11 @@ Choose the endpoint according to where the process runs:
   Docker commonly uses `host.docker.internal:4317`; Podman commonly uses
   `host.containers.internal:4317`.
 
+In the shell command examples below, lines beginning with `#` are comments for
+the reader and are not executed by the shell.
+
 ```bash
+# Reach the collector through the Podman host alias.
 NESTDAQ_OTLP_GRPC_ENDPOINT=host.containers.internal:4317 ./start_device.sh Sampler
 ```
 
@@ -111,20 +115,24 @@ var+=" --severity ${NESTDAQ_FAIRLOGGER_CONSOLE_SEVERITY}"
 ```
 
 ```bash
+# Show debug-level messages in both FairLogger and the OTel export.
 NESTDAQ_FAIRLOGGER_CONSOLE_SEVERITY=debug4 NESTDAQ_START_DEVICE_OTEL_LOG_SEVERITY=debug4 ./start_device.sh Sampler
 ```
 
 ```bash
+  # Start the installed Sampler with its default options.
   # ./start_device.sh [device-name] [options ...]
   ./start_device.sh Sampler
 ```
 
 ```bash
+  # Start a FairMQ device by its executable path.
   ./start_device.sh /your-fairmq-install-path/bin/fairmq-splitter
 ```
 
 The following example starts a `Sampler` with the service name `A-Sampler` and limits the execution rate of `ConditionalRun()` to once per second.
 ```bash
+# Start a rate-limited Sampler under a distinct service name.
 ./start_device.sh Sampler --service-name A-Sampler --rate 1
 ```
 
@@ -134,6 +142,7 @@ device name are passed through to FairMQ and the NestDAQ plugins. See
 for the `daq_service` defaults used when `--service-name` or `--id` is empty.
 
 ```bash
+# Register two Sampler processes as separate service groups.
 ./start_device.sh Sampler --service-name A-Sampler
 ./start_device.sh Sampler --service-name B-Sampler
 ```
@@ -238,6 +247,7 @@ validation environment, flush the Redis database used by `daq_service` /
 `TopologyConfig` before registering the new topology again:
 
 ```sh
+# Clear stale topology and service data from local Redis DB 0.
 redis-cli -u redis://127.0.0.1:6379/0 FLUSHDB
 ```
 
@@ -245,6 +255,7 @@ redis-cli -u redis://127.0.0.1:6379/0 FLUSHDB
 Redis instance should be reset, use `FLUSHALL` instead:
 
 ```sh
+# Clear every database in the local Redis instance.
 redis-cli -u redis://127.0.0.1:6379 FLUSHALL
 ```
 
@@ -275,6 +286,7 @@ When _N_ Samplers and _N_ Sinks start, they form _N_ Sampler/Sink pairs.
 Each Sampler sends data to the Sink with the same instance index.
 
 ```bash
+  # Register the one-to-one Sampler/Sink topology in Redis.
   ./topology-1-1.sh
 ```
 
@@ -305,6 +317,7 @@ The `autoSubChannel true` flag gives each sub-socket a different `address:port` 
 The fairmq-splitter selects destinations in round-robin order according to the number of messages sent.
 
 ```bash
+  # Register the sampler/splitter/sink fan-out topology in Redis.
   ./topology-n-n-m.sh
 ```
 
@@ -359,6 +372,7 @@ graph LR
 This example configures parameters through Redis.
 
 ```bash
+  # Register the example device parameters in Redis DB 2.
   ./mq-param.sh
 ```
 
@@ -409,6 +423,7 @@ and data quality monitor (DQM) channel code using `in`, `out`, and `dqm` as the
 respective channel names.
 
 ```bash
+# Generate a MyDevice project in its own output directory.
 ./generate-device-skeleton.py MyDevice --output ./MyDevice
 ```
 
@@ -436,6 +451,7 @@ back. In the table, `off` means that the flag is not specified. For a `--no-*`
 flag, `off` means that the named feature remains enabled by default.
 
 ```bash
+# Generate a conditional-run device with one single-message output and no DQM channel.
 ./generate-device-skeleton.py MyDevice \
   --output ./MyDevice \
   --processing-mode conditional-run \
@@ -482,6 +498,7 @@ Channel options passed to the generator are not command-line options for the gen
 The generator creates all three channels by default; these options change how it generates the corresponding device command-line options in C++:
 
 ```bash
+# Generate a processor with explicit input, output, and DQM channel options.
 ./generate-device-skeleton.py MyProcessor \
   --input-channel in-chan-name:in \
   --output-channel out-chan-name:out \
@@ -510,15 +527,18 @@ Use `--no-namespace` to generate the class in the global namespace.
 Useful variants:
 
 ```bash
+# Generate a source with only an output channel.
 ./generate-device-skeleton.py MySource \
   --no-input-channel \
   --no-dqm-channel
 
+# Use short channel specifications and their default option keys.
 ./generate-device-skeleton.py MyShortFormProcessor \
   --input-channel :in \
   --output-channel data \
   --dqm-channel dqm
 
+# Generate single-message output and DQM helpers.
 ./generate-device-skeleton.py MySingleMessageProcessor \
   --input-channel :in \
   --output-channel data \
@@ -526,32 +546,39 @@ Useful variants:
   --single-output \
   --single-dqm
 
+# Generate an OnData sink without output or DQM channels.
 ./generate-device-skeleton.py MySink \
   --processing-mode on-data \
   --no-output-channel \
   --no-dqm-channel
 
+# Generate the sink with multipart input handling.
 ./generate-device-skeleton.py MyMultipartSink \
   --processing-mode on-data \
   --no-output-channel \
   --no-dqm-channel \
   --multipart-input
 
+# Exclude output and DQM channels from polling and omit input draining.
 ./generate-device-skeleton.py MyDevice \
   --input-channel in-chan-name:in \
   --output-channel out-chan-name:out \
   --no-poll output,dqm \
   --no-drain-input
 
+# Place the generated class in the global namespace.
 ./generate-device-skeleton.py MyGlobalDevice \
   --no-namespace
 
+# Omit CMake files for integration into an existing build.
 ./generate-device-skeleton.py MyIntegratedDevice \
   --no-cmake
 
+# Omit the generated project README.
 ./generate-device-skeleton.py MyNoReadmeDevice \
   --no-readme
 
+# Choose generation settings interactively.
 ./generate-device-skeleton.py --interactive
 ```
 
@@ -603,10 +630,13 @@ prefixes may be the same directory. The generated CMake project uses C++17 by
 default and rejects standards older than C++17.
 
 ```bash
+# Configure an out-of-source build against the NestDAQ installation.
 cmake -S ./MyDevice -B ./build-MyDevice \
   -DCMAKE_PREFIX_PATH=<nestdaq-install-prefix> \
   -DCMAKE_INSTALL_PREFIX=<device-install-prefix>
+# Compile the generated device in parallel.
 cmake --build ./build-MyDevice --parallel
+# Install the generated device under the selected prefix.
 cmake --install ./build-MyDevice
 ```
 

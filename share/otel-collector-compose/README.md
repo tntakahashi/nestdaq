@@ -23,8 +23,10 @@ Choose one backend directory explicitly:
 
 After installation, copy the installed setup to a working directory.
 If `./otel-collector-compose` already exists, remove it first or choose a different destination.
+In the shell command examples below, lines beginning with `#` are explanatory comments for the reader and are not executed by the shell.
 
 ```bash
+# Copy the installed setup and enter the working copy.
 cp -a <install-prefix>/share/otel-collector-compose ./otel-collector-compose
 cd ./otel-collector-compose
 ```
@@ -32,16 +34,19 @@ cd ./otel-collector-compose
 Start one backend stack from its backend directory:
 
 ```bash
+# Enter the OpenSearch directory and start its stack.
 cd opensearch
 docker compose -f compose-opensearch.yaml up
 ```
 
 ```bash
+# Enter the Victoria directory and start its stack.
 cd victoria
 docker compose -f compose-victoria.yaml up
 ```
 
 ```bash
+# Enter the ClickHouse directory and start its stack.
 cd clickhouse
 docker compose -f compose-clickhouse.yaml up
 ```
@@ -59,6 +64,7 @@ You can copy one backend directory and run the stack from the copied directory.
 Stop the selected backend stack from its backend directory:
 
 ```bash
+# Stop and remove the OpenSearch validation containers and network.
 docker compose -f compose-opensearch.yaml down
 ```
 

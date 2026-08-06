@@ -9,14 +9,17 @@
 どちらかを使用してこのスタックを管理します。
 
 このディレクトリから起動します。
+以下のshellコマンド例では、`#`で始まる行は読者向けの説明コメントであり、shellでは実行されません。
 
 ```bash
+# Docker ComposeでOpenSearchの検証用スタックを起動します。
 docker compose -f compose-opensearch.yaml up
 ```
 
 Podmanの場合:
 
 ```bash
+# Podman ComposeでOpenSearchの検証用スタックを起動します。
 podman compose -f compose-opensearch.yaml up
 ```
 
@@ -77,15 +80,18 @@ OpenSearchはコンテナー内の`uid=1000,gid=1000`で実行されます。
 rootless Podmanでは、`/usr/share/opensearch/data`にbind mountするホストディレクトリが、Podmanのユーザー名前空間から見たコンテナーのuid/gidによって読み書きできる必要があります。
 
 ```bash
+# Podmanのユーザー名前空間内で、コンテナーのユーザー用にデータディレクトリを準備します。
 mkdir -p ./opensearch-data
 podman unshare chown -R 1000:1000 ./opensearch-data
 podman unshare chmod -R u+rwX ./opensearch-data
+# 準備したデータディレクトリを使用してスタックを起動します。
 podman compose -f compose-opensearch.yaml up
 ```
 
 代わりに、コンテナーの`1000:1000`ユーザーをPodman Composeを起動するホストユーザーに対応付けることもできます。
 
 ```bash
+# データディレクトリを作成し、明示的なユーザーマッピングでスタックを起動します。
 mkdir -p ./opensearch-data
 PODMAN_USERNS="keep-id:uid=1000,gid=1000" \
 podman compose --in-pod=false -f compose-opensearch.yaml up
@@ -117,12 +123,14 @@ OpenSearchコンテナープロセスのuser IDは変更されず、コンテナ
 ローカル検証用コンテナーとネットワークを停止して削除します。
 
 ```bash
+# Dockerの検証用コンテナーとネットワークを停止して削除します。
 docker compose -f compose-opensearch.yaml down
 ```
 
 Podmanの場合:
 
 ```bash
+# Podmanの検証用コンテナーとネットワークを停止して削除します。
 podman compose -f compose-opensearch.yaml down
 ```
 
@@ -133,11 +141,13 @@ podman compose -f compose-opensearch.yaml down
 保存されたログ、トレース、index、OpenSearch metadataを破棄したい場合に限り、OpenSearchデータディレクトリを削除してください。
 
 ```bash
+# 保存されたOpenSearchデータを完全に破棄します。
 rm -rf ./opensearch-data
 ```
 
 rootless Podmanでは、ファイル所有権のためユーザー名前空間経由で削除する必要がある場合があります。
 
 ```bash
+# rootless Podmanのデータをユーザー名前空間経由で破棄します。
 podman unshare rm -rf ./opensearch-data
 ```
