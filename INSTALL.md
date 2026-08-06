@@ -164,7 +164,12 @@ apt install -y \
 
 The following procedure installs ZeroMQ, Boost, FairLogger, FairMQ, Catch2, nlohmann/json, hiredis, redis++, and Redis Stack.
 
+### 2.1 Clone or check out the source
+
 In this guide, the **upstream repository** is [github.com/spadi-alliance/nestdaq](https://github.com/spadi-alliance/nestdaq).
+
+#### 2.1.1 Users who do not contribute to the upstream repository
+
 The default procedure builds the latest stable release from its `main` branch.
 This is the normal choice for users who do not contribute changes to the upstream repository.
 Because `main` is the repository's default branch, a normal clone checks it out.
@@ -193,6 +198,8 @@ git fetch --tags
 git switch --detach <release-tag>
 ```
 
+#### 2.1.2 Contributors to the upstream repository
+
 Contributors to the upstream repository should first fork `spadi-alliance/nestdaq` to their own GitHub account.
 To build the latest development version, clone the fork, add the upstream repository, and create a local `develop` branch that tracks the fork's `origin/develop`.
 Pull updates from upstream, but push only to the branch in the fork (`origin`).
@@ -218,6 +225,9 @@ cd ..
 Do not push development branches to the upstream repository.
 
 Create a working branch in your fork before modifying the source; see [`CONTRIBUTING.md`](CONTRIBUTING.md).
+
+### 2.2 Build and installation procedure
+
 The remaining commands build whichever branch is checked out in `nestdaq`.
 
 ```bash
@@ -258,7 +268,7 @@ Redis 7.x uses a separate CMake path because RedisTimeSeries 1.x is built as a s
   - GCC 12.1 or later: add `-DCMAKE_EXE_LINKER_FLAGS="-fuse-ld=mold"` and `-DCMAKE_SHARED_LINKER_FLAGS="-fuse-ld=mold"` to the CMake options.
   - GCC 12.0 or earlier: add `-DCMAKE_EXE_LINKER_FLAGS="-B<path-to-mold>"` and `-DCMAKE_SHARED_LINKER_FLAGS="-B<path-to-mold>"`.
 
-### External dependency build options
+### 2.3 External dependency build options
 
 | Option | Default | Description |
 | :-- | :-- | :-- |
@@ -285,7 +295,7 @@ Redis Stack also exposes low-level cache variables for settings such as TLS, the
 These variables are intended for dependency build maintenance; inspect the CMake cache or `cmake/dependencies/redis-stack.cmake` when they are needed.
 For Redis 7.x maintenance settings, inspect `cmake/dependencies/redis-server-7.cmake`.
 
-### Versions of installed external dependencies
+### 2.4 Versions of installed external dependencies
 
 | Package                                                                  | Version (default) | CMake options to modify versions |
 | :--                                                                      | :--               | :--                              |
@@ -302,7 +312,7 @@ For Redis 7.x maintenance settings, inspect `cmake/dependencies/redis-server-7.c
 | [doxygen-awesome-css](https://github.com/jothepro/doxygen-awesome-css)   | 2.4.2             | `doxygen-awesome-css_VERSION`    |
 
 <a id="external-runtime-components"></a>
-##### Redis Server and Modules
+#### 2.4.1 Redis Server and Modules
 
 Redis Stack (`redis-server`, `redis-cli`, Redis modules, and related tools) is included in the external dependency build and is built and installed from source by default.
 Disable individual Redis modules with `REDIS_BUILD_REDISBLOOM`, `REDIS_BUILD_REDISEARCH`, `REDIS_BUILD_REDISJSON`, and `REDIS_BUILD_REDISTIMESERIES`.

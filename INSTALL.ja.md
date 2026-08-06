@@ -171,7 +171,14 @@ Ubuntu 22.04で依存関係をビルドする際に必要となるため、`pkg-
 
 次の手順では、ZeroMQ、Boost、FairLogger、FairMQ、Catch2、nlohmann/json、hiredis、redis++、Redis Stackをインストールします。
 
+<a id="21-clone-or-check-out-the-source"></a>
+### 2.1 source codeのcloneとcheckout方法
+
 このガイドで**upstream repository**とは、[github.com/spadi-alliance/nestdaq](https://github.com/spadi-alliance/nestdaq)を指します。
+
+<a id="211-users-who-do-not-contribute-to-the-upstream-repository"></a>
+#### 2.1.1 upstream repositoryの開発に貢献しない利用者
+
 デフォルト手順では、その`main`ブランチにある最新の安定リリース版をビルドします。
 これは、upstream repositoryの開発に貢献しない利用者が通常選択する方法です。
 `main`はrepositoryのdefault branchであるため、通常のcloneでcheckoutされます。
@@ -200,6 +207,9 @@ git fetch --tags
 git switch --detach <release-tag>
 ```
 
+<a id="212-contributors-to-the-upstream-repository"></a>
+#### 2.1.2 upstream repositoryの開発に貢献する人
+
 upstream repositoryの開発に貢献する人は、最初に`spadi-alliance/nestdaq`を自身のGitHub accountへforkします。
 最新開発版をビルドする場合は、自身のforkをcloneし、upstream repositoryを追加して、forkの`origin/develop`をtrackするlocal `develop`ブランチを作成します。
 更新はupstreamからpullしますが、push先は自身のfork (`origin`)にあるbranchだけにします。
@@ -226,6 +236,10 @@ cd ..
 
 source codeを変更する前に、自身のfork内で作業ブランチを作成してください。
 詳細は[`CONTRIBUTING.ja.md`](CONTRIBUTING.ja.md)を参照してください。
+
+<a id="22-build-and-install-the-external-dependencies"></a>
+### 2.2 外部依存関係のビルドとインストール方法
+
 以下のコマンドは、`nestdaq`でcheckoutされているbranchをビルドします。
 
 ```bash
@@ -267,7 +281,7 @@ Redis 7.xではRedisTimeSeries 1.xをRedis 8の`redis/modules`tree経由では�
   - GCC 12.0以前: CMake optionに`-DCMAKE_EXE_LINKER_FLAGS="-B<path-to-mold>"`と`-DCMAKE_SHARED_LINKER_FLAGS="-B<path-to-mold>"`を追加します。
 
 <a id="external-dependency-build-options"></a>
-### 外部依存関係のビルドオプション
+### 2.3 外部依存関係のビルドオプション
 
 | オプション | デフォルト | 説明 |
 | :-- | :-- | :-- |
@@ -296,7 +310,7 @@ Redis Stackには、TLS、allocator、一時的なRust toolchain pathなどを�
 Redis 7.xの保守用設定については`cmake/dependencies/redis-server-7.cmake`を確認してください。
 
 <a id="versions-of-installed-external-dependencies"></a>
-### インストールされる外部依存関係のバージョン
+### 2.4 インストールされる外部依存関係のバージョン
 
 | パッケージ                                                               | バージョン(デフォルト) | バージョン変更用CMakeオプション |
 | :--                                                                      | :--                      | :--                              |
@@ -313,7 +327,7 @@ Redis 7.xの保守用設定については`cmake/dependencies/redis-server-7.cma
 | [doxygen-awesome-css](https://github.com/jothepro/doxygen-awesome-css)   | 2.4.2                    | `doxygen-awesome-css_VERSION`    |
 
 <a id="redis-server-and-modules"></a>
-##### Redis serverとmodule
+#### 2.4.1 Redis serverとmodule
 
 Redis Stack(`redis-server`、`redis-cli`、Redis moduleなど)は外部依存関係ビルドに含まれ、デフォルトではソースからビルドしてインストールします。
 Redis moduleは`REDIS_BUILD_REDISBLOOM`、`REDIS_BUILD_REDISEARCH`、`REDIS_BUILD_REDISJSON`、`REDIS_BUILD_REDISTIMESERIES`を使用して個別に無効化できます。
