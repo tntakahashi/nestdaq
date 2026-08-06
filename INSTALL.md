@@ -187,8 +187,6 @@ git fetch --tags
 git switch --detach <release-tag>
 ```
 
-`git checkout <release-tag>` is the equivalent form using `git checkout`.
-
 NestDAQ developers should first fork `spadi-alliance/nestdaq` to their own GitHub account.
 To build the latest development version, clone the fork, add the upstream repository, and create a local `develop` branch that tracks the fork's `origin/develop`.
 Pull updates from upstream, but push only to the branch in the fork (`origin`).

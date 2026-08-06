@@ -194,8 +194,6 @@ git fetch --tags
 git switch --detach <release-tag>
 ```
 
-`git checkout`を使用する場合、同等のcommandは`git checkout <release-tag>`です。
-
 NestDAQ開発者は、最初に`spadi-alliance/nestdaq`を自身のGitHub accountへforkします。
 最新開発版をビルドする場合は、自身のforkをcloneし、upstream repositoryを追加して、forkの`origin/develop`をtrackするlocal `develop`ブランチを作成します。
 更新はupstreamからpullしますが、push先は自身のfork (`origin`)にあるbranchだけにします。
