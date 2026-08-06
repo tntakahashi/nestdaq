@@ -193,7 +193,7 @@ git fetch --tags
 git switch --detach <release-tag>
 ```
 
-NestDAQ developers should first fork `spadi-alliance/nestdaq` to their own GitHub account.
+Contributors to the upstream repository should first fork `spadi-alliance/nestdaq` to their own GitHub account.
 To build the latest development version, clone the fork, add the upstream repository, and create a local `develop` branch that tracks the fork's `origin/develop`.
 Pull updates from upstream, but push only to the branch in the fork (`origin`).
 
@@ -205,8 +205,10 @@ git remote add upstream https://github.com/spadi-alliance/nestdaq.git
 git fetch upstream
 git switch --create develop --track origin/develop
 
-# Integrate upstream changes and publish the updated branch to the fork
+# Rebase the local develop branch onto upstream/develop
 git pull --rebase upstream develop
+
+# Push the updated local develop branch to origin/develop in the fork
 git push origin develop
 
 # Return to the directory that contains the clone

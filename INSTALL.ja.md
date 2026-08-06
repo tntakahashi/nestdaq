@@ -200,7 +200,7 @@ git fetch --tags
 git switch --detach <release-tag>
 ```
 
-NestDAQ開発者は、最初に`spadi-alliance/nestdaq`を自身のGitHub accountへforkします。
+upstream repositoryの開発に貢献する人は、最初に`spadi-alliance/nestdaq`を自身のGitHub accountへforkします。
 最新開発版をビルドする場合は、自身のforkをcloneし、upstream repositoryを追加して、forkの`origin/develop`をtrackするlocal `develop`ブランチを作成します。
 更新はupstreamからpullしますが、push先は自身のfork (`origin`)にあるbranchだけにします。
 
@@ -212,8 +212,10 @@ git remote add upstream https://github.com/spadi-alliance/nestdaq.git
 git fetch upstream
 git switch --create develop --track origin/develop
 
-# upstreamの変更を取り込み、更新したbranchをforkへpush
+# upstream/developを取り込み、local develop branchのcommitをその上にrebase
 git pull --rebase upstream develop
+
+# 更新後のlocal develop branchをforkのorigin/developへpush
 git push origin develop
 
 # cloneを含む親ディレクトリへ戻る
