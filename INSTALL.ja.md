@@ -169,7 +169,7 @@ Ubuntu 22.04で依存関係をビルドする際に必要となるため、`pkg-
 
 このガイドで**upstream repository**とは、[github.com/spadi-alliance/nestdaq](https://github.com/spadi-alliance/nestdaq)を指します。
 デフォルト手順では、その`main`ブランチにある最新の安定リリース版をビルドします。
-これは、NestDAQを開発しない利用者などが通常選択する方法です。
+これは、upstream repositoryの開発に貢献しない利用者が通常選択する方法です。
 `main`はrepositoryのdefault branchであるため、通常のcloneでcheckoutされます。
 
 ```bash

@@ -162,7 +162,7 @@ The following procedure installs ZeroMQ, Boost, FairLogger, FairMQ, Catch2, nloh
 
 In this guide, the **upstream repository** is [github.com/spadi-alliance/nestdaq](https://github.com/spadi-alliance/nestdaq).
 The default procedure builds the latest stable release from its `main` branch.
-This is the normal choice for users and other people who are not developing NestDAQ.
+This is the normal choice for users who do not contribute changes to the upstream repository.
 Because `main` is the repository's default branch, a normal clone checks it out.
 
 ```bash
