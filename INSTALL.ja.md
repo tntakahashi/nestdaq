@@ -222,7 +222,7 @@ git remote add upstream https://github.com/spadi-alliance/nestdaq.git
 git fetch upstream
 git switch --create develop --track origin/develop
 
-# upstream/developを取り込み、local develop branchのcommitをその上にrebase
+# upstream/developに更新がある場合はそれを取り込み、local develop branchのcommitをその上にrebase
 git pull --rebase upstream develop
 
 # 更新後のlocal develop branchをforkのorigin/developへpush

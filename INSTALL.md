@@ -212,7 +212,7 @@ git remote add upstream https://github.com/spadi-alliance/nestdaq.git
 git fetch upstream
 git switch --create develop --track origin/develop
 
-# Rebase the local develop branch onto upstream/develop
+# Integrate any updates from upstream/develop and rebase the local develop branch onto them
 git pull --rebase upstream develop
 
 # Push the updated local develop branch to origin/develop in the fork
