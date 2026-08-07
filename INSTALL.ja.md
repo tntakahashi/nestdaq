@@ -211,7 +211,7 @@ git switch --detach <release-tag>
 #### 2.1.2 upstream repositoryの開発に貢献する人
 
 upstream repositoryの開発に貢献する人は、最初に`spadi-alliance/nestdaq`を自身のGitHub accountへforkします。
-最新開発版をビルドする場合は、自身のforkをcloneし、upstream repositoryを追加して、forkの`origin/develop`をtrackするlocal `develop`ブランチを作成します。
+最新開発版をビルドする場合は、自身のforkをcloneし、upstream repositoryを変更の取得元として使用する`upstream` remoteに登録し、forkの`origin/develop`をtrackするlocal `develop`ブランチを作成します。
 更新はupstreamからpullしますが、push先は自身のfork (`origin`)にあるbranchだけにします。
 
 ```bash
