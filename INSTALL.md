@@ -434,6 +434,9 @@ They install files in system-managed locations such as `/usr` and `/etc`.
 
 ## 4. Build and install examples
 
+The repository provides three examples of FairMQ Device implementations: `NullDevice`, `Sampler`, and `Sink`.
+See [`examples/README.md`](examples/README.md) for details about their behavior, configuration, build, and execution.
+
 The main NestDAQ build includes the examples by default.
 After installing NestDAQ, the examples can also be built as a separate CMake project.
 For a separate build, use the NestDAQ install prefix when configuring the examples with `find_package(NestDAQ)`.

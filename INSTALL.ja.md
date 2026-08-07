@@ -453,6 +453,9 @@ fileは`/usr`や`/etc`などのsystem管理領域へインストールされま�
 <a id="4-build-and-install-examples"></a>
 ## 4. サンプルのビルドとインストール
 
+このrepositoryには、FairMQ Deviceの実装例として`NullDevice`、`Sampler`、`Sink`の3つのサンプルを用意しています。
+各サンプルの動作、設定、ビルド、実行方法の詳細は[`examples/README.ja.md`](examples/README.ja.md)を参照してください。
+
 サンプルはデフォルトでNestDAQのメインビルドに含まれます。
 NestDAQのインストール後に、別のCMake projectとしてビルドすることもできます。
 サンプルを個別にビルドする場合は、NestDAQのinstall prefixを使用し、`find_package(NestDAQ)`でサンプルをconfigureします。
