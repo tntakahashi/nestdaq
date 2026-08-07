@@ -251,20 +251,6 @@ cmake \
 cmake --build ./build-external
 ```
 
-Redis StackはNestDAQアプリケーションの稼働中に必要となる外部サービスであり、直接のライブラリ依存関係ではありません。
-次のいずれかの方法でRedis Stackを用意します。
-
-- 上記の外部依存関係ビルドでRedis Stackをソースからビルドしてインストールします。
-  `WITH_REDIS_STACK=ON`の場合のデフォルトです。
-- `-DWITH_REDIS_STACK=OFF -DWITH_REDIS_SERVER_7=ON`を指定し、Redis 7.xサーバーとstandalone RedisTimeSeriesをソースからビルドしてインストールします。
-- [`share/redis-stack-container/README.ja.md`](share/redis-stack-container/README.ja.md)のhelper scriptを使用して、Redis Stackをコンテナで実行します。
-- [`share/installers/README.ja.md`](share/installers/README.ja.md)のinstaller helper scriptを使用して、RedisとRedis Stack moduleをhost packageとしてインストールします。
-
-Redis Stackをコンテナまたはhost packageで用意する場合は、外部依存関係のconfigure commandに`-DWITH_REDIS_STACK=OFF`を追加してください。
-
-`cmake/dependencies/`以下にあるRedis Stack用CMake fileとhelper shell scriptは、Redis 8以降を対象としています。
-Redis 7.xではRedisTimeSeries 1.xをRedis 8の`redis/modules`tree経由ではなくstandalone moduleとしてビルドするため、別のCMake経路を使用します。
-
 - 上記のcommandでは、CMakeの`ExternalProject`を使用して各依存関係をclone、build、installします。
   `cmake --build`に渡す`--parallel`(または`-j`)optionでは、内部の`ExternalProject` buildを制御できません。
   初回configure時に`-DBUILD_PARALLEL_LEVEL=xxx`を使用して、内部ビルドの並列数を指定してください。
@@ -326,10 +312,20 @@ Redis 7.xの保守用設定については`cmake/dependencies/redis-server-7.cma
 <a id="redis-server-and-modules"></a>
 #### 2.4.1 Redis serverとmodule
 
-Redis Stack(`redis-server`、`redis-cli`、Redis moduleなど)は外部依存関係ビルドに含まれ、デフォルトではソースからビルドしてインストールします。
-Redis moduleは`REDIS_BUILD_REDISBLOOM`、`REDIS_BUILD_REDISEARCH`、`REDIS_BUILD_REDISJSON`、`REDIS_BUILD_REDISTIMESERIES`を使用して個別に無効化できます。
 NestDAQアプリケーションの稼働中にはRedisが必要ですが、直接のライブラリ依存関係ではありません。
-Redisはコンテナまたはhost package用installer scriptで用意することもできます。
+次のいずれかの方法でRedisを用意します。
+
+- 外部依存関係ビルドでRedis Stackをソースからビルドしてインストールします。
+  `WITH_REDIS_STACK=ON`の場合のデフォルトです。
+  Redis moduleは`REDIS_BUILD_REDISBLOOM`、`REDIS_BUILD_REDISEARCH`、`REDIS_BUILD_REDISJSON`、`REDIS_BUILD_REDISTIMESERIES`を使用して個別に無効化できます。
+- `-DWITH_REDIS_STACK=OFF -DWITH_REDIS_SERVER_7=ON`を指定し、Redis 7.xサーバーとstandalone RedisTimeSeriesをソースからビルドしてインストールします。
+- [`share/redis-stack-container/README.ja.md`](share/redis-stack-container/README.ja.md)のhelper scriptを使用して、Redis Stackをコンテナで実行します。
+- [`share/installers/README.ja.md`](share/installers/README.ja.md)のinstaller helper scriptを使用して、RedisとRedis Stack moduleをhost packageとしてインストールします。
+
+Redis Stackをコンテナまたはhost packageで用意する場合は、外部依存関係のconfigure commandに`-DWITH_REDIS_STACK=OFF`を追加してください。
+`cmake/dependencies/`以下にあるRedis Stack用CMake fileとhelper shell scriptは、Redis 8以降を対象としています。
+Redis 7.xではRedisTimeSeries 1.xをRedis 8の`redis/modules`tree経由ではなくstandalone moduleとしてビルドするため、別のCMake経路を使用します。
+
 package installerは、デフォルトでRedis Stack moduleを含むRedis 8.2.7をインストールしますが、RedisInsightは含みません。
 RedisInsightが必要でrepositoryに該当packageがある場合は、Redis Stack container helper、または`REDIS_PACKAGE=redis-stack`と`REDIS_VERSION=latest`を使用してください。
 

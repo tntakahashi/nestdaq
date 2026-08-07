@@ -239,20 +239,6 @@ cmake \
 cmake --build ./build-external
 ```
 
-Redis Stack is an external service required while NestDAQ applications run, not a direct library dependency.
-Use one of the following methods to provide Redis Stack:
-
-- Build and install Redis Stack from source with the external dependency build shown above.
-  This is the default when `WITH_REDIS_STACK=ON`.
-- Build and install Redis 7.x server plus standalone RedisTimeSeries from source with `-DWITH_REDIS_STACK=OFF -DWITH_REDIS_SERVER_7=ON`.
-- Run Redis Stack in a container with the helper scripts in [`share/redis-stack-container/README.md`](share/redis-stack-container/README.md).
-- Install Redis and Redis Stack modules as host packages with the installer helper scripts in [`share/installers/README.md`](share/installers/README.md).
-
-If a container or host package provides Redis Stack, add `-DWITH_REDIS_STACK=OFF` to the external dependency configure command.
-
-The Redis Stack CMake files and helper shell scripts under `cmake/dependencies/` are intended for Redis 8 or later.
-Redis 7.x uses a separate CMake path because RedisTimeSeries 1.x is built as a standalone module rather than through the Redis 8 `redis/modules` tree.
-
 - The command above uses CMake's `ExternalProject` to clone, build, and install each dependency.
   The `--parallel` (or `-j`) option passed to `cmake --build` does not control nested `ExternalProject` builds.
   Set their parallel build level during the initial configuration with `-DBUILD_PARALLEL_LEVEL=xxx`.
@@ -311,10 +297,20 @@ For Redis 7.x maintenance settings, inspect `cmake/dependencies/redis-server-7.c
 <a id="external-runtime-components"></a>
 #### 2.4.1 Redis Server and Modules
 
-Redis Stack (`redis-server`, `redis-cli`, Redis modules, and related tools) is included in the external dependency build and is built and installed from source by default.
-Disable individual Redis modules with `REDIS_BUILD_REDISBLOOM`, `REDIS_BUILD_REDISEARCH`, `REDIS_BUILD_REDISJSON`, and `REDIS_BUILD_REDISTIMESERIES`.
 Redis is required while NestDAQ applications run, but it is not a direct library dependency.
-A container or the host package installer scripts can provide Redis instead.
+Use one of the following methods to provide it:
+
+- Build and install Redis Stack from source with the external dependency build.
+  This is the default when `WITH_REDIS_STACK=ON`.
+  Disable individual Redis modules with `REDIS_BUILD_REDISBLOOM`, `REDIS_BUILD_REDISEARCH`, `REDIS_BUILD_REDISJSON`, and `REDIS_BUILD_REDISTIMESERIES`.
+- Build and install Redis 7.x server plus standalone RedisTimeSeries from source with `-DWITH_REDIS_STACK=OFF -DWITH_REDIS_SERVER_7=ON`.
+- Run Redis Stack in a container with the helper scripts in [`share/redis-stack-container/README.md`](share/redis-stack-container/README.md).
+- Install Redis and Redis Stack modules as host packages with the installer helper scripts in [`share/installers/README.md`](share/installers/README.md).
+
+If a container or host package provides Redis Stack, add `-DWITH_REDIS_STACK=OFF` to the external dependency configure command.
+The Redis Stack CMake files and helper shell scripts under `cmake/dependencies/` are intended for Redis 8 or later.
+Redis 7.x uses a separate CMake path because RedisTimeSeries 1.x is built as a standalone module rather than through the Redis 8 `redis/modules` tree.
+
 By default, the package installer installs Redis 8.2.7 with Redis Stack modules but without RedisInsight.
 When RedisInsight is required and the repository provides the package, use the Redis Stack container helper or set `REDIS_PACKAGE=redis-stack` and `REDIS_VERSION=latest`.
 
