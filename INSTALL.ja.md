@@ -435,7 +435,9 @@ docker compose -f compose-opensearch.yaml up
 
 Podmanでは、同じComposeファイルを`podman compose`で使用します。
 
-次のローカルbackend構成を利用できます。
+local validationには、次のbackend構成を利用できます。
+現時点で検証済みなのはOpenSearch構成だけです。
+VictoriaとClickHouseの構成はexperimentalであり、未検証です。
 
 - [`opensearch/`](share/otel-collector-compose/opensearch/README.ja.md): logとtraceをOpenSearchへ保存し、OpenSearch Dashboardsで表示します。
 - [`victoria/`](share/otel-collector-compose/victoria/README.ja.md): log、metrics、traceをVictoriaLogs、VictoriaMetrics、VictoriaTracesへ保存し、Grafanaで表示します。

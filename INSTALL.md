@@ -417,7 +417,9 @@ docker compose -f compose-opensearch.yaml up
 
 For Podman, use the same Compose files with `podman compose`.
 
-The following local backend setups are available:
+The following backend setups are available for local validation:
+Only the OpenSearch setup has been tested.
+The Victoria and ClickHouse setups are experimental and have not yet been verified.
 
 - [`opensearch/`](share/otel-collector-compose/opensearch/README.md): stores logs and traces in OpenSearch and displays them in OpenSearch Dashboards.
 - [`victoria/`](share/otel-collector-compose/victoria/README.md): stores logs, metrics, and traces in VictoriaLogs, VictoriaMetrics, and VictoriaTraces and displays them in Grafana.
