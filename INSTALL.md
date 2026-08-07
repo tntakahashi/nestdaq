@@ -392,7 +392,8 @@ The external dependency build provides opentelemetry-cpp when `WITH_OTEL_CPP=ON`
 The repository provides Compose setups for local validation under [`share/otel-collector-compose/`](share/otel-collector-compose/README.md).
 Here, **Compose** means either `docker compose` or `podman compose`.
 The setups run services such as OpenTelemetry Collector Contrib, OpenSearch, and OpenSearch Dashboards in containers.
-These services and tools are not build dependencies and the supplied configurations are not intended for production deployment as-is.
+These services and tools are not required to build NestDAQ.
+The supplied Compose configurations are intended for local validation and may use relaxed security settings, so review and harden passwords, authentication, network exposure, and Transport Layer Security (TLS) before using them in production.
 
 Containers or host packages can provide the external services required while NestDAQ applications run.
 

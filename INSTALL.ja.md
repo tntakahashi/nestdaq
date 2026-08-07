@@ -410,7 +410,8 @@ NestDAQのconfigure時にopentelemetry-cppが見つかった場合、NestDAQはO
 repositoryには、ローカル検証用のCompose構成を[`share/otel-collector-compose/`](share/otel-collector-compose/README.ja.md)以下に用意しています。
 ここで**Compose**とは、`docker compose`または`podman compose`を指します。
 この構成では、OpenTelemetry Collector Contrib、OpenSearch、OpenSearch Dashboardsなどをコンテナで実行します。
-これらのserviceとtoolはビルド依存関係ではなく、提供される構成をそのままproduction環境へdeployすることは意図していません。
+これらのserviceとtoolは、NestDAQのビルドには必要ありません。
+提供するCompose構成はlocal validation向けであり、security設定が簡略化されている場合があるため、production環境で使用する前にpassword、authentication、network公開範囲、Transport Layer Security (TLS)を見直して強化してください。
 
 NestDAQアプリケーションの稼働中に必要となる外部serviceは、コンテナまたはhost packageで用意できます。
 
