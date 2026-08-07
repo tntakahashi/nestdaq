@@ -10,13 +10,12 @@ flowchart TD
   Prerequisites[1. 前提パッケージをインストール]
   Dependencies[2. 依存関係をビルドしてインストール]
   NestDAQ[3. NestDAQをビルドしてインストール]
-  Examples[4. NestDAQ_BUILD_EXAMPLES=OFFの場合、または個別のサンプルビルドが必要な場合は<br/>サンプルを別途ビルドしてインストール]
 
-  Prerequisites --> Dependencies --> NestDAQ --> Examples
+  Prerequisites --> Dependencies --> NestDAQ
 ```
 
 NestDAQのメインビルドでは、`NestDAQ_BUILD_EXAMPLES=ON`の場合、デフォルトでサンプルもビルドしてインストールします。
-メインビルドでサンプルを無効にした場合、またはサンプル用に別のビルドディレクトリやインストールプレフィックスが必要な場合にのみ、サンプルを個別にビルドしてください。
+Section 4では、NestDAQとFairMQが提供するサンプルを説明します。
 
 <a id="1-install-prerequisites"></a>
 ## 1. 前提パッケージのインストール
@@ -379,9 +378,6 @@ cmake --build ./build-external --verbose
 
 # NestDAQメインビルドのcommandを表示
 cmake --build ./build --parallel $(nproc) --verbose
-
-# 個別のサンプルビルドのcommandを表示
-cmake --build ./build-examples --parallel $(nproc) --verbose
 ```
 
 環境変数を使用する形式もサポートしています。
@@ -450,33 +446,12 @@ host packageとしてインストールし、systemdで管理する場合は、[
 これらのscriptはDebianおよびUbuntu systemでは`apt-get`、RHEL系systemでは`dnf`または`yum`を使用します。
 fileは`/usr`や`/etc`などのsystem管理領域へインストールされます。
 
-<a id="4-build-and-install-examples"></a>
-## 4. サンプルのビルドとインストール
+<a id="4-examples"></a>
+## 4. サンプル
 
 このrepositoryには、FairMQ Deviceの実装例として`NullDevice`、`Sampler`、`Sink`の3つのサンプルを用意しています。
+NestDAQのメインビルドには、これらのサンプルがデフォルトで含まれます。
 各サンプルの動作、設定、ビルド、実行方法の詳細は[`examples/README.ja.md`](examples/README.ja.md)を参照してください。
-
-サンプルはデフォルトでNestDAQのメインビルドに含まれます。
-NestDAQのインストール後に、別のCMake projectとしてビルドすることもできます。
-サンプルを個別にビルドする場合は、NestDAQのinstall prefixを使用し、`find_package(NestDAQ)`でサンプルをconfigureします。
-
-```bash
-# インストール済みのNestDAQ packageを参照する個別ビルドをconfigure
-cmake \
-  -DCMAKE_PREFIX_PATH=./install \
-  -DCMAKE_INSTALL_PREFIX=./install \
-  -B ./build-examples \
-  -S nestdaq/examples
-
-# サンプルを並列ビルド
-cmake --build ./build-examples --parallel $(nproc)
-
-# 完了したサンプルをインストール
-cmake --install ./build-examples
-```
-
-- `-DCMAKE_PREFIX_PATH=./install`はNestDAQをインストールしたディレクトリを指す必要があります。
-- インストールしたサンプルバイナリーは`./install/bin`以下に配置されます。
 
 FairMQは`BUILD_EXAMPLES`をデフォルトで有効にするため、FairMQをインストールすると複数のFairMQ example executableと起動scriptもインストールされます。
 これらの`fairmq-ex-*`および`fairmq-start-ex-*` fileはFairMQが提供するものであり、ここで説明する3つのNestDAQサンプルとは別です。
