@@ -405,7 +405,8 @@ VERBOSE=1 cmake --build ./build
 <a id="run-local-opentelemetry-collector-and-backend-containers"></a>
 ## ローカルのOpenTelemetry Collectorおよびバックエンドコンテナの実行
 
-NestDAQはOpenTelemetryのlog、metrics、traceをOpenTelemetry Collectorへexportできます。
+NestDAQのconfigure時にopentelemetry-cppが見つかった場合、NestDAQはOpenTelemetryのlog、metrics、traceをOpenTelemetry Collectorへexportできます。
+外部依存関係ビルドでは、デフォルトの`WITH_OTEL_CPP=ON`によりopentelemetry-cppをビルドしてインストールします。
 repositoryには、ローカル検証用のCompose構成を[`share/otel-collector-compose/`](share/otel-collector-compose/README.ja.md)以下に用意しています。
 ここで**Compose**とは、`docker compose`または`podman compose`を指します。
 この構成では、OpenTelemetry Collector Contrib、OpenSearch、OpenSearch Dashboardsなどをコンテナで実行します。
