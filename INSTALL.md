@@ -437,6 +437,10 @@ They install files in system-managed locations such as `/usr` and `/etc`.
 The repository provides three examples of FairMQ Device implementations: `NullDevice`, `Sampler`, and `Sink`.
 See [`examples/README.md`](examples/README.md) for details about their behavior, configuration, build, and execution.
 
+Installing FairMQ also installs several FairMQ example executables and their launch scripts because FairMQ enables `BUILD_EXAMPLES` by default.
+These `fairmq-ex-*` and `fairmq-start-ex-*` files are provided by FairMQ and are separate from the three NestDAQ examples described here.
+FairMQ also installs the generic device executables `fairmq-bsampler`, `fairmq-merger`, `fairmq-multiplier`, `fairmq-proxy`, `fairmq-sink`, and `fairmq-splitter` from its `fairmq/devices` directory.
+
 The main NestDAQ build includes the examples by default.
 After installing NestDAQ, the examples can also be built as a separate CMake project.
 For a separate build, use the NestDAQ install prefix when configuring the examples with `find_package(NestDAQ)`.
