@@ -318,7 +318,7 @@ Redis 7.xの保守用設定については`cmake/dependencies/redis-server-7.cma
 | [Catch2](https://github.com/catchorg/Catch2)                             | 3.15.2                   | `Catch2_VERSION`                 |
 | [nlohmann/json](https://github.com/nlohmann/json)                        | 3.12.0                   | `nlohmann_json_VERSION`          |
 | [spdlog](https://github.com/gabime/spdlog)                               | 1.17.0                   | `spdlog_VERSION`                 |
-| [hiredis](https://github.com/redis/hiredis)                              | 1.4.0                    | `hiredis_VERSION`                |
+| [hiredis](https://github.com/redis/hiredis)                              | 1.4.1                    | `hiredis_VERSION`                |
 | [redis++](https://github.com/sewenew/redis-plus-plus)                    | 1.3.15                   | `redis_plus_plus_VERSION`        |
 | [opentelemetry-cpp](https://github.com/open-telemetry/opentelemetry-cpp) | 1.28.0                   | `opentelemetry-cpp_VERSION`      |
 | [doxygen-awesome-css](https://github.com/jothepro/doxygen-awesome-css)   | 2.4.2                    | `doxygen-awesome-css_VERSION`    |

@@ -63,7 +63,7 @@ if(WITH_REDIS_SERVER_7)
   include("${NESTDAQ_DEPENDENCIES_CMAKE_DIR}/redis-server-7.cmake")
 endif()
 
-set(hiredis_VERSION "1.4.0" CACHE STRING "hiredis version tag")
+set(hiredis_VERSION "1.4.1" CACHE STRING "hiredis version tag")
 include("${NESTDAQ_DEPENDENCIES_CMAKE_DIR}/hiredis.cmake")
 
 set(redis_plus_plus_VERSION "1.3.15" CACHE STRING "redis++ version tag")
