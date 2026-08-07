@@ -227,9 +227,6 @@ git pull --rebase upstream develop
 
 # 更新後のlocal develop branchをforkのorigin/developへpush
 git push origin develop
-
-# cloneを含む親ディレクトリへ戻る
-cd ..
 ```
 
 開発用branchをupstream repositoryへpushしないでください。

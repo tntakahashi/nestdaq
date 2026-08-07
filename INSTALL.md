@@ -217,9 +217,6 @@ git pull --rebase upstream develop
 
 # Push the updated local develop branch to origin/develop in the fork
 git push origin develop
-
-# Return to the directory that contains the clone
-cd ..
 ```
 
 Do not push development branches to the upstream repository.
