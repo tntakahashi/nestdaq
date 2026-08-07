@@ -456,10 +456,6 @@ fileは`/usr`や`/etc`などのsystem管理領域へインストールされま�
 このrepositoryには、FairMQ Deviceの実装例として`NullDevice`、`Sampler`、`Sink`の3つのサンプルを用意しています。
 各サンプルの動作、設定、ビルド、実行方法の詳細は[`examples/README.ja.md`](examples/README.ja.md)を参照してください。
 
-FairMQは`BUILD_EXAMPLES`をデフォルトで有効にするため、FairMQをインストールすると複数のFairMQ example executableと起動scriptもインストールされます。
-これらの`fairmq-ex-*`および`fairmq-start-ex-*` fileはFairMQが提供するものであり、ここで説明する3つのNestDAQサンプルとは別です。
-FairMQの`fairmq/devices`ディレクトリにあるgeneric device executableの`fairmq-bsampler`、`fairmq-merger`、`fairmq-multiplier`、`fairmq-proxy`、`fairmq-sink`、`fairmq-splitter`もインストールされます。
-
 サンプルはデフォルトでNestDAQのメインビルドに含まれます。
 NestDAQのインストール後に、別のCMake projectとしてビルドすることもできます。
 サンプルを個別にビルドする場合は、NestDAQのinstall prefixを使用し、`find_package(NestDAQ)`でサンプルをconfigureします。
@@ -481,3 +477,7 @@ cmake --install ./build-examples
 
 - `-DCMAKE_PREFIX_PATH=./install`はNestDAQをインストールしたディレクトリを指す必要があります。
 - インストールしたサンプルバイナリーは`./install/bin`以下に配置されます。
+
+FairMQは`BUILD_EXAMPLES`をデフォルトで有効にするため、FairMQをインストールすると複数のFairMQ example executableと起動scriptもインストールされます。
+これらの`fairmq-ex-*`および`fairmq-start-ex-*` fileはFairMQが提供するものであり、ここで説明する3つのNestDAQサンプルとは別です。
+FairMQの`fairmq/devices`ディレクトリにあるgeneric device executableの`fairmq-bsampler`、`fairmq-merger`、`fairmq-multiplier`、`fairmq-proxy`、`fairmq-sink`、`fairmq-splitter`もインストールされます。
