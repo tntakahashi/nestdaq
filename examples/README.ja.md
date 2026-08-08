@@ -162,8 +162,8 @@ host package managerで`otelcol-contrib`をインストールした場合は、C
      <install-prefix>/etc/redis/redis-full.conf
    ```
 
-   module loadingまたはpersistence設定を変更する場合は、設定fileをcopyしてから
-   Redisを起動します。
+   module loadingまたはpersistence設定を変更する場合は、設定fileをcopyして
+   必要な設定を変更してからRedisを起動します。
 
    ```sh
    # 編集するためのlocal設定fileを作成します。
