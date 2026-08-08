@@ -16,7 +16,7 @@ On RHEL-family systems such as AlmaLinux, Rocky Linux, RHEL, CentOS, and Fedora,
 
 | Script | Installs or updates |
 | :-- | :-- |
-| `install-redis-stack.sh` | Redis server and Redis Stack modules from the Redis package repository. |
+| `install-redis-stack.sh` | Redis server and [Redis Stack](../../INSTALL.md#external-runtime-components) modules from the Redis package repository. |
 | `install-otelcol-contrib.sh` | OpenTelemetry Collector Contrib from the official OpenTelemetry release package. |
 | `install-opensearch.sh` | OpenSearch from the OpenSearch 2.x package repository. |
 | `install-opensearch-dashboards.sh` | OpenSearch Dashboards from the OpenSearch 2.x package repository. |

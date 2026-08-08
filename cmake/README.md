@@ -29,7 +29,7 @@ These files are installed with NestDAQ for use by downstream projects that call 
 
 `cmake/CMakeLists.txt` defines a standalone project that builds and installs the external dependencies used by NestDAQ.
 It includes files from `cmake/dependencies/` and primarily uses CMake `ExternalProject_Add`.
-The Redis Stack build also uses `FetchContent` to materialize module source trees.
+The [Redis Stack](../INSTALL.md#external-runtime-components) build also uses `FetchContent` to materialize module source trees.
 
 | File | Purpose |
 | :-- | :-- |

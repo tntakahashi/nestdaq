@@ -23,7 +23,7 @@ NestDAQは、粒子線計測向けのストリーミングデータ収集(DAQ)�
 | [tests/](tests/) | C++ testとtest用の補助ファイル。 |
 | `share/` | NestDAQとともにインストールされる設定ファイルと補助ファイル。 |
 | [share/otel-collector-compose/](share/otel-collector-compose/README.ja.md) | `docker compose`または`podman compose`で実行するローカルOpenTelemetry Collectorと、[OpenSearch](share/otel-collector-compose/opensearch/README.ja.md)、[Victoria](share/otel-collector-compose/victoria/README.ja.md)、[ClickStack](share/otel-collector-compose/clickhouse/README.ja.md)用backend Compose stack。 |
-| [share/redis-stack-container/](share/redis-stack-container/README.ja.md) | Redis Stack containerを実行する補助スクリプト。 |
+| [share/redis-stack-container/](share/redis-stack-container/README.ja.md) | [Redis Stack](INSTALL.ja.md#redis-server-and-modules) containerを実行する補助スクリプト。 |
 | [share/installers/](share/installers/README.ja.md) | 外部サービスをhostへインストールする`apt`および`dnf`用補助スクリプト。 |
 | [CONTRIBUTING.ja.md](CONTRIBUTING.ja.md) | ブランチ運用方針、contribution workflow、formatting、static analysis、naming rule。 |
 

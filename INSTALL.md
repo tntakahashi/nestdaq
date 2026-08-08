@@ -161,7 +161,7 @@ apt install -y \
 
 ## 2. Build and install external dependencies
 
-The following procedure installs ZeroMQ, Boost, FairLogger, FairMQ, Catch2, nlohmann/json, hiredis, redis++, and Redis Stack.
+The following procedure installs ZeroMQ, Boost, FairLogger, FairMQ, Catch2, nlohmann/json, hiredis, redis++, and [Redis Stack](#external-runtime-components).
 
 ### 2.1 Clone or check out the source
 
@@ -297,6 +297,11 @@ For Redis 7.x maintenance settings, inspect `cmake/dependencies/redis-server-7.c
 #### 2.4.1 Redis Server and Modules
 
 Redis is required while NestDAQ applications run, but it is not a direct library dependency.
+[Redis Stack](https://redis.io/about/redis-stack/) combines Redis with Search and Query, JSON, Time Series, and probabilistic data-structure capabilities.
+Redis Stack Server contains Redis and these capabilities, while the Redis Stack package and container image also include RedisInsight.
+Starting with Redis 8, [these capabilities are built into Redis Open Source](https://redis.io/docs/latest/operate/oss_and_stack/stack-with-enterprise/modules-lifecycle/), which replaces the separate Redis Stack distribution.
+This repository retains the Redis Stack and module terminology in existing CMake options, file names, and Redis 7 container images.
+
 Use one of the following methods to provide it:
 
 - Build and install Redis Stack from source with the external dependency build.

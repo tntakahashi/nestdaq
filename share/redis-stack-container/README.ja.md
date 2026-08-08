@@ -2,7 +2,7 @@
 
 [English](README.md) | [日本語](README.ja.md)
 
-このディレクトリには、NestDAQのローカル検証用にRedis Stack containerを起動するhelper scriptが含まれています。
+このディレクトリには、NestDAQのローカル検証用に[Redis Stack](../../INSTALL.ja.md#redis-server-and-modules) containerを起動するhelper scriptが含まれています。
 これらのcontainerはhost上にportを公開し、デフォルトではRedis authenticationを有効にしません。
 公開ネットワークや共有ネットワークには公開しないでください。
 開発やローカルでの確認にはRedisInsightを含むRedis Stack imageを使用してください。

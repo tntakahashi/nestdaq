@@ -18,7 +18,7 @@ AlmaLinux、Rocky Linux、RHEL、CentOS、FedoraなどのRHEL系systemでは`dnf
 
 | スクリプト | インストールまたは更新するもの |
 | :-- | :-- |
-| `install-redis-stack.sh` | Redis package repositoryからRedis serverとRedis Stack moduleをインストールします。 |
+| `install-redis-stack.sh` | Redis package repositoryからRedis serverと[Redis Stack](../../INSTALL.ja.md#redis-server-and-modules) moduleをインストールします。 |
 | `install-otelcol-contrib.sh` | OpenTelemetry公式release packageからOpenTelemetry Collector Contribをインストールします。 |
 | `install-opensearch.sh` | OpenSearch 2.x package repositoryからOpenSearchをインストールします。 |
 | `install-opensearch-dashboards.sh` | OpenSearch 2.x package repositoryからOpenSearch Dashboardsをインストールします。 |

@@ -168,7 +168,7 @@ Ubuntu 22.04で依存関係をビルドする際に必要となるため、`pkg-
 <a id="2-build-and-install-external-dependencies"></a>
 ## 2. 外部依存関係のビルドとインストール
 
-次の手順では、ZeroMQ、Boost、FairLogger、FairMQ、Catch2、nlohmann/json、hiredis、redis++、Redis Stackをインストールします。
+次の手順では、ZeroMQ、Boost、FairLogger、FairMQ、Catch2、nlohmann/json、hiredis、redis++、[Redis Stack](#redis-server-and-modules)をインストールします。
 
 <a id="21-clone-or-check-out-the-source"></a>
 ### 2.1 source codeのcloneとcheckout方法
@@ -312,6 +312,11 @@ Redis 7.xの保守用設定については`cmake/dependencies/redis-server-7.cma
 #### 2.4.1 Redis serverとmodule
 
 NestDAQアプリケーションの稼働中にはRedisが必要ですが、直接のライブラリ依存関係ではありません。
+[Redis Stack](https://redis.io/about/redis-stack/)は、RedisにSearch and Query、JSON、Time Series、probabilistic data structureの機能を組み合わせたdistributionです。
+Redis Stack ServerはRedisとこれらの機能を含み、Redis Stack packageとcontainer imageはRedisInsightも含みます。
+Redis 8以降では、[これらの機能がRedis Open Sourceへ組み込まれ](https://redis.io/docs/latest/operate/oss_and_stack/stack-with-enterprise/modules-lifecycle/)、個別のRedis Stack distributionを置き換えました。
+このrepositoryでは、既存のCMake option、file name、Redis 7 container imageでRedis Stackおよびmoduleという用語を維持しています。
+
 次のいずれかの方法でRedisを用意します。
 
 - 外部依存関係ビルドでRedis Stackをソースからビルドしてインストールします。

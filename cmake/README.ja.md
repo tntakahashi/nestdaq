@@ -32,7 +32,7 @@
 
 `cmake/CMakeLists.txt`は、NestDAQが使用する外部依存関係をビルドおよびインストールする独立したprojectです。
 このprojectは`cmake/dependencies/`内のfileをincludeし、主にCMakeの`ExternalProject_Add`を使用します。
-Redis Stackのビルドでは、module source treeを展開するために`FetchContent`も使用します。
+[Redis Stack](../INSTALL.ja.md#redis-server-and-modules)のビルドでは、module source treeを展開するために`FetchContent`も使用します。
 
 | ファイル | 用途 |
 | :-- | :-- |

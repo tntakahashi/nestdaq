@@ -79,7 +79,7 @@ Start the OpenTelemetry Collector and required storage first when logs, metrics,
 If telemetry is disabled, console-only telemetry is used, or an existing Collector is available, treat step A as complete.
 
 Redis is required.
-Start it with the deployment method used by the local environment, such as a local `redis-server`, a containerized Redis/Redis Stack instance, or a host package managed by systemd.
+Start it with the deployment method used by the local environment, such as a local `redis-server`, a containerized Redis/[Redis Stack](../INSTALL.md#external-runtime-components) instance, or a host package managed by systemd.
 Steps E and F may be reordered as long as both occur after Redis is available and before step H.
 
 The browser can be opened as soon as `daq-webctl` starts, but devices may not appear until the topology and parameter settings are registered and the user devices are running.
@@ -129,11 +129,12 @@ uses `localhost:4317`.
 
 #### 3.1.2. Step B: Start Redis
 
-   Redis is required by the NestDAQ DAQ service, metrics, and parameter
-   configuration plugins. Redis can be a locally built server, a host package
-   managed by `systemd`, or a container. Use the Redis endpoint from this step
-   consistently in `daq-webctl`, `start_device.sh`, and the topology/parameter
-   helper scripts.
+   Three NestDAQ plugins require Redis: `daq_service`, `metrics`, and
+   `parameter_config`.
+   Redis can be a locally built server, a host package managed by `systemd`, or
+   a container. Use the endpoint of the Redis server started in
+   this step consistently in `daq-webctl`, `start_device.sh`, and the
+   topology/parameter helper scripts.
 
    If Redis Stack was built and installed with the external dependencies, start
    the installed Redis server with the Redis Stack modules:

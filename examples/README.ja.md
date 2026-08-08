@@ -84,7 +84,7 @@ log、metrics、tracesをexportし、利用可能なCollectorとstorage service�
 telemetryが無効、console-only telemetryを使用、または既存Collectorが利用可能な場合は、step Aが完了済みとみなします。
 
 Redisは必須です。
-ローカル`redis-server`、container化したRedis/Redis Stack instance、systemd管理のhost packageなど、使用中のローカルdeployment方法で起動します。
+ローカル`redis-server`、container化したRedis/[Redis Stack](../INSTALL.ja.md#redis-server-and-modules) instance、systemd管理のhost packageなど、使用中のローカルdeployment方法で起動します。
 step EとFは、Redisが利用可能になった後かつstep Hより前であれば、順序を入れ替えられます。
 
 `daq-webctl`起動後すぐにブラウザを開けますが、topologyとparameter設定が登録され、user deviceが動作するまでdeviceが表示されない場合があります。
@@ -138,9 +138,9 @@ host package managerで`otelcol-contrib`をインストールした場合は、C
 <a id="312-step-b-start-redis"></a>
 #### 3.1.2. Step B: Redisを起動
 
-   NestDAQ DAQ service、metrics、parameter configuration pluginにはRedisが必要です。
+   NestDAQの`daq_service`、`metrics`、`parameter_config`という3つのpluginにはRedisが必要です。
    Redisには、ローカルでビルドしたserver、`systemd`管理のhost package、または
-   containerを使用できます。このstepのRedis endpointを、`daq-webctl`、
+   containerを使用できます。このstepで起動したRedisのendpointを、`daq-webctl`、
    `start_device.sh`、topology/parameter helper scriptで一貫して使用します。
 
    外部依存関係とともにRedis Stackをビルドしてインストールした場合、Redis Stack
