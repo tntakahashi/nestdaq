@@ -25,9 +25,12 @@
 
 | ファイル | 用途 |
 | :-- | :-- |
-| `NestDAQConfig.cmake.in` | インストール済みpackage configのtemplate。`CMAKE_PREFIX_PATH`を調整し、FairMQとその依存関係を検索して、version fileとtarget fileをincludeします。 |
-| `NestDAQVersion.cmake.in` | インストール済みNestDAQ versionおよびGit metadata variableのtemplate。 |
+| `NestDAQConfig.cmake` | `NestDAQConfig.cmake.in`から生成される、インストール済みpackage config。`CMAKE_PREFIX_PATH`を調整し、FairMQとその依存関係を検索して、version fileとtarget fileをincludeします。 |
+| `NestDAQConfigVersion.cmake` | `find_package(NestDAQ)`用にCMakeが生成するpackage version互換性確認file。 |
+| `NestDAQVersion.cmake` | `NestDAQVersion.cmake.in`から生成される、インストール済みNestDAQ versionおよびGit metadata variable。 |
 | `NestDAQTargets.cmake` | imported target `NestDAQ::NestDAQ`と、そのinclude directory、link directory、link libraryを定義します。 |
+
+`.cmake.in` fileはsource templateであり、インストールされません。
 
 <a id="3-external-dependency-project"></a>
 ## 3. 外部依存関係プロジェクト
