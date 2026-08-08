@@ -299,8 +299,8 @@ host package managerで`otelcol-contrib`をインストールした場合は、C
    場合、overrideは不要です。登録した設定または使用するservice groupingで
    defaultとは異なるservice nameやchannel nameを使用する場合は、対応する
    `--service-name`や`--in-chan-name`などをcommand lineで指定します。
-   繰り返し実行する場合は、小さなwrapper shell scriptへoverrideを記述しても
-   構いません。`--service-name`または
+   繰り返し実行する場合は、利用者がこれらのoverrideを付けて`start_device.sh`を
+   呼び出すwrapper shell scriptを作成できます。`--service-name`または
    `--id`が空の場合に使用する`daq_service`のdefaultについては
    [`plugins/README.ja.md#22-daq-service-identity-defaults`](../plugins/README.ja.md#22-daq-service-identity-defaults)
    を参照してください。

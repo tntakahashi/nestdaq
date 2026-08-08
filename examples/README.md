@@ -293,8 +293,8 @@ uses `localhost:4317`.
    registered in Redis use those defaults. If the registered settings or the
    intended service grouping uses a different service name or channel name,
    pass the corresponding option, such as `--service-name` or `--in-chan-name`,
-   to override the default. For repeated runs, it is also fine to put those
-   overrides in a small wrapper shell script.
+   to override the default. For repeated runs, users can create a wrapper shell
+   script that invokes `start_device.sh` with those overrides.
    See
    [`plugins/README.md#22-daq-service-identity-defaults`](../plugins/README.md#22-daq-service-identity-defaults)
    for the `daq_service` defaults used when `--service-name` or `--id` is
