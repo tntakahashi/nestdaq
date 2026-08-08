@@ -55,16 +55,6 @@ The example CMake project sets an install RPATH relative to the example install 
 
 ## 3. Running
 
-Use the installed helper scripts, or invoke the binaries directly with FairMQ channel options.
-A typical local validation run starts Redis, an OpenTelemetry Collector backend, `daq-webctl`, and then the example devices.
-
-```sh
-# Display the command-line options supported by each example device.
-Sampler --help
-Sink --help
-NullDevice --help
-```
-
 ### 3.1. Local Run Sequence
 
 The commands below assume that NestDAQ was installed under `<install-prefix>`.

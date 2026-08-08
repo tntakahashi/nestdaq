@@ -59,16 +59,6 @@ example CMake projectは、example install prefixからの相対的なinstall RP
 <a id="3-running"></a>
 ## 3. 実行
 
-install済みhelper scriptを使用するか、FairMQ channel optionを指定してbinaryを直接実行します。
-一般的なローカル検証ではRedis、OpenTelemetry Collector backend、`daq-webctl`、example deviceの順に起動します。
-
-```sh
-# 各example deviceが対応するcommand-line optionを表示します。
-Sampler --help
-Sink --help
-NullDevice --help
-```
-
 <a id="31-local-run-sequence"></a>
 ### 3.1. ローカル実行シーケンス
 
