@@ -350,22 +350,25 @@ host package managerで`otelcol-contrib`をインストールした場合は、C
 次の図は、ローカル実行例のcomponentを3つのgroupに分けて示します。
 実線は通常のdataおよび制御経路、破線は省略可能なtelemetry、確認用tool、
 external toolの経路です。
+図中のアルファベットは、上記の起動sequenceにあるstep AからHに対応します。
 
 ```mermaid
 flowchart TB
   Browser["Web browser"]
 
-  subgraph DevicesGroup["1. NestDAQ device processes"]
+  Config["E. topology-*.sh / mq-param.sh"]
+
+  subgraph DevicesGroup["F. NestDAQ device processes"]
     direction LR
     Sampler["Sampler"]
     Sink["Sink"]
     Sampler -->|"FairMQ PUSH/PULL"| Sink
   end
 
-  subgraph ServicesGroup["2. Control, Redis, and optional Web UIs"]
+  subgraph ServicesGroup["Redis, control, and optional Web UIs"]
     direction LR
-    WebCtl["daq-webctl"]
-    Redis["Redis server"]
+    WebCtl["C. daq-webctl"]
+    Redis["B. Redis server"]
     RedisInsight["RedisInsight"]
     SlowDash["SlowDash"]
     Grafana["Grafana"]
@@ -377,7 +380,7 @@ flowchart TB
   end
 
 
-  subgraph TelemetryGroup["3. OpenTelemetry and OpenSearch"]
+  subgraph TelemetryGroup["A. OpenTelemetry and OpenSearch"]
     direction LR
     Collector["OpenTelemetry Collector Contrib"]
     OpenSearch["OpenSearch"]
@@ -389,11 +392,12 @@ flowchart TB
 
   Sampler -->|"Redis client"| Redis
   Sink -->|"Redis client"| Redis
+  Config -->|"設定を登録"| Redis
   Sampler -.->|"有効な場合はOTLP"| Collector
   Sink -.->|"有効な場合はOTLP"| Collector
   WebCtl -.->|"有効な場合はOTLP log"| Collector
 
-  Browser -->|"HTTP / WebSocket"| WebCtl
+  Browser -->|"D. UIを開く / G. run numberを設定 / H. runを開始"| WebCtl
   Browser -.->|"HTTP"| RedisInsight
   Browser -.->|"HTTP"| SlowDash
   Browser -.->|"HTTP"| Grafana

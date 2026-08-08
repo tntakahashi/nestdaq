@@ -338,22 +338,25 @@ uses `localhost:4317`.
 The following diagram separates the local example into three groups.
 Solid lines show the normal data and control paths.
 Dashed lines show optional telemetry, inspection, and external-tool paths.
+The letters correspond to steps A through H in the startup sequence above.
 
 ```mermaid
 flowchart TB
   Browser["Web browser"]
 
-  subgraph DevicesGroup["1. NestDAQ device processes"]
+  Config["E. topology-*.sh / mq-param.sh"]
+
+  subgraph DevicesGroup["F. NestDAQ device processes"]
     direction LR
     Sampler["Sampler"]
     Sink["Sink"]
     Sampler -->|"FairMQ PUSH/PULL"| Sink
   end
 
-  subgraph ServicesGroup["2. Control, Redis, and optional Web UIs"]
+  subgraph ServicesGroup["Redis, control, and optional Web UIs"]
     direction LR
-    WebCtl["daq-webctl"]
-    Redis["Redis server"]
+    WebCtl["C. daq-webctl"]
+    Redis["B. Redis server"]
     RedisInsight["RedisInsight"]
     SlowDash["SlowDash"]
     Grafana["Grafana"]
@@ -364,7 +367,7 @@ flowchart TB
     Grafana -.->|"if configured for Redis"| Redis
   end
 
-  subgraph TelemetryGroup["3. OpenTelemetry and OpenSearch"]
+  subgraph TelemetryGroup["A. OpenTelemetry and OpenSearch"]
     direction LR
     Collector["OpenTelemetry Collector Contrib"]
     OpenSearch["OpenSearch"]
@@ -376,11 +379,12 @@ flowchart TB
 
   Sampler -->|"Redis client"| Redis
   Sink -->|"Redis client"| Redis
+  Config -->|"register settings"| Redis
   Sampler -.->|"OTLP when enabled"| Collector
   Sink -.->|"OTLP when enabled"| Collector
   WebCtl -.->|"OTLP logs when enabled"| Collector
 
-  Browser -->|"HTTP / WebSocket"| WebCtl
+  Browser -->|"D. open UI / G. set run number / H. start run"| WebCtl
   Browser -.->|"HTTP"| RedisInsight
   Browser -.->|"HTTP"| SlowDash
   Browser -.->|"HTTP"| Grafana
