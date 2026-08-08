@@ -286,25 +286,28 @@ host package managerで`otelcol-contrib`をインストールした場合は、C
 <a id="316-step-f-start-user-devices"></a>
 #### 3.1.6. Step F: `start_device.sh`でuser deviceを起動
 
-   インストール済みscriptはNestDAQ pluginをloadし、defaultでは
+   インストール済みの`<install-prefix>/scripts/start_device.sh`はNestDAQ pluginを
+   loadし、defaultでは
    `127.0.0.1:6379`のRedisを使用して、OTLP gRPCによりOpenTelemetry logを
    `localhost:4317`へexportします。RedisまたはCollectorが別のendpointを使用する
    場合は`NESTDAQ_REDIS_SERVER`と`NESTDAQ_OTLP_GRPC_ENDPOINT`を設定します。
-   scriptではmetricsとtracesがdefaultで無効です。有効化またはtelemetryを
-   consoleへ出力する方法は
+   `start_device.sh`ではmetricsとtracesがdefaultで無効です。
+   有効化またはtelemetryをconsoleへ出力する方法は
    [`scripts/README.ja.md`](../scripts/README.ja.md)を参照してください。
 
    device nameより後のoptionは、deviceまたはNestDAQ pluginが設定するdefault値を
-   overrideします。異なるtopology、parameter set、service groupingにdefault値を
-   合わせる必要がある場合だけ、command lineで`--service-name`や
-   `--in-chan-name`などを指定します。繰り返し実行する場合は、小さなwrapper
-   shell scriptへoverrideを記述しても構いません。`--service-name`または
+   overrideします。Redisへ登録したtopologyとparameter設定がdefault値を使用する
+   場合、overrideは不要です。登録した設定または使用するservice groupingで
+   defaultとは異なるservice nameやchannel nameを使用する場合は、対応する
+   `--service-name`や`--in-chan-name`などをcommand lineで指定します。
+   繰り返し実行する場合は、小さなwrapper shell scriptへoverrideを記述しても
+   構いません。`--service-name`または
    `--id`が空の場合に使用する`daq_service`のdefaultについては
    [`plugins/README.ja.md#22-daq-service-identity-defaults`](../plugins/README.ja.md#22-daq-service-identity-defaults)
    を参照してください。
 
-   `NullDevice`にはdata channelがありませんが、同じscriptとRedisを使用する
-   NestDAQ pluginを使用します。
+   `NullDevice`にはdata channelがありませんが、同じインストール済み
+   `start_device.sh`とRedisを使用するNestDAQ pluginを使用します。
 
    ```sh
    <install-prefix>/scripts/start_device.sh NullDevice

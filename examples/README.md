@@ -278,26 +278,30 @@ uses `localhost:4317`.
 
 #### 3.1.6. Step F: Start the user devices with `start_device.sh`
 
-   The installed script loads the NestDAQ plugins, uses Redis at
+   The installed `<install-prefix>/scripts/start_device.sh` loads the NestDAQ
+   plugins, uses Redis at
    `127.0.0.1:6379` by default, and exports OpenTelemetry logs to
    `localhost:4317` by OTLP gRPC by default. Set `NESTDAQ_REDIS_SERVER` and
    `NESTDAQ_OTLP_GRPC_ENDPOINT` when Redis or the Collector use different
-   endpoints. Metrics and traces are disabled by default in the script; see
+   endpoints. Metrics and traces are disabled by default in `start_device.sh`;
+   see
    [`scripts/README.md`](../scripts/README.md) to enable them or to print
    telemetry to the console.
 
    Options after the device name override defaults set by the device or NestDAQ
-   plugins. Specify options such as `--service-name` or
-   `--in-chan-name` on the command line only when the default values need to
-   match a different topology, parameter set, or service grouping. For repeated
-   runs, it is also fine to put those overrides in a small wrapper shell script.
+   plugins. No override is needed when the topology and parameter settings
+   registered in Redis use those defaults. If the registered settings or the
+   intended service grouping uses a different service name or channel name,
+   pass the corresponding option, such as `--service-name` or `--in-chan-name`,
+   to override the default. For repeated runs, it is also fine to put those
+   overrides in a small wrapper shell script.
    See
    [`plugins/README.md#22-daq-service-identity-defaults`](../plugins/README.md#22-daq-service-identity-defaults)
    for the `daq_service` defaults used when `--service-name` or `--id` is
    empty.
 
-   `NullDevice` has no data channel, but it still uses the same script and
-   Redis-backed NestDAQ plugins:
+   `NullDevice` has no data channel, but it still uses the same installed
+   `start_device.sh` and Redis-backed NestDAQ plugins:
 
    ```sh
    <install-prefix>/scripts/start_device.sh NullDevice
