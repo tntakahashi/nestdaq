@@ -338,6 +338,9 @@ uses `localhost:4317`.
 The following diagram separates the local example into three groups.
 Solid lines show the normal data and control paths.
 Dashed lines show optional telemetry, inspection, and external-tool paths.
+Directed arrows point from a client to a server.
+The FairMQ PUSH/PULL connection has no arrow because its client and server
+roles depend on the bind/connect configuration.
 The letters correspond to steps A through H in the startup sequence above.
 
 ```mermaid
@@ -350,7 +353,7 @@ flowchart TB
     direction LR
     Sampler["Sampler"]
     Sink["Sink"]
-    Sampler -->|"FairMQ PUSH/PULL"| Sink
+    Sampler ---|"FairMQ PUSH/PULL"| Sink
   end
 
   subgraph ServicesGroup["Redis, control, and optional Web UIs"]

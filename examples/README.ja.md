@@ -350,6 +350,9 @@ host package managerで`otelcol-contrib`をインストールした場合は、C
 次の図は、ローカル実行例のcomponentを3つのgroupに分けて示します。
 実線は通常のdataおよび制御経路、破線は省略可能なtelemetry、確認用tool、
 external toolの経路です。
+矢印はclientからserverへ向けています。
+FairMQ PUSH/PULL接続のclientとserverはbind/connect設定によって変わるため、
+この接続には矢印を付けていません。
 図中のアルファベットは、上記の起動sequenceにあるstep AからHに対応します。
 
 ```mermaid
@@ -362,7 +365,7 @@ flowchart TB
     direction LR
     Sampler["Sampler"]
     Sink["Sink"]
-    Sampler -->|"FairMQ PUSH/PULL"| Sink
+    Sampler ---|"FairMQ PUSH/PULL"| Sink
   end
 
   subgraph ServicesGroup["Redis, control, and optional Web UIs"]
