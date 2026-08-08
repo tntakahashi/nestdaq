@@ -76,7 +76,7 @@ flowchart TD
 
 The diagram shows a typical local run sequence, not a strict dependency graph.
 Start the OpenTelemetry Collector and required storage first when logs, metrics, or traces should be exported and no suitable services are already running.
-If telemetry is disabled, console-only telemetry is used, or an existing collector is available, treat step A as complete.
+If telemetry is disabled, console-only telemetry is used, or an existing Collector is available, treat step A as complete.
 
 Redis is required.
 Start it with the deployment method used by the local environment, such as a local `redis-server`, a containerized Redis/Redis Stack instance, or a host package managed by systemd.
@@ -85,43 +85,49 @@ Steps E and F may be reordered as long as both occur after Redis is available an
 The browser can be opened as soon as `daq-webctl` starts, but devices may not appear until the topology and parameter settings are registered and the user devices are running.
 Steps G and H are operations in the `daq-webctl` Web UI.
 Run-start commands require the target devices to be running, so perform step H last.
-`daq-webctl` and the user devices use Redis and can export OpenTelemetry logs to the collector.
+`daq-webctl` and the user devices use Redis and can export OpenTelemetry logs to the Collector.
 
-A. Start an OpenTelemetry Collector.
+#### 3.1.1. Step A: Start an OpenTelemetry Collector
 
-   Use the collector in the local Compose setup, run with `docker compose` or
-   `podman compose`, a host-installed `otelcol-contrib` service, or another
-   collector reachable from the NestDAQ processes.
-   The collector receives OpenTelemetry
-   Protocol (OTLP) data from the example devices and forwards it to the
-   configured log, metric, or trace storage.
+Use the Collector in the local Compose setup, a host-installed
+`otelcol-contrib` service, or another Collector reachable from the NestDAQ
+processes. The Collector receives OpenTelemetry Protocol (OTLP) data from the
+example devices and forwards it to the configured log, metric, or trace storage.
 
-   The local validation example below uses the OpenSearch Compose stack. It
-   stores logs and traces in OpenSearch and makes them available in OpenSearch
-   Dashboards.
+##### 3.1.1.1. Compose
 
-   ```sh
-   cp -a <install-prefix>/share/otel-collector-compose ./otel-collector-compose
-   cd ./otel-collector-compose/opensearch
-   docker compose -f compose-opensearch.yaml up
-   ```
+The local validation example below uses the OpenSearch Compose stack. It stores
+logs and traces in OpenSearch and makes them available in OpenSearch Dashboards.
 
-   For Podman, use the same file with `podman compose`. See
-   [`share/otel-collector-compose/opensearch/README.md`](../share/otel-collector-compose/opensearch/README.md)
-   for ports, rootless Podman notes, and dashboard setup details. The default
-   OTLP gRPC endpoint is `localhost:4317`. Open OpenSearch Dashboards at
-   `http://localhost:5601/app/discover` to inspect exported logs and traces.
-   The setup service creates the initial logs and traces Data Views.
+```sh
+# Copy the installed Compose files into the current directory.
+cp -a <install-prefix>/share/otel-collector-compose ./otel-collector-compose
+# Enter the OpenSearch Compose directory.
+cd ./otel-collector-compose/opensearch
+# Start the Collector, OpenSearch, OpenSearch Dashboards, and setup service.
+docker compose -f compose-opensearch.yaml up
+```
 
-   If you install `otelcol-contrib` with the host package manager instead, edit
-   the collector configuration and start the service with `systemd`; see
-   [`share/installers/README.md`](../share/installers/README.md). Use the OTLP
-   endpoint that matches where the collector is running. A host process usually
-   uses `localhost:4317`; a process in the same Compose network usually uses
-   the collector service name, such as `otel-collector:4317` or
-   `clickstack:4317`.
+For Podman, use the same file with `podman compose`. See
+[`share/otel-collector-compose/opensearch/README.md`](../share/otel-collector-compose/opensearch/README.md)
+for ports, rootless Podman notes, and dashboard setup details. The default OTLP
+gRPC endpoint for host processes is `localhost:4317`. A process in the same
+Compose network uses the Collector service name, such as `otel-collector:4317`.
 
-B. Start Redis.
+The `opensearch-dashboards-setup` service runs automatically as part of
+`docker compose up` or `podman compose up`. It creates the initial logs and
+traces Data Views. Open `http://localhost:5601/app/discover` in OpenSearch
+Dashboards to inspect exported logs and traces.
+
+##### 3.1.1.2. Host Package
+
+If `otelcol-contrib` was installed with the host package manager, edit the
+Collector configuration and start the service with `systemd`; see
+[`share/installers/README.md`](../share/installers/README.md). Use the OTLP
+endpoint configured for that service. A client process on the same host usually
+uses `localhost:4317`.
+
+#### 3.1.2. Step B: Start Redis
 
    Redis is required by the NestDAQ DAQ service, metrics, and parameter
    configuration plugins. Redis can be a locally built server, a host package
@@ -185,7 +191,7 @@ B. Start Redis.
    Redis unit name first because it can differ between packages and
    distributions.
 
-C. Start `daq-webctl`.
+#### 3.1.3. Step C: Start `daq-webctl`
 
    ```sh
    <install-prefix>/bin/daq-webctl \
@@ -202,9 +208,9 @@ C. Start `daq-webctl`.
    The `daq-webctl` Web UI is the browser interface served by this process, not a separate controller service.
    The browser communicates with `daq-webctl`; it does not connect directly to Redis.
 
-   The OpenTelemetry options send `daq-webctl` logs to the local collector
+   The OpenTelemetry options send `daq-webctl` logs to the local Collector
    started above. Replace `--redis-uri` and `--otel-log-endpoint-grpc` when
-   Redis or the collector are not reachable at the example host endpoints. See
+   Redis or the Collector are not reachable at the example host endpoints. See
    [`controller/README.md`](../controller/README.md) for `daq-webctl` options
    and Redis command behavior, and
    [`nestdaq/telemetry/README.md`](../nestdaq/telemetry/README.md) for the full
@@ -215,13 +221,13 @@ C. Start `daq-webctl`.
    instead. In the same ClickStack compose network, use
    `--otel-log-endpoint-grpc=clickstack:4317`.
 
-D. Open the `daq-webctl` Web UI.
+#### 3.1.4. Step D: Open the `daq-webctl` Web UI
 
    Open `http://localhost:8080/` in a browser. At this point the Web UI may not
    show user devices yet. They become available after topology and
    parameter registration and after the user device processes start.
 
-E. Register topology and parameter settings.
+#### 3.1.5. Step E: Register topology and parameter settings
 
    Before starting devices, register the topology and parameter examples in
    Redis. The topology script writes channel and link settings used by the
@@ -234,12 +240,12 @@ E. Register topology and parameter settings.
    ./mq-param.sh
    ```
 
-F. Start the user devices with `start_device.sh`.
+#### 3.1.6. Step F: Start the user devices with `start_device.sh`
 
    The installed script loads the NestDAQ plugins, uses Redis at
    `127.0.0.1:6379` by default, and exports OpenTelemetry logs to
    `localhost:4317` by OTLP gRPC by default. Set `NESTDAQ_REDIS_SERVER` and
-   `NESTDAQ_OTLP_GRPC_ENDPOINT` when Redis or the collector use different
+   `NESTDAQ_OTLP_GRPC_ENDPOINT` when Redis or the Collector use different
    endpoints. Metrics and traces are disabled by default in the script; see
    [`scripts/README.md`](../scripts/README.md) to enable them or to print
    telemetry to the console.
@@ -273,7 +279,7 @@ F. Start the user devices with `start_device.sh`.
    <install-prefix>/scripts/start_device.sh Sampler
    ```
 
-G. Set the run number if it is missing.
+#### 3.1.7. Step G: Set the run number if it is missing
 
    If Redis does not already contain `run_info:run_number`, set or increment the
    run number from the `daq-webctl` Web UI before starting a run. In response to
@@ -283,7 +289,7 @@ G. Set the run number if it is missing.
    and [`plugins/README.md`](../plugins/README.md#23-redis-keys-written-or-read)
    for the Redis command interface and run information keys.
 
-H. Start the run from the `daq-webctl` Web UI.
+#### 3.1.8. Step H: Start the run from the `daq-webctl` Web UI
 
    Use the `daq-webctl` Web UI to move the selected user devices through the
    required state-machine transitions and publish `RUN` to start the run. When

@@ -80,8 +80,8 @@ flowchart TD
 ```
 
 この図は一般的なローカル実行sequenceであり、厳密なdependency graphではありません。
-log、metrics、tracesをexportし、利用可能なcollectorとstorage serviceがまだ動作していない場合は、最初にOpenTelemetry Collectorと必要なstorageを起動します。
-telemetryが無効、console-only telemetryを使用、または既存collectorが利用可能な場合は、step Aが完了済みとみなします。
+log、metrics、tracesをexportし、利用可能なCollectorとstorage serviceがまだ動作していない場合は、最初にOpenTelemetry Collectorと必要なstorageを起動します。
+telemetryが無効、console-only telemetryを使用、または既存Collectorが利用可能な場合は、step Aが完了済みとみなします。
 
 Redisは必須です。
 ローカル`redis-server`、container化したRedis/Redis Stack instance、systemd管理のhost packageなど、使用中のローカルdeployment方法で起動します。
@@ -90,42 +90,53 @@ step EとFは、Redisが利用可能になった後かつstep Hより前であ�
 `daq-webctl`起動後すぐにブラウザを開けますが、topologyとparameter設定が登録され、user deviceが動作するまでdeviceが表示されない場合があります。
 step GとHは`daq-webctl` Web UIで行う操作です。
 run-start commandの実行には対象deviceが動作中である必要があるため、step Hは最後に行います。
-`daq-webctl`とuser deviceはRedisを使用し、OpenTelemetry logをcollectorへexportできます。
+`daq-webctl`とuser deviceはRedisを使用し、OpenTelemetry logをCollectorへexportできます。
 
-A. OpenTelemetry Collectorを起動します。
+<a id="311-step-a-start-an-opentelemetry-collector"></a>
+#### 3.1.1. Step A: OpenTelemetry Collectorを起動
 
-   OpenTelemetry Collectorとして、`docker compose`または`podman compose`で実行する
-   ローカルCompose構成のcollector、hostへインストールした`otelcol-contrib` service、
-   またはNestDAQ processから到達可能な別のcollectorを使用できます。
-   このCollectorは、example deviceから
-   OpenTelemetry Protocol (OTLP) dataを受信し、設定されたlog、metric、trace storageへ転送します。
+ローカルCompose構成のCollector、hostへインストールした`otelcol-contrib` service、
+またはNestDAQ processから到達可能な別のCollectorを使用できます。
+Collectorはexample deviceからOpenTelemetry Protocol (OTLP) dataを受信し、
+設定されたlog、metric、trace storageへ転送します。
 
-   以下のローカル検証例ではOpenSearch Compose stackを使用します。logとtraceを
-   OpenSearchへ保存し、OpenSearch Dashboardsで利用できるようにします。
+<a id="3111-compose"></a>
+##### 3.1.1.1. Compose
 
-   ```sh
-   cp -a <install-prefix>/share/otel-collector-compose ./otel-collector-compose
-   cd ./otel-collector-compose/opensearch
-   docker compose -f compose-opensearch.yaml up
-   ```
+以下のローカル検証例ではOpenSearch Compose stackを使用します。
+logとtraceをOpenSearchへ保存し、OpenSearch Dashboardsで利用できるようにします。
 
-   Podmanでは同じfileを`podman compose`で使用します。port、rootless Podmanの
-   注意事項、dashboard設定の詳細は
-   [`share/otel-collector-compose/opensearch/README.ja.md`](../share/otel-collector-compose/opensearch/README.ja.md)を参照してください。
-   defaultのOTLP gRPC endpointは`localhost:4317`です。
-   exportされたlogとtraceを確認するには、OpenSearch Dashboardsの
-   `http://localhost:5601/app/discover`を開きます。setup serviceが初期logとtrace
-   Data Viewを作成します。
+```sh
+# インストール済みCompose fileをcurrent directoryへcopyします。
+cp -a <install-prefix>/share/otel-collector-compose ./otel-collector-compose
+# OpenSearch Compose directoryへ移動します。
+cd ./otel-collector-compose/opensearch
+# Collector、OpenSearch、OpenSearch Dashboards、setup serviceを起動します。
+docker compose -f compose-opensearch.yaml up
+```
 
-   代わりにhost package managerで`otelcol-contrib`をインストールする場合は、
-   collector設定を編集し、`systemd`でserviceを起動します。
-   [`share/installers/README.ja.md`](../share/installers/README.ja.md)を参照してください。
-   collectorの実行場所に合うOTLP endpointを使用します。host processでは通常
-   `localhost:4317`を使用し、同じCompose network内のprocessでは通常
-   `otel-collector:4317`や`clickstack:4317`などのcollector service nameを
-   使用します。
+Podmanでは同じfileを`podman compose`で使用します。
+port、rootless Podmanの注意事項、dashboard設定の詳細は
+[`share/otel-collector-compose/opensearch/README.ja.md`](../share/otel-collector-compose/opensearch/README.ja.md)を参照してください。
+host processが使用するdefaultのOTLP gRPC endpointは`localhost:4317`です。
+同じCompose network内のprocessは、`otel-collector:4317`などのCollector service nameを使用します。
 
-B. Redisを起動します。
+`opensearch-dashboards-setup` serviceは、`docker compose up`または
+`podman compose up`の一部として自動的に実行され、logとtraceの初期Data Viewを作成します。
+exportされたlogとtraceを確認するには、OpenSearch Dashboardsで
+`http://localhost:5601/app/discover`を開きます。
+
+<a id="3112-host-package"></a>
+##### 3.1.1.2. Host package
+
+host package managerで`otelcol-contrib`をインストールした場合は、Collector設定を編集し、
+`systemd`でserviceを起動します。
+[`share/installers/README.ja.md`](../share/installers/README.ja.md)を参照してください。
+このserviceに設定したOTLP endpointを使用します。
+同じhost上のclient processは通常`localhost:4317`を使用します。
+
+<a id="312-step-b-start-redis"></a>
+#### 3.1.2. Step B: Redisを起動
 
    NestDAQ DAQ service、metrics、parameter configuration pluginにはRedisが必要です。
    Redisには、ローカルでビルドしたserver、`systemd`管理のhost package、または
@@ -186,7 +197,8 @@ B. Redisを起動します。
    [`share/installers/README.ja.md`](../share/installers/README.ja.md)を参照してください。
    Redis unit nameはpackageやdistributionにより異なるため、先に確認します。
 
-C. `daq-webctl`を起動します。
+<a id="313-step-c-start-daq-webctl"></a>
+#### 3.1.3. Step C: `daq-webctl`を起動
 
    ```sh
    <install-prefix>/bin/daq-webctl \
@@ -203,8 +215,8 @@ C. `daq-webctl`を起動します。
    `daq-webctl` Web UIは、このprocessがbrowserへ配信するinterfaceであり、別のcontroller serviceではありません。
    browserは`daq-webctl`と通信し、Redisへ直接接続しません。
 
-   OpenTelemetry optionは`daq-webctl` logを上で起動したローカルcollectorへ送信します。
-   Redisやcollectorへ例のhost endpointで到達できない場合は、`--redis-uri`と
+   OpenTelemetry optionは`daq-webctl` logを上で起動したローカルCollectorへ送信します。
+   RedisやCollectorへ例のhost endpointで到達できない場合は、`--redis-uri`と
    `--otel-log-endpoint-grpc`を変更します。`daq-webctl` optionとRedis commandの
    動作は[`controller/README.ja.md`](../controller/README.ja.md)、telemetry optionの
    完全な一覧は
@@ -215,13 +227,15 @@ C. `daq-webctl`を起動します。
    使用します。同じClickStack compose network内では
    `--otel-log-endpoint-grpc=clickstack:4317`を使用します。
 
-D. `daq-webctl` Web UIを開きます。
+<a id="314-step-d-open-daq-webctl-web-ui"></a>
+#### 3.1.4. Step D: `daq-webctl` Web UIを開く
 
    ブラウザで`http://localhost:8080/`を開きます。この時点ではWeb UIに
    user deviceがまだ表示されない場合があります。topologyとparameterの登録後、
    user device processが起動すると利用可能になります。
 
-E. topologyとparameter設定を登録します。
+<a id="315-step-e-register-topology-and-parameters"></a>
+#### 3.1.5. Step E: topologyとparameter設定を登録
 
    deviceを起動する前に、topologyとparameterのexampleをRedisへ登録します。
    topology scriptは`daq_service` pluginが使用するchannelとlinkの設定を書き込み、
@@ -234,11 +248,12 @@ E. topologyとparameter設定を登録します。
    ./mq-param.sh
    ```
 
-F. `start_device.sh`でuser deviceを起動します。
+<a id="316-step-f-start-user-devices"></a>
+#### 3.1.6. Step F: `start_device.sh`でuser deviceを起動
 
    インストール済みscriptはNestDAQ pluginをloadし、defaultでは
    `127.0.0.1:6379`のRedisを使用して、OTLP gRPCによりOpenTelemetry logを
-   `localhost:4317`へexportします。Redisまたはcollectorが別のendpointを使用する
+   `localhost:4317`へexportします。RedisまたはCollectorが別のendpointを使用する
    場合は`NESTDAQ_REDIS_SERVER`と`NESTDAQ_OTLP_GRPC_ENDPOINT`を設定します。
    scriptではmetricsとtracesがdefaultで無効です。有効化またはtelemetryを
    consoleへ出力する方法は
@@ -272,7 +287,8 @@ F. `start_device.sh`でuser deviceを起動します。
    <install-prefix>/scripts/start_device.sh Sampler
    ```
 
-G. run numberがない場合は設定します。
+<a id="317-step-g-set-run-number"></a>
+#### 3.1.7. Step G: run numberがない場合は設定
 
    Redisに`run_info:run_number`がまだない場合、runを開始する前に
    `daq-webctl` Web UIからrun numberを設定またはincrementします。Web UIでの操作に
@@ -283,7 +299,8 @@ G. run numberがない場合は設定します。
    [`plugins/README.ja.md`](../plugins/README.ja.md#23-redis-keys-written-or-read)を
    参照してください。
 
-H. `daq-webctl` Web UIからrunを開始します。
+<a id="318-step-h-start-run"></a>
+#### 3.1.8. Step H: `daq-webctl` Web UIからrunを開始
 
    `daq-webctl` Web UIを使用して選択したuser deviceを必要なstate-machine
    transitionで遷移させ、`RUN`をpublishしてrunを開始します。`RUN`を要求すると、
