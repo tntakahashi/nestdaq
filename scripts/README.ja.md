@@ -354,10 +354,12 @@ graph LR
 <a id="31-mq-paramsh"></a>
 ### 3.1. mq-param.sh
 
-Redisを通じてparameterを設定する例です。
+Redisを通じてdevice parameterを設定する例です。
+device parameterは、NestDAQ device processが`parameter_config` pluginを通じて
+取得し、使用するparameterです。
 
 ```bash
-  # example deviceのparameterをRedis DB 2へ登録する。
+  # example NestDAQ device processが使用するparameterをRedis DB 2へ登録する。
   ./mq-param.sh
 ```
 

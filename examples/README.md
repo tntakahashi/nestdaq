@@ -266,8 +266,9 @@ uses `localhost:4317`.
 
    Before starting devices, register the topology and parameter examples in
    Redis. The topology script writes channel and link settings used by the
-   `daq_service` plugin. The parameter script writes device parameters used by
-   the `parameter_config` plugin.
+   `daq_service` plugin. The parameter script writes device parameters, which
+   are parameters that NestDAQ device processes obtain through the
+   `parameter_config` plugin.
 
    ```sh
    cd <install-prefix>/scripts

@@ -371,10 +371,12 @@ graph LR
 ## 3. Parameter configuration
 
 ### 3.1. mq-param.sh
-This example configures parameters through Redis.
+This example configures device parameters through Redis.
+Device parameters are parameters that NestDAQ device processes obtain through
+the `parameter_config` plugin.
 
 ```bash
-  # Register the example device parameters in Redis DB 2.
+  # Register parameters used by the example NestDAQ device processes in Redis DB 2.
   ./mq-param.sh
 ```
 

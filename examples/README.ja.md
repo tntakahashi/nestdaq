@@ -273,8 +273,9 @@ host package managerで`otelcol-contrib`をインストールした場合は、C
 
    deviceを起動する前に、topologyとparameterのexampleをRedisへ登録します。
    topology scriptは`daq_service` pluginが使用するchannelとlinkの設定を書き込み、
-   parameter scriptは`parameter_config` pluginが使用するdevice parameterを
-   書き込みます。
+   parameter scriptはdevice parameterを書き込みます。
+   device parameterは、NestDAQ device processが`parameter_config` pluginを通じて
+   取得し、使用するparameterです。
 
    ```sh
    cd <install-prefix>/scripts
