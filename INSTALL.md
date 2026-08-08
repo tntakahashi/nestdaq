@@ -299,6 +299,7 @@ For Redis 7.x maintenance settings, inspect `cmake/dependencies/redis-server-7.c
 Redis is required while NestDAQ applications run, but it is not a direct library dependency.
 [Redis Stack](https://redis.io/about/redis-stack/) combines Redis with Search and Query, JSON, Time Series, and probabilistic data-structure capabilities.
 Redis Stack Server contains Redis and these capabilities, while the Redis Stack package and container image also include RedisInsight.
+RedisInsight is a web-based graphical user interface (GUI) for connecting to Redis, inspecting data, and running commands.
 Starting with Redis 8, [these capabilities are built into Redis Open Source](https://redis.io/docs/latest/operate/oss_and_stack/stack-with-enterprise/modules-lifecycle/), which replaces the separate Redis Stack distribution.
 This repository retains the Redis Stack and module terminology in existing CMake options, file names, and Redis 7 container images.
 

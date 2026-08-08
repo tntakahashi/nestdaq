@@ -200,6 +200,8 @@ uses `localhost:4317`.
 <a id="3123-persistence-and-endpoint"></a>
 ##### 3.1.2.3. Persistence and endpoint
 
+   An RDB snapshot is a point-in-time binary copy of the dataset held in Redis
+   memory. Redis can use it to restore data after a restart.
    Redis writes RDB snapshots to `dump.rdb` by default. The snapshot directory
    and file name can be changed with the Redis `dir` and `dbfilename`
    configuration settings.

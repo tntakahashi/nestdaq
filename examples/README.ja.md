@@ -206,6 +206,8 @@ host package managerで`otelcol-contrib`をインストールした場合は、C
 <a id="3123-persistence-and-endpoint"></a>
 ##### 3.1.2.3. データ保存とendpoint
 
+   RDB snapshotは、Redisがmemory上に保持するdatasetを、ある時点でbinary fileへ
+   保存したものです。Redisは再起動後のデータ復元にRDB snapshotを使用できます。
    RedisはdefaultでRDB snapshotを`dump.rdb`へ書き込みます。snapshot directoryと
    file nameはRedisの`dir`および`dbfilename`設定で変更できます。
 
