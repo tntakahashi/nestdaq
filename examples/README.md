@@ -340,6 +340,10 @@ The following diagram separates the local example into three groups.
 Solid lines show the normal data and control paths.
 Dashed lines show optional telemetry, inspection, and external-tool paths.
 Directed arrows point from a client to a server.
+An arrow shows the connection direction, not necessarily the direction in which
+data is sent or received.
+After a connection is established, the data direction depends on the protocol
+and socket type.
 The FairMQ PUSH/PULL connection has no arrow because its client and server
 roles depend on the bind/connect configuration.
 The letters correspond to steps A through H in the startup sequence above.

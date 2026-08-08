@@ -352,6 +352,8 @@ host package managerで`otelcol-contrib`をインストールした場合は、C
 実線は通常のdataおよび制御経路、破線は省略可能なtelemetry、確認用tool、
 external toolの経路です。
 矢印はclientからserverへ向けています。
+矢印が示すのはconnectionの向きであり、dataを送受信する向きとは限りません。
+connection確立後のdataの向きはprotocolとsocket typeによって決まります。
 FairMQ PUSH/PULL接続のclientとserverはbind/connect設定によって変わるため、
 この接続には矢印を付けていません。
 図中のアルファベットは、上記の起動sequenceにあるstep AからHに対応します。
