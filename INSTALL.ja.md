@@ -309,7 +309,7 @@ Redis 7.xの保守用設定については`cmake/dependencies/redis-server-7.cma
 | [doxygen-awesome-css](https://github.com/jothepro/doxygen-awesome-css)   | 2.4.2                    | `doxygen-awesome-css_VERSION`    |
 
 <a id="redis-server-and-modules"></a>
-#### 2.4.1 Redis serverとmodule
+#### 2.4.1 Redis server、Redis module、Redis Web GUI
 
 NestDAQアプリケーションの稼働中にはRedisが必要ですが、直接のライブラリ依存関係ではありません。
 [Redis Stack](https://redis.io/about/redis-stack/)は、RedisにRedisBloom、RediSearch、RedisJSON、RedisTimeSeriesを組み合わせたdistributionです。
@@ -326,7 +326,6 @@ Redis 8以降では、[これらのmoduleが従来提供していた機能がRed
 このrepositoryでは、既存のCMake option、file name、Redis 7 container imageでRedis Stackおよびmoduleという用語を維持しています。
 
 RedisInsightは、Redisへ接続してデータの確認やcommandの実行を行うための独立したWeb GUIです。
-Redis Stack packageとcontainer imageには含まれますが、Redis Stack ServerとRedis 8には含まれません。
 
 ##### 2.4.1.1 インストールされるcomponentの対応表
 

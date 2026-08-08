@@ -294,7 +294,7 @@ For Redis 7.x maintenance settings, inspect `cmake/dependencies/redis-server-7.c
 | [doxygen-awesome-css](https://github.com/jothepro/doxygen-awesome-css)   | 2.4.2             | `doxygen-awesome-css_VERSION`    |
 
 <a id="external-runtime-components"></a>
-#### 2.4.1 Redis Server and Modules
+#### 2.4.1 Redis Server, Redis Modules, and Redis Web GUI
 
 Redis is required while NestDAQ applications run, but it is not a direct library dependency.
 [Redis Stack](https://redis.io/about/redis-stack/) combines Redis with RedisBloom, RediSearch, RedisJSON, and RedisTimeSeries.
@@ -311,7 +311,6 @@ Starting with Redis 8, [the capabilities previously provided by these modules ar
 This repository retains the Redis Stack and module terminology in existing CMake options, file names, and Redis 7 container images.
 
 RedisInsight is a separate web-based graphical user interface (GUI) for connecting to Redis, inspecting data, and running commands.
-It is included in the Redis Stack package and container image, but not in Redis Stack Server or Redis 8.
 
 ##### 2.4.1.1 Installed component matrix
 
