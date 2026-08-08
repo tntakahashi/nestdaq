@@ -2,7 +2,7 @@
 
 [English](README.md) | [日本語](README.ja.md)
 
-[Top: NestDAQ](../README.md) | [Previous: Plugins](../plugins/README.md) | [Next: OpenTelemetry Collector container setups](../share/otel-collector-compose/README.md)
+[Top: NestDAQ](../README.md) | [Previous: Package installers](../share/installers/README.md) | [Next: Contribution guidelines](../CONTRIBUTING.md)
 
 This directory contains the CMake files used by the NestDAQ build, the installed `find_package(NestDAQ)` package, and the separate external dependency project.
 For build commands, dependency versions, and user-facing options, see [`INSTALL.md`](../INSTALL.md).

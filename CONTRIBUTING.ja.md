@@ -2,7 +2,7 @@
 
 [English](CONTRIBUTING.md) | [日本語](CONTRIBUTING.ja.md)
 
-[トップ: NestDAQ](README.ja.md) | [前へ: Package installer](share/installers/README.ja.md)
+[トップ: NestDAQ](README.ja.md) | [前へ: CMake](cmake/README.ja.md)
 
 このドキュメントでは、NestDAQへのコントリビューションにおける推奨事項と禁止事項を説明します。
 

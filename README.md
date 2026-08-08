@@ -10,22 +10,34 @@ DAQ application code for specific detectors and hardware is outside the scope of
 
 ## 1. Project guide
 
+### 1.1. User and operator guides
+
 | Path / document | Purpose |
 | :-- | :-- |
 | [INSTALL.md](INSTALL.md) | Prerequisites, dependency versions and build options, NestDAQ build options, external services, examples, and documentation generation. |
 | [examples/](examples/README.md) | Example devices such as `Sampler`, `Sink`, and `NullDevice`, detailed local run procedures, and guidance for [creating custom user devices](examples/README.md#4-creating-your-own-user-device). |
 | [scripts/](scripts/README.md) | Process startup and topology helper scripts, including the `generate-device-skeleton.py` device skeleton generator. |
+| [plugins/](plugins/README.md) | FairMQ plugins for DAQ services, metrics, and parameter configuration. |
 | [controller/](controller/README.md) | The `daq-webctl` HTTP/WebSocket server, Redis control, and telemetry setup. |
 | [share/controller/](share/controller/README.md) | Browser files served by `daq-webctl`. |
-| `nestdaq/` | Core headers and telemetry code, including the version header template and `runDevice.h`, which provides the FairMQ device application entry point and `main()`. |
 | [nestdaq/telemetry/](nestdaq/telemetry/README.md) | OpenTelemetry integration that can be enabled when needed. |
-| [plugins/](plugins/README.md) | FairMQ plugins for DAQ services, metrics, and parameter configuration. |
-| [cmake/](cmake/README.md) | CMake helpers, installed package files, and the external dependency build project. |
-| [tests/](tests/) | C++ tests and test support files. |
-| `share/` | Configuration and helper files installed with NestDAQ. |
-| [share/otel-collector-compose/](share/otel-collector-compose/README.md) | Local OpenTelemetry Collector and backend Compose stacks, run with `docker compose` or `podman compose`, for [OpenSearch](share/otel-collector-compose/opensearch/README.md), [Victoria](share/otel-collector-compose/victoria/README.md), and [ClickStack](share/otel-collector-compose/clickhouse/README.md). |
 | [share/redis-stack-container/](share/redis-stack-container/README.md) | Helper scripts for running [Redis Stack](INSTALL.md#external-runtime-components) containers. |
+| [share/otel-collector-compose/](share/otel-collector-compose/README.md) | Local OpenTelemetry Collector, storage, and visualization Compose stacks, run with `docker compose` or `podman compose`, for [OpenSearch](share/otel-collector-compose/opensearch/README.md), [Victoria](share/otel-collector-compose/victoria/README.md), and [ClickStack](share/otel-collector-compose/clickhouse/README.md). |
 | [share/installers/](share/installers/README.md) | `apt` and `dnf` helper scripts for installing external services on the host. |
+
+### 1.2. Repository reference
+
+| Path / document | Purpose |
+| :-- | :-- |
+| `nestdaq/` | Core headers and telemetry code, including the version header template and `runDevice.h`, which provides the FairMQ device application entry point and `main()`. |
+| `share/` | Configuration and helper files installed with NestDAQ. |
+| [tests/](tests/) | C++ tests and test support files. |
+
+### 1.3. Developer guides
+
+| Path / document | Purpose |
+| :-- | :-- |
+| [cmake/](cmake/README.md) | CMake helpers, installed package files, and the external dependency build project. |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | Branch policy, contribution workflow, formatting, static analysis, and naming rules. |
 
 ## 2. Tested systems

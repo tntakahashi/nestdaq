@@ -2,7 +2,7 @@
 
 [English](README.md) | [日本語](README.ja.md)
 
-[トップ: NestDAQ](../README.ja.md) | [前へ: Telemetry](../nestdaq/telemetry/README.ja.md) | [次へ: CMake](../cmake/README.ja.md)
+[トップ: NestDAQ](../README.ja.md) | [前へ: スクリプト](../scripts/README.ja.md) | [次へ: Web controller](../controller/README.ja.md)
 
 NestDAQは、service情報のRedisへのpublish、device動作中のprocessおよびchannel metricsの収集、Redis-backed configuration keyからのFairMQ program optionのloadを行うFairMQ pluginをinstallします。
 

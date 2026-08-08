@@ -2,7 +2,7 @@
 
 [English](README.md) | [日本語](README.ja.md)
 
-[トップ: NestDAQ](../../../README.ja.md) | [前へ: Victoria設定](../victoria/README.ja.md) | [次へ: Redis container](../../redis-stack-container/README.ja.md)
+[トップ: NestDAQ](../../../README.ja.md) | [前の保存先候補: Victoria](../victoria/README.ja.md) | [次へ: Package installer](../../installers/README.ja.md)
 
 このローカル検証用スタックは、ClickStack OpenTelemetry CollectorでOpenTelemetryのログ、メトリクス、トレースを受信します。
 受信したデータをClickHouseに保存し、ClickStackユーザーインターフェース(UI)で表示します。

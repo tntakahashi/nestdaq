@@ -2,7 +2,7 @@
 
 [English](README.md) | [日本語](README.ja.md)
 
-[Top: NestDAQ](../README.md) | [Previous: Telemetry](../nestdaq/telemetry/README.md) | [Next: CMake](../cmake/README.md)
+[Top: NestDAQ](../README.md) | [Previous: Scripts](../scripts/README.md) | [Next: Web controller](../controller/README.md)
 
 NestDAQ installs FairMQ plugins that publish service information to Redis, collect process and channel metrics while a device is running, and load FairMQ program options from Redis-backed configuration keys.
 

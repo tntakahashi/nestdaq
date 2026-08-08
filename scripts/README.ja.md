@@ -2,7 +2,7 @@
 
 [English](README.md) | [日本語](README.ja.md)
 
-[トップ: NestDAQ](../README.ja.md) | [前へ: サンプル](../examples/README.ja.md) | [次へ: Web controller](../controller/README.ja.md)
+[トップ: NestDAQ](../README.ja.md) | [前へ: サンプル](../examples/README.ja.md) | [次へ: Plugin](../plugins/README.ja.md)
 
 このディレクトリには、NestDAQ pluginの使用方法を示すscriptがあります。
 scriptは別の作業directoryへcopyできます。

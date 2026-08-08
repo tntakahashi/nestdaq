@@ -2,7 +2,7 @@
 
 [English](README.md) | [日本語](README.ja.md)
 
-[トップ: NestDAQ](../../README.ja.md) | [前へ: CMake](../../cmake/README.ja.md) | [次へ: OpenSearch設定](opensearch/README.ja.md)
+[トップ: NestDAQ](../../README.ja.md) | [前へ: Redis container](../redis-stack-container/README.ja.md) | [次へ: OpenSearch設定](opensearch/README.ja.md)
 
 この文書で**Compose**とは、Docker Compose (`docker compose`)またはPodman Compose (`podman compose`)を指します。
 このディレクトリには、ローカル検証用のCompose構成が含まれています。

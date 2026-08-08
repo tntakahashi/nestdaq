@@ -2,7 +2,7 @@
 
 [English](README.md) | [日本語](README.ja.md)
 
-[Top: NestDAQ](../../README.md) | [Previous: CMake](../../cmake/README.md) | [Next: OpenSearch setup](opensearch/README.md)
+[Top: NestDAQ](../../README.md) | [Previous: Redis containers](../redis-stack-container/README.md) | [Next: OpenSearch setup](opensearch/README.md)
 
 In this documentation, **Compose** means either Docker Compose (`docker compose`) or Podman Compose (`podman compose`).
 This directory contains Compose setups for local validation.

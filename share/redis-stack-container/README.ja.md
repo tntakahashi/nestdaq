@@ -2,7 +2,7 @@
 
 [English](README.md) | [日本語](README.ja.md)
 
-[トップ: NestDAQ](../../README.ja.md) | [前へ: ClickStack設定](../otel-collector-compose/clickhouse/README.ja.md) | [次へ: Package installer](../installers/README.ja.md)
+[トップ: NestDAQ](../../README.ja.md) | [前へ: Telemetry](../../nestdaq/telemetry/README.ja.md) | [次へ: OpenTelemetry Collector container設定](../otel-collector-compose/README.ja.md)
 
 このディレクトリには、NestDAQのローカル検証用に[Redis Stack](../../INSTALL.ja.md#redis-server-and-modules) containerを起動するhelper scriptが含まれています。
 これらのcontainerはhost上にportを公開し、デフォルトではRedis authenticationを有効にしません。

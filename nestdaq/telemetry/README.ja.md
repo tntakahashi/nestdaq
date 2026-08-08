@@ -2,7 +2,7 @@
 
 [English](README.md) | [日本語](README.ja.md)
 
-[トップ: NestDAQ](../../README.ja.md) | [前へ: Web controller assets](../../share/controller/README.ja.md) | [次へ: Plugin](../../plugins/README.ja.md)
+[トップ: NestDAQ](../../README.ja.md) | [前へ: Web controller assets](../../share/controller/README.ja.md) | [次へ: Redis container](../../share/redis-stack-container/README.ja.md)
 
 NestDAQテレメトリーは、FairMQベースのdeviceおよびcontroller process向けに、必要に応じて有効にできるOpenTelemetry統合です。
 application executableはOpenTelemetryへ直接linkしません。

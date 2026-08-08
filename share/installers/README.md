@@ -2,7 +2,7 @@
 
 [English](README.md) | [日本語](README.ja.md)
 
-[Top: NestDAQ](../../README.md) | [Previous: Redis containers](../redis-stack-container/README.md) | [Next: Contribution guidelines](../../CONTRIBUTING.md)
+[Top: NestDAQ](../../README.md) | [Previous: ClickStack setup](../otel-collector-compose/clickhouse/README.md) | [Next: CMake](../../cmake/README.md)
 
 This directory contains helper scripts for installing and updating external services with the host package manager.
 They provide an alternative to the local **Compose** examples, where Compose means either `docker compose` or `podman compose`.

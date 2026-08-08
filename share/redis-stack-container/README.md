@@ -2,7 +2,7 @@
 
 [English](README.md) | [日本語](README.ja.md)
 
-[Top: NestDAQ](../../README.md) | [Previous: ClickStack setup](../otel-collector-compose/clickhouse/README.md) | [Next: Package installers](../installers/README.md)
+[Top: NestDAQ](../../README.md) | [Previous: Telemetry](../../nestdaq/telemetry/README.md) | [Next: OpenTelemetry Collector container setups](../otel-collector-compose/README.md)
 
 This directory contains helper scripts for starting [Redis Stack](../../INSTALL.md#external-runtime-components) containers for local NestDAQ validation.
 The containers publish ports on the host and do not enable Redis authentication by default.

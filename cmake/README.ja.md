@@ -2,7 +2,7 @@
 
 [English](README.md) | [日本語](README.ja.md)
 
-[トップ: NestDAQ](../README.ja.md) | [前へ: Plugin](../plugins/README.ja.md) | [次へ: OpenTelemetry Collector container設定](../share/otel-collector-compose/README.ja.md)
+[トップ: NestDAQ](../README.ja.md) | [前へ: Package installer](../share/installers/README.ja.md) | [次へ: コントリビューションガイドライン](../CONTRIBUTING.ja.md)
 
 このディレクトリには、NestDAQのビルド、インストール済みの`find_package(NestDAQ)` package、および独立した外部依存関係projectで使用するCMake fileがあります。
 ビルドコマンド、依存関係のバージョン、user向けoptionについては[`INSTALL.ja.md`](../INSTALL.ja.md)を参照してください。

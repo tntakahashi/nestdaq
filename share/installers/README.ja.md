@@ -2,7 +2,7 @@
 
 [English](README.md) | [日本語](README.ja.md)
 
-[トップ: NestDAQ](../../README.ja.md) | [前へ: Redis container](../redis-stack-container/README.ja.md) | [次へ: コントリビューションガイドライン](../../CONTRIBUTING.ja.md)
+[トップ: NestDAQ](../../README.ja.md) | [前へ: ClickStack設定](../otel-collector-compose/clickhouse/README.ja.md) | [次へ: CMake](../../cmake/README.ja.md)
 
 このディレクトリには、hostのpackage managerで外部serviceをインストールおよび更新するための補助scriptが含まれています。
 これらのscriptは、ローカルの**Compose**例に代わる方法を提供します。
