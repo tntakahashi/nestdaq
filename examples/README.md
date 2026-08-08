@@ -3,8 +3,8 @@
 [English](README.md) | [日本語](README.ja.md)
 
 This directory contains small NestDAQ device examples.
-The main NestDAQ build includes them because `NestDAQ_BUILD_EXAMPLES` defaults to `ON`.
-Set `NestDAQ_BUILD_EXAMPLES=OFF` to exclude the examples from the main build and build them separately as a standalone CMake project after installing NestDAQ.
+The main NestDAQ build includes them because the `NestDAQ_BUILD_EXAMPLES` CMake option defaults to `ON`.
+Set this CMake option to `OFF` with `-DNestDAQ_BUILD_EXAMPLES=OFF` to exclude the examples from the main build and build them separately as a standalone CMake project after installing NestDAQ.
 
 ## 1. Example Devices
 
@@ -28,9 +28,12 @@ Enable the telemetry examples with command-line options such as `--otel-metric-p
 ## 2. Build
 
 The main NestDAQ build builds and installs these examples by default.
-Configure with `-DNestDAQ_BUILD_EXAMPLES=OFF` to skip them.
+To skip them, set the NestDAQ CMake option `NestDAQ_BUILD_EXAMPLES` to `OFF` by passing `-DNestDAQ_BUILD_EXAMPLES=OFF` when configuring the project.
 
 To build the examples separately, install NestDAQ first and then configure the examples with the NestDAQ install prefix in `CMAKE_PREFIX_PATH`.
+
+In the command below, `CMAKE_PREFIX_PATH` and `CMAKE_INSTALL_PREFIX` are CMake cache variables set with `-D`.
+The `-S` and `-B` arguments are `cmake` command-line options that select the source and build directories.
 
 Lines beginning with `#` inside shell command examples are comments for the reader and are not executed by the shell.
 
@@ -151,9 +154,9 @@ B. Start Redis.
    was disabled at dependency build time, omit the corresponding `--loadmodule`
    line.
 
-   If Redis 7.x server was built with standalone RedisTimeSeries by configuring
-   external dependencies with `-DWITH_REDIS_STACK=OFF
-   -DWITH_REDIS_SERVER_7=ON`, load only the installed RedisTimeSeries module:
+   If Redis 7.x server was built with standalone RedisTimeSeries by setting the
+   CMake options `WITH_REDIS_STACK=OFF` and `WITH_REDIS_SERVER_7=ON`, load only
+   the installed RedisTimeSeries module:
 
    ```sh
    <install-prefix>/bin/redis-server \
@@ -735,8 +738,9 @@ cmake --build ./build-MyDevice --parallel
 cmake --install ./build-MyDevice
 ```
 
-`CMAKE_PREFIX_PATH` must point to the NestDAQ install prefix so CMake can find
-`NestDAQConfig.cmake`. `CMAKE_INSTALL_PREFIX` is where the new device
+The CMake cache variable `CMAKE_PREFIX_PATH` must point to the NestDAQ install
+prefix so CMake can find `NestDAQConfig.cmake`. The CMake cache variable
+`CMAKE_INSTALL_PREFIX` is where the new device
 executable is installed. It may be the same prefix as NestDAQ or a separate
 prefix.
 
