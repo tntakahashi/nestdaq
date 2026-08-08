@@ -3,9 +3,7 @@
 [English](README.md) | [日本語](README.ja.md)
 
 このディレクトリには、小規模なNestDAQ device exampleがあります。
-`NestDAQ_BUILD_EXAMPLES` CMake optionのdefaultは`ON`であるため、NestDAQのmain buildはexampleを含みます。
-main buildから除外するには、`-DNestDAQ_BUILD_EXAMPLES=OFF`を指定して、このCMake optionを`OFF`に設定します。
-除外したexampleは、NestDAQのinstall後に独立したCMake projectとしてbuildできます。
+CMake option `NestDAQ_BUILD_EXAMPLES`は、NestDAQのmain buildにexampleを含めるかどうかを制御し、defaultは`ON`です。
 
 <a id="1-example-devices"></a>
 ## 1. デバイス例
@@ -31,12 +29,12 @@ device起動時に`--otel-metric-protocol=console`と`--otel-trace-protocol=cons
 ## 2. ビルド
 
 NestDAQのmain buildはdefaultでこれらのexampleをビルドしてインストールします。
-除外するには、projectのconfigure時に`-DNestDAQ_BUILD_EXAMPLES=OFF`を指定し、NestDAQ CMake optionの`NestDAQ_BUILD_EXAMPLES`を`OFF`に設定します。
+除外するには、`-DNestDAQ_BUILD_EXAMPLES=OFF`を指定してNestDAQをconfigureします。
 
 exampleを別にbuildする場合は、先にNestDAQをinstallします。
 次に、NestDAQのinstall prefixを`CMAKE_PREFIX_PATH`へ設定してexampleをconfigureします。
 
-以下のcommandでは、`CMAKE_PREFIX_PATH`と`CMAKE_INSTALL_PREFIX`は`-D`で設定するCMake cache variableです。
+以下のcommandでは、`-D`でCMake cache variableの`CMAKE_PREFIX_PATH`と`CMAKE_INSTALL_PREFIX`を設定します。
 `-S`と`-B`は、source directoryとbuild directoryを選択する`cmake` command-line optionです。
 
 shell command例の中で`#`から始まる行は読者向けのcommentであり、shellでは実行されません。
@@ -749,10 +747,9 @@ cmake --build ./build-MyDevice --parallel
 cmake --install ./build-MyDevice
 ```
 
-`CMAKE_PREFIX_PATH` CMake cache variableはNestDAQ install prefixを指す必要があります。これにより
-CMakeが`NestDAQConfig.cmake`を見つけられます。`CMAKE_INSTALL_PREFIX` CMake cache variableは
-新しいdevice executableのインストール先です。NestDAQと同じprefixでも、
-別のprefixでも構いません。
+`CMAKE_PREFIX_PATH`と`CMAKE_INSTALL_PREFIX`はCMake cache variableです。
+`CMAKE_PREFIX_PATH`には、CMakeが`NestDAQConfig.cmake`を検出できるようにNestDAQ install prefixを指定します。
+`CMAKE_INSTALL_PREFIX`には、新しいdeviceのインストール先を指定します。NestDAQと同じprefixでも、別のprefixでも構いません。
 
 <a id="46-running-the-new-device"></a>
 ### 4.6. 新しいデバイスの実行
