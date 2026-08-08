@@ -312,12 +312,21 @@ Redis 7.xの保守用設定については`cmake/dependencies/redis-server-7.cma
 #### 2.4.1 Redis serverとmodule
 
 NestDAQアプリケーションの稼働中にはRedisが必要ですが、直接のライブラリ依存関係ではありません。
-[Redis Stack](https://redis.io/about/redis-stack/)は、RedisにSearch and Query、JSON、Time Series、probabilistic data structureの機能を組み合わせたdistributionです。
-Redis Stack ServerはRedisとこれらの機能を含み、Redis Stack packageとcontainer imageはRedisInsightも含みます。
-RedisInsightは、Redisへ接続してデータの確認やcommandの実行を行うためのWeb GUIです。
-RedisInsightは独立したapplicationであり、Redis 8には組み込まれていません。
-Redis 8以降では、[Search and Query、JSON、Time Series、probabilistic data structureの機能がRedis Open Sourceへ組み込まれ](https://redis.io/docs/latest/operate/oss_and_stack/stack-with-enterprise/modules-lifecycle/)、個別のRedis Stack distributionを置き換えました。
+[Redis Stack](https://redis.io/about/redis-stack/)は、RedisにRedisBloom、RediSearch、RedisJSON、RedisTimeSeriesを組み合わせたdistributionです。
+
+| Module | 機能 |
+| :-- | :-- |
+| RedisBloom | Probabilistic data structure |
+| RediSearch | Search and Query |
+| RedisJSON | JSON data |
+| RedisTimeSeries | Time-series data |
+
+Redis Stack ServerはRedisとこれらの機能を含みます。
+Redis 8以降では、[これらのmoduleが従来提供していた機能がRedis Open Sourceへ組み込まれ](https://redis.io/docs/latest/operate/oss_and_stack/stack-with-enterprise/modules-lifecycle/)、個別のRedis Stack distributionを置き換えました。
 このrepositoryでは、既存のCMake option、file name、Redis 7 container imageでRedis Stackおよびmoduleという用語を維持しています。
+
+RedisInsightは、Redisへ接続してデータの確認やcommandの実行を行うための独立したWeb GUIです。
+Redis Stack packageとcontainer imageには含まれますが、Redis Stack ServerとRedis 8には含まれません。
 
 ##### 2.4.1.1 インストールされるcomponentの対応表
 

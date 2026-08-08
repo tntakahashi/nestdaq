@@ -297,12 +297,21 @@ For Redis 7.x maintenance settings, inspect `cmake/dependencies/redis-server-7.c
 #### 2.4.1 Redis Server and Modules
 
 Redis is required while NestDAQ applications run, but it is not a direct library dependency.
-[Redis Stack](https://redis.io/about/redis-stack/) combines Redis with Search and Query, JSON, Time Series, and probabilistic data-structure capabilities.
-Redis Stack Server contains Redis and these capabilities, while the Redis Stack package and container image also include RedisInsight.
-RedisInsight is a web-based graphical user interface (GUI) for connecting to Redis, inspecting data, and running commands.
-RedisInsight is a separate application and is not built into Redis 8.
-Starting with Redis 8, [the Search and Query, JSON, Time Series, and probabilistic data-structure capabilities are built into Redis Open Source](https://redis.io/docs/latest/operate/oss_and_stack/stack-with-enterprise/modules-lifecycle/), which replaces the separate Redis Stack distribution.
+[Redis Stack](https://redis.io/about/redis-stack/) combines Redis with RedisBloom, RediSearch, RedisJSON, and RedisTimeSeries.
+
+| Module | Capability |
+| :-- | :-- |
+| RedisBloom | Probabilistic data structures |
+| RediSearch | Search and Query |
+| RedisJSON | JSON data |
+| RedisTimeSeries | Time-series data |
+
+Redis Stack Server contains Redis and these capabilities.
+Starting with Redis 8, [the capabilities previously provided by these modules are built into Redis Open Source](https://redis.io/docs/latest/operate/oss_and_stack/stack-with-enterprise/modules-lifecycle/), which replaces the separate Redis Stack distribution.
 This repository retains the Redis Stack and module terminology in existing CMake options, file names, and Redis 7 container images.
+
+RedisInsight is a separate web-based graphical user interface (GUI) for connecting to Redis, inspecting data, and running commands.
+It is included in the Redis Stack package and container image, but not in Redis Stack Server or Redis 8.
 
 ##### 2.4.1.1 Installed component matrix
 
