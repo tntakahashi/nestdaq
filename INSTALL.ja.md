@@ -317,6 +317,8 @@ Redis Stack ServerはRedisとこれらの機能を含み、Redis Stack package�
 Redis 8以降では、[これらの機能がRedis Open Sourceへ組み込まれ](https://redis.io/docs/latest/operate/oss_and_stack/stack-with-enterprise/modules-lifecycle/)、個別のRedis Stack distributionを置き換えました。
 このrepositoryでは、既存のCMake option、file name、Redis 7 container imageでRedis Stackおよびmoduleという用語を維持しています。
 
+##### 2.4.1.1 インストールされるcomponentの対応表
+
 このrepositoryがサポートする各導入方法で何が用意されるかを次の表に示します。
 
 | インストールされるもの | CMake: Redis 8 (デフォルト) | CMake: Redis 7 | Container: Redis Stack | Container: Stack Server | Container: Redis 8 | Host package (デフォルト) |
@@ -328,19 +330,36 @@ Redis 8以降では、[これらの機能がRedis Open Sourceへ組み込まれ]
 | RedisTimeSeries | Yes | Yes (standalone 1.x) | Yes | Yes | Yes | Yes |
 | RedisInsight | No | No | Yes | No | No | No |
 
-CMakeによるRedis 8のビルドは、選択したcomponentと生成した`redis-full.conf`を`CMAKE_INSTALL_PREFIX`以下にインストールします。
+##### 2.4.1.2 CMakeビルドとインストールされる設定file
+
+CMakeによるRedis 8のビルドは、選択したcomponentを`CMAKE_INSTALL_PREFIX`以下にインストールします。
 各componentは対応する`REDIS_BUILD_*`optionで無効化できます。
 CMakeによるRedis 7のビルドでは、Redis serverに加えてRedisTimeSeriesのみを提供します。
 どちらのCMakeビルドもserviceのインストールやRedisの起動は行いません。
+
+どちらのCMakeビルドでも、デフォルトでは`<install-prefix>/etc/redis/`以下に次の設定fileをインストールします。
+
+- `redis.conf`は、upstreamの基本設定を変更せずにインストールしたfileです。
+- `redis-full.conf`は、インストール時に生成するfileです。
+  `redis.conf`を絶対pathでincludeし、インストールした各moduleの絶対pathを`loadmodule`に設定します。
+
+このため、どの作業directoryからでも、インストールした`redis-full.conf`を`redis-server`へ直接指定できます。
+起動例とデータ保存設定については[`examples/README.ja.md`](examples/README.ja.md#312-step-b-start-redis)を参照してください。
+
+##### 2.4.1.3 Container helper
 
 Container列は[`share/redis-stack-container/README.ja.md`](share/redis-stack-container/README.ja.md)のhelperを指します。
 デフォルトではbind mountしたdirectoryを使用し、DockerまたはPodmanが管理するvolumeも選択できます。
 Redis Stack containerはRedisInsightを含むため開発およびlocal確認向けです。Stack ServerおよびRedis 8 containerはRedisInsightを含みません。
 
+##### 2.4.1.4 Host package
+
 デフォルトのhost package経路では、Redis 8.2.7をsystem管理領域へインストールしますが、Redisは起動しません。
 DebianおよびUbuntuでversionを固定する場合は`redis`、`redis-server`、`redis-sentinel`、`redis-tools`をインストールし、RPM系では`redis`packageをインストールします。
 設定したrepositoryが該当packageを提供する場合は、`REDIS_PACKAGE=redis-stack REDIS_VERSION=latest`を指定してRedisInsightを含むRedis Stack packageをインストールできます。
 Packageおよびserviceの管理方法は[`share/installers/README.ja.md`](share/installers/README.ja.md)を参照してください。
+
+##### 2.4.1.5 外部で用意したRedisの選択
 
 Redis Stackをコンテナまたはhost packageで用意する場合は、外部依存関係のconfigure commandに`-DWITH_REDIS_STACK=OFF`を追加してください。
 `cmake/dependencies/`以下にあるRedis Stack用CMake fileとhelper shell scriptは、Redis 8以降を対象としています。
@@ -348,6 +367,8 @@ Redis 7.xではRedisTimeSeries 1.xをRedis 8の`redis/modules`tree経由では�
 
 package installerは、デフォルトでRedis Stack moduleを含むRedis 8.2.7をインストールしますが、RedisInsightは含みません。
 RedisInsightが必要でrepositoryに該当packageがある場合は、Redis Stack container helper、または`REDIS_PACKAGE=redis-stack`と`REDIS_VERSION=latest`を使用してください。
+
+##### 2.4.1.6 ビルド制約とversion
 
 RediSearchにはC++20をサポートするcompilerが必要です。
 AlmaLinux 8のGCC 8.5では、RediSearchが`<ranges>`などのC++20機能を使用するため、`REDIS_BUILD_REDISEARCH=ON`のビルドは失敗します。

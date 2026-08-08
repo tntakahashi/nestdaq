@@ -302,6 +302,8 @@ Redis Stack Server contains Redis and these capabilities, while the Redis Stack 
 Starting with Redis 8, [these capabilities are built into Redis Open Source](https://redis.io/docs/latest/operate/oss_and_stack/stack-with-enterprise/modules-lifecycle/), which replaces the separate Redis Stack distribution.
 This repository retains the Redis Stack and module terminology in existing CMake options, file names, and Redis 7 container images.
 
+##### 2.4.1.1 Installed component matrix
+
 The following matrix shows which components each supported provisioning method provides.
 
 | Installed component | CMake: Redis 8 (default) | CMake: Redis 7 | Container: Redis Stack | Container: Stack Server | Container: Redis 8 | Host package (default) |
@@ -313,19 +315,36 @@ The following matrix shows which components each supported provisioning method p
 | RedisTimeSeries | Yes | Yes (standalone 1.x) | Yes | Yes | Yes | Yes |
 | RedisInsight | No | No | Yes | No | No | No |
 
-The CMake Redis 8 build installs the selected components and a generated `redis-full.conf` under `CMAKE_INSTALL_PREFIX`.
+##### 2.4.1.2 CMake build and installed configuration files
+
+The CMake Redis 8 build installs the selected components under `CMAKE_INSTALL_PREFIX`.
 Individual components can be disabled with their `REDIS_BUILD_*` options.
 The CMake Redis 7 build provides only RedisTimeSeries in addition to the Redis server.
 Neither CMake build installs a service or starts Redis.
+
+Both CMake build paths install the following configuration files under `<install-prefix>/etc/redis/` by default:
+
+- `redis.conf` is the unchanged upstream base configuration.
+- `redis-full.conf` is generated during installation.
+  It includes `redis.conf` by absolute path and contains an absolute `loadmodule` path for each installed module.
+
+The installed `redis-full.conf` can therefore be passed directly to `redis-server` from any working directory.
+See [`examples/README.md`](examples/README.md#312-step-b-start-redis) for the startup example and persistence settings.
+
+##### 2.4.1.3 Container helpers
 
 The container columns refer to the helpers in [`share/redis-stack-container/README.md`](share/redis-stack-container/README.md).
 They use bind-mounted directories by default and can use Docker- or Podman-managed volumes instead.
 The Redis Stack container is intended for development and local inspection because it includes RedisInsight; the Stack Server and Redis 8 containers do not include it.
 
+##### 2.4.1.4 Host packages
+
 The default host-package path installs Redis 8.2.7 into system-managed locations but does not start it.
 On Debian and Ubuntu, a pinned installation includes `redis`, `redis-server`, `redis-sentinel`, and `redis-tools`; the RPM-family path installs the `redis` package.
 When the configured repository provides it, `REDIS_PACKAGE=redis-stack REDIS_VERSION=latest` can be used to install the Redis Stack package, including RedisInsight.
 See [`share/installers/README.md`](share/installers/README.md) for package and service management details.
+
+##### 2.4.1.5 Selecting an externally provided Redis
 
 If a container or host package provides Redis Stack, add `-DWITH_REDIS_STACK=OFF` to the external dependency configure command.
 The Redis Stack CMake files and helper shell scripts under `cmake/dependencies/` are intended for Redis 8 or later.
@@ -333,6 +352,8 @@ Redis 7.x uses a separate CMake path because RedisTimeSeries 1.x is built as a s
 
 By default, the package installer installs Redis 8.2.7 with Redis Stack modules but without RedisInsight.
 When RedisInsight is required and the repository provides the package, use the Redis Stack container helper or set `REDIS_PACKAGE=redis-stack` and `REDIS_VERSION=latest`.
+
+##### 2.4.1.6 Build constraints and versions
 
 RediSearch requires a compiler with C++20 support.
 On AlmaLinux 8 with GCC 8.5, builds with `REDIS_BUILD_REDISEARCH=ON` fail because RediSearch uses C++20 features such as `<ranges>`.
