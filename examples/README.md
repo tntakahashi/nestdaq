@@ -335,6 +335,62 @@ uses `localhost:4317`.
    See [`plugins/README.md`](../plugins/README.md#24-daq-command-publishsubscribe-pubsub)
    for the accepted DAQ commands and `RUN` sequencing.
 
+#### 3.1.9. Component Connections
+
+The following diagram shows the connections used by a local NestDAQ example.
+Arrows point from the client or data sender to the service that receives the
+connection or data.
+Solid lines show the required control path, while dashed lines show optional
+telemetry and inspection paths.
+
+```mermaid
+flowchart TB
+  Browser["Web browser"]
+  WebCtl["daq-webctl<br/>HTTP/WebSocket server and Redis client<br/>:8080"]
+  Devices["NestDAQ device processes<br/>for example, Sampler and Sink"]
+  Redis["Redis server<br/>:6379"]
+  Collector["OpenTelemetry Collector Contrib<br/>OTLP gRPC :4317 / HTTP :4318"]
+  OpenSearch["OpenSearch<br/>log and trace storage"]
+  Dashboards["OpenSearch Dashboards<br/>Web UI :5601"]
+  Victoria["VictoriaMetrics / VictoriaLogs / VictoriaTraces<br/>metric, log, and trace storage"]
+  Grafana["Grafana<br/>Web UI :3000"]
+  RedisInsight["RedisInsight<br/>Web UI :8001"]
+  SlowDash["SlowDash<br/>Web UI :18881"]
+
+  Browser -->|"HTTP / WebSocket"| WebCtl
+  WebCtl -->|"Redis commands and Pub/Sub"| Redis
+  Devices -->|"Redis commands and Pub/Sub"| Redis
+
+  Devices -.->|"OTLP telemetry when enabled"| Collector
+  WebCtl -.->|"OTLP logs when enabled"| Collector
+  Collector -.->|"export logs and traces"| OpenSearch
+  Browser -.->|"HTTP"| Dashboards
+  Dashboards -.->|"query"| OpenSearch
+  Collector -.->|"export metrics, logs, and traces"| Victoria
+  Browser -.->|"HTTP"| Grafana
+  Grafana -.->|"query"| Victoria
+  Browser -.->|"HTTP"| RedisInsight
+  RedisInsight -.->|"Redis protocol"| Redis
+  Browser -.->|"HTTP"| SlowDash
+  SlowDash -.->|"query configured Redis data source"| Redis
+```
+
+The browser communicates with device processes through `daq-webctl`; it does
+not connect directly to a device or Redis.
+The device processes and `daq-webctl` are independent Redis clients.
+FairMQ data channels connect device processes directly and do not pass through
+Redis or `daq-webctl`.
+
+OpenSearch with OpenSearch Dashboards and the Victoria services with Grafana are
+alternative telemetry storage and Web UI examples.
+The supplied OpenSearch configuration stores logs and traces, while the
+Victoria configuration stores metrics, logs, and traces.
+RedisInsight is available only when the selected Redis deployment includes it.
+SlowDash is shown as an external Web UI configured to use Redis as its data
+source; the Compose files in this repository do not start SlowDash.
+Actual hostnames and ports depend on whether each component runs on the host or
+in a container network.
+
 ### 3.2. Stop the Local Services
 
 Use the `daq-webctl` Web UI to end the user device processes before stopping the

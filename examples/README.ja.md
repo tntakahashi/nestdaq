@@ -346,6 +346,61 @@ host package managerで`otelcol-contrib`をインストールした場合は、C
    [`plugins/README.ja.md`](../plugins/README.ja.md#24-daq-command-publishsubscribe-pubsub)
    を参照してください。
 
+<a id="319-component-connections"></a>
+#### 3.1.9. Component間の接続
+
+次の図は、ローカル環境でNestDAQ exampleを実行する場合の接続例です。
+矢印は、clientまたはdata送信元から、接続またはdataを受けるserviceへ向けています。
+実線は必須の制御経路、破線は省略可能なtelemetryおよび確認用の経路です。
+
+```mermaid
+flowchart TB
+  Browser["Web browser"]
+  WebCtl["daq-webctl<br/>HTTP/WebSocket server and Redis client<br/>:8080"]
+  Devices["NestDAQ device processes<br/>for example, Sampler and Sink"]
+  Redis["Redis server<br/>:6379"]
+  Collector["OpenTelemetry Collector Contrib<br/>OTLP gRPC :4317 / HTTP :4318"]
+  OpenSearch["OpenSearch<br/>log and trace storage"]
+  Dashboards["OpenSearch Dashboards<br/>Web UI :5601"]
+  Victoria["VictoriaMetrics / VictoriaLogs / VictoriaTraces<br/>metric, log, and trace storage"]
+  Grafana["Grafana<br/>Web UI :3000"]
+  RedisInsight["RedisInsight<br/>Web UI :8001"]
+  SlowDash["SlowDash<br/>Web UI :18881"]
+
+  Browser -->|"HTTP / WebSocket"| WebCtl
+  WebCtl -->|"Redis command and Pub/Sub"| Redis
+  Devices -->|"Redis command and Pub/Sub"| Redis
+
+  Devices -.->|"有効な場合はOTLP telemetry"| Collector
+  WebCtl -.->|"有効な場合はOTLP log"| Collector
+  Collector -.->|"logとtraceをexport"| OpenSearch
+  Browser -.->|"HTTP"| Dashboards
+  Dashboards -.->|"query"| OpenSearch
+  Collector -.->|"metric、log、traceをexport"| Victoria
+  Browser -.->|"HTTP"| Grafana
+  Grafana -.->|"query"| Victoria
+  Browser -.->|"HTTP"| RedisInsight
+  RedisInsight -.->|"Redis protocol"| Redis
+  Browser -.->|"HTTP"| SlowDash
+  SlowDash -.->|"設定したRedis data sourceをquery"| Redis
+```
+
+Web browserは`daq-webctl`を介してdevice processを操作し、deviceまたはRedisへ
+直接接続しません。
+device processと`daq-webctl`は、それぞれ独立したRedis clientです。
+FairMQ data channelはdevice process間を直接接続し、Redisまたは`daq-webctl`を
+経由しません。
+
+OpenSearchとOpenSearch Dashboardsの組み合わせ、およびVictoria serviceとGrafanaの
+組み合わせは、telemetry storageとWeb UIの選択肢です。
+このrepositoryで提供するOpenSearch設定はlogとtraceを保存し、Victoria設定は
+metric、log、traceを保存します。
+RedisInsightを利用できるのは、選択したRedis deploymentにRedisInsightが含まれる場合だけです。
+図のSlowDashは、Redisをdata sourceとして設定した外部Web UIの例です。
+このrepositoryのCompose fileはSlowDashを起動しません。
+実際のhostnameとportは、各componentをhostとcontainer networkのどちらで
+動作させるかによって異なります。
+
 <a id="32-stop-the-local-services"></a>
 ### 3.2. ローカルサービスの停止
 
