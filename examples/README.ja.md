@@ -514,7 +514,7 @@ S-E. OpenTelemetry Collectorとtelemetry storageを停止します。これら�
    directory nameと明示的な破棄commandはCompose設定のREADMEを参照してください。
 
 <a id="33-example-specific-options"></a>
-### 3.3. サンプル固有オプション
+### 3.3. examples固有オプション
 
 exampleはFairMQ option、NestDAQ plugin option、NestDAQ telemetry optionも受け付けます。
 完全なoption setは各executableの`--help`で確認してください。
