@@ -335,61 +335,71 @@ uses `localhost:4317`.
    See [`plugins/README.md`](../plugins/README.md#24-daq-command-publishsubscribe-pubsub)
    for the accepted DAQ commands and `RUN` sequencing.
 
-#### 3.1.9. Component Connections
+#### 3.1.9. Component Connection Groups
 
-The following diagram shows the connections used by a local NestDAQ example.
-Arrows point from the client or data sender to the service that receives the
-connection or data.
-Solid lines show the required control path, while dashed lines show optional
-telemetry and inspection paths.
+The following diagram separates the local example into three groups.
+Solid lines show the normal data and control paths.
+Dashed lines show optional telemetry, inspection, and external-tool paths.
 
 ```mermaid
 flowchart TB
   Browser["Web browser"]
-  WebCtl["daq-webctl<br/>HTTP/WebSocket server and Redis client<br/>:8080"]
-  Devices["NestDAQ device processes<br/>for example, Sampler and Sink"]
-  Redis["Redis server<br/>:6379"]
-  Collector["OpenTelemetry Collector Contrib<br/>OTLP gRPC :4317 / HTTP :4318"]
-  OpenSearch["OpenSearch<br/>log and trace storage"]
-  Dashboards["OpenSearch Dashboards<br/>Web UI :5601"]
-  Victoria["VictoriaMetrics / VictoriaLogs / VictoriaTraces<br/>metric, log, and trace storage"]
-  Grafana["Grafana<br/>Web UI :3000"]
-  RedisInsight["RedisInsight<br/>Web UI :8001"]
-  SlowDash["SlowDash<br/>Web UI :18881"]
+
+  subgraph DevicesGroup["1. NestDAQ device processes"]
+    direction LR
+    Sampler["Sampler"]
+    Sink["Sink"]
+    Sampler -->|"FairMQ PUSH/PULL"| Sink
+  end
+
+  subgraph ServicesGroup["2. Control, Redis, and optional Web UIs"]
+    direction LR
+    WebCtl["daq-webctl<br/>HTTP/WebSocket :8080"]
+    Redis["Redis server<br/>:6379"]
+    RedisInsight["RedisInsight<br/>:8001, optional"]
+    SlowDash["SlowDash<br/>external setup"]
+    Grafana["Grafana<br/>Victoria stack only"]
+
+    WebCtl -->|"commands, state, Pub/Sub"| Redis
+    RedisInsight -.->|"Redis protocol"| Redis
+    SlowDash -.->|"if configured for Redis"| Redis
+  end
+
+  subgraph TelemetryGroup["3. OpenTelemetry and OpenSearch"]
+    direction LR
+    Collector["OpenTelemetry Collector Contrib<br/>OTLP :4317 / :4318"]
+    OpenSearch["OpenSearch<br/>logs and traces"]
+    Dashboards["OpenSearch Dashboards<br/>:5601"]
+
+    Collector -.->|"export logs and traces"| OpenSearch
+    Dashboards -.->|"query"| OpenSearch
+  end
+
+  Sampler -->|"Redis client"| Redis
+  Sink -->|"Redis client"| Redis
+  Sampler -.->|"OTLP when enabled"| Collector
+  Sink -.->|"OTLP when enabled"| Collector
+  WebCtl -.->|"OTLP logs when enabled"| Collector
 
   Browser -->|"HTTP / WebSocket"| WebCtl
-  WebCtl -->|"Redis commands and Pub/Sub"| Redis
-  Devices -->|"Redis commands and Pub/Sub"| Redis
-
-  Devices -.->|"OTLP telemetry when enabled"| Collector
-  WebCtl -.->|"OTLP logs when enabled"| Collector
-  Collector -.->|"export logs and traces"| OpenSearch
-  Browser -.->|"HTTP"| Dashboards
-  Dashboards -.->|"query"| OpenSearch
-  Collector -.->|"export metrics, logs, and traces"| Victoria
-  Browser -.->|"HTTP"| Grafana
-  Grafana -.->|"query"| Victoria
   Browser -.->|"HTTP"| RedisInsight
-  RedisInsight -.->|"Redis protocol"| Redis
   Browser -.->|"HTTP"| SlowDash
-  SlowDash -.->|"query configured Redis data source"| Redis
+  Browser -.->|"HTTP"| Grafana
+  Browser -.->|"HTTP"| Dashboards
 ```
 
-The browser communicates with device processes through `daq-webctl`; it does
-not connect directly to a device or Redis.
-The device processes and `daq-webctl` are independent Redis clients.
-FairMQ data channels connect device processes directly and do not pass through
-Redis or `daq-webctl`.
+The browser reaches device processes through `daq-webctl`; it does not connect
+directly to a device or Redis.
+The FairMQ data channel connects `Sampler` directly to `Sink` and does not pass
+through Redis or `daq-webctl`.
 
-OpenSearch with OpenSearch Dashboards and the Victoria services with Grafana are
-alternative telemetry storage and Web UI examples.
-The supplied OpenSearch configuration stores logs and traces, while the
-Victoria configuration stores metrics, logs, and traces.
-RedisInsight is available only when the selected Redis deployment includes it.
-SlowDash is shown as an external Web UI configured to use Redis as its data
-source; the Compose files in this repository do not start SlowDash.
-Actual hostnames and ports depend on whether each component runs on the host or
-in a container network.
+RedisInsight is available only with a Redis deployment that includes it.
+SlowDash is an external tool and connects to Redis only when its data source is
+configured accordingly.
+The repository provides Grafana with the separate
+[Victoria configuration](../share/otel-collector-compose/victoria/README.md),
+not with the OpenSearch configuration, so this diagram does not connect Grafana
+to OpenSearch.
 
 ### 3.2. Stop the Local Services
 
