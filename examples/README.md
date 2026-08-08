@@ -136,10 +136,45 @@ uses `localhost:4317`.
    this step consistently in `daq-webctl`, `start_device.sh`, and the
    topology/parameter helper scripts.
 
-   If Redis Stack was built and installed with the external dependencies, start
-   the installed Redis server with the Redis Stack modules:
+<a id="3121-start-with-a-configuration-file"></a>
+##### 3.1.2.1. Start with a configuration file
+
+   The dependency install provides two Redis configuration files under
+   `<install-prefix>/etc/redis/`:
+
+   - `redis.conf` is the unchanged upstream base configuration.
+   - `redis-full.conf` includes `redis.conf` and loads each module installed by
+     the dependency build using absolute paths.
+
+   Start Redis directly with the generated configuration when its default
+   settings are suitable:
 
    ```sh
+   # Start Redis with the generated module configuration.
+   <install-prefix>/bin/redis-server \
+     <install-prefix>/etc/redis/redis-full.conf
+   ```
+
+   Copy the file before starting Redis when module loading or persistence must
+   be changed:
+
+   ```sh
+   # Create a local configuration that can be edited.
+   cp <install-prefix>/etc/redis/redis-full.conf ./redis-full.conf
+   # Edit ./redis-full.conf before starting Redis when required.
+   <install-prefix>/bin/redis-server ./redis-full.conf
+   ```
+
+<a id="3122-start-without-a-configuration-file"></a>
+##### 3.1.2.2. Start without a configuration file
+
+   Redis can also be started with built-in defaults while module paths are
+   supplied as command-line options.
+   If Redis Stack was built and installed with the external dependencies, start
+   Redis with the installed modules as follows:
+
+   ```sh
+   # Start Redis 8 and load all modules installed by the default build.
    <install-prefix>/bin/redis-server \
      --loadmodule <install-prefix>/lib/redis/modules/redisbloom.so \
      --loadmodule <install-prefix>/lib/redis/modules/redisearch.so \
@@ -156,28 +191,22 @@ uses `localhost:4317`.
    the installed RedisTimeSeries module:
 
    ```sh
+   # Start Redis 7 and load the standalone RedisTimeSeries module.
    <install-prefix>/bin/redis-server \
      --loadmodule <install-prefix>/lib/redis/modules/redistimeseries.so
    ```
 
-   The dependency install also provides Redis configuration examples under
-   `<install-prefix>/etc/redis/`. `redis.conf` is the upstream base
-   configuration, and `redis-full.conf` is generated with the module paths that
-   were installed by the dependency build. You can copy one of these files,
-   adjust persistence settings or module loading, and start Redis with the
-   config file:
-
-   ```sh
-   cp <install-prefix>/etc/redis/redis-full.conf ./redis-full.conf
-   # Edit ./redis-full.conf if you want to adjust module loading or persistence.
-   <install-prefix>/bin/redis-server ./redis-full.conf
-   ```
+<a id="3123-persistence-and-endpoint"></a>
+##### 3.1.2.3. Persistence and endpoint
 
    Redis writes RDB snapshots to `dump.rdb` by default. The snapshot directory
    and file name can be changed with the Redis `dir` and `dbfilename`
    configuration settings.
 
    The default Redis endpoint is `localhost:6379`.
+
+<a id="3124-container-and-host-package-methods"></a>
+##### 3.1.2.4. Container and host-package methods
 
    Redis Stack can also be run in a container. See
    [`share/redis-stack-container/README.md`](../share/redis-stack-container/README.md)

@@ -143,10 +143,44 @@ host package managerで`otelcol-contrib`をインストールした場合は、C
    containerを使用できます。このstepで起動したRedisのendpointを、`daq-webctl`、
    `start_device.sh`、topology/parameter helper scriptで一貫して使用します。
 
-   外部依存関係とともにRedis Stackをビルドしてインストールした場合、Redis Stack
-   moduleを指定してインストール済みRedis serverを起動します。
+<a id="3121-start-with-a-configuration-file"></a>
+##### 3.1.2.1. 設定fileを使用して起動
+
+   dependency installは`<install-prefix>/etc/redis/`以下に2つのRedis設定fileを
+   インストールします。
+
+   - `redis.conf`はupstreamの基本設定を変更せずにインストールしたfileです。
+   - `redis-full.conf`は`redis.conf`をincludeし、dependency buildでインストールした
+     各moduleを絶対pathでloadします。
+
+   デフォルト設定を変更しない場合は、生成された設定fileを直接指定して起動します。
 
    ```sh
+   # 生成されたmodule設定を使用してRedisを起動します。
+   <install-prefix>/bin/redis-server \
+     <install-prefix>/etc/redis/redis-full.conf
+   ```
+
+   module loadingまたはpersistence設定を変更する場合は、設定fileをcopyしてから
+   Redisを起動します。
+
+   ```sh
+   # 編集するためのlocal設定fileを作成します。
+   cp <install-prefix>/etc/redis/redis-full.conf ./redis-full.conf
+   # 必要な設定を変更してからRedisを起動します。
+   <install-prefix>/bin/redis-server ./redis-full.conf
+   ```
+
+<a id="3122-start-without-a-configuration-file"></a>
+##### 3.1.2.2. 設定fileを使用せずに起動
+
+   Redisの組み込みデフォルト設定を使用し、module pathをcommand-line optionで
+   指定して起動することもできます。
+   外部依存関係とともにRedis Stackをビルドしてインストールした場合は、次のように
+   インストール済みmoduleを指定します。
+
+   ```sh
+   # Redis 8を起動し、デフォルトビルドでインストールした全moduleをloadします。
    <install-prefix>/bin/redis-server \
      --loadmodule <install-prefix>/lib/redis/modules/redisbloom.so \
      --loadmodule <install-prefix>/lib/redis/modules/redisearch.so \
@@ -163,26 +197,21 @@ host package managerで`otelcol-contrib`をインストールした場合は、C
    loadします。
 
    ```sh
+   # Redis 7を起動し、standalone RedisTimeSeries moduleをloadします。
    <install-prefix>/bin/redis-server \
      --loadmodule <install-prefix>/lib/redis/modules/redistimeseries.so
    ```
 
-   dependency installは`<install-prefix>/etc/redis/`以下にRedis設定例も
-   提供します。`redis.conf`はupstreamのbase configurationで、
-   `redis-full.conf`はdependency buildでインストールされたmodule pathを
-   使用して生成されます。いずれかをcopyし、persistence設定やmodule loadingを
-   調整して、config fileを指定してRedisを起動できます。
-
-   ```sh
-   cp <install-prefix>/etc/redis/redis-full.conf ./redis-full.conf
-   # module loadingまたはpersistenceを調整する場合は./redis-full.confを編集します。
-   <install-prefix>/bin/redis-server ./redis-full.conf
-   ```
+<a id="3123-persistence-and-endpoint"></a>
+##### 3.1.2.3. データ保存とendpoint
 
    RedisはdefaultでRDB snapshotを`dump.rdb`へ書き込みます。snapshot directoryと
    file nameはRedisの`dir`および`dbfilename`設定で変更できます。
 
    defaultのRedis endpointは`localhost:6379`です。
+
+<a id="3124-container-and-host-package-methods"></a>
+##### 3.1.2.4. Containerおよびhost packageを使用する方法
 
    Redis Stackはcontainerでも実行できます。
    以下を参照してください。

@@ -344,7 +344,7 @@ CMakeによるRedis 7のビルドでは、Redis serverに加えてRedisTimeSerie
   `redis.conf`を絶対pathでincludeし、インストールした各moduleの絶対pathを`loadmodule`に設定します。
 
 このため、どの作業directoryからでも、インストールした`redis-full.conf`を`redis-server`へ直接指定できます。
-起動例とデータ保存設定については[`examples/README.ja.md`](examples/README.ja.md#312-step-b-start-redis)を参照してください。
+起動例とデータ保存設定については[`examples/README.ja.md`](examples/README.ja.md#3121-start-with-a-configuration-file)を参照してください。
 
 ##### 2.4.1.3 Container helper
 

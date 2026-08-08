@@ -329,7 +329,7 @@ Both CMake build paths install the following configuration files under `<install
   It includes `redis.conf` by absolute path and contains an absolute `loadmodule` path for each installed module.
 
 The installed `redis-full.conf` can therefore be passed directly to `redis-server` from any working directory.
-See [`examples/README.md`](examples/README.md#312-step-b-start-redis) for the startup example and persistence settings.
+See [`examples/README.md`](examples/README.md#3121-start-with-a-configuration-file) for the startup example and persistence settings.
 
 ##### 2.4.1.3 Container helpers
 
