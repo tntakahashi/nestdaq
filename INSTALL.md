@@ -302,14 +302,19 @@ Redis Stack Server contains Redis and these capabilities, while the Redis Stack 
 Starting with Redis 8, [these capabilities are built into Redis Open Source](https://redis.io/docs/latest/operate/oss_and_stack/stack-with-enterprise/modules-lifecycle/), which replaces the separate Redis Stack distribution.
 This repository retains the Redis Stack and module terminology in existing CMake options, file names, and Redis 7 container images.
 
-Use one of the following methods to provide it:
+The following table compares the Redis provisioning methods supported by this repository.
 
-- Build and install Redis Stack from source with the external dependency build.
-  This is the default when `WITH_REDIS_STACK=ON`.
-  Disable individual Redis modules with `REDIS_BUILD_REDISBLOOM`, `REDIS_BUILD_REDISEARCH`, `REDIS_BUILD_REDISJSON`, and `REDIS_BUILD_REDISTIMESERIES`.
-- Build and install Redis 7.x server plus standalone RedisTimeSeries from source with `-DWITH_REDIS_STACK=OFF -DWITH_REDIS_SERVER_7=ON`.
-- Run Redis Stack in a container with the helper scripts in [`share/redis-stack-container/README.md`](share/redis-stack-container/README.md).
-- Install Redis and Redis Stack modules as host packages with the installer helper scripts in [`share/installers/README.md`](share/installers/README.md).
+| Method | Redis server and tools | Search, JSON, Time Series, and probabilistic capabilities | RedisInsight | Operation and data storage |
+| :-- | :-- | :-- | :-- | :-- |
+| CMake dependency build (default) | Builds Redis 8.2.7 from source with `WITH_REDIS_STACK=ON`. | Builds RedisBloom, RediSearch, RedisJSON, and RedisTimeSeries by default. Each component can be disabled with its `REDIS_BUILD_*` option. | No | Installs files and a generated `redis-full.conf` under `CMAKE_INSTALL_PREFIX`. It does not install a service or start Redis. Select the persistence path in the configuration. |
+| CMake dependency build for Redis 7 | Builds Redis 7.4.9, or 7.2.14 when selected, with `WITH_REDIS_STACK=OFF` and `WITH_REDIS_SERVER_7=ON`. | Builds standalone RedisTimeSeries only: 1.12.14 for Redis 7.4 or 1.10.24 for Redis 7.2. | No | Installs files and a generated `redis-full.conf` that loads RedisTimeSeries under `CMAKE_INSTALL_PREFIX`. It does not install a service or start Redis. |
+| Redis Stack container helper | Pulls and runs the pinned Redis Stack 7.4 or 7.2 image with [`run-redis-stack.sh`](share/redis-stack-container/run-redis-stack.sh) or [`run-redis-7.2-stack.sh`](share/redis-stack-container/run-redis-7.2-stack.sh). | Included in the Redis Stack image. | Yes | Uses a bind-mounted directory by default; a Docker- or Podman-managed volume can be selected. Intended for development and local inspection. |
+| Redis Stack Server container helper | Pulls and runs the pinned server-only Redis Stack 7.4 or 7.2 image with [`run-redis-stack-server.sh`](share/redis-stack-container/run-redis-stack-server.sh) or [`run-redis-7.2-stack-server.sh`](share/redis-stack-container/run-redis-7.2-stack-server.sh). | Included in the Redis Stack Server image. | No | Uses a bind-mounted directory by default; a managed volume can be selected. |
+| Redis 8 container helper | Pulls and runs the official Redis 8.2.7 image with [`run-redis-8.2.7.sh`](share/redis-stack-container/run-redis-8.2.7.sh). | Redis 8 provides these capabilities. Verify the running image as described in the container helper documentation. | No | Uses a bind-mounted directory by default; a managed volume can be selected. |
+| Host package installer | Installs Redis 8.2.7 with the OS package manager by default. On Debian and Ubuntu, the pinned installation includes `redis`, `redis-server`, `redis-sentinel`, and `redis-tools`; the RPM-family path installs the `redis` package. | Provided by the Redis 8 package. | No by default. Set `REDIS_PACKAGE=redis-stack` and `REDIS_VERSION=latest` only when the configured repository provides that package and RedisInsight is required. | Installs into system-managed locations but does not start Redis. Use the configuration, service unit, and persistence path supplied by the selected package. See [`share/installers/README.md`](share/installers/README.md). |
+
+The repository does not provide a Redis Compose file.
+The container helpers invoke Docker or Podman directly; Compose files under `share/otel-collector-compose/` provide OpenTelemetry storage and visualization services, not Redis.
 
 If a container or host package provides Redis Stack, add `-DWITH_REDIS_STACK=OFF` to the external dependency configure command.
 The Redis Stack CMake files and helper shell scripts under `cmake/dependencies/` are intended for Redis 8 or later.
