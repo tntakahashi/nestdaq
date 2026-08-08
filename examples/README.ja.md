@@ -521,10 +521,10 @@ exampleはFairMQ option、NestDAQ plugin option、NestDAQ telemetry optionも受
 
 | 実行ファイル | Option | 既定値 | 説明 |
 | :-- | :-- | :-- | :-- |
-| `Sampler` | `--out-chan-name` | `data` | producerが使用するoutput channel name。 |
+| `Sampler` | `--out-chan-name` | `data` | `Sampler`が使用するoutput channel name。 |
 | `Sampler` | `--text` | `Hello` | 各messageで送信するtext payload prefix。 |
 | `Sampler` | `--max-iterations` | `0` | run-loop iterationの最大回数。`0`は無限を意味します。 |
-| `Sink` | `--in-chan-name` | `in` | consumerが使用するinput channel name。 |
+| `Sink` | `--in-chan-name` | `in` | `Sink`が使用するinput channel name。 |
 | `Sink` | `--multipart` | `true` | incoming dataをmultipart messageとして処理します。 |
 
 script-basedの起動例は[`scripts/README.ja.md`](../scripts/README.ja.md)を参照してください。

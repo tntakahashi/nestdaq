@@ -510,10 +510,10 @@ telemetry options. Use `--help` on each executable for the complete option set.
 
 | Executable | Option | Default | Description |
 | :-- | :-- | :-- | :-- |
-| `Sampler` | `--out-chan-name` | `data` | Output channel name used by the producer. |
+| `Sampler` | `--out-chan-name` | `data` | Output channel name used by `Sampler`. |
 | `Sampler` | `--text` | `Hello` | Text payload prefix sent in each message. |
 | `Sampler` | `--max-iterations` | `0` | Maximum number of run-loop iterations. `0` means infinite. |
-| `Sink` | `--in-chan-name` | `in` | Input channel name used by the consumer. |
+| `Sink` | `--in-chan-name` | `in` | Input channel name used by `Sink`. |
 | `Sink` | `--multipart` | `true` | Handle incoming data as multipart messages. |
 
 For script-based launch examples, see [`scripts/README.md`](../scripts/README.md).
