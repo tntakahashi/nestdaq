@@ -339,7 +339,8 @@ CMakeによるRedis 7のビルドでは、Redis serverに加えてRedisTimeSerie
 
 どちらのCMakeビルドでも、デフォルトでは`<install-prefix>/etc/redis/`以下に次の設定fileをインストールします。
 
-- `redis.conf`は、upstreamの基本設定を変更せずにインストールしたfileです。
+- `redis.conf`は[Redis GitHub repository](https://github.com/redis/redis)の
+  source treeにあるfileを変更せずにcopyしたものです。
 - `redis-full.conf`は、インストール時に生成するfileです。
   `redis.conf`を絶対pathでincludeし、インストールした各moduleの絶対pathを`loadmodule`に設定します。
 

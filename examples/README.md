@@ -142,7 +142,8 @@ uses `localhost:4317`.
    The dependency install provides two Redis configuration files under
    `<install-prefix>/etc/redis/`:
 
-   - `redis.conf` is the unchanged upstream base configuration.
+   - `redis.conf` is copied without modification from the source tree in the
+     [Redis GitHub repository](https://github.com/redis/redis).
    - `redis-full.conf` includes `redis.conf` and loads each module installed by
      the dependency build using absolute paths.
 

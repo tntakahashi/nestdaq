@@ -324,7 +324,8 @@ Neither CMake build installs a service or starts Redis.
 
 Both CMake build paths install the following configuration files under `<install-prefix>/etc/redis/` by default:
 
-- `redis.conf` is the unchanged upstream base configuration.
+- `redis.conf` is copied without modification from the source tree in the
+  [Redis GitHub repository](https://github.com/redis/redis).
 - `redis-full.conf` is generated during installation.
   It includes `redis.conf` by absolute path and contains an absolute `loadmodule` path for each installed module.
 

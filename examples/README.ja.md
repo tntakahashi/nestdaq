@@ -149,7 +149,8 @@ host package managerで`otelcol-contrib`をインストールした場合は、C
    dependency installは`<install-prefix>/etc/redis/`以下に2つのRedis設定fileを
    インストールします。
 
-   - `redis.conf`はupstreamの基本設定を変更せずにインストールしたfileです。
+   - `redis.conf`は[Redis GitHub repository](https://github.com/redis/redis)の
+     source treeにあるfileを変更せずにcopyしたものです。
    - `redis-full.conf`は`redis.conf`をincludeし、dependency buildでインストールした
      各moduleを絶対pathでloadします。
 
