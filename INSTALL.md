@@ -304,14 +304,14 @@ This repository retains the Redis Stack and module terminology in existing CMake
 
 The following matrix shows which components each supported provisioning method provides.
 
-| Installed component | CMake: Redis 8 (default) | CMake: Redis 7 | Container: Redis Stack | Container: Stack Server | Container: Redis 8 | Redis Compose | Host package (default) |
-| :-- | :--: | :--: | :--: | :--: | :--: | :--: | :--: |
-| Redis server | Yes (8.2.7) | Yes (7.4.9 or 7.2.14) | Yes (7.4 or 7.2 image) | Yes (7.4 or 7.2 image) | Yes (8.2.7) | No | Yes (8.2.7) |
-| RedisBloom / probabilistic data structures | Yes | No | Yes | Yes | Yes | No | Yes |
-| RediSearch / Search and Query | Yes | No | Yes | Yes | Yes | No | Yes |
-| RedisJSON / JSON | Yes | No | Yes | Yes | Yes | No | Yes |
-| RedisTimeSeries / Time Series | Yes | Yes (standalone 1.x) | Yes | Yes | Yes | No | Yes |
-| RedisInsight | No | No | Yes | No | No | No | No |
+| Installed component | CMake: Redis 8 (default) | CMake: Redis 7 | Container: Redis Stack | Container: Stack Server | Container: Redis 8 | Host package (default) |
+| :-- | :--: | :--: | :--: | :--: | :--: | :--: |
+| Redis server | Yes (8.2.7) | Yes (7.4.9 or 7.2.14) | Yes (7.4 or 7.2 image) | Yes (7.4 or 7.2 image) | Yes (8.2.7) | Yes (8.2.7) |
+| RedisBloom | Yes | No | Yes | Yes | Yes | Yes |
+| RediSearch | Yes | No | Yes | Yes | Yes | Yes |
+| RedisJSON | Yes | No | Yes | Yes | Yes | Yes |
+| RedisTimeSeries | Yes | Yes (standalone 1.x) | Yes | Yes | Yes | Yes |
+| RedisInsight | No | No | Yes | No | No | No |
 
 The CMake Redis 8 build installs the selected components and a generated `redis-full.conf` under `CMAKE_INSTALL_PREFIX`.
 Individual components can be disabled with their `REDIS_BUILD_*` options.
@@ -326,9 +326,6 @@ The default host-package path installs Redis 8.2.7 into system-managed locations
 On Debian and Ubuntu, a pinned installation includes `redis`, `redis-server`, `redis-sentinel`, and `redis-tools`; the RPM-family path installs the `redis` package.
 When the configured repository provides it, `REDIS_PACKAGE=redis-stack REDIS_VERSION=latest` can be used to install the Redis Stack package, including RedisInsight.
 See [`share/installers/README.md`](share/installers/README.md) for package and service management details.
-
-The repository does not provide a Redis Compose file.
-The container helpers invoke Docker or Podman directly; Compose files under `share/otel-collector-compose/` provide OpenTelemetry storage and visualization services, not Redis.
 
 If a container or host package provides Redis Stack, add `-DWITH_REDIS_STACK=OFF` to the external dependency configure command.
 The Redis Stack CMake files and helper shell scripts under `cmake/dependencies/` are intended for Redis 8 or later.

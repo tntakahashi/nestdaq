@@ -319,14 +319,14 @@ Redis 8以降では、[これらの機能がRedis Open Sourceへ組み込まれ]
 
 このrepositoryがサポートする各導入方法で何が用意されるかを次の表に示します。
 
-| インストールされるもの | CMake: Redis 8 (デフォルト) | CMake: Redis 7 | Container: Redis Stack | Container: Stack Server | Container: Redis 8 | Redis Compose | Host package (デフォルト) |
-| :-- | :--: | :--: | :--: | :--: | :--: | :--: | :--: |
-| Redis server | Yes (8.2.7) | Yes (7.4.9または7.2.14) | Yes (7.4または7.2 image) | Yes (7.4または7.2 image) | Yes (8.2.7) | No | Yes (8.2.7) |
-| RedisBloom / probabilistic data structure | Yes | No | Yes | Yes | Yes | No | Yes |
-| RediSearch / Search and Query | Yes | No | Yes | Yes | Yes | No | Yes |
-| RedisJSON / JSON | Yes | No | Yes | Yes | Yes | No | Yes |
-| RedisTimeSeries / Time Series | Yes | Yes (standalone 1.x) | Yes | Yes | Yes | No | Yes |
-| RedisInsight | No | No | Yes | No | No | No | No |
+| インストールされるもの | CMake: Redis 8 (デフォルト) | CMake: Redis 7 | Container: Redis Stack | Container: Stack Server | Container: Redis 8 | Host package (デフォルト) |
+| :-- | :--: | :--: | :--: | :--: | :--: | :--: |
+| Redis server | Yes (8.2.7) | Yes (7.4.9または7.2.14) | Yes (7.4または7.2 image) | Yes (7.4または7.2 image) | Yes (8.2.7) | Yes (8.2.7) |
+| RedisBloom | Yes | No | Yes | Yes | Yes | Yes |
+| RediSearch | Yes | No | Yes | Yes | Yes | Yes |
+| RedisJSON | Yes | No | Yes | Yes | Yes | Yes |
+| RedisTimeSeries | Yes | Yes (standalone 1.x) | Yes | Yes | Yes | Yes |
+| RedisInsight | No | No | Yes | No | No | No |
 
 CMakeによるRedis 8のビルドは、選択したcomponentと生成した`redis-full.conf`を`CMAKE_INSTALL_PREFIX`以下にインストールします。
 各componentは対応する`REDIS_BUILD_*`optionで無効化できます。
@@ -341,9 +341,6 @@ Redis Stack containerはRedisInsightを含むため開発およびlocal確認向
 DebianおよびUbuntuでversionを固定する場合は`redis`、`redis-server`、`redis-sentinel`、`redis-tools`をインストールし、RPM系では`redis`packageをインストールします。
 設定したrepositoryが該当packageを提供する場合は、`REDIS_PACKAGE=redis-stack REDIS_VERSION=latest`を指定してRedisInsightを含むRedis Stack packageをインストールできます。
 Packageおよびserviceの管理方法は[`share/installers/README.ja.md`](share/installers/README.ja.md)を参照してください。
-
-このrepositoryはRedis用Compose fileを提供していません。
-Container helperはDockerまたはPodmanを直接実行します。`share/otel-collector-compose/`以下のCompose fileはOpenTelemetryのデータ保存および可視化serviceを提供するものであり、Redisは含みません。
 
 Redis Stackをコンテナまたはhost packageで用意する場合は、外部依存関係のconfigure commandに`-DWITH_REDIS_STACK=OFF`を追加してください。
 `cmake/dependencies/`以下にあるRedis Stack用CMake fileとhelper shell scriptは、Redis 8以降を対象としています。
