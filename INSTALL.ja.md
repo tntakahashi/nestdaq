@@ -313,15 +313,7 @@ Redis 7.xの保守用設定については`cmake/dependencies/redis-server-7.cma
 
 NestDAQアプリケーションの稼働中にはRedisが必要ですが、直接のライブラリ依存関係ではありません。
 [Redis Stack](https://redis.io/about/redis-stack/)は、RedisにRedisBloom、RediSearch、RedisJSON、RedisTimeSeriesを組み合わせたdistributionです。
-
-| Module | 機能 |
-| :-- | :-- |
-| RedisBloom | Probabilistic data structure |
-| RediSearch | Search and Query |
-| RedisJSON | JSON data |
-| RedisTimeSeries | Time-series data |
-
-Redis Stack ServerはRedisとこれらの機能を含みます。
+Redis Stack ServerはRedisとこれらのmoduleを含みます。
 Redis 8以降では、[これらのmoduleが従来提供していた機能がRedis Open Sourceへ組み込まれ](https://redis.io/docs/latest/operate/oss_and_stack/stack-with-enterprise/modules-lifecycle/)、個別のRedis Stack distributionを置き換えました。
 このrepositoryでは、既存のCMake option、file name、Redis 7 container imageでRedis Stackおよびmoduleという用語を維持しています。
 
@@ -331,14 +323,14 @@ RedisInsightは、Redisへ接続してデータの確認やcommandの実行を�
 
 このrepositoryがサポートする各導入方法で何が用意されるかを次の表に示します。
 
-| インストールされるもの | CMake: Redis 8 (デフォルト) | CMake: Redis 7 | Container: Redis Stack | Container: Stack Server | Container: Redis 8 | Host package (デフォルト) |
-| :-- | :--: | :--: | :--: | :--: | :--: | :--: |
-| Redis server | Yes (8.2.7) | Yes (7.4.9または7.2.14) | Yes (7.4または7.2 image) | Yes (7.4または7.2 image) | Yes (8.2.7) | Yes (8.2.7) |
-| RedisBloom | Yes | No | Yes | Yes | Yes | Yes |
-| RediSearch | Yes | No | Yes | Yes | Yes | Yes |
-| RedisJSON | Yes | No | Yes | Yes | Yes | Yes |
-| RedisTimeSeries | Yes | Yes (standalone 1.x) | Yes | Yes | Yes | Yes |
-| RedisInsight | No | No | Yes | No | No | No |
+| インストールされるもの | 機能 | CMake: Redis 8 (デフォルト) | CMake: Redis 7 | Container: Redis Stack | Container: Stack Server | Container: Redis 8 | Host package (デフォルト) |
+| :-- | :-- | :--: | :--: | :--: | :--: | :--: | :--: |
+| Redis server | In-memory data store | Yes (8.2.7) | Yes (7.4.9または7.2.14) | Yes (7.4または7.2 image) | Yes (7.4または7.2 image) | Yes (8.2.7) | Yes (8.2.7) |
+| RedisBloom | Probabilistic data structure | Yes | No | Yes | Yes | Yes | Yes |
+| RediSearch | Search and Query | Yes | No | Yes | Yes | Yes | Yes |
+| RedisJSON | JSON data | Yes | No | Yes | Yes | Yes | Yes |
+| RedisTimeSeries | Time-series data | Yes | Yes (standalone 1.x) | Yes | Yes | Yes | Yes |
+| RedisInsight | Web GUI | No | No | Yes | No | No | No |
 
 ##### 2.4.1.2 CMakeビルドとインストールされる設定file
 

@@ -298,15 +298,7 @@ For Redis 7.x maintenance settings, inspect `cmake/dependencies/redis-server-7.c
 
 Redis is required while NestDAQ applications run, but it is not a direct library dependency.
 [Redis Stack](https://redis.io/about/redis-stack/) combines Redis with RedisBloom, RediSearch, RedisJSON, and RedisTimeSeries.
-
-| Module | Capability |
-| :-- | :-- |
-| RedisBloom | Probabilistic data structures |
-| RediSearch | Search and Query |
-| RedisJSON | JSON data |
-| RedisTimeSeries | Time-series data |
-
-Redis Stack Server contains Redis and these capabilities.
+Redis Stack Server contains Redis and these modules.
 Starting with Redis 8, [the capabilities previously provided by these modules are built into Redis Open Source](https://redis.io/docs/latest/operate/oss_and_stack/stack-with-enterprise/modules-lifecycle/), which replaces the separate Redis Stack distribution.
 This repository retains the Redis Stack and module terminology in existing CMake options, file names, and Redis 7 container images.
 
@@ -316,14 +308,14 @@ RedisInsight is a separate web-based graphical user interface (GUI) for connecti
 
 The following matrix shows which components each supported provisioning method provides.
 
-| Installed component | CMake: Redis 8 (default) | CMake: Redis 7 | Container: Redis Stack | Container: Stack Server | Container: Redis 8 | Host package (default) |
-| :-- | :--: | :--: | :--: | :--: | :--: | :--: |
-| Redis server | Yes (8.2.7) | Yes (7.4.9 or 7.2.14) | Yes (7.4 or 7.2 image) | Yes (7.4 or 7.2 image) | Yes (8.2.7) | Yes (8.2.7) |
-| RedisBloom | Yes | No | Yes | Yes | Yes | Yes |
-| RediSearch | Yes | No | Yes | Yes | Yes | Yes |
-| RedisJSON | Yes | No | Yes | Yes | Yes | Yes |
-| RedisTimeSeries | Yes | Yes (standalone 1.x) | Yes | Yes | Yes | Yes |
-| RedisInsight | No | No | Yes | No | No | No |
+| Installed component | Capability | CMake: Redis 8 (default) | CMake: Redis 7 | Container: Redis Stack | Container: Stack Server | Container: Redis 8 | Host package (default) |
+| :-- | :-- | :--: | :--: | :--: | :--: | :--: | :--: |
+| Redis server | In-memory data store | Yes (8.2.7) | Yes (7.4.9 or 7.2.14) | Yes (7.4 or 7.2 image) | Yes (7.4 or 7.2 image) | Yes (8.2.7) | Yes (8.2.7) |
+| RedisBloom | Probabilistic data structures | Yes | No | Yes | Yes | Yes | Yes |
+| RediSearch | Search and Query | Yes | No | Yes | Yes | Yes | Yes |
+| RedisJSON | JSON data | Yes | No | Yes | Yes | Yes | Yes |
+| RedisTimeSeries | Time-series data | Yes | Yes (standalone 1.x) | Yes | Yes | Yes | Yes |
+| RedisInsight | Web GUI | No | No | Yes | No | No | No |
 
 ##### 2.4.1.2 CMake build and installed configuration files
 
