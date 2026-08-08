@@ -13,8 +13,8 @@ CMake option `NestDAQ_BUILD_EXAMPLES`は、NestDAQのmain buildにexampleを含�
 | 実行ファイル | 用途 |
 | :-- | :-- |
 | `NullDevice` | data channelを使用せず、NestDAQ `runDevice.h` entry pointとlifecycle hookを実行する最小限のFairMQ device。 |
-| `Sampler` | FairMQ output channelを通じてtext messageを送信し、custom command-line optionを示します。OpenTelemetry spanとmetricsの計装例も示します。 |
-| `Sink` | FairMQ input channelを通じてsingle-partまたはmultipart messageを受信し、channel callback設定を示します。OpenTelemetry spanとmetricsの計装例も示します。 |
+| `Sampler` | FairMQ output channelを通じてtext messageを送信します。custom command-line optionの使用例を示します。OpenTelemetry spanとmetricsの計装例も示します。 |
+| `Sink` | FairMQ input channelを通じてsingle-partまたはmultipart messageを受信します。channel callbackの設定例を示します。OpenTelemetry spanとmetricsの計装例も示します。 |
 
 **lifecycle hook**は、deviceのlifecycleにおける所定の段階でFairMQ state machineが呼び出すmember functionです。
 例えば、`Init()`と`InitTask()`はdeviceを初期化し、`PreRun()`はrunの準備、`PostRun()`はrun終了後の処理を行います。
