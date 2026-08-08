@@ -317,16 +317,30 @@ Redis Stack ServerはRedisとこれらの機能を含み、Redis Stack package�
 Redis 8以降では、[これらの機能がRedis Open Sourceへ組み込まれ](https://redis.io/docs/latest/operate/oss_and_stack/stack-with-enterprise/modules-lifecycle/)、個別のRedis Stack distributionを置き換えました。
 このrepositoryでは、既存のCMake option、file name、Redis 7 container imageでRedis Stackおよびmoduleという用語を維持しています。
 
-このrepositoryがサポートするRedisの導入方法を次の表に示します。
+このrepositoryがサポートする各導入方法で何が用意されるかを次の表に示します。
 
-| 方法 | Redis serverとtool | Search、JSON、Time Series、probabilistic機能 | RedisInsight | 起動方法とデータ保存 |
-| :-- | :-- | :-- | :-- | :-- |
-| CMakeによる依存関係ビルド(デフォルト) | `WITH_REDIS_STACK=ON`でRedis 8.2.7をsourceからビルドします。 | デフォルトでRedisBloom、RediSearch、RedisJSON、RedisTimeSeriesをビルドします。各componentは対応する`REDIS_BUILD_*`optionで無効化できます。 | なし | `CMAKE_INSTALL_PREFIX`以下にfileと生成した`redis-full.conf`をインストールします。serviceのインストールやRedisの起動は行いません。データ保存先は設定fileで指定します。 |
-| Redis 7用CMake依存関係ビルド | `WITH_REDIS_STACK=OFF`と`WITH_REDIS_SERVER_7=ON`を指定し、Redis 7.4.9、または選択時は7.2.14をsourceからビルドします。 | standalone RedisTimeSeriesのみをビルドします。Redis 7.4では1.12.14、Redis 7.2では1.10.24です。 | なし | `CMAKE_INSTALL_PREFIX`以下にfileと、RedisTimeSeriesをloadする`redis-full.conf`をインストールします。serviceのインストールやRedisの起動は行いません。 |
-| Redis Stack container helper | [`run-redis-stack.sh`](share/redis-stack-container/run-redis-stack.sh)または[`run-redis-7.2-stack.sh`](share/redis-stack-container/run-redis-7.2-stack.sh)で、versionを固定したRedis Stack 7.4または7.2 imageを取得して実行します。 | Redis Stack imageに含まれます。 | あり | デフォルトではbind mountしたdirectoryへ保存します。DockerまたはPodmanが管理するvolumeも選択できます。開発およびlocal確認向けです。 |
-| Redis Stack Server container helper | [`run-redis-stack-server.sh`](share/redis-stack-container/run-redis-stack-server.sh)または[`run-redis-7.2-stack-server.sh`](share/redis-stack-container/run-redis-7.2-stack-server.sh)で、versionを固定したRedis Stack Server 7.4または7.2 imageを取得して実行します。 | Redis Stack Server imageに含まれます。 | なし | デフォルトではbind mountしたdirectoryへ保存します。DockerまたはPodmanが管理するvolumeも選択できます。 |
-| Redis 8 container helper | [`run-redis-8.2.7.sh`](share/redis-stack-container/run-redis-8.2.7.sh)で公式Redis 8.2.7 imageを取得して実行します。 | Redis 8がこれらの機能を提供します。実行中のimageはcontainer helperのdocumentに従って確認してください。 | なし | デフォルトではbind mountしたdirectoryへ保存します。DockerまたはPodmanが管理するvolumeも選択できます。 |
-| Host package installer | デフォルトではOSのpackage managerでRedis 8.2.7をインストールします。DebianおよびUbuntuでversionを固定する場合は`redis`、`redis-server`、`redis-sentinel`、`redis-tools`をインストールし、RPM系では`redis`packageをインストールします。 | Redis 8 packageが提供します。 | デフォルトではなし。設定したrepositoryが該当packageを提供し、RedisInsightが必要な場合に限り、`REDIS_PACKAGE=redis-stack`と`REDIS_VERSION=latest`を指定します。 | system管理領域へインストールしますが、Redisは起動しません。選択したpackageが提供する設定、service unit、データ保存先を使用します。[`share/installers/README.ja.md`](share/installers/README.ja.md)を参照してください。 |
+| インストールされるもの | CMake: Redis 8 (デフォルト) | CMake: Redis 7 | Container: Redis Stack | Container: Stack Server | Container: Redis 8 | Redis Compose | Host package (デフォルト) |
+| :-- | :--: | :--: | :--: | :--: | :--: | :--: | :--: |
+| Redis server | Yes (8.2.7) | Yes (7.4.9または7.2.14) | Yes (7.4または7.2 image) | Yes (7.4または7.2 image) | Yes (8.2.7) | No | Yes (8.2.7) |
+| RedisBloom / probabilistic data structure | Yes | No | Yes | Yes | Yes | No | Yes |
+| RediSearch / Search and Query | Yes | No | Yes | Yes | Yes | No | Yes |
+| RedisJSON / JSON | Yes | No | Yes | Yes | Yes | No | Yes |
+| RedisTimeSeries / Time Series | Yes | Yes (standalone 1.x) | Yes | Yes | Yes | No | Yes |
+| RedisInsight | No | No | Yes | No | No | No | No |
+
+CMakeによるRedis 8のビルドは、選択したcomponentと生成した`redis-full.conf`を`CMAKE_INSTALL_PREFIX`以下にインストールします。
+各componentは対応する`REDIS_BUILD_*`optionで無効化できます。
+CMakeによるRedis 7のビルドでは、Redis serverに加えてRedisTimeSeriesのみを提供します。
+どちらのCMakeビルドもserviceのインストールやRedisの起動は行いません。
+
+Container列は[`share/redis-stack-container/README.ja.md`](share/redis-stack-container/README.ja.md)のhelperを指します。
+デフォルトではbind mountしたdirectoryを使用し、DockerまたはPodmanが管理するvolumeも選択できます。
+Redis Stack containerはRedisInsightを含むため開発およびlocal確認向けです。Stack ServerおよびRedis 8 containerはRedisInsightを含みません。
+
+デフォルトのhost package経路では、Redis 8.2.7をsystem管理領域へインストールしますが、Redisは起動しません。
+DebianおよびUbuntuでversionを固定する場合は`redis`、`redis-server`、`redis-sentinel`、`redis-tools`をインストールし、RPM系では`redis`packageをインストールします。
+設定したrepositoryが該当packageを提供する場合は、`REDIS_PACKAGE=redis-stack REDIS_VERSION=latest`を指定してRedisInsightを含むRedis Stack packageをインストールできます。
+Packageおよびserviceの管理方法は[`share/installers/README.ja.md`](share/installers/README.ja.md)を参照してください。
 
 このrepositoryはRedis用Compose fileを提供していません。
 Container helperはDockerまたはPodmanを直接実行します。`share/otel-collector-compose/`以下のCompose fileはOpenTelemetryのデータ保存および可視化serviceを提供するものであり、Redisは含みません。
