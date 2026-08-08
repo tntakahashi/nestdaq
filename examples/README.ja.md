@@ -258,10 +258,8 @@ host package managerで`otelcol-contrib`をインストールした場合は、C
    完全な一覧は
    [`nestdaq/telemetry/README.ja.md`](../nestdaq/telemetry/README.ja.md)を参照してください。
 
-   `daq-webctl`を同じOpenSearchまたはVictoria compose network内のcontainerとして
-   実行する場合は、代わりに`--otel-log-endpoint-grpc=otel-collector:4317`を
-   使用します。同じClickStack compose network内では
-   `--otel-log-endpoint-grpc=clickstack:4317`を使用します。
+   `daq-webctl`を同じOpenSearch Compose network内のcontainerとして実行する場合は、
+   代わりに`--otel-log-endpoint-grpc=otel-collector:4317`を使用します。
 
 <a id="314-step-d-open-daq-webctl-web-ui"></a>
 #### 3.1.4. Step D: `daq-webctl` Web UIを開く
@@ -366,25 +364,26 @@ flowchart TB
 
   subgraph ServicesGroup["2. Control, Redis, and optional Web UIs"]
     direction LR
-    WebCtl["daq-webctl<br/>HTTP/WebSocket :8080"]
-    Redis["Redis server<br/>:6379"]
-    RedisInsight["RedisInsight<br/>:8001, optional"]
-    SlowDash["SlowDash<br/>external setup"]
-    Grafana["Grafana<br/>Victoria stack only"]
+    WebCtl["daq-webctl"]
+    Redis["Redis server"]
+    RedisInsight["RedisInsight"]
+    SlowDash["SlowDash"]
+    Grafana["Grafana"]
 
     WebCtl -->|"command, state, Pub/Sub"| Redis
     RedisInsight -.->|"Redis protocol"| Redis
     SlowDash -.->|"Redis data source設定時"| Redis
+    Grafana -.->|"Redis data source設定時"| Redis
   end
 
 
   subgraph TelemetryGroup["3. OpenTelemetry and OpenSearch"]
     direction LR
-    Collector["OpenTelemetry Collector Contrib<br/>OTLP :4317 / :4318"]
-    OpenSearch["OpenSearch<br/>log and trace"]
-    Dashboards["OpenSearch Dashboards<br/>:5601"]
+    Collector["OpenTelemetry Collector Contrib"]
+    OpenSearch["OpenSearch"]
+    Dashboards["OpenSearch Dashboards"]
 
-    Collector -.->|"logとtraceをexport"| OpenSearch
+    Collector -.->|"logなどのtelemetry dataをexport"| OpenSearch
     Dashboards -.->|"query"| OpenSearch
   end
 
@@ -407,11 +406,7 @@ FairMQ data channelは`Sampler`から`Sink`へ直接接続し、Redisまたは`d
 経由しません。
 
 RedisInsightを利用できるのは、選択したRedis deploymentに含まれる場合だけです。
-SlowDashはexternal toolであり、Redisをdata sourceとして設定した場合だけRedisへ
-接続します。
-このrepositoryは、OpenSearch設定ではなく別の
-[Victoria設定](../share/otel-collector-compose/victoria/README.ja.md)でGrafanaを提供するため、
-この図ではGrafanaをOpenSearchへ接続していません。
+SlowDashとGrafanaは、Redisをdata sourceとして設定した場合にRedisへ接続します。
 
 <a id="32-stop-the-local-services"></a>
 ### 3.2. ローカルサービスの停止

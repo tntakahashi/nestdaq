@@ -253,10 +253,8 @@ uses `localhost:4317`.
    [`nestdaq/telemetry/README.md`](../nestdaq/telemetry/README.md) for the full
    telemetry option list.
 
-   If `daq-webctl` runs as a container in the same OpenSearch or Victoria
-   compose network, use `--otel-log-endpoint-grpc=otel-collector:4317`
-   instead. In the same ClickStack compose network, use
-   `--otel-log-endpoint-grpc=clickstack:4317`.
+   If `daq-webctl` runs as a container in the same OpenSearch Compose network,
+   use `--otel-log-endpoint-grpc=otel-collector:4317` instead.
 
 #### 3.1.4. Step D: Open the `daq-webctl` Web UI
 
@@ -354,24 +352,25 @@ flowchart TB
 
   subgraph ServicesGroup["2. Control, Redis, and optional Web UIs"]
     direction LR
-    WebCtl["daq-webctl<br/>HTTP/WebSocket :8080"]
-    Redis["Redis server<br/>:6379"]
-    RedisInsight["RedisInsight<br/>:8001, optional"]
-    SlowDash["SlowDash<br/>external setup"]
-    Grafana["Grafana<br/>Victoria stack only"]
+    WebCtl["daq-webctl"]
+    Redis["Redis server"]
+    RedisInsight["RedisInsight"]
+    SlowDash["SlowDash"]
+    Grafana["Grafana"]
 
     WebCtl -->|"commands, state, Pub/Sub"| Redis
     RedisInsight -.->|"Redis protocol"| Redis
     SlowDash -.->|"if configured for Redis"| Redis
+    Grafana -.->|"if configured for Redis"| Redis
   end
 
   subgraph TelemetryGroup["3. OpenTelemetry and OpenSearch"]
     direction LR
-    Collector["OpenTelemetry Collector Contrib<br/>OTLP :4317 / :4318"]
-    OpenSearch["OpenSearch<br/>logs and traces"]
-    Dashboards["OpenSearch Dashboards<br/>:5601"]
+    Collector["OpenTelemetry Collector Contrib"]
+    OpenSearch["OpenSearch"]
+    Dashboards["OpenSearch Dashboards"]
 
-    Collector -.->|"export logs and traces"| OpenSearch
+    Collector -.->|"export telemetry data such as logs"| OpenSearch
     Dashboards -.->|"query"| OpenSearch
   end
 
@@ -394,12 +393,7 @@ The FairMQ data channel connects `Sampler` directly to `Sink` and does not pass
 through Redis or `daq-webctl`.
 
 RedisInsight is available only with a Redis deployment that includes it.
-SlowDash is an external tool and connects to Redis only when its data source is
-configured accordingly.
-The repository provides Grafana with the separate
-[Victoria configuration](../share/otel-collector-compose/victoria/README.md),
-not with the OpenSearch configuration, so this diagram does not connect Grafana
-to OpenSearch.
+SlowDash and Grafana connect to Redis when configured with a Redis data source.
 
 ### 3.2. Stop the Local Services
 
