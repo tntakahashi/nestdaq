@@ -2,6 +2,8 @@
 
 [English](README.md) | [日本語](README.ja.md)
 
+[トップ: NestDAQ](../README.ja.md) | [前へ: Telemetry](../nestdaq/telemetry/README.ja.md) | [次へ: CMake](../cmake/README.ja.md)
+
 NestDAQは、service情報のRedisへのpublish、device動作中のprocessおよびchannel metricsの収集、Redis-backed configuration keyからのFairMQ program optionのloadを行うFairMQ pluginをinstallします。
 
 pluginはshared libraryとしてbuildされます。
@@ -11,6 +13,11 @@ pluginはshared libraryとしてbuildされます。
 | `daq_service` | `libFairMQPlugin_daq_service.so` | FairMQ deviceをRedisへ登録し、health/state dataをpublishし、data acquisition(DAQ)commandを処理し、topology/channel metadataをpublishします。 |
 | `metrics` | `libFairMQPlugin_metrics.so` | process metricsおよびFairMQ channel throughput metricsをRedisとRedisTimeSeriesへpublishします。 |
 | `parameter_config` | `libFairMQPlugin_parameter_config.so` | Redisからparameterを読み取り、FairMQ program propertyへ反映します。 |
+
+3つのpluginはすべて、想定する動作のためにRedis serverへの接続を必要とします。
+`metrics` pluginはtime-series keyを作成して更新するため、RedisTimeSeriesも必要です。
+したがって、標準のNestDAQ plugin構成にはRedis serverとRedisTimeSeriesの両方が必要です。
+`daq_service`と`parameter_config`はRedisのcore commandを使用し、RedisTimeSeriesを必要としません。
 
 pluginをloadする正確なoptionは、FairMQとFairMQを使用するexecutableが定義します。
 これらのlibraryを有効にするときは、上記のplugin nameを使用してください。

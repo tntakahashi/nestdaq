@@ -2,6 +2,8 @@
 
 [English](README.md) | [日本語](README.ja.md)
 
+[Top: NestDAQ](../../README.md) | [Previous: Web controller](../../controller/README.md) | [Next: Telemetry](../../nestdaq/telemetry/README.md)
+
 This directory contains the browser assets installed for `daq-webctl`, the NestDAQ web controller.
 
 ## 1. `daq-webctl.html`

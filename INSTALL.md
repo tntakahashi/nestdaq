@@ -2,6 +2,8 @@
 
 [English](INSTALL.md) | [日本語](INSTALL.ja.md)
 
+[Top: NestDAQ](README.md) | [Next: Examples](examples/README.md)
+
 ## Installation flow
 
 ```mermaid
@@ -296,7 +298,8 @@ For Redis 7.x maintenance settings, inspect `cmake/dependencies/redis-server-7.c
 <a id="external-runtime-components"></a>
 #### 2.4.1 Redis Server, Redis Modules, and Redis Web GUI
 
-Redis is required while NestDAQ applications run, but it is not a direct library dependency.
+The standard NestDAQ plugin set requires Redis server and RedisTimeSeries while the plugins run, but they are not direct library dependencies.
+See the [`plugins` documentation](plugins/README.md) for the requirements of each plugin.
 [Redis Stack](https://redis.io/about/redis-stack/) combines Redis with RedisBloom, RediSearch, RedisJSON, and RedisTimeSeries.
 Redis Stack Server contains Redis and these modules.
 Starting with Redis 8, [the capabilities previously provided by these modules are built into Redis Open Source](https://redis.io/docs/latest/operate/oss_and_stack/stack-with-enterprise/modules-lifecycle/), which replaces the separate Redis Stack distribution.

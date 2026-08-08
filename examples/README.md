@@ -2,6 +2,8 @@
 
 [English](README.md) | [日本語](README.ja.md)
 
+[Top: NestDAQ](../README.md) | [Previous: Installation](../INSTALL.md) | [Next: Scripts](../scripts/README.md)
+
 This directory contains small NestDAQ device examples.
 The CMake option `NestDAQ_BUILD_EXAMPLES` controls whether the main NestDAQ build includes them and defaults to `ON`.
 
@@ -131,6 +133,8 @@ uses `localhost:4317`.
 
    Three NestDAQ plugins require Redis: `daq_service`, `metrics`, and
    `parameter_config`.
+   The `metrics` plugin also requires RedisTimeSeries.
+   See [`plugins/README.md`](../plugins/README.md) for the requirement of each plugin.
    Redis can be a locally built server, a host package managed by `systemd`, or
    a container. Use the endpoint of the Redis server started in
    this step consistently in `daq-webctl`, `start_device.sh`, and the

@@ -2,6 +2,8 @@
 
 [English](README.md) | [日本語](README.ja.md)
 
+[Top: NestDAQ](../README.md) | [Previous: Telemetry](../nestdaq/telemetry/README.md) | [Next: CMake](../cmake/README.md)
+
 NestDAQ installs FairMQ plugins that publish service information to Redis, collect process and channel metrics while a device is running, and load FairMQ program options from Redis-backed configuration keys.
 
 The plugins are built as shared libraries:
@@ -11,6 +13,11 @@ The plugins are built as shared libraries:
 | `daq_service`      | `libFairMQPlugin_daq_service.so`       | Registers the FairMQ device in Redis, publishes health/state data, handles data acquisition (DAQ) commands, and publishes topology/channel metadata. |
 | `metrics`          | `libFairMQPlugin_metrics.so`           | Publishes process metrics and FairMQ channel throughput metrics to Redis and RedisTimeSeries. |
 | `parameter_config` | `libFairMQPlugin_parameter_config.so`  | Reads parameters from Redis and mirrors them into FairMQ program properties. |
+
+All three plugins require access to a Redis server for their intended operation.
+The `metrics` plugin additionally requires RedisTimeSeries because it creates and updates time-series keys.
+The standard NestDAQ plugin setup therefore requires both Redis server and RedisTimeSeries.
+The `daq_service` and `parameter_config` plugins use core Redis commands and do not require RedisTimeSeries.
 
 FairMQ and the executable that uses it define the exact option for loading plugins.
 Use the plugin names above when enabling these libraries.

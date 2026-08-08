@@ -2,6 +2,8 @@
 
 [English](INSTALL.md) | [日本語](INSTALL.ja.md)
 
+[トップ: NestDAQ](README.ja.md) | [次へ: サンプル](examples/README.ja.md)
+
 <a id="installation-flow"></a>
 ## インストールの流れ
 
@@ -311,7 +313,8 @@ Redis 7.xの保守用設定については`cmake/dependencies/redis-server-7.cma
 <a id="redis-server-and-modules"></a>
 #### 2.4.1 Redis server、Redis module、Redis Web GUI
 
-NestDAQアプリケーションの稼働中にはRedisが必要ですが、直接のライブラリ依存関係ではありません。
+標準のNestDAQ plugin構成では、pluginの動作中にRedis serverとRedisTimeSeriesが必要ですが、これらは直接のライブラリ依存関係ではありません。
+各pluginの要件は[`plugins`のドキュメント](plugins/README.ja.md)を参照してください。
 [Redis Stack](https://redis.io/about/redis-stack/)は、RedisにRedisBloom、RediSearch、RedisJSON、RedisTimeSeriesを組み合わせたdistributionです。
 Redis Stack ServerはRedisとこれらのmoduleを含みます。
 Redis 8以降では、[これらのmoduleが従来提供していた機能がRedis Open Sourceへ組み込まれ](https://redis.io/docs/latest/operate/oss_and_stack/stack-with-enterprise/modules-lifecycle/)、個別のRedis Stack distributionを置き換えました。

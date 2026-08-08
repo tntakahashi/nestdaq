@@ -2,6 +2,8 @@
 
 [English](README.md) | [日本語](README.ja.md)
 
+[トップ: NestDAQ](../README.ja.md) | [前へ: サンプル](../examples/README.ja.md) | [次へ: Web controller](../controller/README.ja.md)
+
 このディレクトリには、NestDAQ pluginの使用方法を示すscriptがあります。
 scriptは別の作業directoryへcopyできます。
 設定を登録または読み取るscriptを実行する前に、Redis serverを起動してください。

@@ -2,6 +2,8 @@
 
 [English](README.md) | [日本語](README.ja.md)
 
+[トップ: NestDAQ](../README.ja.md) | [前へ: スクリプト](../scripts/README.ja.md) | [次へ: Web controller assets](../share/controller/README.ja.md)
+
 このディレクトリには、NestDAQ web controller processである`daq-webctl`の実装があります。
 `daq-webctl`は、ブラウザuser interface(UI)用のHypertext Transfer Protocol(HTTP)server、対話的client用のWebSocket session、およびRedisをbackendとするDAQ device制御操作を提供します。
 

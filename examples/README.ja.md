@@ -2,6 +2,8 @@
 
 [English](README.md) | [日本語](README.ja.md)
 
+[トップ: NestDAQ](../README.ja.md) | [前へ: インストール](../INSTALL.ja.md) | [次へ: スクリプト](../scripts/README.ja.md)
+
 このディレクトリには、小規模なNestDAQ device exampleがあります。
 CMake option `NestDAQ_BUILD_EXAMPLES`は、NestDAQのmain buildにexampleを含めるかどうかを制御し、defaultは`ON`です。
 
@@ -139,6 +141,8 @@ host package managerで`otelcol-contrib`をインストールした場合は、C
 #### 3.1.2. Step B: Redisを起動
 
    NestDAQの`daq_service`、`metrics`、`parameter_config`という3つのpluginにはRedisが必要です。
+   `metrics` pluginにはRedisTimeSeriesも必要です。
+   各pluginの要件は[`plugins/README.ja.md`](../plugins/README.ja.md)を参照してください。
    Redisには、ローカルでビルドしたserver、`systemd`管理のhost package、または
    containerを使用できます。このstepで起動したRedisのendpointを、`daq-webctl`、
    `start_device.sh`、topology/parameter helper scriptで一貫して使用します。

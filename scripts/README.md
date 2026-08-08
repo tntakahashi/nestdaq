@@ -2,6 +2,8 @@
 
 [English](README.md) | [日本語](README.ja.md)
 
+[Top: NestDAQ](../README.md) | [Previous: Examples](../examples/README.md) | [Next: Web controller](../controller/README.md)
+
 This directory contains scripts that demonstrate how to use the NestDAQ plugins.
 You can copy the scripts to another working directory.
 Start a Redis server before running scripts that register or read configuration.

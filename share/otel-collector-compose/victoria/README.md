@@ -2,6 +2,8 @@
 
 [English](README.md) | [日本語](README.ja.md)
 
+[Top: NestDAQ](../../../README.md) | [Previous: OpenSearch setup](../opensearch/README.md) | [Next: ClickStack setup](../clickhouse/README.md)
+
 This local validation stack uses OpenTelemetry Collector to receive OpenTelemetry logs, metrics, and traces.
 It stores the data in Victoria stack services and displays it in Grafana.
 

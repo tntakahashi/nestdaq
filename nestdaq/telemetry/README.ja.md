@@ -2,6 +2,8 @@
 
 [English](README.md) | [日本語](README.ja.md)
 
+[トップ: NestDAQ](../../README.ja.md) | [前へ: Web controller assets](../../share/controller/README.ja.md) | [次へ: Plugin](../../plugins/README.ja.md)
+
 NestDAQテレメトリーは、FairMQベースのdeviceおよびcontroller process向けに、必要に応じて有効にできるOpenTelemetry統合です。
 application executableはOpenTelemetryへ直接linkしません。
 代わりに、NestDAQは単一のtelemetry plugin `libnestdaq_otel.so`を`dlopen()`で動的にloadし、小さなC application binary interface(ABI)を解決します。

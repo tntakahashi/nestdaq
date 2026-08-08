@@ -2,6 +2,8 @@
 
 [English](README.md) | [日本語](README.ja.md)
 
+[トップ: NestDAQ](../../../README.ja.md) | [前へ: Collector container設定](../README.ja.md) | [次へ: Victoria設定](../victoria/README.ja.md)
+
 このローカル検証用スタックは、OpenTelemetry CollectorでOpenTelemetryのログとトレースを受信します。
 受信したデータをOpenSearchに保存し、OpenSearch Dashboardsで表示します。
 

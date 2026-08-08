@@ -2,6 +2,8 @@
 
 [English](README.md) | [日本語](README.ja.md)
 
+[トップ: NestDAQ](../../../README.ja.md) | [前へ: OpenSearch設定](../opensearch/README.ja.md) | [次へ: ClickStack設定](../clickhouse/README.ja.md)
+
 このローカル検証用スタックは、OpenTelemetry CollectorでOpenTelemetryのログ、メトリクス、トレースを受信します。
 受信したデータをVictoria stackを構成する各serviceに保存し、Grafanaで表示します。
 

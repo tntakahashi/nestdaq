@@ -2,6 +2,8 @@
 
 [English](README.md) | [日本語](README.ja.md)
 
+[Top: NestDAQ](../../README.md) | [Previous: Web controller assets](../../share/controller/README.md) | [Next: Plugins](../../plugins/README.md)
+
 NestDAQ telemetry provides optional OpenTelemetry integration for FairMQ-based devices and controller processes.
 The application executable does not link OpenTelemetry directly.
 Instead, NestDAQ loads the single telemetry plugin `libnestdaq_otel.so` dynamically with `dlopen()` and resolves a small C application binary interface (ABI).

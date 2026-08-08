@@ -2,6 +2,8 @@
 
 [English](README.md) | [日本語](README.ja.md)
 
+[Top: NestDAQ](../../../README.md) | [Previous: Victoria setup](../victoria/README.md) | [Next: Redis containers](../../redis-stack-container/README.md)
+
 This local validation stack uses the ClickStack OpenTelemetry Collector to receive OpenTelemetry logs, metrics, and traces.
 It stores the data in ClickHouse and displays it in the ClickStack user interface (UI).
 

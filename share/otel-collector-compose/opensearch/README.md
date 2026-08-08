@@ -2,6 +2,8 @@
 
 [English](README.md) | [日本語](README.ja.md)
 
+[Top: NestDAQ](../../../README.md) | [Previous: Collector container setups](../README.md) | [Next: Victoria setup](../victoria/README.md)
+
 This local validation stack uses OpenTelemetry Collector to receive OpenTelemetry logs and traces.
 It stores the data in OpenSearch and displays it in OpenSearch Dashboards.
 
