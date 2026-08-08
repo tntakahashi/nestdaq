@@ -286,8 +286,7 @@ host package managerで`otelcol-contrib`をインストールした場合は、C
 <a id="316-step-f-start-user-devices"></a>
 #### 3.1.6. Step F: `start_device.sh`でuser deviceを起動
 
-   インストール済みの`<install-prefix>/scripts/start_device.sh`はNestDAQ pluginを
-   loadし、defaultでは
+   `<install-prefix>/scripts/start_device.sh`はNestDAQ pluginをloadし、defaultでは
    `127.0.0.1:6379`のRedisを使用して、OTLP gRPCによりOpenTelemetry logを
    `localhost:4317`へexportします。RedisまたはCollectorが別のendpointを使用する
    場合は`NESTDAQ_REDIS_SERVER`と`NESTDAQ_OTLP_GRPC_ENDPOINT`を設定します。
@@ -306,8 +305,8 @@ host package managerで`otelcol-contrib`をインストールした場合は、C
    [`plugins/README.ja.md#22-daq-service-identity-defaults`](../plugins/README.ja.md#22-daq-service-identity-defaults)
    を参照してください。
 
-   `NullDevice`にはdata channelがありませんが、同じインストール済み
-   `start_device.sh`とRedisを使用するNestDAQ pluginを使用します。
+   `NullDevice`にはdata channelがありませんが、`start_device.sh`とRedisを使用する
+   NestDAQ pluginを使用します。
 
    ```sh
    <install-prefix>/scripts/start_device.sh NullDevice

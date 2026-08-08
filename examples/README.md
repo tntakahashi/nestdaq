@@ -278,8 +278,8 @@ uses `localhost:4317`.
 
 #### 3.1.6. Step F: Start the user devices with `start_device.sh`
 
-   The installed `<install-prefix>/scripts/start_device.sh` loads the NestDAQ
-   plugins, uses Redis at
+   `<install-prefix>/scripts/start_device.sh` loads the NestDAQ plugins and uses
+   Redis at
    `127.0.0.1:6379` by default, and exports OpenTelemetry logs to
    `localhost:4317` by OTLP gRPC by default. Set `NESTDAQ_REDIS_SERVER` and
    `NESTDAQ_OTLP_GRPC_ENDPOINT` when Redis or the Collector use different
@@ -300,8 +300,8 @@ uses `localhost:4317`.
    for the `daq_service` defaults used when `--service-name` or `--id` is
    empty.
 
-   `NullDevice` has no data channel, but it still uses the same installed
-   `start_device.sh` and Redis-backed NestDAQ plugins:
+   `NullDevice` has no data channel, but it still uses `start_device.sh` and
+   Redis-backed NestDAQ plugins:
 
    ```sh
    <install-prefix>/scripts/start_device.sh NullDevice
