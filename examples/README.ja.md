@@ -66,7 +66,7 @@ example CMake projectは、example install prefixからの相対的なinstall RP
 
 ```mermaid
 flowchart TD
-  Otel[A. 必要な場合はOTel Collector backendを起動]
+  Otel[A. 必要な場合はOTel Collectorと<br/>telemetry storageを起動]
   Redis[B. Redisを起動]
   WebCtl[C. daq-webctlを起動]
   Browser[D. daq-webctl Web UIを開く<br/>http://localhost:8080/]
@@ -80,7 +80,7 @@ flowchart TD
 ```
 
 この図は一般的なローカル実行sequenceであり、厳密なdependency graphではありません。
-log、metrics、tracesをexportし、利用可能なcollector/backendがまだ動作していない場合は、最初にOpenTelemetry Collector backendを起動します。
+log、metrics、tracesをexportし、利用可能なcollectorとstorage serviceがまだ動作していない場合は、最初にOpenTelemetry Collectorと必要なstorageを起動します。
 telemetryが無効、console-only telemetryを使用、または既存collectorが利用可能な場合は、step Aが完了済みとみなします。
 
 Redisは必須です。
@@ -92,14 +92,15 @@ step GとHは`daq-webctl` Web UIで行う操作です。
 run-start commandの実行には対象deviceが動作中である必要があるため、step Hは最後に行います。
 `daq-webctl`とuser deviceはRedisを使用し、OpenTelemetry logをcollectorへexportできます。
 
-A. OpenTelemetry Collector backendを起動します。
+A. OpenTelemetry Collectorを起動します。
 
-   backendには、`docker compose`または`podman compose`で実行するローカルCompose設定、
-   hostへインストールした`otelcol-contrib` service、またはNestDAQ processから到達可能な
-   別のcollectorを使用できます。example deviceからOpenTelemetry Protocol(OTLP)dataを
-   受信し、設定されたlog、metric、trace storageへ転送します。
+   OpenTelemetry Collectorとして、`docker compose`または`podman compose`で実行する
+   ローカルCompose構成のcollector、hostへインストールした`otelcol-contrib` service、
+   またはNestDAQ processから到達可能な別のcollectorを使用できます。
+   このCollectorは、example deviceから
+   OpenTelemetry Protocol (OTLP) dataを受信し、設定されたlog、metric、trace storageへ転送します。
 
-   以下のローカル検証例ではOpenSearch Compose backendを使用します。logとtraceを
+   以下のローカル検証例ではOpenSearch Compose stackを使用します。logとtraceを
    OpenSearchへ保存し、OpenSearch Dashboardsで利用できるようにします。
 
    ```sh
@@ -252,7 +253,7 @@ F. `start_device.sh`でuser deviceを起動します。
    [`plugins/README.ja.md#22-daq-service-identity-defaults`](../plugins/README.ja.md#22-daq-service-identity-defaults)
    を参照してください。
 
-   `NullDevice`にはdata channelがありませんが、同じscriptとRedisをbackendとする
+   `NullDevice`にはdata channelがありませんが、同じscriptとRedisを使用する
    NestDAQ pluginを使用します。
 
    ```sh
@@ -304,7 +305,7 @@ flowchart TD
   DeviceFallback[S-B. 必要な場合: device terminalを停止またはkillを送信]
   WebCtl[S-C. terminalからdaq-webctlを停止]
   Redis[S-D. Redis serverまたはserviceを停止]
-  Otel[S-E. OTel Collector backendを停止]
+  Otel[S-E. OTel Collectorとtelemetry storageを停止]
 
   End --> DeviceFallback --> WebCtl --> Redis --> Otel
 ```
@@ -358,8 +359,8 @@ S-D. Redisを停止します。
    sudo systemctl stop redis-stack-server
    ```
 
-S-E. OpenTelemetry backendを停止します。collectorとbackendの起動方法に合った
-   停止手順を使用してください。OpenSearch backend Compose exampleの場合:
+S-E. OpenTelemetry Collectorとtelemetry storageを停止します。これらのserviceの
+   起動方法に合った停止手順を使用してください。OpenSearch Compose exampleの場合:
 
    ```sh
    cd ./otel-collector-compose/opensearch
@@ -382,8 +383,8 @@ S-E. OpenTelemetry backendを停止します。collectorとbackendの起動方�
 
    Compose `down` commandはローカル検証用containerとnetworkを停止して削除します。
    OpenSearch data directoryは削除しません。同じdata directoryを指定して同じ
-   backendを再度起動すると、以前のOpenSearch dataが再利用されます。data
-   directory nameと明示的な破棄commandはbackend READMEを参照してください。
+   Compose stackを再度起動すると、以前のOpenSearch dataが再利用されます。data
+   directory nameと明示的な破棄commandはCompose設定のREADMEを参照してください。
 
 <a id="33-example-specific-options"></a>
 ### 3.3. サンプル固有オプション
@@ -413,7 +414,7 @@ C++では`fair::mq::Device`から派生するclassとして実装します。
   `fair::mq::Device`を提供します。
 - FairLoggerはFairMQとこれらのexampleが`LOG(info)`、`LOG(error)`などの
   macroを通じて使用するlogging systemです。
-- NestDAQは`nestdaq/runDevice.h`、Redisをbackendとするplugin、DAQ command
+- NestDAQは`nestdaq/runDevice.h`、Redisを使用するplugin、DAQ command
   integration、plugin search path、必要に応じて有効にできるtelemetry設定を提供します。
 - RedisはNestDAQ pluginが使用する登録済みprocess/service情報、topology設定、
   parameter設定、DAQ command、metricsを保存します。
@@ -747,14 +748,14 @@ cmake --install ./build-MyDevice
 上のローカル実行sequenceで説明したものと同じ外部serviceを使用します。
 
 既存のローカル検証環境がすでに動作している場合、対応する以下のstepを省略します。
-たとえば、新しいdeviceで同じendpointを使用する場合、別のRedis server、
-OpenTelemetry Collector backend、`daq-webctl` processを起動する必要はありません。
+たとえば、新しいdeviceで同じendpointを使用する場合、Redis server、OpenTelemetry Collector、
+storage service、`daq-webctl` processを重複して起動する必要はありません。
 ただし`start_device.sh`が使用するRedis endpoint、OpenTelemetry endpoint、
 `daq-webctl` endpointは、すでに動作中のserviceと一致する必要があります。
 既存のRedis設定が新しいdeviceの`--service-name`またはchannel nameと一致しない
 場合だけ、topologyとparameter設定を再登録します。
 
-1. telemetry exportが必要な場合、OpenTelemetry Collector backendを起動します。
+1. telemetry exportが必要な場合、OpenTelemetry Collectorとtelemetry storageを起動します。
 2. Redisを起動します。
 3. browser controlが必要な場合、`daq-webctl`を起動します。
 4. Redisへtopologyとparameter設定を登録します。

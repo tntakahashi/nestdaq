@@ -61,7 +61,7 @@ The commands below assume that NestDAQ was installed under `<install-prefix>`.
 
 ```mermaid
 flowchart TD
-  Otel[A. Start OTel Collector backend<br/>if needed]
+  Otel[A. Start OTel Collector and<br/>telemetry storage if needed]
   Redis[B. Start Redis]
   WebCtl[C. Start daq-webctl]
   Browser[D. Open the daq-webctl Web UI<br/>http://localhost:8080/]
@@ -75,7 +75,7 @@ flowchart TD
 ```
 
 The diagram shows a typical local run sequence, not a strict dependency graph.
-Start the OpenTelemetry Collector backend first when logs, metrics, or traces should be exported and no suitable collector/backend is already running.
+Start the OpenTelemetry Collector and required storage first when logs, metrics, or traces should be exported and no suitable services are already running.
 If telemetry is disabled, console-only telemetry is used, or an existing collector is available, treat step A as complete.
 
 Redis is required.
@@ -87,15 +87,16 @@ Steps G and H are operations in the `daq-webctl` Web UI.
 Run-start commands require the target devices to be running, so perform step H last.
 `daq-webctl` and the user devices use Redis and can export OpenTelemetry logs to the collector.
 
-A. Start an OpenTelemetry Collector backend.
+A. Start an OpenTelemetry Collector.
 
-   The backend can be the local Compose setup, run with `docker compose` or
+   Use the collector in the local Compose setup, run with `docker compose` or
    `podman compose`, a host-installed `otelcol-contrib` service, or another
-   collector reachable from the NestDAQ processes. It receives OpenTelemetry
+   collector reachable from the NestDAQ processes.
+   The collector receives OpenTelemetry
    Protocol (OTLP) data from the example devices and forwards it to the
    configured log, metric, or trace storage.
 
-   The local validation example below uses the OpenSearch Compose backend. It
+   The local validation example below uses the OpenSearch Compose stack. It
    stores logs and traces in OpenSearch and makes them available in OpenSearch
    Dashboards.
 
@@ -302,7 +303,7 @@ flowchart TD
   DeviceFallback[S-B. If needed: stop device terminals or send kill]
   WebCtl[S-C. Stop daq-webctl from its terminal]
   Redis[S-D. Stop Redis server or service]
-  Otel[S-E. Stop OTel Collector backend]
+  Otel[S-E. Stop OTel Collector and telemetry storage]
 
   End --> DeviceFallback --> WebCtl --> Redis --> Otel
 ```
@@ -354,9 +355,9 @@ S-D. Stop Redis. Use the stop procedure that matches how Redis was started. For
    sudo systemctl stop redis-stack-server
    ```
 
-S-E. Stop the OpenTelemetry backend. Use the stop procedure that matches how the
-   collector and backend were started. For the OpenSearch backend Compose
-   example:
+S-E. Stop the OpenTelemetry Collector and telemetry storage. Use the stop
+   procedure that matches how these services were started. For the OpenSearch
+   Compose example:
 
    ```sh
    cd ./otel-collector-compose/opensearch
@@ -379,9 +380,9 @@ S-E. Stop the OpenTelemetry backend. Use the stop procedure that matches how the
 
    The Compose `down` command stops and removes the local validation containers
    and network. It does not delete the OpenSearch data directory. If you start
-   the same backend again with the same data directory, the previous OpenSearch
-   data is reused. See the backend README for data directory names and explicit
-   discard commands.
+   the same Compose stack again with the same data directory, the previous
+   OpenSearch data is reused. See the Compose configuration README for data
+   directory names and explicit discard commands.
 
 ### 3.3. Example-Specific Options
 
@@ -737,15 +738,15 @@ installed and may use the NestDAQ prefix or a separate prefix.
 Use the supporting services described in the local run sequence above.
 
 If an existing local validation environment is already running, skip the
-matching steps below. For example, you do not need to start another Redis
-server, OpenTelemetry Collector backend, or `daq-webctl` process when the new
-device should use the same endpoints. The Redis endpoint, OpenTelemetry
+matching steps below. For example, you do not need to start duplicate Redis,
+OpenTelemetry Collector, telemetry storage, or `daq-webctl` services when the
+new device should use the same endpoints. The Redis endpoint, OpenTelemetry
 endpoint, and `daq-webctl` endpoint used by `start_device.sh` must still match
 the services that are already running. Topology and parameter settings only
 need to be registered again when the existing Redis settings do not match the
 new device's `--service-name` or channel names.
 
-1. Start the OpenTelemetry Collector backend if telemetry export is needed.
+1. Start the OpenTelemetry Collector and telemetry storage if export is needed.
 2. Start Redis.
 3. Start `daq-webctl` if browser control is needed.
 4. Register topology and parameter settings in Redis.
