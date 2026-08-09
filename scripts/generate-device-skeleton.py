@@ -27,8 +27,8 @@ class TemplateSpec:
 
 
 BUILTIN_TEMPLATES = {
-    "Device.h.in": TemplateSpec(
-        output_pattern="{class_name}.h",
+    "Device.hpp.in": TemplateSpec(
+        output_pattern="{class_name}.hpp",
         text=r"""#pragma once
 
 /**
@@ -62,8 +62,8 @@ private:
 @NAMESPACE_CLOSE@
 """,
     ),
-    "Device.cxx.in": TemplateSpec(
-        output_pattern="{class_name}.cxx",
+    "Device.cpp.in": TemplateSpec(
+        output_pattern="{class_name}.cpp",
         text=r"""/** @file
  *  @brief Implements the @CLASS_NAME@ NestDAQ device skeleton.
  */
@@ -139,8 +139,8 @@ templates, replacing template placeholders and writing concrete device files.
 
 | Template | Generated file |
 | :-- | :-- |
-| `Device.h.in` | `@HEADER_FILE@` |
-| `Device.cxx.in` | `@SOURCE_FILE@` |
+| `Device.hpp.in` | `@HEADER_FILE@` |
+| `Device.cpp.in` | `@SOURCE_FILE@` |
 @CMAKE_GENERATED_ROW@| `README.md.in` | `README.md` |
 
 The placeholders `@CLASS_NAME@`, `@HEADER_FILE@`, and `@SOURCE_FILE@` have
@@ -898,7 +898,7 @@ def render_cmake_build_section(config: GenerationConfig) -> str:
     if not config.generate_cmake:
         return f"""## Build
 
-`CMakeLists.txt` was not generated. Add `{config.class_name}.h` and `{config.class_name}.cxx` to
+`CMakeLists.txt` was not generated. Add `{config.class_name}.hpp` and `{config.class_name}.cpp` to
 your existing build system and link the resulting executable with NestDAQ.
 
 ## Run
@@ -955,8 +955,8 @@ def render_substitutions(config: GenerationConfig) -> dict[str, str]:
     return {
         "CLASS_NAME": config.class_name,
         "QUALIFIED_CLASS_NAME": qualified_class_name(config),
-        "HEADER_FILE": f"{config.class_name}.h",
-        "SOURCE_FILE": f"{config.class_name}.cxx",
+        "HEADER_FILE": f"{config.class_name}.hpp",
+        "SOURCE_FILE": f"{config.class_name}.cpp",
         "NAMESPACE_OPEN": namespace_open(config),
         "NAMESPACE_CLOSE": namespace_close(config),
         "HEADER_INCLUDES": render_header_includes(config),
@@ -1011,7 +1011,7 @@ def main() -> int:
     for template in templates.values():
         output_path = output_dir / template.output_pattern.format(class_name=config.class_name)
         rendered = render_template(template.text, substitutions)
-        if output_path.suffix in (".cxx", ".h"):
+        if output_path.suffix in (".cpp", ".hpp"):
             rendered = compact_cpp_blank_lines(rendered)
         output_path.write_text(rendered, encoding="utf-8")
         print(f"generated: {output_path}")

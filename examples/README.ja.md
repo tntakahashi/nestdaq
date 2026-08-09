@@ -562,7 +562,7 @@ C++では`fair::mq::Device`から派生するclassとして実装します。
   --output ./MyDevice
 ```
 
-これにより`MyDevice.h`、`MyDevice.cxx`、`CMakeLists.txt`、`README.md`が作成されます。
+これにより`MyDevice.hpp`、`MyDevice.cpp`、`CMakeLists.txt`、`README.md`が作成されます。
 `--force`を指定しない限り既存fileは上書きされません。
 defaultのskeletonには`in`、`out`、`dqm`という名前のinput、output、DQM channelが含まれます。
 
@@ -612,7 +612,7 @@ entry pointを持ちます。
 
 #include <nestdaq/runDevice.h>
 
-#include "MyDevice.h"
+#include "MyDevice.hpp"
 
 namespace bpo = boost::program_options;
 
@@ -839,7 +839,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 find_package(NestDAQ REQUIRED CONFIG)
 
 add_executable(MyDevice
-  MyDevice.cxx
+  MyDevice.cpp
 )
 
 target_link_libraries(MyDevice PUBLIC

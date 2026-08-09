@@ -552,7 +552,7 @@ and edit the generated code.
   --output ./MyDevice
 ```
 
-This creates `MyDevice.h`, `MyDevice.cxx`, `CMakeLists.txt`, and `README.md`.
+This creates `MyDevice.hpp`, `MyDevice.cpp`, `CMakeLists.txt`, and `README.md`.
 Existing files are not overwritten unless `--force` is specified. The default
 skeleton includes input, output, and DQM channels named `in`, `out`, and `dqm`.
 
@@ -600,7 +600,7 @@ A minimal NestDAQ device has three C++ entry points around a
 
 #include <nestdaq/runDevice.h>
 
-#include "MyDevice.h"
+#include "MyDevice.hpp"
 
 namespace bpo = boost::program_options;
 
@@ -824,7 +824,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 find_package(NestDAQ REQUIRED CONFIG)
 
 add_executable(MyDevice
-  MyDevice.cxx
+  MyDevice.cpp
 )
 
 target_link_libraries(MyDevice PUBLIC

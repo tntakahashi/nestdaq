@@ -404,7 +404,7 @@ defaultではinput、output、data quality monitor(DQM)channel codeを生成し�
 ./generate-device-skeleton.py MyDevice --output ./MyDevice
 ```
 
-optionでhelper fileを除外しない限り、生成projectには`MyDevice.h`、`MyDevice.cxx`、`CMakeLists.txt`、`README.md`が含まれます。
+optionでhelper fileを除外しない限り、生成projectには`MyDevice.hpp`、`MyDevice.cpp`、`CMakeLists.txt`、`README.md`が含まれます。
 `--force`未指定時は既存fileを上書きしません。
 fileを書き込まずoutput pathを確認するには`--dry-run`を使用します。
 既存build systemへdeviceを追加し`CMakeLists.txt`を生成しない場合は`--no-cmake`、生成device固有の`README.md`が不要な場合は`--no-readme`を使用します。
@@ -572,8 +572,8 @@ generatorは組み込みtemplateを読み、device固有placeholderを置換し�
 
 | Template | `MyDevice`用生成file |
 | :-- | :-- |
-| `Device.h.in` | `MyDevice.h` |
-| `Device.cxx.in` | `MyDevice.cxx` |
+| `Device.hpp.in` | `MyDevice.hpp` |
+| `Device.cpp.in` | `MyDevice.cpp` |
 | `CMakeLists.txt.in` | `CMakeLists.txt` |
 | `README.md.in` | `README.md` |
 

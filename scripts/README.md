@@ -431,7 +431,7 @@ respective channel names.
 ./generate-device-skeleton.py MyDevice --output ./MyDevice
 ```
 
-The generated project contains `MyDevice.h`, `MyDevice.cxx`,
+The generated project contains `MyDevice.hpp`, `MyDevice.cpp`,
 `CMakeLists.txt`, and `README.md` unless those helper files are omitted by
 options. Existing files are not overwritten unless `--force` is specified. Use
 `--dry-run` to inspect the output paths without writing files. Use
@@ -618,8 +618,8 @@ options, processing methods, send helpers, and drain code.
 
 | Template | Generated file for `MyDevice` |
 | :-- | :-- |
-| `Device.h.in` | `MyDevice.h` |
-| `Device.cxx.in` | `MyDevice.cxx` |
+| `Device.hpp.in` | `MyDevice.hpp` |
+| `Device.cpp.in` | `MyDevice.cpp` |
 | `CMakeLists.txt.in` | `CMakeLists.txt` |
 | `README.md.in` | `README.md` |
 
