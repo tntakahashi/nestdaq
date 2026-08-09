@@ -331,9 +331,10 @@ host package managerで`otelcol-contrib`をインストールした場合は、C
 #### 3.1.7. Step G: run numberがない場合は設定
 
    Redisに`run_info:run_number`がまだない場合、runを開始する前に
-   `daq-webctl` Web UIからrun numberを設定またはincrementします。Web UIでの操作に
-   応じて`daq-webctl` processがRedis上のこの値を読み書きし、`RUN`のpublish時に
-   使用します。Redis
+   `daq-webctl` Web UIで使用する値を入力して`SET`を選択するか、`+1`を
+   選択します。`+1`はRedisの`INCR`を使用します。keyがない場合、Redisは
+   値が`1`のkeyを作成します。現行の`daq-webctl`実装は、`RUN`要求時にkeyが
+   ないとerrorを通知しますが、`RUN` commandのpublishは停止しません。Redis
    command interfaceとrun information keyについては
    [`controller/README.ja.md`](../controller/README.ja.md#6-redis-command-interface)と
    [`plugins/README.ja.md`](../plugins/README.ja.md#23-redis-keys-written-or-read)を
@@ -344,8 +345,9 @@ host package managerで`otelcol-contrib`をインストールした場合は、C
 
    `daq-webctl` Web UIを使用して選択したuser deviceを必要なstate-machine
    transitionで遷移させ、`RUN`をpublishしてrunを開始します。`RUN`を要求すると、
-   `daq-webctl` processは`run_info:run_number`を`run_info:latest_run_number`へcopyし、
-   run-start command sequenceをpublishします。受け付けるDAQ commandと`RUN`
+   `daq-webctl` processはsource keyがある場合に`run_info:run_number`を
+   `run_info:latest_run_number`へcopyし、run-start command sequenceをpublishします。
+   受け付けるDAQ commandと`RUN`
    sequenceについては
    [`plugins/README.ja.md`](../plugins/README.ja.md#24-daq-command-publishsubscribe-pubsub)
    を参照してください。

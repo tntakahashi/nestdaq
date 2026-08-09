@@ -324,10 +324,12 @@ uses `localhost:4317`.
 
 #### 3.1.7. Step G: Set the run number if it is missing
 
-   If Redis does not already contain `run_info:run_number`, set or increment the
-   run number from the `daq-webctl` Web UI before starting a run. In response to
-   the Web UI operation, the `daq-webctl` process reads or writes this value in
-   Redis and uses it when publishing `RUN`.
+   If Redis does not already contain `run_info:run_number`, enter the intended
+   value and select `SET`, or select `+1`, in the `daq-webctl` Web UI before
+   starting a run. The `+1` operation uses Redis `INCR`; when the key is
+   missing, Redis creates it with the value `1`. The current `daq-webctl`
+   implementation reports an error if the key is still missing when `RUN` is
+   requested, but it does not prevent the `RUN` command from being published.
    See [`controller/README.md`](../controller/README.md#6-redis-command-interface)
    and [`plugins/README.md`](../plugins/README.md#23-redis-keys-written-or-read)
    for the Redis command interface and run information keys.
@@ -337,7 +339,8 @@ uses `localhost:4317`.
    Use the `daq-webctl` Web UI to move the selected user devices through the
    required state-machine transitions and publish `RUN` to start the run. When
    `RUN` is requested, the `daq-webctl` process copies `run_info:run_number` to
-   `run_info:latest_run_number` and publishes the run-start command sequence.
+   `run_info:latest_run_number` if the source key exists, then publishes the
+   run-start command sequence.
    See [`plugins/README.md`](../plugins/README.md#24-daq-command-publishsubscribe-pubsub)
    for the accepted DAQ commands and `RUN` sequencing.
 
