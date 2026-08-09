@@ -16,8 +16,9 @@ This script starts a FairMQ device with the NestDAQ plugins.
 Specify either a device provided by this repository or an executable whose path contains `fairmq-`.
 Arguments after the device name are passed to the device and FairMQ, so plugin options such as `--service-name` and device-specific options such as `--max-iterations` can appear on the same command line.
 
-For a typical local validation run, start the supporting services and register
-the required configuration before starting devices with `start_device.sh`:
+When running the NestDAQ examples in a local environment, start the supporting
+services and register the required configuration before starting devices with
+`start_device.sh`:
 
 - Start a Redis server.
 - Start an OpenTelemetry Collector backend, for example the Compose setup run

@@ -19,7 +19,8 @@ Redis serverを起動してください。
 このrepositoryが提供するdevice、またはpathに`fairmq-`を含むexecutableを指定してください。
 device name以降のargumentはdeviceおよびFairMQへ渡されるため、`--service-name`などのplugin optionと`--max-iterations`などのdevice固有optionを同じcommand lineで指定できます。
 
-一般的なlocal validationでは、`start_device.sh`でdeviceを起動する前に外部serviceを起動し、必要な設定を登録します。
+NestDAQ exampleをローカル環境で実行する場合は、`start_device.sh`でdeviceを
+起動する前に外部serviceを起動し、必要な設定を登録します。
 
 - Redis serverを起動します。
 - `share/otel-collector-compose`配下にある、`docker compose`または`podman compose`で実行するCompose setupなどのOpenTelemetry Collector backendを起動します。
