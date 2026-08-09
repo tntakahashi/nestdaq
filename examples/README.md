@@ -546,7 +546,8 @@ The main pieces are:
 ### 4.1. Start From the Skeleton Generator
 
 This section shows how to generate a small project with the skeleton generator
-and edit the generated code.
+and edit the generated code. The following command generates `MyDevice` with
+the default skeleton:
 
 ```sh
 # Generate a device project from the default skeleton.
@@ -559,7 +560,8 @@ Existing files are not overwritten unless `--force` is specified. The default
 skeleton includes input, output, and Data Quality Monitoring (DQM) channels
 named `in`, `out`, and `dqm`.
 
-Useful variants:
+The following command examples generate a source-like device, a sink-like
+device, and an interactively configured device:
 
 ```sh
 # A source-like device that only sends data.
@@ -594,7 +596,7 @@ for all generator options.
 ### 4.2. C++ Device Structure
 
 A minimal NestDAQ device has three C++ entry points around a
-`fair::mq::Device` subclass:
+`fair::mq::Device` subclass. The following source shows these entry points:
 
 ```cpp
 #include <memory>
@@ -626,7 +628,8 @@ auto getDevice(const fair::mq::ProgOptions& /*config*/) -> std::unique_ptr<fair:
 `nestdaq/runDevice.h` supplies the NestDAQ-aware main program wrapper, so the generated source does not need to define `main()`.
 
 `addCustomOptions()` uses Boost.Program_options syntax. `options.add_options()`
-returns an object that accepts option descriptions by chaining calls:
+returns an object that accepts option descriptions by chaining calls. The
+following example registers multiple options:
 
 ```cpp
 options.add_options()
@@ -654,7 +657,7 @@ Each option description has three parts:
   string inside the device class.
 - The third argument is the help text shown by `--help`.
 
-Your device class derives from `fair::mq::Device`:
+The following class declaration derives `MyDevice` from `fair::mq::Device`:
 
 ```cpp
 namespace nestdaq {
@@ -690,8 +693,9 @@ is normally called from `InitTask()`.
 ### 4.3. Command-Line Options and Type Conversion
 
 In current NestDAQ examples and skeleton code, custom options are normally
-registered as `std::string`, even when the logical value is numeric. Convert
-them in the device class, usually in `InitTask()`:
+registered as `std::string`, even when the logical value is numeric. The
+following `InitTask()` implementation converts a numeric option in the device
+class:
 
 ```cpp
 auto MyDevice::InitTask() -> void
@@ -777,7 +781,7 @@ the `ConditionalRun()` / `Run()` path. The FairMQ input-handling path checks
 `NewStatePending()`, but the callback must return control instead of blocking
 indefinitely so that the device can respond to state transition commands.
 
-Callback-based sink example:
+The following callback-based sink processes each message passed by FairMQ:
 
 ```cpp
 auto MySink::InitTask() -> void
@@ -813,7 +817,7 @@ timeout handling. The implementation must not wait indefinitely inside one
 call and must return control so that the FairMQ loop can check
 `NewStatePending()`.
 
-Loop-based source example:
+The following loop-based source sends one message per `ConditionalRun()` call:
 
 ```cpp
 auto MySource::ConditionalRun() -> bool
@@ -840,13 +844,15 @@ calls `Run()` from the same RUNNING transition after the `ConditionalRun()`
 loop exits.
 
 The device-class developer must implement any required `Receive()`, polling,
-and timeout handling in `Run()`. A custom loop, retry, or wait must check
-`NewStatePending()` and exit when a state transition command is pending.
+and timeout handling in `Run()`. The developer must also check
+`NewStatePending()` in each custom loop, retry, or wait. When a state transition
+command is pending, the implementation must exit the loop and return control
+from `Run()`.
 
 ### 4.5. CMake Project
 
-The generated `CMakeLists.txt` is intentionally small. A standalone device
-project only needs to find NestDAQ and link to `NestDAQ::NestDAQ`:
+The generated `CMakeLists.txt` is intentionally small. The following CMake file
+finds NestDAQ and links a standalone device to `NestDAQ::NestDAQ`:
 
 ```cmake
 cmake_minimum_required(VERSION 3.22)
@@ -879,7 +885,8 @@ package. `NestDAQ::NestDAQ` carries the include directories, link libraries,
 and link and library-search settings needed to execute a device with NestDAQ,
 FairMQ, FairLogger, and related dependencies.
 
-Build and install the generated project out of source:
+The following commands configure, build, and install the generated project out
+of source:
 
 ```sh
 # Configure the generated device as an out-of-source build.
@@ -917,7 +924,8 @@ new device's `--service-name` or channel names.
 4. Register topology and parameter settings in Redis.
 5. Start the user device process.
 
-Start the installed device with the NestDAQ helper script:
+The following command starts the installed device with the NestDAQ helper
+script:
 
 ```sh
 # Start MyDevice with its own service identity and input channel.
@@ -939,7 +947,8 @@ for the `daq_service` defaults used when `--service-name` or `--id` is empty.
 
 The service name and channel names must match the topology registered in
 Redis. If your device should replace the example `Sink`, either run it with a
-matching service and input channel, or write a new topology script:
+matching service and input channel, or write a new topology script. The
+following command starts `MyDevice` with the example `Sink` settings:
 
 ```sh
 # Start MyDevice as a replacement for the example Sink service.

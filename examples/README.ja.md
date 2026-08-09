@@ -557,6 +557,7 @@ C++では`fair::mq::Device`から派生するclassとして実装します。
 ### 4.1. スケルトン生成ツールから始める
 
 スケルトン生成ツールで小さなprojectを生成し、生成されたコードを編集する方法を紹介します。
+以下のコマンド例は、default skeletonから`MyDevice`を生成します。
 
 ```sh
 # default skeletonからdevice projectを生成します。
@@ -569,7 +570,8 @@ C++では`fair::mq::Device`から派生するclassとして実装します。
 defaultのskeletonには`in`、`out`、`dqm`という名前のinput、output、
 Data Quality Monitoring (DQM; データ品質監視) channelが含まれます。
 
-便利なvariant:
+以下のコマンド例は、source型device、sink型device、対話形式で設定するdeviceを
+それぞれ生成します。
 
 ```sh
 # dataの送信だけを行うsource型device。
@@ -606,7 +608,7 @@ generator optionの一覧は
 ### 4.2. C++デバイスの構造
 
 最小限のNestDAQ deviceは、`fair::mq::Device` subclassを中心に3つのC++
-entry pointを持ちます。
+entry pointを持ちます。以下のsource codeは、これらのentry pointを示します。
 
 ```cpp
 #include <memory>
@@ -639,7 +641,7 @@ auto getDevice(const fair::mq::ProgOptions& /*config*/) -> std::unique_ptr<fair:
 
 `addCustomOptions()`はBoost.Program_optionsのsyntaxを使用します。
 `options.add_options()`は、call chainによりoption descriptionを受け付ける
-objectを返します。
+objectを返します。以下の例は複数のoptionを登録します。
 
 ```cpp
 options.add_options()
@@ -666,7 +668,7 @@ semicolonは、最後のoption descriptionの後に一度だけ書きます。
   `bpo::value<std::string>()`を使用し、device class内でstringを変換します。
 - 第3引数は`--help`で表示するhelp textです。
 
-device classは`fair::mq::Device`から派生します。
+以下のclass宣言では、`MyDevice`を`fair::mq::Device`から派生させます。
 
 ```cpp
 namespace nestdaq {
@@ -703,8 +705,8 @@ private:
 ### 4.3. コマンドラインオプションと型変換
 
 現在のNestDAQ exampleとskeleton codeでは、論理的な値が数値の場合でも、custom
-optionを通常`std::string`として登録します。通常は`InitTask()`内でdevice
-classの型へ変換します。
+optionを通常`std::string`として登録します。以下の`InitTask()`実装では、数値optionを
+device class内で変換します。
 
 ```cpp
 auto MyDevice::InitTask() -> void
@@ -791,7 +793,7 @@ FairMQのinput-handling pathは`NewStatePending()`を確認しますが、device
 transition commandへ応答できるよう、callback内で無期限にblockせず制御を
 戻す必要があります。
 
-callback-based sinkの例:
+以下のcallback-based sinkは、FairMQから渡されたmessageを処理します。
 
 ```cpp
 auto MySink::InitTask() -> void
@@ -826,7 +828,7 @@ device class開発者が`Receive()`、polling、timeout handlingを実装しま�
 1回のcall内で無期限にwaitせず、FairMQ loopが`NewStatePending()`を確認できるよう、
 FairMQ loopへ制御を戻す必要があります。
 
-loop-based sourceの例:
+以下のloop-based sourceは、`ConditionalRun()`のcallごとにmessageを1つ送信します。
 
 ```cpp
 auto MySource::ConditionalRun() -> bool
@@ -853,14 +855,15 @@ auto MySource::ConditionalRun() -> bool
 終了後、同じRUNNING transitionから`Run()`を呼び出します。
 
 device class開発者は、`Run()`で必要な`Receive()`、polling、timeout handlingを
-実装します。custom loop、retry、waitでは`NewStatePending()`を確認し、state
-transition commandがpendingの場合はloopを終了します。
+実装します。custom loop、retry、waitでは`NewStatePending()`も確認する必要があります。
+state transition commandがpendingの場合はloopを終了し、`Run()`から制御を戻す
+必要があります。
 
 <a id="45-cmake-project"></a>
 ### 4.5. CMakeプロジェクト
 
-生成される`CMakeLists.txt`は意図的に小さくしています。standalone device
-projectで必要なのは、NestDAQを検索して`NestDAQ::NestDAQ`へlinkすることだけです。
+生成される`CMakeLists.txt`は意図的に小さくしています。以下のCMake fileはNestDAQを
+検索し、standalone deviceを`NestDAQ::NestDAQ`へlinkします。
 
 ```cmake
 cmake_minimum_required(VERSION 3.22)
@@ -893,7 +896,7 @@ packageを検索します。`NestDAQ::NestDAQ`はNestDAQ、FairMQ、FairLogger�
 関連依存関係の実行に必要なinclude directory、link library、link設定、
 library search設定を伝播します。
 
-生成projectをout-of-sourceでビルドしてインストールします。
+以下のコマンド例は、生成projectをout-of-sourceでconfigure、build、installします。
 
 ```sh
 # 生成したdeviceをout-of-source buildとしてconfigureします。
@@ -930,7 +933,7 @@ storage service、`daq-webctl` processを重複して起動する必要はあり
 4. Redisへtopologyとparameter設定を登録します。
 5. user device processを起動します。
 
-NestDAQ helper scriptを使用してインストール済みdeviceを起動します。
+以下のコマンド例は、NestDAQ helper scriptを使用してインストール済みdeviceを起動します。
 
 ```sh
 # MyDevice独自のservice identityとinput channelを指定して起動します。
@@ -953,7 +956,8 @@ overrideします。`--service-name`または`--id`が空の場合に使用す�
 
 service nameとchannel nameはRedisへ登録したtopologyと一致する必要があります。
 deviceでexample `Sink`を置き換える場合、serviceとinput channelを一致させて
-実行するか、新しいtopology scriptを作成します。
+実行するか、新しいtopology scriptを作成します。以下のコマンド例は、example
+`Sink`の設定で`MyDevice`を起動します。
 
 ```sh
 # exampleのSink serviceを置き換えるMyDeviceを起動します。
