@@ -538,7 +538,8 @@ The main pieces are:
 - NestDAQ provides `nestdaq/runDevice.h`, Redis-backed plugins, DAQ command
   integration, plugin search paths, and optional telemetry setup.
 - Redis stores registered process and service information, topology settings,
-  parameter settings, DAQ commands, and metrics used by the NestDAQ plugins.
+  parameter settings, and metrics used by the NestDAQ plugins. It also
+  transports DAQ commands through Pub/Sub; it does not store command history.
 
 ### 4.1. Start From the Skeleton Generator
 

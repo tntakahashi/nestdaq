@@ -549,7 +549,8 @@ C++では`fair::mq::Device`から派生するclassとして実装します。
 - NestDAQは`nestdaq/runDevice.h`、Redisを使用するplugin、DAQ command
   integration、plugin search path、必要に応じて有効にできるtelemetry設定を提供します。
 - RedisはNestDAQ pluginが使用する登録済みprocess/service情報、topology設定、
-  parameter設定、DAQ command、metricsを保存します。
+  parameter設定、metricsを保存します。DAQ commandはPub/Subで配送し、command
+  historyは保存しません。
 
 <a id="41-start-from-the-skeleton-generator"></a>
 ### 4.1. スケルトン生成ツールから始める
