@@ -808,9 +808,10 @@ implementation returns immediately, and FairMQ transitions from RUNNING to
 READY when no other state transition is pending.
 
 `ConditionalRun()` does not receive messages automatically. When it consumes
-input, implement `Receive()`, polling, and timeout handling in the device code.
-Do not wait indefinitely inside one call. Return control to the FairMQ loop so
-that it can check `NewStatePending()`.
+input, the device-class developer must implement `Receive()`, polling, and
+timeout handling. The implementation must not wait indefinitely inside one
+call and must return control so that the FairMQ loop can check
+`NewStatePending()`.
 
 Loop-based source example:
 
@@ -836,12 +837,10 @@ after the configured number of iterations.
 Use `Run()` when the device needs a custom loop that does not fit the
 `ConditionalRun()` model. When no `OnData()` callback is registered, FairMQ
 calls `Run()` from the same RUNNING transition after the `ConditionalRun()`
-loop exits. The loop can exit because `ConditionalRun()` returned `false` or
-because a state transition became pending.
+loop exits.
 
-`Run()` does not receive messages or check for state transitions on behalf of
-the custom loop. Implement any required `Receive()`, polling, and timeout
-handling in the device code. A loop, retry, or wait inside `Run()` must check
+The device-class developer must implement any required `Receive()`, polling,
+and timeout handling in `Run()`. A custom loop, retry, or wait must check
 `NewStatePending()` and exit when a state transition command is pending.
 
 ### 4.5. CMake Project

@@ -822,8 +822,9 @@ deviceが`Run()`をoverrideしていない場合、default実装はすぐにretu
 transitionがpendingでなければ、FairMQはRUNNINGからREADYへ遷移します。
 
 `ConditionalRun()`はmessageを自動的に受信しません。inputを消費する場合は、
-device codeに`Receive()`、polling、timeout handlingを実装します。1回のcall内で
-無期限にwaitせず、FairMQ loopが`NewStatePending()`を確認できるよう制御を戻します。
+device class開発者が`Receive()`、polling、timeout handlingを実装します。また、
+1回のcall内で無期限にwaitせず、FairMQ loopが`NewStatePending()`を確認できるよう、
+FairMQ loopへ制御を戻す必要があります。
 
 loop-based sourceの例:
 
@@ -849,14 +850,11 @@ auto MySource::ConditionalRun() -> bool
 
 `ConditionalRun()` modelに合わないcustom loopが必要な場合は`Run()`を使用します。
 `OnData()` callbackが登録されていない場合、FairMQは`ConditionalRun()` loopの
-終了後、同じRUNNING transitionから`Run()`を呼び出します。loopは
-`ConditionalRun()`が`false`を返した場合、またはstate transitionがpendingになった
-場合に終了します。
+終了後、同じRUNNING transitionから`Run()`を呼び出します。
 
-`Run()`はcustom loopに代わってmessageを受信したりstate transitionを確認したり
-しません。必要な`Receive()`、polling、timeout handlingはdevice codeに実装します。
-`Run()`内のloop、retry、waitでは`NewStatePending()`を確認し、state transition
-commandがpendingの場合はloopを終了します。
+device class開発者は、`Run()`で必要な`Receive()`、polling、timeout handlingを
+実装します。custom loop、retry、waitでは`NewStatePending()`を確認し、state
+transition commandがpendingの場合はloopを終了します。
 
 <a id="45-cmake-project"></a>
 ### 4.5. CMakeプロジェクト
