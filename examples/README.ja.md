@@ -815,6 +815,12 @@ source device、polling receiver、単純なprocessorには`ConditionalRun()`を
 確認するloopからこのfunctionを呼び出します。そのため、`STOP`や`END`などの
 state transitionがpendingになると、次のcallの前にloopを終了します。
 
+戻り値はloopの継続を制御するものであり、成功または失敗を表しません。`true`を返すと、
+次のiterationを要求します。次のcallの前にFairMQが`NewStatePending()`を確認します。
+`false`を返すと`ConditionalRun()` loopを抜け、FairMQが`Run()`を呼び出します。
+deviceが`Run()`をoverrideしていない場合、default実装はすぐにreturnします。他のstate
+transitionがpendingでなければ、FairMQはRUNNINGからREADYへ遷移します。
+
 `ConditionalRun()`はmessageを自動的に受信しません。inputを消費する場合は、
 device codeに`Receive()`、polling、timeout handlingを実装します。1回のcall内で
 無期限にwaitせず、FairMQ loopが`NewStatePending()`を確認できるよう制御を戻します。
@@ -834,12 +840,18 @@ auto MySource::ConditionalRun() -> bool
 }
 ```
 
+この例では、`fMaxIterations == 0`の場合、state transitionが要求されるまで
+`true`を返し続けます。正の上限値では、指定したiteration数の実行後に
+`false`を返します。
+
 <a id="443-run"></a>
 #### 4.4.3. Run()
 
 `ConditionalRun()` modelに合わないcustom loopが必要な場合は`Run()`を使用します。
-`OnData()` callbackが登録されておらず、`ConditionalRun()`が`false`を返すと、
-FairMQは同じRUNNING transitionから`Run()`を呼び出します。
+`OnData()` callbackが登録されていない場合、FairMQは`ConditionalRun()` loopの
+終了後、同じRUNNING transitionから`Run()`を呼び出します。loopは
+`ConditionalRun()`が`false`を返した場合、またはstate transitionがpendingになった
+場合に終了します。
 
 `Run()`はcustom loopに代わってmessageを受信したりstate transitionを確認したり
 しません。必要な`Receive()`、polling、timeout handlingはdevice codeに実装します。

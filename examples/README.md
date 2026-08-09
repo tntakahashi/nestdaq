@@ -800,6 +800,13 @@ processor. This is the easiest style to debug. FairMQ calls it from a loop that
 checks `NewStatePending()` before each iteration. A pending state transition
 such as `STOP` or `END` therefore stops the loop before the next call.
 
+The return value controls the loop; it is not a success or failure status.
+Return `true` to request another iteration. Before the next call, FairMQ checks
+`NewStatePending()`. Return `false` to leave the `ConditionalRun()` loop.
+FairMQ then calls `Run()`. If the device does not override `Run()`, its default
+implementation returns immediately, and FairMQ transitions from RUNNING to
+READY when no other state transition is pending.
+
 `ConditionalRun()` does not receive messages automatically. When it consumes
 input, implement `Receive()`, polling, and timeout handling in the device code.
 Do not wait indefinitely inside one call. Return control to the FairMQ loop so
@@ -820,12 +827,17 @@ auto MySource::ConditionalRun() -> bool
 }
 ```
 
+In this example, `fMaxIterations == 0` keeps returning `true` until a state
+transition is requested. A positive limit makes the function return `false`
+after the configured number of iterations.
+
 #### 4.4.3. Run()
 
 Use `Run()` when the device needs a custom loop that does not fit the
-`ConditionalRun()` model. When no `OnData()` callback is registered and
-`ConditionalRun()` returns `false`, FairMQ calls `Run()` from the same RUNNING
-transition.
+`ConditionalRun()` model. When no `OnData()` callback is registered, FairMQ
+calls `Run()` from the same RUNNING transition after the `ConditionalRun()`
+loop exits. The loop can exit because `ConditionalRun()` returned `false` or
+because a state transition became pending.
 
 `Run()` does not receive messages or check for state transitions on behalf of
 the custom loop. Implement any required `Receive()`, polling, and timeout
