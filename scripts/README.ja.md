@@ -397,7 +397,8 @@ structured group/instance parameter keyを含む全Redis key patternは、[`plug
 ## 4. デバイススケルトン生成
 
 `generate-device-skeleton.py`はscriptに組み込まれたtemplateから最小構成のNestDAQ FairMQ device projectを作成します。
-defaultではinput、output、data quality monitor(DQM)channel codeを生成し、各channel nameに`in`、`out`、`dqm`を使用します。
+defaultではinput、output、Data Quality Monitoring (DQM; データ品質監視) channel
+codeを生成し、各channel nameに`in`、`out`、`dqm`を使用します。
 
 ```bash
 # MyDevice projectを専用のoutput directoryへ生成する。

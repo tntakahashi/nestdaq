@@ -554,7 +554,8 @@ and edit the generated code.
 
 This creates `MyDevice.hpp`, `MyDevice.cpp`, `CMakeLists.txt`, and `README.md`.
 Existing files are not overwritten unless `--force` is specified. The default
-skeleton includes input, output, and DQM channels named `in`, `out`, and `dqm`.
+skeleton includes input, output, and Data Quality Monitoring (DQM) channels
+named `in`, `out`, and `dqm`.
 
 Useful variants:
 

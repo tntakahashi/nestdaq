@@ -423,8 +423,8 @@ parameter keys.
 
 `generate-device-skeleton.py` creates a minimal NestDAQ FairMQ device project
 from templates built into the script. By default, it generates input, output,
-and data quality monitor (DQM) channel code using `in`, `out`, and `dqm` as the
-respective channel names.
+and Data Quality Monitoring (DQM) channel code using `in`, `out`, and `dqm` as
+the respective channel names.
 
 ```bash
 # Generate a MyDevice project in its own output directory.
