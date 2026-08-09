@@ -294,7 +294,9 @@ uses `localhost:4317`.
    intended service grouping uses a different service name or channel name,
    pass the corresponding option, such as `--service-name` or `--in-chan-name`,
    to override the default. For repeated runs, users can create a wrapper shell
-   script that invokes `start_device.sh` with those overrides.
+   script that invokes `start_device.sh` with those overrides, or edit
+   `start_device.sh` itself to include them. Reinstalling NestDAQ may replace
+   edits made directly to the installed script.
    See
    [`plugins/README.md#22-daq-service-identity-defaults`](../plugins/README.md#22-daq-service-identity-defaults)
    for the `daq_service` defaults used when `--service-name` or `--id` is
@@ -308,8 +310,9 @@ uses `localhost:4317`.
    ```
 
    Start `Sink` and `Sampler` in separate terminals after registering the
-   topology. Starting `Sink` first avoids dropping early messages while the
-   receiver is not yet connected.
+   topology. This PUSH/PULL example does not require a specific startup order
+   to retain initial messages. By default, the PUSH send waits until a PULL
+   peer becomes available.
 
    ```sh
    <install-prefix>/scripts/start_device.sh Sink

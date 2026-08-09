@@ -300,7 +300,9 @@ host package managerで`otelcol-contrib`をインストールした場合は、C
    defaultとは異なるservice nameやchannel nameを使用する場合は、対応する
    `--service-name`や`--in-chan-name`などをcommand lineで指定します。
    繰り返し実行する場合は、利用者がこれらのoverrideを付けて`start_device.sh`を
-   呼び出すwrapper shell scriptを作成できます。`--service-name`または
+   呼び出すwrapper shell scriptを作成するか、`start_device.sh`自体にoverrideを
+   記述できます。NestDAQを再installすると、install先のscriptへ直接加えた変更が
+   置き換わる場合があります。`--service-name`または
    `--id`が空の場合に使用する`daq_service`のdefaultについては
    [`plugins/README.ja.md#22-daq-service-identity-defaults`](../plugins/README.ja.md#22-daq-service-identity-defaults)
    を参照してください。
@@ -313,8 +315,9 @@ host package managerで`otelcol-contrib`をインストールした場合は、C
    ```
 
    topologyの登録後、`Sink`と`Sampler`を別々のterminalで起動します。
-   `Sink`を先に起動すると、receiverがまだ接続されていない間に初期messageが
-   失われるのを避けられます。
+   このPUSH/PULL例では、初期messageを保持するために起動順を固定する必要は
+   ありません。defaultでは、PUSH側の送信はPULL peerが利用可能になるまで
+   待機します。
 
    ```sh
    <install-prefix>/scripts/start_device.sh Sink
