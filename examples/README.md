@@ -539,11 +539,12 @@ The main pieces are:
   integration, plugin search paths, and optional telemetry setup.
 - Redis stores registered process and service information, topology settings,
   parameter settings, and metrics used by the NestDAQ plugins. It also
-  transports DAQ commands through Pub/Sub; it does not store command history.
+  transports DAQ commands through Pub/Sub.
 
 ### 4.1. Start From the Skeleton Generator
 
-A practical first step is to generate a small project and then edit the generated files.
+This section shows how to generate a small project with the skeleton generator
+and edit the generated code.
 
 ```sh
 # Generate a device project from the default skeleton.
