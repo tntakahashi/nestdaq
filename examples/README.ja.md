@@ -717,7 +717,12 @@ auto MyDevice::InitTask() -> void
 ```
 
 この方法により、command-line処理、Redis parameter injection、および生成codeの動作が一貫します。
-数値optionが不正な場合は、変換を早い段階で失敗させるか、exceptionをcatchして明確なerrorをlogへ記録します。
+user-definedの数値optionの変換とvalidationは、device class開発者の責任です。
+NestDAQはcustom string optionの数値形式や許容範囲を自動検証しません。
+通常は`InitTask()`で変換します。変換exceptionをそのまま伝播させて初期化を
+失敗させるか、exceptionをcatchし、option nameと不正なvalueをlogへ記録してから
+rethrowする処理をdevice classに実装します。skeleton generatorは、generator自身が
+生成する数値optionの変換codeだけを出力します。
 
 <a id="44-choosing-ondata-conditionalrun-or-run"></a>
 ### 4.4. OnData()、ConditionalRun()、Run()の選択

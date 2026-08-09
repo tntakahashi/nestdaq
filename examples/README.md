@@ -704,7 +704,13 @@ auto MyDevice::InitTask() -> void
 ```
 
 This approach keeps command-line handling, Redis parameter injection, and generated code behavior consistent.
-If a numeric option is invalid, let the conversion fail early or catch the exception and log a clear error.
+The device-class developer is responsible for converting and validating
+user-defined numeric options. NestDAQ does not automatically validate the
+numeric syntax or accepted range of custom string options. Perform the
+conversion during initialization, normally in `InitTask()`. Either allow the
+conversion exception to propagate and fail initialization, or catch it, log
+the option name and invalid value, and rethrow it. The skeleton generator emits
+conversion code only for the numeric options that it generates.
 
 ### 4.4. Choosing OnData(), ConditionalRun(), or Run()
 
