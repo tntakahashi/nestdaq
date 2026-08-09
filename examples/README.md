@@ -79,7 +79,11 @@ flowchart TD
 ```
 
 The diagram shows a typical local run sequence, not a strict dependency graph.
-Start the OpenTelemetry Collector and required storage first when logs, metrics, or traces should be exported and no suitable services are already running.
+In this section, telemetry storage means a service such as OpenSearch that
+stores telemetry data forwarded by the Collector.
+Start the OpenTelemetry Collector and required telemetry storage first when
+logs, metrics, or traces should be exported and suitable services are not
+already running.
 If telemetry is disabled, console-only telemetry is used, or an existing Collector is available, treat step A as complete.
 
 Redis is required.

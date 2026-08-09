@@ -84,7 +84,11 @@ flowchart TD
 ```
 
 この図は一般的なローカル実行sequenceであり、厳密なdependency graphではありません。
-log、metrics、tracesをexportし、利用可能なCollectorとstorage serviceがまだ動作していない場合は、最初にOpenTelemetry Collectorと必要なstorageを起動します。
+このsectionにおけるtelemetry storageは、OpenSearchなど、Collectorから転送された
+telemetry dataを保存するserviceを指します。
+log、metrics、tracesをexportし、利用可能なCollectorとtelemetry storageがまだ
+動作していない場合は、最初にOpenTelemetry Collectorと必要なtelemetry storageを
+起動します。
 telemetryが無効、console-only telemetryを使用、または既存Collectorが利用可能な場合は、step Aが完了済みとみなします。
 
 Redisは必須です。
