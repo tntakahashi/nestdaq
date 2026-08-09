@@ -593,9 +593,8 @@ command-line optionではありません。たとえば
 C++に、default valueが`raw`のdevice command-line option
 `source-chan-name`を登録させます。
 生成deviceでdefault channelのいずれかが不要な場合は、対応する
-`--no-*-channel` optionを使用します。代わりに生成後、関連するoption、member、
-initialization、polling、processing codeをすべて削除することもできますが、
-生成時にchannelを除外する方が簡単です。
+`--no-*-channel` optionを使用します。生成後に、関連するoption、member、
+initialization、polling、processing codeをすべて削除することもできます。
 
 generator optionの一覧は
 [`scripts/README.ja.md#4-device-skeleton-generation`](../scripts/README.ja.md#4-device-skeleton-generation)

@@ -583,9 +583,8 @@ final command-line options of the generated device. For example,
 the generated C++ register a device command-line option named
 `source-chan-name` with default value `raw`. Use the corresponding
 `--no-*-channel` option when the generated device does not need one of the
-default channels. You can instead delete all related option, member,
-initialization, polling, and processing code after generation, but excluding
-the channel during generation is simpler.
+default channels. After generation, you can delete all related option, member,
+initialization, polling, and processing code.
 
 See [`scripts/README.md#4-device-skeleton-generation`](../scripts/README.md#4-device-skeleton-generation)
 for all generator options.
