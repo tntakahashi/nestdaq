@@ -777,7 +777,7 @@ deviceのmain processing styleには、次のうち1つを使用します。
 
 - input data到着時だけ処理するreceiverには`OnData()`を使用します。
   `InitTask()`でcallbackを登録します。FairMQのinput-handling pathが
-  `Receive()`を実行し、受信した`MessagePtr`または`Parts`をcallbackへ渡す
+  `Receive()`を実行し、受信したsingle-part messageまたはmultipart messageをcallbackへ渡す
   唯一のstyleです。callbackには受信messageに対する操作を書き、再度
   `Receive()`を呼び出さないでください。`OnData()` callbackを登録すると、
   FairMQはcallback pathを処理し、`ConditionalRun()` / `Run()` pathへ入りません。

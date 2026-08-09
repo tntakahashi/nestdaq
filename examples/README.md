@@ -765,10 +765,10 @@ Use one processing style as the main style for a device:
 - Use `OnData()` for a receiver whose work should happen only when input data
   arrives. Register the callback in `InitTask()`. This is the only style where
   FairMQ's input-handling path performs `Receive()` for you and passes the
-  received `MessagePtr` or `Parts` to your callback. In the callback, write the
-  operation on the received message; do not call `Receive()` again. If an
-  `OnData()` callback is registered, FairMQ handles the callback path and does
-  not enter the `ConditionalRun()` / `Run()` path.
+  received single-part message or multipart message to your callback. In the
+  callback, write the operation on the received message; do not call
+  `Receive()` again. If an `OnData()` callback is registered, FairMQ handles
+  the callback path and does not enter the `ConditionalRun()` / `Run()` path.
 - Use `ConditionalRun()` for a source device, a polling receiver, or a simple
   processor. This is the easiest style to debug. FairMQ calls it from a loop
   that checks `NewStatePending()` before each iteration, so a pending state
