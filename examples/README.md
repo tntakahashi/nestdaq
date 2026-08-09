@@ -760,35 +760,24 @@ auto Device::RunWrapper() -> void
 }
 ```
 
-Use one processing style as the main style for a device:
+Use one of `OnData()`, `ConditionalRun()`, or `Run()` as the main processing
+style. One device does not need to implement all three.
 
-- Use `OnData()` for a receiver whose work should happen only when input data
-  arrives. Register the callback in `InitTask()`. This is the only style where
-  FairMQ's input-handling path performs `Receive()` for you and passes the
-  received single-part message or multipart message to your callback. In the
-  callback, write the operation on the received message; do not call
-  `Receive()` again. If an `OnData()` callback is registered, FairMQ handles
-  the callback path and does not enter the `ConditionalRun()` / `Run()` path.
-- Use `ConditionalRun()` for a source device, a polling receiver, or a simple
-  processor. This is the easiest style to debug. FairMQ calls it from a loop
-  that checks `NewStatePending()` before each iteration, so a pending state
-  transition such as `STOP` or `END` makes the loop exit.
-- Use `Run()` when you need a custom loop that does not fit the
-  `ConditionalRun()` model. If `ConditionalRun()` returns `false` immediately,
-  FairMQ then calls `Run()` from the same RUNNING transition.
+#### 4.4.1. OnData()
 
-Unlike `OnData()`, `ConditionalRun()` and `Run()` do not receive messages
-automatically. If either function should consume input, write the `Receive()`,
-polling, and timeout handling in the device code.
+Use `OnData()` for a receiver whose work should happen only when input data
+arrives. Register the callback in `InitTask()`. This is the only style where
+FairMQ's input-handling path performs `Receive()` and passes the received
+single-part message or multipart message to the callback. Write the operation
+on the received message in the callback; do not call `Receive()` again.
 
-Implement one of `OnData()`, `ConditionalRun()`, or `Run()` as the main processing style.
-One device does not need to implement all three.
-Do not wait indefinitely inside an `OnData()` callback, `ConditionalRun()`, or `Run()`.
-If any of them contains a loop, retry, or wait, check `NewStatePending()` so that the device can react to state transition commands.
-The FairMQ input-handling path used by `OnData()` and the FairMQ loop around `ConditionalRun()` already check `NewStatePending()`, but user code must still return control instead of blocking indefinitely.
-Returning to the FairMQ loop promptly improves responsiveness to state transitions.
+An `OnData()` callback takes priority over `ConditionalRun()` and `Run()`.
+When a callback is registered, FairMQ uses the callback path and does not enter
+the `ConditionalRun()` / `Run()` path. The FairMQ input-handling path checks
+`NewStatePending()`, but the callback must return control instead of blocking
+indefinitely so that the device can respond to state transition commands.
 
-For a callback-based sink:
+Callback-based sink example:
 
 ```cpp
 auto MySink::InitTask() -> void
@@ -804,7 +793,19 @@ auto MySink::HandleData(fair::mq::MessagePtr& msg, int index) -> bool
 }
 ```
 
-For a loop-based source:
+#### 4.4.2. ConditionalRun()
+
+Use `ConditionalRun()` for a source device, polling receiver, or simple
+processor. This is the easiest style to debug. FairMQ calls it from a loop that
+checks `NewStatePending()` before each iteration. A pending state transition
+such as `STOP` or `END` therefore stops the loop before the next call.
+
+`ConditionalRun()` does not receive messages automatically. When it consumes
+input, implement `Receive()`, polling, and timeout handling in the device code.
+Do not wait indefinitely inside one call. Return control to the FairMQ loop so
+that it can check `NewStatePending()`.
+
+Loop-based source example:
 
 ```cpp
 auto MySource::ConditionalRun() -> bool
@@ -818,6 +819,18 @@ auto MySource::ConditionalRun() -> bool
     return fMaxIterations == 0 || fIterations < fMaxIterations;
 }
 ```
+
+#### 4.4.3. Run()
+
+Use `Run()` when the device needs a custom loop that does not fit the
+`ConditionalRun()` model. When no `OnData()` callback is registered and
+`ConditionalRun()` returns `false`, FairMQ calls `Run()` from the same RUNNING
+transition.
+
+`Run()` does not receive messages or check for state transitions on behalf of
+the custom loop. Implement any required `Receive()`, polling, and timeout
+handling in the device code. A loop, retry, or wait inside `Run()` must check
+`NewStatePending()` and exit when a state transition command is pending.
 
 ### 4.5. CMake Project
 
