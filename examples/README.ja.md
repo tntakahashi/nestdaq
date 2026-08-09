@@ -684,9 +684,11 @@ private:
 } // namespace nestdaq
 ```
 
-異なる種類の処理には、それぞれのlifecycle functionを使用します。
+処理内容に応じたlifecycle functionをoverrideします。
+`OnData()`はlifecycle functionのoverrideではなくcallback登録APIであり、通常は
+`InitTask()`から呼び出します。
 
-| Function | 使用場面 |
+| FunctionまたはAPI | 使用場面 |
 | :-- | :-- |
 | `InitTask()` | `fConfig`からcommand-line optionを読み、stringを型付きmemberへ変換し、`OnData()` callbackを登録してtelemetry instrumentを作成します。 |
 | `PreRun()` | deviceがRUNNINGへ入る直前にresourceを準備します。 |

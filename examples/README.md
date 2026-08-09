@@ -672,9 +672,11 @@ private:
 } // namespace nestdaq
 ```
 
-Use lifecycle functions for different kinds of work:
+Override the appropriate lifecycle function for each kind of work.
+`OnData()` is a callback-registration API rather than a lifecycle override and
+is normally called from `InitTask()`.
 
-| Function | When to use it |
+| Function or API | When to use it |
 | :-- | :-- |
 | `InitTask()` | Read command-line options from `fConfig`, convert strings to typed members, register `OnData()` callbacks, and create telemetry instruments. |
 | `PreRun()` | Prepare resources immediately before the device enters RUNNING. |
