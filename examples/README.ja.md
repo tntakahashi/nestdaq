@@ -690,7 +690,7 @@ private:
 
 | FunctionまたはAPI | 使用場面 |
 | :-- | :-- |
-| `InitTask()` | `fConfig`からcommand-line optionを読み、stringを型付きmemberへ変換し、`OnData()` callbackを登録してtelemetry instrumentを作成します。 |
+| `InitTask()` | task実行に必要な初期化を行います。必要に応じて`fConfig`からcommand-line optionを読み、stringを型付きmemberへ変換します。`OnData()`を使用する場合はcallbackを登録し、telemetry instrumentが必要な場合は作成します。 |
 | `PreRun()` | deviceがRUNNINGへ入る直前にresourceを準備します。 |
 | `OnData()` | incoming FairMQ messageを起点に処理する場合、`InitTask()`でinput callbackを登録します。FairMQがmessageを受信してcallbackへ渡します。 |
 | `ConditionalRun()` | 単純なactive processing loopのdefault選択です。続行する場合は`true`、RUNNINGを抜ける場合は`false`を返します。 |

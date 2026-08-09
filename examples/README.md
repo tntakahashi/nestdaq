@@ -678,7 +678,7 @@ is normally called from `InitTask()`.
 
 | Function or API | When to use it |
 | :-- | :-- |
-| `InitTask()` | Read command-line options from `fConfig`, convert strings to typed members, register `OnData()` callbacks, and create telemetry instruments. |
+| `InitTask()` | Initialize the state required for the task. Read command-line options from `fConfig` and convert strings to typed members as needed. Register callbacks when using `OnData()`, and create telemetry instruments when required. |
 | `PreRun()` | Prepare resources immediately before the device enters RUNNING. |
 | `OnData()` | Register input callbacks in `InitTask()` when processing should be driven by incoming FairMQ messages. FairMQ receives the message and passes it to the callback. |
 | `ConditionalRun()` | Default choice for simple active processing loops. Return `true` to continue and `false` to leave RUNNING. |
