@@ -703,7 +703,8 @@ auto MyDevice::InitTask() -> void
 }
 ```
 
-This approach keeps command-line handling, Redis parameter injection, and generated code behavior consistent.
+Whether a value is set from the command line or Redis, the device class
+receives the same string property and can use the same conversion logic.
 The device-class developer is responsible for converting and validating
 user-defined numeric options. NestDAQ does not automatically validate the
 numeric syntax or accepted range of custom string options. Perform the

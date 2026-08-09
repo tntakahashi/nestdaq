@@ -716,7 +716,8 @@ auto MyDevice::InitTask() -> void
 }
 ```
 
-この方法により、command-line処理、Redis parameter injection、および生成codeの動作が一貫します。
+command-lineとRedisのどちらから値を設定した場合も、device classは同じstring
+propertyを受け取り、同じ変換処理を使用できます。
 user-definedの数値optionの変換とvalidationは、device class開発者の責任です。
 NestDAQはcustom string optionの数値形式や許容範囲を自動検証しません。
 通常は`InitTask()`で変換します。変換exceptionをそのまま伝播させて初期化を
