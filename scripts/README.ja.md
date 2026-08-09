@@ -6,7 +6,8 @@
 
 このディレクトリには、NestDAQ pluginの使用方法を示すscriptがあります。
 scriptは別の作業directoryへcopyできます。
-設定を登録または読み取るscriptを実行する前に、Redis serverを起動してください。
+Redisへ設定を登録したり、Redisから設定を読み取ったりするscriptを実行する前に、
+Redis serverを起動してください。
 
 <a id="1-helper-script-to-launch-a-data-acquisition-daq-process"></a>
 ## 1. データ収集(DAQ)プロセス起動用ヘルパースクリプト

@@ -6,7 +6,8 @@
 
 This directory contains scripts that demonstrate how to use the NestDAQ plugins.
 You can copy the scripts to another working directory.
-Start a Redis server before running scripts that register or read configuration.
+Start a Redis server before running scripts that write configuration to or read
+configuration from Redis.
 
 ## 1. Helper script to launch a data acquisition (DAQ) process
 
