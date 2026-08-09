@@ -644,9 +644,12 @@ Each option description has three parts:
 - The first argument is the option name string. `"option-2,o"` defines the
   long option `--option-2` and the short option `-o`. Without the comma, for
   example `"option-1"`, only the long option `--option-1` is defined.
-- The second argument describes the stored value and default. In current
-  NestDAQ examples and skeleton code, use `bpo::value<std::string>()` even for
-  numeric settings, then convert the string inside the device class.
+- The second argument describes the stored value and default.
+  `ParameterConfigPlugin` applies user-defined scalar parameters received
+  through Redis as string properties. To keep the property type consistent,
+  the current NestDAQ examples and skeleton code use
+  `bpo::value<std::string>()` even for numeric settings, then convert the
+  string inside the device class.
 - The third argument is the help text shown by `--help`.
 
 Your device class derives from `fair::mq::Device`:

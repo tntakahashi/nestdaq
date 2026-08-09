@@ -657,9 +657,11 @@ semicolonは、最後のoption descriptionの後に一度だけ書きます。
 - 第1引数はoption name stringです。`"option-2,o"`はlong option
   `--option-2`とshort option `-o`を定義します。`"option-1"`のように
   commaがない場合はlong option `--option-1`だけを定義します。
-- 第2引数は保存するvalueとdefaultを指定します。現在のNestDAQ exampleと
-  skeleton codeでは、数値設定でも`bpo::value<std::string>()`を使用し、
-  device class内でstringを変換します。
+- 第2引数は保存するvalueとdefaultを指定します。
+  `ParameterConfigPlugin`はRedis経由で受け取るuser-defined scalar parameterを
+  string propertyとして扱います。propertyの型を一致させるため、現在の
+  NestDAQ exampleとskeleton codeでは、数値設定でも
+  `bpo::value<std::string>()`を使用し、device class内でstringを変換します。
 - 第3引数は`--help`で表示するhelp textです。
 
 device classは`fair::mq::Device`から派生します。
