@@ -432,6 +432,8 @@ VERBOSE=1 cmake --build ./build
 ## Run local OpenTelemetry Collector and backend containers
 
 When opentelemetry-cpp is available while NestDAQ is configured, NestDAQ can export OpenTelemetry logs, metrics, and traces to an OpenTelemetry Collector.
+NestDAQ's OpenTelemetry metrics and trace instrumentation is experimental and
+should not be used in production code.
 The external dependency build provides opentelemetry-cpp when `WITH_OTEL_CPP=ON`, which is the default.
 The repository provides Compose setups for local validation under [`share/otel-collector-compose/`](share/otel-collector-compose/README.md).
 Here, **Compose** means either `docker compose` or `podman compose`.

@@ -16,6 +16,10 @@ pluginは3種類のOpenTelemetry signalをexportできます。
 | Metrics | 無効 | `nestdaq::telemetry::Telemetry` counter/histogram/gauge application programming interface(API) |
 | Traces | 無効 | `nestdaq::telemetry::TelemetrySpan` resource acquisition is initialization(RAII)API |
 
+> **注意:** NestDAQのOpenTelemetry metricsおよびtrace instrumentationはexperimentalです。
+> production codeでは使用しないでください。spdlog log sinkもexperimentalであり、
+> 詳細は後述します。
+
 `libnestdaq_otel.so`は、CMake configure時に`opentelemetry-cpp`が見つかった場合にのみbuildおよびinstallされます。
 
 <a id="1-telemetry-plugin-loading-model"></a>

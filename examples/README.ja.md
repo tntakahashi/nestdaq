@@ -26,6 +26,8 @@ deviceは自身の処理やresource管理に必要なhookだけをoverrideしま
 
 `Sampler`と`Sink`は、OpenTelemetry headerを直接includeせずにtrace spanとmetricsを示すため、NestDAQ telemetry facadeを使用します。
 device起動時に`--otel-metric-protocol=console`と`--otel-trace-protocol=console`などのcommand-line optionを指定すると、これらの計装例が有効になります。
+NestDAQのOpenTelemetry metricsおよびtrace instrumentationはexperimentalであり、
+production codeでは使用しないでください。
 
 <a id="2-build"></a>
 ## 2. ビルド

@@ -25,6 +25,8 @@ This target provides the NestDAQ `runDevice.h` integration, FairMQ/FairLogger de
 
 `Sampler` and `Sink` use the NestDAQ telemetry facade to demonstrate trace spans and metrics without directly including OpenTelemetry headers.
 Enable the telemetry examples with command-line options such as `--otel-metric-protocol=console` and `--otel-trace-protocol=console` when starting the device.
+NestDAQ's OpenTelemetry metrics and trace instrumentation is experimental and
+should not be used in production code.
 
 ## 2. Build
 
