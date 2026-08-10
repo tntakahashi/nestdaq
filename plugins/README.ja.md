@@ -76,13 +76,13 @@ FairMQの`--id` optionが設定されている場合、その値をNestDAQ servi
 `--uuid`を省略すると、標準FairMQ device wrapperは生成したtelemetry UUIDを`uuid` propertyへcopyします。`uuid` propertyが存在しない場合、pluginが生成します。
 
 <a id="23-redis-keys-written-or-read"></a>
-### 2.3. 書き込みまたは読み取りを行うRedis key
+### 2.3. `daq_service`が使用するRedis key
 
 Health dataは、device identity、host情報、FairMQ state、およびlifecycle timestampを含むRedis hash dataです。
 `TopologyConfig`はconnection resolutionに`hostIp` fieldを使用し、monitoring clientは他のfieldをdevice statusの表示に使用できます。
 
-`Writer / reader`列は、scanとPub/Subを含む各Redisのwriteまたはreadを直接実行するrepository内のcomponentを示します。
-`daq_service`はNestDAQ device processへloadしたplugin、`daq-webctl`はweb controller、`operator`は外部Redis clientを指します。
+`Writer / reader`列は、NestDAQ device processへloadした`daq_service` pluginが行う操作を示します。
+`daq-webctl`が行うRedis操作は、[`controller/README.ja.md`](../controller/README.ja.md#6-redis-command-interface)を参照してください。
 
 `createdTime`、`updated_time`、`updatedTime`、`start_time`、`stop_time`は、local timeを秒精度の`YYYY-MM-DDTHH:MM:SS`形式で表したstringです。
 timezone offsetは含みません。
@@ -93,26 +93,20 @@ timezone offsetは含みません。
 | --- | --- | --- | --- | --- |
 | `daq_service{sep}{service}{sep}{id}{sep}presence` | string | TTL付きでrefreshされるUUID string | `daq_service`がwrite/read | device instanceのpresence marker。 |
 | `daq_service{sep}{service}{sep}{id}{sep}health` | hash | `instanceID`, `uuid`, `hostName`, `hostIp`, `serviceName`, `fair:mq:state`, `createdTime`, `updated_time`, `uptime`。run timing記録時は`start_time`, `start_time_ns`, `stop_time`, `stop_time_ns`も含む | `daq_service`がwrite/read | device instanceのhealth/lifecycle metadata。 |
-| `daq_service{sep}{service}{sep}{id}{sep}fair-mq-state` | string | FairMQ state name | `daq_service`がwrite/read、`daq-webctl`がread | TTL付きの現在のFairMQ state。 |
-| `daq_service{sep}{service}{sep}{id}{sep}updatedTime` | string | 最終update timestamp | `daq_service`がwrite、`daq-webctl`がread | TTL付きの軽量な最終update key。 |
+| `daq_service{sep}{service}{sep}{id}{sep}fair-mq-state` | string | FairMQ state name | `daq_service`がwrite/read | TTL付きの現在のFairMQ state。 |
+| `daq_service{sep}{service}{sep}{id}{sep}updatedTime` | string | 最終update timestamp | `daq_service`がwrite | TTL付きの軽量な最終update key。 |
 | `daq_service{sep}{service}{sep}{id}{sep}option` | hash | `severity`, `file-severity`, `verbosity`, `color`, `log-to-file`, `id`, `io-threads`, `transport`, `network-interface`, `init-timeout`、shared-memory option、`rate`, `session`などのFairMQ program option | `daq_service`がwrite | monitoring/debugging用の現在のoption値。 |
-| `daq_service{sep}service-instance-index{sep}{service}` | hash | Field：数値instance index、value：UUID | `daq_service`がread/write、presence expire後に`daq-webctl`がdelete | `--id`未指定時に`{service}-{index}` instance IDを割り当て、再利用。 |
-| `run_info{sep}run_number` | string integer | 現在または次のrun number | `daq_service`がread、`daq-webctl`がread/write | run number metadataのsource。web controllerは`RUN`前にincrementし`latest_run_number`へcopyする場合があります。 |
-| `run_info{sep}latest_run_number` | string integer | `RUN`要求時にcopyされた最後のrun number | `daq-webctl`がread/write | run metadataおよび表示用run number snapshot。 |
-| `run_info{sep}wait-device-ready` | string boolean | `1`または`true`：有効。未設定またはその他の値：無効 | `daq-webctl`がread/write | 有効の場合、`daq-webctl`は`CONNECT`の送信後に待ちます。`INIT TASK`または`RUN`の前には`CONNECT`を先に送信し、検出した対象deviceがすべて`DeviceReady`、`Ready`、`Running`のいずれか1つの同じstateを報告するまで待ちます。 |
-| `run_info{sep}wait-ready` | string boolean | `1`または`true`：有効。未設定またはその他の値：無効 | `daq-webctl`がread/write | 有効の場合、`daq-webctl`は`INIT TASK`の送信後に待ちます。`RUN`の前には`INIT TASK`を先に送信し、検出した対象deviceがすべて`Ready`またはすべて`Running`を報告するまで待ちます。 |
-| `daqctl` | pub/sub channel | JSON DAQ command message | `daq-webctl`またはoperatorがpublish、`daq_service`がsubscribe | controller commandを受信。 |
+| `daq_service{sep}service-instance-index{sep}{service}` | hash | Field：数値instance index、value：UUID | `daq_service`がread/write | `--id`未指定時に`{service}-{index}` instance IDを割り当て、再利用。 |
+| `run_info{sep}run_number` | string integer | 現在または次のrun number | `daq_service`がread | run metadataへ記録するrun numberを取得。 |
+| `daqctl` | pub/sub channel | JSON DAQ command message | `daq_service`がsubscribe | DAQ state transition要求を受信。 |
 
 <a id="24-daq-command-publishsubscribe-pubsub"></a>
 ### 2.4. DAQ commandのPublish/Subscribe (Pub/Sub)
 
-`daq_service`は`daqctl`をsubscribeし、対象に一致するcommand messageをlocal service instanceのFairMQ state transitionへ変換します。
-controllerや他のoperatorはこのchannelへcommand messageをpublishします。
-
 Redis Pub/Subは各`daqctl` messageを、このchannelをsubscribeするすべてのuser device processへ配信します。
 Redisはserviceやinstanceによってmessageをfilterしません。
-各subscriberの`daq_service` pluginはcommand messageを読み、local `service-name`と`Sampler-0`のようなlong instance idが選択されているかを確認します。
-local processがtargetでなければ、pluginはmessageを無視します。
+各deviceの`daq_service` pluginは、messageの`services`および`instances` arrayを、そのdeviceの`service-name`および`Sampler-0`のようなlong instance idと比較します。
+これらのarrayがそのdevice instanceを選択していない場合、pluginはmessageを無視します。
 
 `daqctl`へpublishするmessageの形式は次のとおりです。
 
@@ -128,7 +122,8 @@ local processがtargetでなければ、pluginはmessageを無視します。
 `services` arrayはservice nameを選択し、`instances` arrayはinstance idを選択します。
 両arrayが存在して空でないことが必要であり、いずれも複数entryを含められます。
 pluginはentryをsetとして保存するため、順序や重複はtarget matchingに影響しません。
-target selectionがlocal service instanceと一致する場合のみ、deviceがmessageを処理します。
+`daq_service` pluginが現在`command` fieldで処理する値は、大文字と小文字を区別した文字列`"change_state"`だけです。
+その他の`command`値を持つmessageは無視します。
 `value` fieldには、pluginが扱う次のFairMQまたはNestDAQ command stringを指定できます。
 
 ```text
@@ -199,16 +194,6 @@ serviceをまたいで選択したinstanceを対象にします。
 
 最後のmessageも全`daqctl` subscriberへ配信されます。
 例えば`Sampler-2`と`Sink-1`もmessageを受信しますが、long instance idが`instances`にないため無視します。
-
-web controllerが`RUN`を要求すると、`run_info{sep}run_number`を`run_info{sep}latest_run_number`へcopyします。
-その後、`run_info{sep}wait-device-ready`と`run_info{sep}wait-ready`に応じて、前提となる`CONNECT`と`INIT TASK` commandをpublishし、`RUN`をpublishして設定済みpre/post hookを実行します。
-`STOP`要求時は、`STOP`をpublishして設定済みpre/post hookを実行します。
-
-web controllerの前提wait logicも同じtarget selectionを使用します。
-`services: ["all"]`は既知の全serviceおよびinstance state keyを待ち、`instances: ["all"]`は選択service配下の全instanceを待ちます。
-
-`daq_service`は現在stateを`daq_service{sep}{service}{sep}{id}{sep}fair-mq-state`へ書き込み、関連するpresence、health、timestamp keyをrefreshします。
-`daq-webctl`などのcontrollerは、それらのkeyをpollまたはscanしてstate summaryを構築できます。
 
 <a id="25-topology-and-channel-keys"></a>
 ### 2.5. トポロジーおよびchannel key

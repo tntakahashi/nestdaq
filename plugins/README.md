@@ -72,13 +72,14 @@ The `--uuid` value is separate from the instance id and identifies the process f
 It also supplies the default telemetry `service.instance.id` unless `--otel-service-instance-id` is set explicitly.
 When `--uuid` is omitted, the standard FairMQ device wrapper copies its generated telemetry UUID to the `uuid` property; if no `uuid` property exists, the plugin generates one.
 
-### 2.3. Redis Keys Written or Read
+<a id="23-redis-keys-written-or-read"></a>
+### 2.3. Redis Keys Used by `daq_service`
 
 Health data is a Redis hash containing device identity, host details, FairMQ state, and lifecycle timestamps.
 `TopologyConfig` uses its `hostIp` field for connection resolution, and monitoring clients can read the other fields to report device status.
 
-The `Writer / reader` column names the in-tree components that directly perform each Redis write or read, including scans and Pub/Sub operations.
-`daq_service` means the plugin loaded in a NestDAQ device process, `daq-webctl` means the web controller, and `operator` means an external Redis client.
+The `Writer / reader` column describes the operations performed by the `daq_service` plugin loaded in a NestDAQ device process.
+Redis operations performed by `daq-webctl` are documented in [`controller/README.md`](../controller/README.md#6-redis-command-interface).
 
 `createdTime`, `updated_time`, `updatedTime`, `start_time`, and `stop_time` are local-time strings in `YYYY-MM-DDTHH:MM:SS` format, with second precision and no time-zone offset.
 `uptime` is the number of elapsed milliseconds since the `daq_service` plugin was created.
@@ -88,24 +89,19 @@ The `Writer / reader` column names the in-tree components that directly perform 
 |-------------|------------|----------------|-----------------|---------|
 | `daq_service{sep}{service}{sep}{id}{sep}presence` | string | UUID string, refreshed with TTL | Written/read by `daq_service` | Presence marker for one device instance. |
 | `daq_service{sep}{service}{sep}{id}{sep}health` | hash | `instanceID`, `uuid`, `hostName`, `hostIp`, `serviceName`, `fair:mq:state`, `createdTime`, `updated_time`, `uptime`; also `start_time`, `start_time_ns`, `stop_time`, `stop_time_ns` when run timing is recorded | Written/read by `daq_service` | Health and lifecycle metadata for one device instance. |
-| `daq_service{sep}{service}{sep}{id}{sep}fair-mq-state` | string | FairMQ state name | Written/read by `daq_service`; read by `daq-webctl` | Current FairMQ state with TTL. |
-| `daq_service{sep}{service}{sep}{id}{sep}updatedTime` | string | Last update timestamp | Written by `daq_service`; read by `daq-webctl` | Lightweight last-update key with TTL. |
+| `daq_service{sep}{service}{sep}{id}{sep}fair-mq-state` | string | FairMQ state name | Written/read by `daq_service` | Current FairMQ state with TTL. |
+| `daq_service{sep}{service}{sep}{id}{sep}updatedTime` | string | Last update timestamp | Written by `daq_service` | Lightweight last-update key with TTL. |
 | `daq_service{sep}{service}{sep}{id}{sep}option` | hash | Selected FairMQ program options such as `severity`, `file-severity`, `verbosity`, `color`, `log-to-file`, `id`, `io-threads`, `transport`, `network-interface`, `init-timeout`, shared-memory options, `rate`, and `session` | Written by `daq_service` | Current option values for monitoring and debugging. |
-| `daq_service{sep}service-instance-index{sep}{service}` | hash | Field: numeric instance index; value: UUID | Read/write by `daq_service`; deleted by `daq-webctl` after presence expiry | Allocates and reuses `{service}-{index}` instance IDs when `--id` is not given. |
-| `run_info{sep}run_number` | string integer | Current or next run number | Read by `daq_service`; read/write by `daq-webctl` | Source for run number metadata. The web controller may increment it and copy it to `latest_run_number` before `RUN`. |
-| `run_info{sep}latest_run_number` | string integer | Last run number copied when `RUN` was requested | Read/write by `daq-webctl` | Run number snapshot used for run metadata and display. |
-| `run_info{sep}wait-device-ready` | string boolean | `1` or `true`: enabled; missing or any other value: disabled | Read/write by `daq-webctl` | When enabled, `daq-webctl` waits after sending `CONNECT`. Before `INIT TASK` or `RUN`, it first sends `CONNECT` and waits until all discovered target devices report the same accepted state: `DeviceReady`, `Ready`, or `Running`. |
-| `run_info{sep}wait-ready` | string boolean | `1` or `true`: enabled; missing or any other value: disabled | Read/write by `daq-webctl` | When enabled, `daq-webctl` waits after sending `INIT TASK`. Before `RUN`, it first sends `INIT TASK` and waits until all discovered target devices report `Ready` or all report `Running`. |
-| `daqctl` | pub/sub channel | JSON DAQ command messages | Published by `daq-webctl` or an operator; subscribed by `daq_service` | Receives controller commands. |
+| `daq_service{sep}service-instance-index{sep}{service}` | hash | Field: numeric instance index; value: UUID | Read/write by `daq_service` | Allocates and reuses `{service}-{index}` instance IDs when `--id` is not given. |
+| `run_info{sep}run_number` | string integer | Current or next run number | Read by `daq_service` | Supplies the run number stored in run metadata. |
+| `daqctl` | pub/sub channel | JSON DAQ command messages | Subscribed by `daq_service` | Receives DAQ state-transition requests. |
 
 ### 2.4. DAQ Command Publish/Subscribe (Pub/Sub)
 
-`daq_service` subscribes to `daqctl` and translates matching command messages into FairMQ state transitions for the local service instance.
-Controllers and other operators publish command messages to this channel.
-
 Redis Pub/Sub delivers each `daqctl` message to every user device process subscribed to the channel.
 Redis does not filter messages by service or instance.
-Each subscriber's `daq_service` plugin reads the command, checks whether it selects the local `service-name` and long instance id such as `Sampler-0`, and ignores the command when the local process is not a target.
+Each subscribing device's `daq_service` plugin compares the message's `services` and `instances` arrays with that device's `service-name` and long instance id, such as `Sampler-0`.
+The plugin ignores the message when those arrays do not select that device instance.
 
 Messages published to `daqctl` have this shape:
 
@@ -121,7 +117,8 @@ Messages published to `daqctl` have this shape:
 The `services` array selects service names, and the `instances` array selects instance ids.
 Both arrays must be present and non-empty, and each can contain multiple entries.
 The plugin stores the entries as sets, so their order and duplicates do not affect target matching.
-A device processes the message only when the target selection matches its local service instance.
+The `daq_service` plugin currently handles only the exact, case-sensitive value `"change_state"` in the `command` field.
+It ignores messages with any other `command` value.
 The `value` field accepts one of the following FairMQ or NestDAQ command strings handled by the plugin:
 
 ```text
@@ -194,16 +191,6 @@ Target selected instances across services:
 
 The last message is still delivered to every `daqctl` subscriber.
 For example, `Sampler-2` and `Sink-1` receive the message but ignore it because their long instance ids are not listed in `instances`.
-
-When the web controller requests `RUN`, it copies `run_info{sep}run_number` to `run_info{sep}latest_run_number`.
-According to `run_info{sep}wait-device-ready` and `run_info{sep}wait-ready`, the controller then publishes any prerequisite `CONNECT` and `INIT TASK` commands, publishes `RUN`, and runs its configured pre/post hooks.
-When the controller requests `STOP`, it publishes `STOP` and runs its configured pre/post hooks.
-
-The web controller's prerequisite wait logic uses the same target selection.
-`services: ["all"]` waits on all known service and instance state keys, whereas `instances: ["all"]` waits on all instances under the selected services.
-
-`daq_service` writes the current state to `daq_service{sep}{service}{sep}{id}{sep}fair-mq-state` and refreshes the related presence, health, and timestamp keys.
-Controllers such as `daq-webctl` can poll or scan these keys to build state summaries.
 
 ### 2.5. Topology and Channel Keys
 

@@ -177,6 +177,25 @@ DAQ command key、`daqctl` Publish/Subscribe (Pub/Sub) channel、message形式�
 起動時に`daq-webctl`はRedis `notify-keyspace-events`を`AKE`に設定し、expired key eventを含むkey-event notificationを受信できるようにします。
 さらに、ブラウザのstate summaryを構築するため、`daq_service{sep}*{sep}*{sep}fair-mq-state`と`daq_service{sep}*{sep}*{sep}updatedTime`をpollします。
 
+次の表は、`daq-webctl`が直接操作するRedis keyおよびchannelを示します。
+
+| Key pattern | `daq-webctl`が行う操作 | 目的 |
+| :-- | :-- | :-- |
+| `daq_service{sep}{service}{sep}{id}{sep}fair-mq-state` | read | 各device instanceの現在のFairMQ stateを取得。 |
+| `daq_service{sep}{service}{sep}{id}{sep}updatedTime` | read | 各device instanceが最後にstateを更新した時刻を取得。 |
+| `daq_service{sep}service-instance-index{sep}{service}` | 対応するpresence keyのexpire後にinstance index fieldをdelete | 数値instance indexを再利用できる状態に戻す。 |
+| `run_info{sep}run_number` | read、set、increment | 現在または次のrun numberを管理。 |
+| `run_info{sep}latest_run_number` | read/write | `RUN`要求時にcopyしたrun numberを保存。 |
+| `run_info{sep}wait-device-ready` | read/write | `1`または`true`の場合、選択した全deviceが`DeviceReady`、`Ready`、`Running`のいずれか1つの同じstateを報告するまで`CONNECT`後に待機。keyがない場合またはその他の値の場合は待機しません。 |
+| `run_info{sep}wait-ready` | read/write | `1`または`true`の場合、選択した全deviceが`Ready`または全deviceが`Running`を報告するまで`INIT TASK`後に待機。keyがない場合またはその他の値の場合は待機しません。 |
+| `daqctl` | publish | 選択したdevice instanceへDAQ state transition要求を送信。 |
+
+`daq-webctl`は`RUN`要求を処理するときに、`run_info{sep}run_number`を`run_info{sep}latest_run_number`へcopyします。
+2つのwait flagの設定に応じて、前提となる`CONNECT`および`INIT TASK`要求を送信し、選択したdeviceを待ってから`RUN`を送信します。
+前提となるstate transitionを待つ場合にも、同じ`services`および`instances`の選択を使用します。
+`STOP`要求を処理するときは、前提となるstate transitionを行わずに`STOP`を送信します。
+設定済みのpre/post hookは、対応する`RUN`および`STOP`要求の前後で実行します。
+
 <a id="7-websocket-messages"></a>
 ## 7. WebSocketメッセージ
 

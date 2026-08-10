@@ -169,6 +169,25 @@ DAQ command keys, the `daqctl` Publish/Subscribe (Pub/Sub) channel, message shap
 At startup, `daq-webctl` sets Redis `notify-keyspace-events` to `AKE` so that it can receive key-event notifications, including expired key events.
 It also polls `daq_service{sep}*{sep}*{sep}fair-mq-state` and `daq_service{sep}*{sep}*{sep}updatedTime` to build browser state summaries.
 
+The following table lists the Redis keys and channel that `daq-webctl` accesses directly.
+
+| Key pattern | Operation performed by `daq-webctl` | Purpose |
+| :-- | :-- | :-- |
+| `daq_service{sep}{service}{sep}{id}{sep}fair-mq-state` | Read | Obtain each device instance's current FairMQ state. |
+| `daq_service{sep}{service}{sep}{id}{sep}updatedTime` | Read | Determine when each device instance last updated its state. |
+| `daq_service{sep}service-instance-index{sep}{service}` | Delete an instance-index field after the corresponding presence key expires | Release the numeric instance index for reuse. |
+| `run_info{sep}run_number` | Read, set, and increment | Manage the current or next run number. |
+| `run_info{sep}latest_run_number` | Read and write | Store the run number copied when `RUN` is requested. |
+| `run_info{sep}wait-device-ready` | Read and write | When set to `1` or `true`, wait after `CONNECT` until all selected devices report the same accepted state: `DeviceReady`, `Ready`, or `Running`. A missing key or any other value disables the wait. |
+| `run_info{sep}wait-ready` | Read and write | When set to `1` or `true`, wait after `INIT TASK` until all selected devices report `Ready` or all report `Running`. A missing key or any other value disables the wait. |
+| `daqctl` | Publish | Send DAQ state-transition requests to the selected device instances. |
+
+When `daq-webctl` handles a `RUN` request, it copies `run_info{sep}run_number` to `run_info{sep}latest_run_number`.
+Depending on the two wait flags, it sends the prerequisite `CONNECT` and `INIT TASK` requests and waits for the selected devices before sending `RUN`.
+The same `services` and `instances` selection applies to the prerequisite waits.
+When `daq-webctl` handles a `STOP` request, it sends `STOP` without prerequisite state transitions.
+Configured pre/post hooks run around the corresponding `RUN` and `STOP` requests.
+
 ## 7. WebSocket Messages
 
 Browser clients send JSON commands to the WebSocket endpoint.
