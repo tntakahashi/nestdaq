@@ -10,7 +10,7 @@ Redisへ設定を登録したり、Redisから設定を読み取ったりするs
 Redis serverを起動してください。
 
 <a id="1-helper-script-to-launch-a-data-acquisition-daq-process"></a>
-## 1. データ収集(DAQ)プロセス起動用ヘルパースクリプト
+## 1. データ収集 (DAQ) プロセス起動用ヘルパースクリプト
 
 <a id="11-start_devicesh"></a>
 ### 1.1. start_device.sh
@@ -24,9 +24,9 @@ device name以降のargumentはdeviceおよびFairMQへ渡されるため、`--s
 NestDAQ exampleをローカル環境で実行する場合は、`start_device.sh`でdeviceを
 起動する前に外部serviceを起動し、必要な設定を登録します。
 
-- telemetry exportが必要な場合は、最初にOpenTelemetry Collectorとtelemetry
-  storageを起動します。例えば、`share/otel-collector-compose/`配下のCompose
-  setupを`docker compose`または`podman compose`で起動します。
+- telemetry exportが必要な場合は、最初にOpenTelemetry Collector、OpenSearch、
+  OpenSearch Dashboardsを起動します。`share/otel-collector-compose/opensearch/`の
+  Compose setupを`docker compose`または`podman compose`で起動します。
 - Redis serverを起動します。
 - browser user interfaceからdeviceを制御する場合は`daq-webctl`を起動します。
 - `topology-*.sh` scriptでtopology設定をRedisへ登録します。
@@ -34,9 +34,13 @@ NestDAQ exampleをローカル環境で実行する場合は、`start_device.sh`
 
 localでの完全な起動sequenceは[`examples/README.ja.md`](../examples/README.ja.md)を参照してください。
 
+`start_device.sh`が固定しない設定は、deviceまたはpluginのcommand-line optionで変更できます。
+scriptが生成するdefaultは、以下に示す対応済みの環境変数を使用するか、script自体を編集して変更します。
+scriptが生成するoptionはuser argumentの後へ追加されるため、同名のcommand-line optionでは上書きできません。
+
 `start_device.sh`は、すべてのNestDAQ Redis connectionに`NESTDAQ_REDIS_SERVER`を使用します。
 defaultは`127.0.0.1:6379`です。
-scriptはDAQ service registryをRedis database `0`、metricsをdatabase `1`、parameter configurationをdatabase `2`へ割り当てます。
+scriptはDAQ service registryをRedis database (DB) `0`、metricsをDB `1`、parameter configurationをDB `2`へ割り当てます。
 
 scriptの該当部分は次のとおりです。
 
@@ -48,9 +52,9 @@ METRICS_URI=" --metrics-uri tcp://${NESTDAQ_REDIS_SERVER}/1"
 CONFIG_URI=" --parameter-config-uri tcp://${NESTDAQ_REDIS_SERVER}/2"
 ```
 
-`daq_service`はservice registry、DAQ command、topology metadataにDB 0を使用します。
-`metrics` pluginはDB 1を使用します。
-`parameter_config` pluginはDB 2からdevice option valueを読み取ります。
+`daq_service`はservice registry、DAQ command、topology metadataにDB `0`を使用します。
+`metrics` pluginはDB `1`を使用します。
+`parameter_config` pluginはDB `2`からdevice option valueを読み取ります。
 
 scriptはplugin search pathとplugin load orderも設定します。
 
@@ -76,7 +80,7 @@ FairMQは最終command line上の`-P` optionの順序に従ってpluginをload�
 `-S`でdirectoryを追加するとsearch priorityは変わりますが、loadするpluginやload orderは変わりません。
 loadするpluginとその順序は`-P` entryで制御されます。
 
-`start_device.sh`はOpenTelemetry(OTel)logをOpenTelemetry Protocol(OTLP)gRPCでlocal OpenTelemetry Collectorへ送信します。
+`start_device.sh`はOpenTelemetry (OTel) logをOpenTelemetry Protocol (OTLP) gRPCでlocal OpenTelemetry Collectorへ送信します。
 default endpointは`localhost:4317`です。
 別のendpointを使用するには`NESTDAQ_OTLP_GRPC_ENDPOINT`を設定します。
 
@@ -94,8 +98,7 @@ var+=" --otel-log-severity=${NESTDAQ_START_DEVICE_OTEL_LOG_SEVERITY}"
 processの実行場所に応じてendpointを選択します。
 
 - host processからComposeが公開したcollector portへ接続：`localhost:4317`。
-- OpenSearchまたはVictoria Compose network内のNestDAQ device container/`daq-webctl` container：`otel-collector:4317`。
-- ClickStack Compose network内のNestDAQ device container/`daq-webctl` container：`clickstack:4317`。
+- OpenSearch Compose network内のNestDAQ device container/`daq-webctl` container：`otel-collector:4317`。
 - Compose network外のcontainerからhost公開collector portへ接続：Dockerでは通常`host.docker.internal:4317`、Podmanでは通常`host.containers.internal:4317`。
 
 以下のshell command例では、`#`で始まる行は読者向けのcommentであり、shellでは実行されません。
@@ -105,8 +108,17 @@ processの実行場所に応じてendpointを選択します。
 NESTDAQ_OTLP_GRPC_ENDPOINT=host.containers.internal:4317 ./start_device.sh Sampler
 ```
 
-OTel metricsとtracesはdefaultで無効です。
-OTLP gRPCでexportするかdebug用console exporterへ出力する場合は、`start_device.sh`内のmetric/trace exampleをuncommentします。
+`--otel-log-protocol`、`--otel-metric-protocol`、`--otel-trace-protocol`では、
+`console`、`otlp-grpc`、`otlp-http`、空文字列 (`""`) の4種類を指定できます。
+空文字列を指定すると、対象signalのexportは無効になります。
+複数のexporterを有効にする場合は、protocolをcomma区切りで指定します。
+`start_device.sh`を使用する場合、defaultのlog protocolを変更するには、scriptが生成する
+`--otel-log-protocol` optionを編集します。
+
+OTel metricsとOTel tracesはdefaultで無効です。
+OTLP gRPCまたはOTLP HTTPでexportする場合、debug用console exporterへ出力する場合、
+または空文字列のままexportを無効にする場合は、`start_device.sh`内のmetric/trace exampleを
+uncommentまたは編集します。
 
 FairLogger console outputは`--severity nolog`によってdefaultで無効です。
 有効にするには`NESTDAQ_FAIRLOGGER_CONSOLE_SEVERITY`を変更します。
@@ -193,7 +205,7 @@ flowchart TB
 | portRangeMin | 22000 |
 | portRangeMax | 32000 |
 | autoBind | true |
-| numSockets | 0(pluginが自動計算) |
+| numSockets | 0 (pluginが自動計算) |
 | autoSubChannel | false |
 | bound | (userは設定しない) |
 | waitForPeerConnection | true |
@@ -206,7 +218,7 @@ flowchart TB
 `[subindex]`を明示した場合は、そのsubchannelだけを使用します。
 詳細は[`plugins/README.ja.md#251-autosubchannel`](../plugins/README.ja.md#251-autosubchannel)を参照してください。
 
-topology scriptはendpointとlink definitionをRedis DB 0へ書き込みます。
+topology scriptはendpointとlink definitionをRedis DB `0`へ書き込みます。
 helper functionは次の形式です。
 
 ```bash
@@ -369,7 +381,7 @@ device parameterは、NestDAQ device processが`parameter_config` pluginを通�
   ./mq-param.sh
 ```
 
-`mq-param.sh`は、`parameter_config` pluginが使用するRedis DB 2へparameter hashを書き込みます。
+`mq-param.sh`は、`parameter_config` pluginが使用するRedis DB `2`へparameter hashを書き込みます。
 
 ```bash
 server=redis://127.0.0.1:6379/2
@@ -567,7 +579,7 @@ single-message exampleにはgenerator option `--single-output`または`--single
 
 | 生成device command-line option | デフォルト | 説明 |
 | :-- | :-- | :-- |
-| `poll-timeout-ms` | `100` | FairMQ poll timeout(milliseconds)。 |
+| `poll-timeout-ms` | `100` | FairMQ poll timeout (milliseconds)。 |
 | `drain-timeout-ms` | `100` | input drainで使用するreceive timeout。負値は`0`として扱う。 |
 | `drain-max-timeout-count` | `20` | 最後にdrainしたmessage以降、この回数だけ連続でreceive timeoutしたらinput drainを停止。正値必須。 |
 
