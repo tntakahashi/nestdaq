@@ -571,6 +571,27 @@ Redisへ接続するように設定したGrafanaやSlowDashなどの外部可視
 これらのlabelは、pluginが`TS.CREATE`を実行した場合だけ設定されます。
 `--recreate-ts=false`で、存在しないseriesを`TS.ADD`が暗黙に作成した場合、そのseriesにこれらのlabelは付きません。
 
+次のコマンドは`redis-cli`を使用し、defaultのmetrics databaseであるDB `1`からRedisTimeSeries dataを読み取ります。
+URI、key name、timestamp、およびlabel filterは、操作対象の環境に合わせて変更してください。
+このshellの例では、`#`で始まる行はcommentです。
+
+```bash
+# 1つのprocess CPU seriesから最新sampleを読み取る。
+redis-cli -u redis://127.0.0.1:6379/1 \
+  TS.GET 'ts:Sampler-0:cpu-stat'
+
+# 1つのchannel throughput seriesからすべてのsampleを読み取る。
+redis-cli -u redis://127.0.0.1:6379/1 \
+  TS.RANGE 'ts:Sampler-0:out[0]:mb-out' - +
+
+# service labelがSamplerである全seriesをtimestamp範囲で読み取る。
+redis-cli -u redis://127.0.0.1:6379/1 \
+  TS.MRANGE 1710000000000 1710003600000 FILTER service=Sampler
+```
+
+`TS.GET`は最新sampleを返し、`TS.RANGE`は1つのseriesを読み取り、`TS.MRANGE`はlabelを使用して複数のseriesを選択します。
+`TS.RANGE`の範囲に`-`と`+`を指定すると、保持されている全範囲を取得します。
+
 pluginはFairMQのFairLogger throughput lineをlistenし、次のようなinput、output、およびData Quality Monitoring (DQM; データ品質監視) channelのrecordをparseします。
 
 ```text
@@ -632,16 +653,16 @@ pluginは`TS.CREATE`の前にも、同名のkeyが存在すれば削除します
 <a id="42-redis-keys-read-or-subscribed"></a>
 ### 4.2. 読み取りまたは購読するRedis key
 
-Redis clientがparameter valueを書き込みます。
-付属の`scripts/mq-param.sh`はhash parameterを書き込む手段の1つであり、operatorや他のapplicationが`redis-cli`などのRedis clientを使用することもできます。
+Redis clientを呼び出すscript、またはRedis clientを直接使用するapplicationがparameter valueを書き込みます。
+付属の`scripts/mq-param.sh`はhash parameterを書き込むscriptの1つですが、対応するすべてのRedis data typeの例を提供しているわけではありません。
 各NestDAQ device processへloadされた`parameter_config` pluginは、そのprocessのgroup keyとinstance keyを読み取り、取得したvalueをFairMQ program propertyへ書き込みます。
 
 | Key pattern | Redis type | Field / value | Writer / reader | 目的 |
 | --- | --- | --- | --- | --- |
-| `parameters{sep}{id}` | hash | Field：option name、value：option value string | `mq-param.sh`または他のRedis clientがwrite。`parameter_config`がread | instance固有parameter set。 |
-| `parameters{sep}{group}` | hash | Field：option name、value：option value string | `mq-param.sh`または他のRedis clientがwrite。`parameter_config`がread | group default parameter set。`{group}`は`{id}`末尾の数値`-N` suffixを除いて生成。 |
-| `parameters{sep}{id}{sep}*` | string/list/hash/set/zset | instance key配下の追加structured parameter | Redis clientがwrite。`parameter_config`がscanしてread | instanceごとのstructured parameter value。 |
-| `parameters{sep}{group}{sep}*` | string/list/hash/set/zset | group key配下の追加structured parameter | Redis clientがwrite。`parameter_config`がscanしてread | group-level structured parameter value。 |
+| `parameters{sep}{id}` | hash | Field：option name、value：option value string | Redis clientを呼び出すscript、または他のRedis clientがwrite。`parameter_config`がread | instance固有parameter set。 |
+| `parameters{sep}{group}` | hash | Field：option name、value：option value string | Redis clientを呼び出すscript、または他のRedis clientがwrite。`parameter_config`がread | group default parameter set。`{group}`は`{id}`末尾の数値`-N` suffixを除いて生成。 |
+| `parameters{sep}{id}{sep}*` | string/list/hash/set/zset | instance key配下の追加structured parameter | Redis clientを呼び出すscript、または他のRedis clientがwrite。`parameter_config`がscanしてread | instanceごとのstructured parameter value。 |
+| `parameters{sep}{group}{sep}*` | string/list/hash/set/zset | group key配下の追加structured parameter | Redis clientを呼び出すscript、または他のRedis clientがwrite。`parameter_config`がscanしてread | group-level structured parameter value。 |
 | `__keyspace@{db}__:{key}` | pub/sub channel | Redis keyspace notification event | Redisがpublish。`parameter_config`がsubscribe | instance/group parameter keyのlive reloadをtrigger。 |
 
 string keyは最後のpath componentをoption nameとして使用します。

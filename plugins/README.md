@@ -555,6 +555,27 @@ Visualization tools can filter or group series by these labels.
 These labels are applied only when the plugin runs `TS.CREATE`.
 If `--recreate-ts=false` and `TS.ADD` implicitly creates a missing series, that series does not receive these labels.
 
+The following commands use `redis-cli` to read RedisTimeSeries data from the default metrics database, DB `1`.
+Replace the URI, key names, timestamps, and label filters for the target environment.
+In this shell example, lines beginning with `#` are comments.
+
+```bash
+# Read the latest sample from one process CPU series.
+redis-cli -u redis://127.0.0.1:6379/1 \
+  TS.GET 'ts:Sampler-0:cpu-stat'
+
+# Read every sample from one channel throughput series.
+redis-cli -u redis://127.0.0.1:6379/1 \
+  TS.RANGE 'ts:Sampler-0:out[0]:mb-out' - +
+
+# Read all series whose service label is Sampler over a timestamp range.
+redis-cli -u redis://127.0.0.1:6379/1 \
+  TS.MRANGE 1710000000000 1710003600000 FILTER service=Sampler
+```
+
+`TS.GET` returns the latest sample, `TS.RANGE` reads one series, and `TS.MRANGE` selects multiple series using labels.
+Use `-` and `+` as the `TS.RANGE` boundaries to request the complete available range.
+
 The plugin listens for FairLogger throughput lines from FairMQ and parses records such as these input, output, and Data Quality Monitoring (DQM) channel examples:
 
 ```text
@@ -612,16 +633,16 @@ Instance-specific parameters override group parameters when both are present.
 
 ### 4.2. Redis Keys Read or Subscribed
 
-Redis clients write the parameter values.
-The supplied `scripts/mq-param.sh` is one such writer for hash parameters; operators or other applications may use `redis-cli` or another Redis client instead.
+Scripts that invoke a Redis client, or applications that use a Redis client directly, write the parameter values.
+The supplied `scripts/mq-param.sh` is one such script for hash parameters, but it does not provide examples for every supported Redis data type.
 The `parameter_config` plugin loaded in each NestDAQ device process reads the keys for its group and instance and writes the resulting values to that process's FairMQ program properties.
 
 | Key pattern | Redis type | Fields / value | Writer / reader | Purpose |
 |-------------|------------|----------------|-----------------|---------|
-| `parameters{sep}{id}` | hash | Field: option name; value: option value string | `mq-param.sh` or another Redis client writes; `parameter_config` reads | Instance-specific parameter set. |
-| `parameters{sep}{group}` | hash | Field: option name; value: option value string | `mq-param.sh` or another Redis client writes; `parameter_config` reads | Group default parameter set. `{group}` is derived from `{id}` by removing a trailing numeric `-N` suffix. |
-| `parameters{sep}{id}{sep}*` | string/list/hash/set/zset | Additional structured parameters below the instance key | A Redis client writes; `parameter_config` scans and reads | Per-instance structured parameter values. |
-| `parameters{sep}{group}{sep}*` | string/list/hash/set/zset | Additional structured parameters below the group key | A Redis client writes; `parameter_config` scans and reads | Group-level structured parameter values. |
+| `parameters{sep}{id}` | hash | Field: option name; value: option value string | A script invoking a Redis client, or another Redis client, writes; `parameter_config` reads | Instance-specific parameter set. |
+| `parameters{sep}{group}` | hash | Field: option name; value: option value string | A script invoking a Redis client, or another Redis client, writes; `parameter_config` reads | Group default parameter set. `{group}` is derived from `{id}` by removing a trailing numeric `-N` suffix. |
+| `parameters{sep}{id}{sep}*` | string/list/hash/set/zset | Additional structured parameters below the instance key | A script invoking a Redis client, or another Redis client, writes; `parameter_config` scans and reads | Per-instance structured parameter values. |
+| `parameters{sep}{group}{sep}*` | string/list/hash/set/zset | Additional structured parameters below the group key | A script invoking a Redis client, or another Redis client, writes; `parameter_config` scans and reads | Group-level structured parameter values. |
 | `__keyspace@{db}__:{key}` | pub/sub channel | Redis keyspace notification events | Redis publishes; `parameter_config` subscribes | Triggers live reload for the instance and group parameter keys. |
 
 String keys use the last path component as the option name.
