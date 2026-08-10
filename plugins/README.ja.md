@@ -385,7 +385,17 @@ sequenceDiagram
     DaqService->>Redis: fair-mq-state = "BINDING"
     alt bind channelが存在
         Device->>Device: BindWrapper()がAttachChannels()を呼び出す
-        Device->>Device: Channel::BindEndpoint()がSocket::Bind()を呼び出す
+        Device->>Device: BindEndpoint()が設定済みaddressでSocket::Bind()を試す
+        alt 設定済みaddressでbindに成功
+            Device-->>Device: 設定済みendpointを使用
+        else bindに失敗し、TCPかつautoBind=true
+            loop bind成功または1000回失敗まで
+                Device->>Device: portRangeMin..portRangeMaxからportをランダムに選択
+                Device->>Device: 選択したaddressでSocket::Bind()
+            end
+        else random portへのfallbackを使用できない
+            Device-->>Device: bind初期化に失敗
+        end
     else bind channelが存在しない
         Device-->>Device: channel socketのBind()を呼び出さない
     end
@@ -435,6 +445,11 @@ sequenceDiagram
     DaqService->>Redis: fair-mq-state = "DEVICE READY"
 ```
 
+各bind channelについて、`Channel::BindEndpoint()`は最初に設定済みaddressでbindを試します。
+bindに失敗した場合、protocolがTCPかつ`autoBind=true`であれば、FairMQは`portRangeMin`から`portRangeMax`までの範囲からport番号をランダムに選び、bindを再試行します。
+範囲には両端の値を含みます。
+random portを試す回数は最大1000回です。
+TCP以外のendpoint、`autoBind=false`、または最大回数まで成功しなかった場合は、bind初期化に失敗します。
 bind channelは最初に自身のaddressをRedisへ書き込みます。
 connect channelはpeer bind channelが`bound=1`になるのを待ち、Redisからpeer socket addressを解決して、結果をFairMQ `chans.*` propertyへ書き込みます。
 `waitForPeerConnection=false`のbind channelは、最後のpeer-ready waitを省略します。

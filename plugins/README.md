@@ -376,7 +376,17 @@ sequenceDiagram
     DaqService->>Redis: fair-mq-state = "BINDING"
     alt bind channels exist
         Device->>Device: BindWrapper() calls AttachChannels()
-        Device->>Device: Channel::BindEndpoint() calls Socket::Bind()
+        Device->>Device: BindEndpoint() tries Socket::Bind(configured address)
+        alt configured bind succeeds
+            Device-->>Device: keep the configured endpoint
+        else bind fails, protocol is TCP, and autoBind=true
+            loop until bind succeeds or 1000 attempts fail
+                Device->>Device: choose a random port in portRangeMin..portRangeMax
+                Device->>Device: Socket::Bind(candidate address)
+            end
+        else random-port fallback is unavailable
+            Device-->>Device: bind initialization fails
+        end
     else no bind channels
         Device-->>Device: no channel socket Bind() call
     end
@@ -426,6 +436,9 @@ sequenceDiagram
     DaqService->>Redis: fair-mq-state = "DEVICE READY"
 ```
 
+For each bind channel, `Channel::BindEndpoint()` first attempts the configured address.
+If that attempt fails, the protocol is TCP, and `autoBind=true`, FairMQ selects a random port from the inclusive `portRangeMin` through `portRangeMax` range and retries the bind operation.
+FairMQ makes at most 1000 random-port attempts; a non-TCP endpoint, `autoBind=false`, or exhaustion of all attempts causes bind initialization to fail.
 Bind channels write their own addresses to Redis first.
 Connect channels wait for the peer bind channel to become `bound=1`, resolve the peer socket addresses from Redis, and write the resulting FairMQ `chans.*` properties.
 A bind channel with `waitForPeerConnection=false` skips the final wait for the peer to become ready.
