@@ -213,13 +213,13 @@ serviceをまたいで選択したinstanceを対象にします。
 ### 2.5. トポロジーおよびchannel key
 
 各`daq_service` pluginの`TopologyConfig` objectはtopology定義を読み取り、そのdeviceのchannelおよびsocket metadataをRedisへ書き込みます。
-bind側が最初にaddressを書き込み、connect側がそのaddressを読み取ってlocal FairMQ socketを設定します。
+bind側が最初にaddressを書き込み、connect側がそのaddressを読み取って自身のFairMQ socketを設定します。
 
 | Key pattern | Redis type | Field / value | Writer / reader | 目的 |
 | --- | --- | --- | --- | --- |
-| `daq_service{sep}{service}{sep}{id}{sep}channel{sep}{channel}` | hash | `name`, `type`, `method`, `address`, `transport`、buffer/kernel size、`linger`, `rateLogging`、port range、`autoBind`, `num_sockets`, `autoSubChannel`, `bound`, `waitForPeerConnection` | local deviceの`TopologyConfig`がbind channelとconnect channelの両方をwrite。topology linkからaddressを解決する場合、connect側がpeerのbind channel metadataと`bound` fieldをread | 保存されたchannel endpoint metadata。 |
-| `daq_service{sep}{service}{sep}{id}{sep}channel{sep}{channel}{sep}peer` | list | peer channel key string | 各deviceの`TopologyConfig`がwrite。topology linkからaddressを解決する場合、connect側がlocal peer listおよび対応するpeer listをread | channelのpeer list。 |
-| `daq_service{sep}{service}{sep}{id}{sep}socket{sep}chans.{channel}.{subindex}` | hash | local subchannel/socket parameterと`num_sockets`, `autoSubChannel` | bind側の`TopologyConfig`がbind済みsocket addressをwrite。connect側がそのrecordをreadしてaddressを解決し、自身のsocket recordをwrite | subchannelごとのconnection metadata。 |
+| `daq_service{sep}{service}{sep}{id}{sep}channel{sep}{channel}` | hash | `name`, `type`, `method`, `address`, `transport`、buffer/kernel size、`linger`, `rateLogging`、port range、`autoBind`, `num_sockets`, `autoSubChannel`, `bound`, `waitForPeerConnection` | `{service}`と`{id}`が示すdevice instanceの`TopologyConfig`がbind channelとconnect channelの両方をwrite。topology linkからaddressを解決する場合、connect側がpeerのbind channel metadataと`bound` fieldをread | 保存されたchannel endpoint metadata。 |
+| `daq_service{sep}{service}{sep}{id}{sep}channel{sep}{channel}{sep}peer` | list | peer channel key string | 各deviceの`TopologyConfig`がwrite。topology linkからaddressを解決する場合、connect側が自身のchannelのpeer listおよび対応するpeer listをread | channelのpeer list。 |
+| `daq_service{sep}{service}{sep}{id}{sep}socket{sep}chans.{channel}.{subindex}` | hash | そのdevice instanceのsubchannel/socket parameterと`num_sockets`, `autoSubChannel` | bind側の`TopologyConfig`がbind済みsocket addressをwrite。connect側がそのrecordをreadしてaddressを解決し、自身のsocket recordをwrite | subchannelごとのconnection metadata。 |
 | `daq_service{sep}topology{sep}endpoint...` | hash | topology endpoint configuration | `scripts/topology-*.sh`または他のRedis clientがwrite。対象serviceの各deviceにある`TopologyConfig`がscan/read | bind channelおよびconnect channelを定義する外部topology configuration。 |
 | `daq_service{sep}topology{sep}link...` | string | topology link configuration | `scripts/topology-*.sh`または他のRedis clientがwrite。link両側のdeviceにある`TopologyConfig`がscan/read | serviceとchannelを接続する外部topology configuration。 |
 
@@ -233,10 +233,10 @@ repositoryが提供するscriptはRedis database `0`とseparator `:`を使用し
 
 FairMQでは、同じ名前のchannelを`std::vector<fair::mq::Channel>`として保持します。
 各`fair::mq::Channel`は1つのFairMQ Socketを包み、vectorのindexがsubchannelを識別します。
-deviceのC++コードでは、`Send()`または`Receive()`のindex引数でlocal subchannelを選択します。
+deviceのC++コードでは、`Send()`または`Receive()`のindex引数で、そのchannelのsubchannelを選択します。
 index引数を省略すると`0`を使用します。
 
-topology endpointおよびlinkを使用する構成では、`autoSubChannel`は、Redisのpresence keyから検出したpeer device instanceに応じて`TopologyConfig`がlocal subchannelを追加するかどうかを制御します。
+topology endpointおよびlinkを使用する構成では、`autoSubChannel`は、Redisのpresence keyから検出したpeer device instanceに応じて`TopologyConfig`がそのdeviceのchannelへsubchannelを追加するかどうかを制御します。
 defaultは`false`です。
 
 - `autoSubChannel=false`はchannel設定にある固定のsubchannel数を維持します。
@@ -320,11 +320,11 @@ pluginは通常、topologyから`num_sockets`を計算します。
 <a id="252-connect-config"></a>
 #### 2.5.2. `--connect-config`
 
-`--connect-config`は、local connect channelおよび接続相手をJSON stringで直接定義します。
+`--connect-config`は、このoptionを受け取るdevice processのconnect channelおよび接続相手をJSON stringで直接定義します。
 `TopologyConfig`は、このJSONの各最上位channelへ`method=connect`を設定します。
 このoptionが空でない場合、`TopologyConfig`はtopology linkによるpeer解決の代わりに、このpeer参照からconnect addressを解決します。
 
-次の例は、`in`というlocal pull channelを定義し、`Sampler` serviceの`Sampler-0` instanceが持つbind channel `out`のsubchannel `0`へ接続します。
+次の例は、このoptionを受け取るdeviceに`in`というpull channelを定義し、`Sampler` serviceの`Sampler-0` instanceが持つbind channel `out`のsubchannel `0`へ接続します。
 
 ```json
 {
@@ -335,7 +335,7 @@ pluginは通常、topologyから`num_sockets`を計算します。
 }
 ```
 
-最上位のkey `in`はlocal channel name、`type`はそのFairMQ socket type、`peer`は接続相手のchannelを示します。
+最上位のkey `in`はこのoptionを受け取るdeviceへ設定するchannel name、`type`はそのFairMQ socket type、`peer`は接続相手のchannelを示します。
 default separator `:`を使用する場合、完全修飾peer参照は`{service}:{instance-id}:{channel}[{subindex}]`形式です。
 `[0]` suffixは接続相手のsubchannel `0`を選択します。
 これは`TopologyConfig`が解釈するJSON dataであり、C++の構文やtopology shell scriptの`link` commandに記述する構文ではありません。
@@ -370,7 +370,7 @@ sequenceDiagram
 
     Device->>TopologyConfig: Bound
     alt bind channelが存在
-        TopologyConfig->>Redis: local socket address recordを書き込む
+        TopologyConfig->>Redis: このdeviceのsocket address recordを書き込む
         TopologyConfig->>Redis: bind channelをbound=1に設定
     end
     alt connect channelが存在
@@ -390,7 +390,7 @@ sequenceDiagram
     end
 ```
 
-bind channelは最初にlocal addressをRedisへ書き込みます。
+bind channelは最初に自身のaddressをRedisへ書き込みます。
 connect channelはpeer bind channelが`bound=1`になるのを待ち、Redisからpeer socket addressを解決して、結果をFairMQ `chans.*` propertyへ書き込みます。
 `waitForPeerConnection=false`のbind channelは、最後のpeer-ready waitを省略します。
 resetまたはcancellationはwait stepを中断します。

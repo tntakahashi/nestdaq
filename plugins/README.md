@@ -209,13 +209,13 @@ For example, `Sampler-2` and `Sink-1` receive the message but ignore it because 
 ### 2.5. Topology and Channel Keys
 
 The `TopologyConfig` object in each `daq_service` plugin reads the topology definition and publishes metadata for that device's channels and sockets.
-The bind side publishes addresses first, and the connect side reads those addresses to configure its local FairMQ sockets.
+The bind side publishes addresses first, and the connect side reads those addresses to configure its FairMQ sockets.
 
 | Key pattern | Redis type | Fields / value | Writer / reader | Purpose |
 |-------------|------------|----------------|-----------------|---------|
-| `daq_service{sep}{service}{sep}{id}{sep}channel{sep}{channel}` | hash | `name`, `type`, `method`, `address`, `transport`, buffer sizes, kernel sizes, `linger`, `rateLogging`, port range, `autoBind`, `num_sockets`, `autoSubChannel`, `bound`, `waitForPeerConnection` | Written by the local device's `TopologyConfig` for both bind and connect channels. During topology-link resolution, the connect side reads peer bind-channel metadata and its `bound` field. | Stored channel endpoint metadata. |
-| `daq_service{sep}{service}{sep}{id}{sep}channel{sep}{channel}{sep}peer` | list | Peer channel key strings | Written by each device's `TopologyConfig`. During topology-link resolution, the connect side reads its local peer list and the corresponding peer lists. | Peer list for the channel. |
-| `daq_service{sep}{service}{sep}{id}{sep}socket{sep}chans.{channel}.{subindex}` | hash | Local subchannel/socket parameters plus `num_sockets` and `autoSubChannel` | The bind side's `TopologyConfig` writes bound socket addresses. The connect side reads those records, resolves its addresses, and writes its own socket records. | Per-subchannel connection metadata. |
+| `daq_service{sep}{service}{sep}{id}{sep}channel{sep}{channel}` | hash | `name`, `type`, `method`, `address`, `transport`, buffer sizes, kernel sizes, `linger`, `rateLogging`, port range, `autoBind`, `num_sockets`, `autoSubChannel`, `bound`, `waitForPeerConnection` | Written by the `TopologyConfig` of the device instance identified by `{service}` and `{id}` for both bind and connect channels. During topology-link resolution, the connect side reads peer bind-channel metadata and its `bound` field. | Stored channel endpoint metadata. |
+| `daq_service{sep}{service}{sep}{id}{sep}channel{sep}{channel}{sep}peer` | list | Peer channel key strings | Written by each device's `TopologyConfig`. During topology-link resolution, the connect side reads its own channel's peer list and the corresponding peer lists. | Peer list for the channel. |
+| `daq_service{sep}{service}{sep}{id}{sep}socket{sep}chans.{channel}.{subindex}` | hash | Subchannel/socket parameters for the device instance plus `num_sockets` and `autoSubChannel` | The bind side's `TopologyConfig` writes bound socket addresses. The connect side reads those records, resolves its addresses, and writes its own socket records. | Per-subchannel connection metadata. |
 | `daq_service{sep}topology{sep}endpoint...` | hash | Topology endpoint configuration | Written by `scripts/topology-*.sh` or another Redis client. Scanned and read by `TopologyConfig` in each device of the matching service. | External topology configuration used to define bind and connect channels. |
 | `daq_service{sep}topology{sep}link...` | string | Topology link configuration | Written by `scripts/topology-*.sh` or another Redis client. Scanned and read by `TopologyConfig` in devices on both sides of the link. | External topology configuration used to link services and channels. |
 
@@ -228,10 +228,10 @@ The supplied scripts use Redis database `0` and the `:` separator; edit their Re
 FairMQ stores each named channel as a `std::vector<fair::mq::Channel>`.
 Each `fair::mq::Channel` wraps one FairMQ Socket, and the vector index identifies
 a subchannel.
-Device code selects a local subchannel with the index argument of `Send()` or
+Device code selects one of the channel's subchannels with the index argument of `Send()` or
 `Receive()`; omitting that argument selects index `0`.
 
-For topology endpoint and link configuration, `autoSubChannel` controls whether `TopologyConfig` creates additional local subchannels from peer device instances discovered through Redis presence keys.
+For topology endpoint and link configuration, `autoSubChannel` controls whether `TopologyConfig` creates additional subchannels for that device's channel from peer device instances discovered through Redis presence keys.
 Its default is `false`.
 
 - `autoSubChannel=false` keeps the fixed subchannel count from the channel configuration.
@@ -314,11 +314,11 @@ For channels with `autoSubChannel=true`, `num_sockets` grows with the discovered
 
 #### 2.5.2. `--connect-config`
 
-`--connect-config` defines local connect channels and their peers directly in a JSON string.
+`--connect-config` defines connect channels on the device process and their peers directly in a JSON string.
 `TopologyConfig` sets `method=connect` for every top-level channel in this JSON.
 When this option is not empty, `TopologyConfig` resolves connect addresses from these peer references instead of using topology-link peer resolution.
 
-The following example defines a local pull channel named `in` and connects it to subchannel `0` of the bind channel `out` owned by the `Sampler-0` instance of the `Sampler` service:
+The following example defines a pull channel named `in` on the device receiving the option and connects it to subchannel `0` of the bind channel `out` owned by the `Sampler-0` instance of the `Sampler` service:
 
 ```json
 {
@@ -329,7 +329,7 @@ The following example defines a local pull channel named `in` and connects it to
 }
 ```
 
-The top-level key `in` is the local channel name, `type` is its FairMQ socket type, and `peer` identifies the remote channel.
+The top-level key `in` names the channel configured on the device receiving the option, `type` is its FairMQ socket type, and `peer` identifies the remote channel.
 With the default separator `:`, a fully qualified peer reference has the form `{service}:{instance-id}:{channel}[{subindex}]`.
 The `[0]` suffix selects remote subchannel `0`; it is JSON data parsed by `TopologyConfig`, not C++ syntax or syntax used by a topology shell script's `link` command.
 The `{subindex}` text in the Redis key table is a placeholder, whereas `[0]` is an actual suffix in the peer reference.
@@ -361,7 +361,7 @@ sequenceDiagram
 
     Device->>TopologyConfig: Bound
     alt bind channels exist
-        TopologyConfig->>Redis: write local socket address records
+        TopologyConfig->>Redis: write this device's socket address records
         TopologyConfig->>Redis: mark bind channels bound=1
     end
     alt connect channels exist
@@ -381,7 +381,7 @@ sequenceDiagram
     end
 ```
 
-Bind channels write their local addresses to Redis first.
+Bind channels write their own addresses to Redis first.
 Connect channels wait for the peer bind channel to become `bound=1`, resolve the peer socket addresses from Redis, and write the resulting FairMQ `chans.*` properties.
 A bind channel with `waitForPeerConnection=false` skips the final wait for the peer to become ready.
 A reset or cancellation interrupts these waiting steps.
