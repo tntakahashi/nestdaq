@@ -22,8 +22,10 @@ device name以降のargumentはdeviceおよびFairMQへ渡されるため、`--s
 NestDAQ exampleをローカル環境で実行する場合は、`start_device.sh`でdeviceを
 起動する前に外部serviceを起動し、必要な設定を登録します。
 
+- telemetry exportが必要な場合は、最初にOpenTelemetry Collectorとtelemetry
+  storageを起動します。例えば、`share/otel-collector-compose/`配下のCompose
+  setupを`docker compose`または`podman compose`で起動します。
 - Redis serverを起動します。
-- `share/otel-collector-compose/`配下にある、`docker compose`または`podman compose`で実行するCompose setupなどのOpenTelemetry Collector backendを起動します。
 - browser user interfaceからdeviceを制御する場合は`daq-webctl`を起動します。
 - `topology-*.sh` scriptでtopology設定をRedisへ登録します。
 - exampleが`parameter_config` pluginからparameterを読み取る場合は、`mq-param.sh`でparameter設定をRedisへ登録します。

@@ -20,9 +20,10 @@ When running the NestDAQ examples in a local environment, start the supporting
 services and register the required configuration before starting devices with
 `start_device.sh`:
 
+- If telemetry export is needed, start the OpenTelemetry Collector and
+  telemetry storage first. For example, use the Compose setup under
+  `share/otel-collector-compose/` with `docker compose` or `podman compose`.
 - Start a Redis server.
-- Start an OpenTelemetry Collector backend, for example the Compose setup run
-  with `docker compose` or `podman compose` under `share/otel-collector-compose/`.
 - Start `daq-webctl` if you want to control devices from the browser user
   interface.
 - Register topology settings in Redis with a `topology-*.sh` script.
