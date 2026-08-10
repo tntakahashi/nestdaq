@@ -79,21 +79,29 @@ FairMQの`--id` optionが設定されている場合、その値をNestDAQ servi
 ### 2.3. 書き込みまたは読み取りを行うRedis key
 
 Health dataは、device identity、host情報、FairMQ state、およびlifecycle timestampを含むRedis hash dataです。
-controllerはstatus表示に使用し、pluginはconnection resolutionに`hostIp` fieldを使用します。
+`TopologyConfig`はconnection resolutionに`hostIp` fieldを使用し、monitoring clientは他のfieldをdevice statusの表示に使用できます。
+
+`Writer / reader`列は、scanとPub/Subを含む各Redisのwriteまたはreadを直接実行するrepository内のcomponentを示します。
+`daq_service`はNestDAQ device processへloadしたplugin、`daq-webctl`はweb controller、`operator`は外部Redis clientを指します。
+
+`createdTime`、`updated_time`、`updatedTime`、`start_time`、`stop_time`は、local timeを秒精度の`YYYY-MM-DDTHH:MM:SS`形式で表したstringです。
+timezone offsetは含みません。
+`uptime`は`daq_service` pluginの生成後に経過したmillisecondsです。
+`start_time_ns`と`stop_time_ns`は同じ起点からの経過nanosecondsであり、Unix epoch timestampではありません。
 
 | Key pattern | Redis type | Field / value | Writer / reader | 目的 |
 | --- | --- | --- | --- | --- |
-| `daq_service{sep}{service}{sep}{id}{sep}presence` | string | TTL付きでrefreshされるUUID string | Written | device instanceのpresence marker。 |
-| `daq_service{sep}{service}{sep}{id}{sep}health` | hash | `instanceID`, `uuid`, `hostName`, `hostIp`, `serviceName`, `fair:mq:state`, `createdTime`, `updated_time`, `uptime`。run timing記録時は`start_time`, `start_time_ns`, `stop_time`, `stop_time_ns`も含む | Written | device instanceのhealth/lifecycle metadata。 |
-| `daq_service{sep}{service}{sep}{id}{sep}fair-mq-state` | string | FairMQ state name | Written | TTL付きの現在のFairMQ state。 |
-| `daq_service{sep}{service}{sep}{id}{sep}updatedTime` | string | 最終update timestamp | Written | TTL付きの軽量な最終update key。 |
-| `daq_service{sep}{service}{sep}{id}{sep}option` | hash | `severity`, `file-severity`, `verbosity`, `color`, `log-to-file`, `id`, `io-threads`, `transport`, `network-interface`, `init-timeout`、shared-memory option、`rate`, `session`などのFairMQ program option | Written | monitoring/debugging用の現在のoption値。 |
-| `daq_service{sep}service-instance-index{sep}{service}` | hash | Field：数値instance index、value：UUID | Read/write | `--id`未指定時に`{service}-{index}` instance IDを割り当て、再利用。 |
-| `run_info{sep}run_number` | string integer | 現在または次のrun number | pluginがread、controllerがread/write | run number metadataのsource。web controllerは`RUN`前にincrementし`latest_run_number`へcopyする場合があります。 |
-| `run_info{sep}latest_run_number` | string integer | `RUN`要求時にcopyされた最後のrun number | controllerがwrite | run metadataおよび表示用run number snapshot。 |
-| `run_info{sep}wait-device-ready` | string boolean | `1`、`true`、またはその他のstring | controllerがread/write | trueの場合、web controllerはdevice readinessが必要な後続commandの前に前提`CONNECT`をpublish。 |
-| `run_info{sep}wait-ready` | string boolean | `1`、`true`、またはその他のstring | controllerがread/write | trueの場合、web controllerは`RUN`前に前提`INIT TASK`をpublish。 |
-| `daqctl` | pub/sub channel | JSON DAQ command message | pluginがsubscribe、controller/operatorがpublish | controller commandを受信。 |
+| `daq_service{sep}{service}{sep}{id}{sep}presence` | string | TTL付きでrefreshされるUUID string | `daq_service`がwrite/read | device instanceのpresence marker。 |
+| `daq_service{sep}{service}{sep}{id}{sep}health` | hash | `instanceID`, `uuid`, `hostName`, `hostIp`, `serviceName`, `fair:mq:state`, `createdTime`, `updated_time`, `uptime`。run timing記録時は`start_time`, `start_time_ns`, `stop_time`, `stop_time_ns`も含む | `daq_service`がwrite/read | device instanceのhealth/lifecycle metadata。 |
+| `daq_service{sep}{service}{sep}{id}{sep}fair-mq-state` | string | FairMQ state name | `daq_service`がwrite/read、`daq-webctl`がread | TTL付きの現在のFairMQ state。 |
+| `daq_service{sep}{service}{sep}{id}{sep}updatedTime` | string | 最終update timestamp | `daq_service`がwrite、`daq-webctl`がread | TTL付きの軽量な最終update key。 |
+| `daq_service{sep}{service}{sep}{id}{sep}option` | hash | `severity`, `file-severity`, `verbosity`, `color`, `log-to-file`, `id`, `io-threads`, `transport`, `network-interface`, `init-timeout`、shared-memory option、`rate`, `session`などのFairMQ program option | `daq_service`がwrite | monitoring/debugging用の現在のoption値。 |
+| `daq_service{sep}service-instance-index{sep}{service}` | hash | Field：数値instance index、value：UUID | `daq_service`がread/write、presence expire後に`daq-webctl`がdelete | `--id`未指定時に`{service}-{index}` instance IDを割り当て、再利用。 |
+| `run_info{sep}run_number` | string integer | 現在または次のrun number | `daq_service`がread、`daq-webctl`がread/write | run number metadataのsource。web controllerは`RUN`前にincrementし`latest_run_number`へcopyする場合があります。 |
+| `run_info{sep}latest_run_number` | string integer | `RUN`要求時にcopyされた最後のrun number | `daq-webctl`がread/write | run metadataおよび表示用run number snapshot。 |
+| `run_info{sep}wait-device-ready` | string boolean | `1`または`true`：有効。未設定またはその他の値：無効 | `daq-webctl`がread/write | 有効の場合、`daq-webctl`は`CONNECT`の送信後に待ちます。`INIT TASK`または`RUN`の前には`CONNECT`を先に送信し、検出した対象deviceがすべて`DeviceReady`、`Ready`、`Running`のいずれか1つの同じstateを報告するまで待ちます。 |
+| `run_info{sep}wait-ready` | string boolean | `1`または`true`：有効。未設定またはその他の値：無効 | `daq-webctl`がread/write | 有効の場合、`daq-webctl`は`INIT TASK`の送信後に待ちます。`RUN`の前には`INIT TASK`を先に送信し、検出した対象deviceがすべて`Ready`またはすべて`Running`を報告するまで待ちます。 |
+| `daqctl` | pub/sub channel | JSON DAQ command message | `daq-webctl`またはoperatorがpublish、`daq_service`がsubscribe | controller commandを受信。 |
 
 <a id="24-daq-command-publishsubscribe-pubsub"></a>
 ### 2.4. DAQ commandのPublish/Subscribe (Pub/Sub)
