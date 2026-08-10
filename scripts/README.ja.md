@@ -16,6 +16,8 @@ Redis serverを起動してください。
 ### 1.1. start_device.sh
 
 このscriptはNestDAQ pluginを使用してFairMQ deviceを起動します。
+CMakeは`scripts/start_device.sh.in`から`start_device.sh`を生成し、
+`<install-prefix>/scripts/`へインストールします。
 このrepositoryが提供するdevice、またはpathに`fairmq-`を含むexecutableを指定してください。
 device name以降のargumentはdeviceおよびFairMQへ渡されるため、`--service-name`などのplugin optionと`--max-iterations`などのdevice固有optionを同じcommand lineで指定できます。
 
@@ -32,7 +34,7 @@ NestDAQ exampleをローカル環境で実行する場合は、`start_device.sh`
 
 localでの完全な起動sequenceは[`examples/README.ja.md`](../examples/README.ja.md)を参照してください。
 
-生成済みscriptは、すべてのNestDAQ Redis connectionに`NESTDAQ_REDIS_SERVER`を使用します。
+`start_device.sh`は、すべてのNestDAQ Redis connectionに`NESTDAQ_REDIS_SERVER`を使用します。
 defaultは`127.0.0.1:6379`です。
 scriptはDAQ service registryをRedis database `0`、metricsをdatabase `1`、parameter configurationをdatabase `2`へ割り当てます。
 
@@ -70,11 +72,11 @@ var+=$CONFIG_PLUGIN
 
 `-P`はloadするpluginを選択します。
 FairMQは最終command line上の`-P` optionの順序に従ってpluginをloadします。
-生成済み`start_device.sh`は`daq_service`、`metrics`、`parameter_config`の順で渡します。
+`start_device.sh`は`daq_service`、`metrics`、`parameter_config`の順で渡します。
 `-S`でdirectoryを追加するとsearch priorityは変わりますが、loadするpluginやload orderは変わりません。
 loadするpluginとその順序は`-P` entryで制御されます。
 
-生成済みscriptはOpenTelemetry(OTel)logをOpenTelemetry Protocol(OTLP)gRPCでlocal OpenTelemetry Collectorへ送信します。
+`start_device.sh`はOpenTelemetry(OTel)logをOpenTelemetry Protocol(OTLP)gRPCでlocal OpenTelemetry Collectorへ送信します。
 default endpointは`localhost:4317`です。
 別のendpointを使用するには`NESTDAQ_OTLP_GRPC_ENDPOINT`を設定します。
 

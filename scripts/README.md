@@ -13,6 +13,8 @@ configuration from Redis.
 
 ### 1.1. start_device.sh
 This script starts a FairMQ device with the NestDAQ plugins.
+CMake generates `start_device.sh` from `scripts/start_device.sh.in` and installs
+it under `<install-prefix>/scripts/`.
 Specify either a device provided by this repository or an executable whose path contains `fairmq-`.
 Arguments after the device name are passed to the device and FairMQ, so plugin options such as `--service-name` and device-specific options such as `--max-iterations` can appear on the same command line.
 
@@ -32,7 +34,7 @@ services and register the required configuration before starting devices with
 
 See [`examples/README.md`](../examples/README.md) for the complete local run sequence.
 
-The generated script uses `NESTDAQ_REDIS_SERVER` for all NestDAQ Redis connections.
+`start_device.sh` uses `NESTDAQ_REDIS_SERVER` for all NestDAQ Redis connections.
 The default is `127.0.0.1:6379`.
 The script maps the DAQ service registry to Redis database `0`, metrics to database `1`, and parameter configuration to database `2`.
 
@@ -70,10 +72,10 @@ This option controls only where FairMQ searches for plugin libraries.
 
 `-P` selects a plugin to load.
 FairMQ loads the plugins in the order of the `-P` options on the final command line.
-The generated `start_device.sh` passes them as `daq_service`, then `metrics`, then `parameter_config`.
+`start_device.sh` passes them as `daq_service`, then `metrics`, then `parameter_config`.
 Adding directories with `-S` changes search priority but does not change which plugins FairMQ loads or their order; the `-P` entries control those decisions.
 
-The generated script sends OpenTelemetry (OTel) logs to a local OpenTelemetry Collector with OpenTelemetry Protocol (OTLP) gRPC.
+`start_device.sh` sends OpenTelemetry (OTel) logs to a local OpenTelemetry Collector with OpenTelemetry Protocol (OTLP) gRPC.
 The default endpoint is `localhost:4317`; set `NESTDAQ_OTLP_GRPC_ENDPOINT` to use another endpoint.
 
 The script builds the OTel log options like this:
