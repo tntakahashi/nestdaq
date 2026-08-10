@@ -356,7 +356,7 @@ Redis serverおよび各peer deviceは、それぞれ別のprocessで動作し�
 
 ```mermaid
 sequenceDiagram
-    participant Device as Device state machine
+    participant Device as fair::mq::Device<br/>state machine
     participant DaqService as daq_service
     participant TopologyConfig
     participant FairMQProperties as FairMQ property
@@ -369,7 +369,7 @@ sequenceDiagram
         PeerDevices->>Redis: 各peer自身のpresence keyを書き込み、refresh
     end
     Device->>DaqService: state = InitializingDevice
-    DaqService->>Redis: fair-mq-state = InitializingDevice
+    DaqService->>Redis: fair-mq-state = "INITIALIZING DEVICE"
     DaqService->>TopologyConfig: onDeviceStateChange(InitializingDevice)
     TopologyConfig->>Redis: topology endpointとlinkを読み取る
     TopologyConfig->>TopologyConfig: bind/connect channelを分類
@@ -379,10 +379,20 @@ sequenceDiagram
     PeerDevices->>Redis: channel metadataとpeer listを書き込む
     TopologyConfig->>FairMQProperties: 初期chans.* propertyを設定
 
+    Device->>DaqService: state = Initialized
+    DaqService->>Redis: fair-mq-state = "INITIALIZED"
+    Device->>DaqService: state = Binding
+    DaqService->>Redis: fair-mq-state = "BINDING"
+    alt bind channelが存在
+        Device->>Device: BindWrapper()がAttachChannels()を呼び出す
+        Device->>Device: Channel::BindEndpoint()がSocket::Bind()を呼び出す
+    else bind channelが存在しない
+        Device-->>Device: channel socketのBind()を呼び出さない
+    end
     Device->>DaqService: state = Bound
-    DaqService->>Redis: fair-mq-state = Bound
+    DaqService->>Redis: fair-mq-state = "BOUND"
     DaqService->>TopologyConfig: onDeviceStateChange(Bound)
-    PeerDevices->>Redis: fair-mq-state = Bound
+    PeerDevices->>Redis: fair-mq-state = "BOUND"
     opt peer側にbind channelが存在
         PeerDevices->>Redis: bind socket addressとbound=1を書き込む
     end
@@ -406,24 +416,34 @@ sequenceDiagram
         TopologyConfig-->>TopologyConfig: peer addressの解決を省略
     end
     alt bind channelが存在し、waitForPeerConnection=true
-        PeerDevices->>Redis: fair-mq-state = DeviceReady、Ready、またはRunning
+        PeerDevices->>Redis: fair-mq-state = "DEVICE READY"、"READY"、または"RUNNING"
         TopologyConfig->>Redis: peer FairMQ stateを読み取る
         Redis-->>TopologyConfig: 全peerが同じ許容stateになった
     else wait対象のbind channelが存在しない
         TopologyConfig-->>TopologyConfig: peer stateのwaitを省略
     end
+    Device->>DaqService: state = Connecting
+    DaqService->>Redis: fair-mq-state = "CONNECTING"
+    alt connect channelが存在
+        Device->>Device: ConnectWrapper()がAttachChannels()を呼び出す
+        Device->>FairMQProperties: retry時に解決済みchans.*.addressを再取得
+        Device->>PeerDevices: Channel::ConnectEndpoint()がSocket::Connect()を呼び出す
+    else connect channelが存在しない
+        Device-->>Device: channel socketのConnect()を呼び出さない
+    end
     Device->>DaqService: state = DeviceReady
-    DaqService->>Redis: fair-mq-state = DeviceReady
+    DaqService->>Redis: fair-mq-state = "DEVICE READY"
 ```
 
 bind channelは最初に自身のaddressをRedisへ書き込みます。
 connect channelはpeer bind channelが`bound=1`になるのを待ち、Redisからpeer socket addressを解決して、結果をFairMQ `chans.*` propertyへ書き込みます。
 `waitForPeerConnection=false`のbind channelは、最後のpeer-ready waitを省略します。
-許容するpeer stateは`DeviceReady`、`Ready`、`Running`です。waitを終了するには、確認できた全peerが同じ許容stateを示す必要があります。
+許容するRedis state valueは`DEVICE READY`、`READY`、`RUNNING`です。waitを終了するには、確認できた全peerが同じ許容valueを示す必要があります。
 resetまたはcancellationはwait stepを中断します。
 各`daq_service` instanceは、自身のdevice processのpresence keyと現在のFairMQ stateを書き込み、refreshします。
-この図はRedisを介したtopology metadataの交換を示します。
-device process間のFairMQ data socket connectionはaddress解決後に確立されるため、この図には含めていません。
+`TopologyConfig`は`Bound` stateのcallbackで各peer addressを解決し、FairMQの`chans.*` propertyへ保存します。
+state machineが`Connecting`へ遷移した後、`fair::mq::Device::ConnectWrapper()`が`AttachChannels()`を呼び出します。その処理は`Channel::ConnectEndpoint()`を経由してtransport socketの`Connect()`を実行します。
+virtual member functionの`fair::mq::Device::Connect()`はchannel接続処理の後に呼び出されるlifecycle hookであり、transport socketの接続処理ではありません。
 
 <a id="26-ttl-details-daq_service"></a>
 ### 2.6. TTLの詳細 (daq_service)

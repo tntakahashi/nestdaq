@@ -347,7 +347,7 @@ The Redis server and each peer device run in separate processes.
 
 ```mermaid
 sequenceDiagram
-    participant Device as Device state machine
+    participant Device as fair::mq::Device<br/>state machine
     participant DaqService as daq_service
     participant TopologyConfig
     participant FairMQProperties as FairMQ properties
@@ -360,7 +360,7 @@ sequenceDiagram
         PeerDevices->>Redis: write/refresh their presence keys
     end
     Device->>DaqService: state = InitializingDevice
-    DaqService->>Redis: fair-mq-state = InitializingDevice
+    DaqService->>Redis: fair-mq-state = "INITIALIZING DEVICE"
     DaqService->>TopologyConfig: onDeviceStateChange(InitializingDevice)
     TopologyConfig->>Redis: read topology endpoints and links
     TopologyConfig->>TopologyConfig: classify bind/connect channels
@@ -370,10 +370,20 @@ sequenceDiagram
     PeerDevices->>Redis: write channel metadata and peer lists
     TopologyConfig->>FairMQProperties: set initial chans.* properties
 
+    Device->>DaqService: state = Initialized
+    DaqService->>Redis: fair-mq-state = "INITIALIZED"
+    Device->>DaqService: state = Binding
+    DaqService->>Redis: fair-mq-state = "BINDING"
+    alt bind channels exist
+        Device->>Device: BindWrapper() calls AttachChannels()
+        Device->>Device: Channel::BindEndpoint() calls Socket::Bind()
+    else no bind channels
+        Device-->>Device: no channel socket Bind() call
+    end
     Device->>DaqService: state = Bound
-    DaqService->>Redis: fair-mq-state = Bound
+    DaqService->>Redis: fair-mq-state = "BOUND"
     DaqService->>TopologyConfig: onDeviceStateChange(Bound)
-    PeerDevices->>Redis: fair-mq-state = Bound
+    PeerDevices->>Redis: fair-mq-state = "BOUND"
     opt peer bind channels exist
         PeerDevices->>Redis: publish bind socket addresses and bound=1
     end
@@ -397,24 +407,34 @@ sequenceDiagram
         TopologyConfig-->>TopologyConfig: skip peer-address resolution
     end
     alt bind channels exist and waitForPeerConnection=true
-        PeerDevices->>Redis: fair-mq-state = DeviceReady, Ready, or Running
+        PeerDevices->>Redis: fair-mq-state = "DEVICE READY", "READY", or "RUNNING"
         TopologyConfig->>Redis: read peer FairMQ states
         Redis-->>TopologyConfig: all peer states match one accepted state
     else no waiting bind channels
         TopologyConfig-->>TopologyConfig: skip peer-state wait
     end
+    Device->>DaqService: state = Connecting
+    DaqService->>Redis: fair-mq-state = "CONNECTING"
+    alt connect channels exist
+        Device->>Device: ConnectWrapper() calls AttachChannels()
+        Device->>FairMQProperties: reload resolved chans.*.address when retrying
+        Device->>PeerDevices: Channel::ConnectEndpoint() calls Socket::Connect()
+    else no connect channels
+        Device-->>Device: no channel socket Connect() call
+    end
     Device->>DaqService: state = DeviceReady
-    DaqService->>Redis: fair-mq-state = DeviceReady
+    DaqService->>Redis: fair-mq-state = "DEVICE READY"
 ```
 
 Bind channels write their own addresses to Redis first.
 Connect channels wait for the peer bind channel to become `bound=1`, resolve the peer socket addresses from Redis, and write the resulting FairMQ `chans.*` properties.
 A bind channel with `waitForPeerConnection=false` skips the final wait for the peer to become ready.
-The accepted peer states are `DeviceReady`, `Ready`, and `Running`; all observed peers must report the same accepted state before the wait ends.
+The accepted Redis state values are `DEVICE READY`, `READY`, and `RUNNING`; all observed peers must report the same accepted value before the wait ends.
 A reset or cancellation interrupts these waiting steps.
 Each `daq_service` instance writes and refreshes the presence key and current FairMQ state for its own device process.
-The diagram shows topology metadata exchange through Redis.
-The FairMQ data-socket connection between device processes is established after address resolution and is not shown.
+`TopologyConfig` resolves each peer address during the `Bound` state callback and stores it in the FairMQ `chans.*` properties.
+After the state machine enters `Connecting`, `fair::mq::Device::ConnectWrapper()` calls `AttachChannels()`, which reaches `Channel::ConnectEndpoint()` and the transport socket's `Connect()` operation.
+The virtual `fair::mq::Device::Connect()` lifecycle hook runs after channel attachment and is not the transport socket connection.
 
 ### 2.6. TTL Details (daq_service)
 
