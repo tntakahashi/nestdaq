@@ -12,11 +12,27 @@ configuration from Redis.
 ## 1. Helper script to launch a data acquisition (DAQ) process
 
 ### 1.1. start_device.sh
+
+#### 1.1.1. Basic invocation
+
 This script starts a FairMQ device with the NestDAQ plugins.
 CMake generates `start_device.sh` from `scripts/start_device.sh.in` and installs
 it under `<install-prefix>/scripts/`.
 Specify either a device provided by this repository or an executable whose path contains `fairmq-`.
 Arguments after the device name are passed to the device and FairMQ, so plugin options such as `--service-name` and device-specific options such as `--max-iterations` can appear on the same command line.
+
+```bash
+  # Start the installed Sampler with its default options.
+  # ./start_device.sh [device-name] [options ...]
+  ./start_device.sh Sampler
+```
+
+```bash
+  # Start a FairMQ device by its executable path.
+  ./start_device.sh /your-fairmq-install-path/bin/fairmq-splitter
+```
+
+#### 1.1.2. Startup sequence
 
 When running the NestDAQ examples in a local environment, start the supporting
 services and register the required configuration before starting devices with
@@ -34,6 +50,8 @@ services and register the required configuration before starting devices with
   should read parameters from the `parameter_config` plugin.
 
 See [`examples/README.md`](../examples/README.md) for the complete local run sequence.
+
+#### 1.1.3. Redis server and plugin configuration
 
 Settings not fixed by `start_device.sh` can be changed through device or plugin
 command-line options.
@@ -83,6 +101,8 @@ This option controls only where FairMQ searches for plugin libraries.
 FairMQ loads the plugins in the order of the `-P` options on the final command line.
 `start_device.sh` passes them as `daq_service`, then `metrics`, then `parameter_config`.
 Adding directories with `-S` changes search priority but does not change which plugins FairMQ loads or their order; the `-P` entries control those decisions.
+
+#### 1.1.4. OpenTelemetry options
 
 `start_device.sh` sends OpenTelemetry (OTel) logs to a local OpenTelemetry Collector with OpenTelemetry Protocol (OTLP) gRPC.
 The default endpoint is `localhost:4317`; set `NESTDAQ_OTLP_GRPC_ENDPOINT` to use another endpoint.
@@ -143,16 +163,7 @@ var+=" --severity ${NESTDAQ_FAIRLOGGER_CONSOLE_SEVERITY}"
 NESTDAQ_FAIRLOGGER_CONSOLE_SEVERITY=debug4 NESTDAQ_START_DEVICE_OTEL_LOG_SEVERITY=debug4 ./start_device.sh Sampler
 ```
 
-```bash
-  # Start the installed Sampler with its default options.
-  # ./start_device.sh [device-name] [options ...]
-  ./start_device.sh Sampler
-```
-
-```bash
-  # Start a FairMQ device by its executable path.
-  ./start_device.sh /your-fairmq-install-path/bin/fairmq-splitter
-```
+#### 1.1.5. Starting devices with a service name
 
 The following example starts a `Sampler` with the service name `A-Sampler` and limits the execution rate of `ConditionalRun()` to once per second.
 ```bash
@@ -221,13 +232,18 @@ The following table lists the default endpoint parameters.
 The last three parameters are specific to NestDAQ.
 The rest are defined in FairMQ.
 
-`autoSubChannel` controls whether a peer written without `[subindex]` means
-only subchannel `0` or all subchannels registered for that peer channel.
+In this section, `[subindex]` is a bracketed numeric suffix in a `peer` string
+within the JSON passed to `--connect-config`, for example
+`Sampler:Sampler-0:out[0]`.
+It is command-line JSON notation parsed by `TopologyConfig`, not syntax written
+in C++ source code or in a topology shell script's `link` command.
+`autoSubChannel` controls whether a `peer` string without `[subindex]` means
+only subchannel `0` or all subchannels registered for the peer channel.
 Use `autoSubChannel false` for fixed 1:1-style connections such as
 `topology-1-1.sh`. Use `autoSubChannel true` for n:m-style fan-out or fan-in
 topologies such as `topology-n-n-m.sh` and `topology-2samplers-n-m.sh`, where
 the plugin discovers peer subchannels and updates `numSockets` accordingly.
-When `[subindex]` is written explicitly, only that subchannel is used.
+When the `peer` string includes `[subindex]`, only that subchannel is used.
 See [`plugins/README.md#251-autosubchannel`](../plugins/README.md#251-autosubchannel)
 for the detailed topology plugin behavior.
 
@@ -246,10 +262,9 @@ function link () {
 }
 ```
 
-`endpoint SERVICE CHANNEL ...` writes a hash at
-`daq_service:topology:endpoint:SERVICE:CHANNEL`. The remaining fields describe
-the FairMQ socket, for example `type push`, `method bind`, and
-`autoSubChannel false`.
+`endpoint SERVICE CHANNEL ...` writes fields to the Redis hash key
+`daq_service:topology:endpoint:SERVICE:CHANNEL`. The fields describe the FairMQ
+socket, for example `type push`, `method bind`, and `autoSubChannel false`.
 
 The `endpoint()` helper uses Redis `HSET`, so rerunning a topology script only
 updates the fields written by that script. It does not delete fields that are

@@ -15,11 +15,28 @@ Redis serverを起動してください。
 <a id="11-start_devicesh"></a>
 ### 1.1. start_device.sh
 
+<a id="111-basic-invocation"></a>
+#### 1.1.1. 基本的な起動方法
+
 このscriptはNestDAQ pluginを使用してFairMQ deviceを起動します。
 CMakeは`scripts/start_device.sh.in`から`start_device.sh`を生成し、
 `<install-prefix>/scripts/`へインストールします。
 このrepositoryが提供するdevice、またはpathに`fairmq-`を含むexecutableを指定してください。
 device name以降のargumentはdeviceおよびFairMQへ渡されるため、`--service-name`などのplugin optionと`--max-iterations`などのdevice固有optionを同じcommand lineで指定できます。
+
+```bash
+  # install済みSamplerをdefault optionで起動する。
+  # ./start_device.sh [device-name] [options ...]
+  ./start_device.sh Sampler
+```
+
+```bash
+  # executable pathを指定してFairMQ deviceを起動する。
+  ./start_device.sh /your-fairmq-install-path/bin/fairmq-splitter
+```
+
+<a id="112-startup-sequence"></a>
+#### 1.1.2. 起動シーケンス
 
 NestDAQ exampleをローカル環境で実行する場合は、`start_device.sh`でdeviceを
 起動する前に外部serviceを起動し、必要な設定を登録します。
@@ -33,6 +50,9 @@ NestDAQ exampleをローカル環境で実行する場合は、`start_device.sh`
 - exampleが`parameter_config` pluginからparameterを読み取る場合は、`mq-param.sh`でparameter設定をRedisへ登録します。
 
 localでの完全な起動sequenceは[`examples/README.ja.md`](../examples/README.ja.md)を参照してください。
+
+<a id="113-redis-server-and-plugin-configuration"></a>
+#### 1.1.3. Redis serverとpluginの設定
 
 `start_device.sh`が固定しない設定は、deviceまたはpluginのcommand-line optionで変更できます。
 scriptが生成するdefaultは、以下に示す対応済みの環境変数を使用するか、script自体を編集して変更します。
@@ -79,6 +99,9 @@ FairMQは最終command line上の`-P` optionの順序に従ってpluginをload�
 `start_device.sh`は`daq_service`、`metrics`、`parameter_config`の順で渡します。
 `-S`でdirectoryを追加するとsearch priorityは変わりますが、loadするpluginやload orderは変わりません。
 loadするpluginとその順序は`-P` entryで制御されます。
+
+<a id="114-opentelemetry-options"></a>
+#### 1.1.4. OpenTelemetry option
 
 `start_device.sh`はOpenTelemetry (OTel) logをOpenTelemetry Protocol (OTLP) gRPCでlocal OpenTelemetry Collectorへ送信します。
 default endpointは`localhost:4317`です。
@@ -135,16 +158,8 @@ var+=" --severity ${NESTDAQ_FAIRLOGGER_CONSOLE_SEVERITY}"
 NESTDAQ_FAIRLOGGER_CONSOLE_SEVERITY=debug4 NESTDAQ_START_DEVICE_OTEL_LOG_SEVERITY=debug4 ./start_device.sh Sampler
 ```
 
-```bash
-  # install済みSamplerをdefault optionで起動する。
-  # ./start_device.sh [device-name] [options ...]
-  ./start_device.sh Sampler
-```
-
-```bash
-  # executable pathを指定してFairMQ deviceを起動する。
-  ./start_device.sh /your-fairmq-install-path/bin/fairmq-splitter
-```
+<a id="115-starting-devices-with-a-service-name"></a>
+#### 1.1.5. service nameを指定した起動方法
 
 次の例は、`Sampler`をservice name `A-Sampler`で起動し、`ConditionalRun()`の実行rateを1秒に1回へ制限します。
 
@@ -212,10 +227,13 @@ flowchart TB
 
 最後の3 parameterはNestDAQ固有で、その他はFairMQで定義されています。
 
-`autoSubChannel`は、`[subindex]`なしで記述したpeerをsubchannel `0`だけとするか、peer channelに登録された全subchannelとするかを制御します。
+この節の`[subindex]`は、`--connect-config`へ渡すJSONの`peer` stringに付ける数字のsuffixです。
+例えば`Sampler:Sampler-0:out[0]`と記述します。
+これは`TopologyConfig`がparseするcommand-line JSONの記法であり、C++ source codeやtopology shell scriptの`link` commandに記述するsyntaxではありません。
+`autoSubChannel`は、`[subindex]`を付けない`peer` stringをsubchannel `0`だけとするか、peer channelに登録された全subchannelとするかを制御します。
 `topology-1-1.sh`のような固定1:1 connectionには`autoSubChannel false`を使用します。
 `topology-n-n-m.sh`や`topology-2samplers-n-m.sh`のようなn:m fan-out/fan-in topologyでは`autoSubChannel true`を使用し、pluginがpeer subchannelを検出して`numSockets`を更新します。
-`[subindex]`を明示した場合は、そのsubchannelだけを使用します。
+`peer` stringに`[subindex]`を明示した場合は、そのsubchannelだけを使用します。
 詳細は[`plugins/README.ja.md#251-autosubchannel`](../plugins/README.ja.md#251-autosubchannel)を参照してください。
 
 topology scriptはendpointとlink definitionをRedis DB `0`へ書き込みます。
@@ -233,8 +251,9 @@ function link () {
 }
 ```
 
-`endpoint SERVICE CHANNEL ...`は`daq_service:topology:endpoint:SERVICE:CHANNEL`へhashを書き込みます。
-残りのfieldは`type push`、`method bind`、`autoSubChannel false`などFairMQ socketを記述します。
+`endpoint SERVICE CHANNEL ...`はRedis hash key
+`daq_service:topology:endpoint:SERVICE:CHANNEL`へfieldを書き込みます。
+fieldには`type push`、`method bind`、`autoSubChannel false`などFairMQ socketの設定を記述します。
 
 `endpoint()` helperはRedis `HSET`を使用するため、topology scriptを再実行しても、そのscriptが書き込むfieldだけを更新します。
 新しいscript contentで省略したfieldは削除されません。
