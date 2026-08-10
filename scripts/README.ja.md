@@ -21,8 +21,10 @@ Redis serverを起動してください。
 このscriptはNestDAQ pluginを使用してFairMQ deviceを起動します。
 CMakeは`scripts/start_device.sh.in`から`start_device.sh`を生成し、
 `<install-prefix>/scripts/`へインストールします。
-このrepositoryが提供するdevice、またはpathに`fairmq-`を含むexecutableを指定してください。
+このrepositoryが提供するdevice、またはFairMQが提供する`fairmq-`を含むexecutableを指定してください。
 device name以降のargumentはdeviceおよびFairMQへ渡されるため、`--service-name`などのplugin optionと`--max-iterations`などのdevice固有optionを同じcommand lineで指定できます。
+
+このREADMEのshell実行例では、`#`で始まる行はshellのcommentであり、実行されません。
 
 ```bash
   # install済みSamplerをdefault optionで起動する。
@@ -123,8 +125,6 @@ processの実行場所に応じてendpointを選択します。
 - host processからComposeが公開したcollector portへ接続：`localhost:4317`。
 - OpenSearch Compose network内のNestDAQ device container/`daq-webctl` container：`otel-collector:4317`。
 - Compose network外のcontainerからhost公開collector portへ接続：Dockerでは通常`host.docker.internal:4317`、Podmanでは通常`host.containers.internal:4317`。
-
-以下のshell command例では、`#`で始まる行は読者向けのcommentであり、shellでは実行されません。
 
 ```bash
 # Podmanのhost alias経由でcollectorへ接続する。
@@ -227,13 +227,19 @@ flowchart TB
 
 最後の3 parameterはNestDAQ固有で、その他はFairMQで定義されています。
 
-この節の`[subindex]`は、`--connect-config`へ渡すJSONの`peer` stringに付ける数字のsuffixです。
-例えば`Sampler:Sampler-0:out[0]`と記述します。
-これは`TopologyConfig`がparseするcommand-line JSONの記法であり、C++ source codeやtopology shell scriptの`link` commandに記述するsyntaxではありません。
-`autoSubChannel`は、`[subindex]`を付けない`peer` stringをsubchannel `0`だけとするか、peer channelに登録された全subchannelとするかを制御します。
+FairMQでは、同じ名前のchannelを`std::vector<fair::mq::Channel>`として保持します。
+各`fair::mq::Channel`は1つのFairMQ Socketを包み、vectorのindexがsubchannelを識別します。
+deviceのC++コードでは、`Send()`または`Receive()`のindex引数でlocal subchannelを選択します。
+index引数を省略すると`0`を使用します。
+
+`--connect-config`へ渡すJSONでは、`[0]`のような数字付きsuffixでpeer channelのsubchannelを指定します。
+このREADMEでは、`[0]`や`[1]`などのsuffixを`[subindex]`と表記します。
+例えば`Sampler:Sampler-0:out[0]`は、接続相手の`out` channelにあるsubchannel `0`を指定します。
+これは`TopologyConfig`が解釈するcommand-line JSONの記法であり、C++の構文やtopology shell scriptの`link` commandに記述する構文ではありません。
+suffixを省略した場合、`autoSubChannel false`は接続相手のsubchannel `0`だけを解決し、`autoSubChannel true`は接続相手の登録済みsubchannelをすべて検出して解決します。
 `topology-1-1.sh`のような固定1:1 connectionには`autoSubChannel false`を使用します。
 `topology-n-n-m.sh`や`topology-2samplers-n-m.sh`のようなn:m fan-out/fan-in topologyでは`autoSubChannel true`を使用し、pluginがpeer subchannelを検出して`numSockets`を更新します。
-`peer` stringに`[subindex]`を明示した場合は、そのsubchannelだけを使用します。
+`peer` stringに`[subindex]`を明示した場合は、接続相手のそのsubchannelだけを使用します。
 詳細は[`plugins/README.ja.md#251-autosubchannel`](../plugins/README.ja.md#251-autosubchannel)を参照してください。
 
 topology scriptはendpointとlink definitionをRedis DB `0`へ書き込みます。
@@ -255,6 +261,9 @@ function link () {
 `daq_service:topology:endpoint:SERVICE:CHANNEL`へfieldを書き込みます。
 fieldには`type push`、`method bind`、`autoSubChannel false`などFairMQ socketの設定を記述します。
 
+Redis databaseをflushするとは、選択したdatabase内のすべてのkey/valueを削除し、内容を空にする操作です。
+database番号自体を削除する操作ではありません。
+
 `endpoint()` helperはRedis `HSET`を使用するため、topology scriptを再実行しても、そのscriptが書き込むfieldだけを更新します。
 新しいscript contentで省略したfieldは削除されません。
 例えば`autoSubChannel true`をRedisへ書き込んだ後、scriptから`autoSubChannel`を削除して再実行しても、Redis fieldは`true`のままです。
@@ -263,36 +272,36 @@ topologyを最初から再構築する場合は、新しいtopologyを登録す�
 同じ`HSET`規則は、`mq-param.sh`などのhelperが書き込むparameter hashにも適用されます。
 scriptでfieldを省略しても、既存のRedis hash fieldは削除されません。
 
-user deviceのchannel connection informationを変更した場合やuser deviceが正常終了しなかった場合、古い`daq_service` topology/channel metadataがRedisへ残ることがあります。
-stale connection metadataにより、後でdeviceを起動したときに意図したtopologyと異なるsocket addressへ解決されることがあります。
-local validation environmentでは、新しいtopologyを登録する前に`daq_service` / `TopologyConfig`が使用するRedis databaseをflushします。
+ユーザーが実装したdeviceのchannel接続設定を変更した場合や、そのdeviceが正常終了しなかった場合は、`daq_service`がRedisへ保存した古いtopology情報やchannel情報が残ることがあります。
+古い情報が残っていると、次にdeviceを起動したときに、意図しないsocket addressへ接続することがあります。
+ローカル環境で動作を確認するときは、新しいtopologyを登録する前に`daq_service` / `TopologyConfig`が使用するRedis databaseの内容を消去します。
 
 ```sh
-# local Redis DB 0からstale topology/service dataを削除する。
+# ローカルRedis DB 0から古いtopology情報とservice情報を削除する。
 redis-cli -u redis://127.0.0.1:6379/0 FLUSHDB
 ```
 
-`FLUSHDB`は選択したRedis databaseの全keyを削除します。
-local Redis instance全体をresetする場合は`FLUSHALL`を使用します。
+`FLUSHDB`は選択したRedis database内のすべてのkeyを削除します。
+ローカルRedis instance全体の内容を消去する場合は`FLUSHALL`を使用します。
 
 ```sh
-# local Redis instanceの全databaseを消去する。
+# ローカルRedis instanceのすべてのdatabaseを消去する。
 redis-cli -u redis://127.0.0.1:6379 FLUSHALL
 ```
 
-`FLUSHALL`はそのRedis instanceの全databaseにある全keyを削除します。
-data削除を意図している場合を除き、productionまたはshared Redis serverで`FLUSHDB`や`FLUSHALL`を使用しないでください。
-例のRedis addressとdatabase numberはlocal defaultです。
-実際に操作するRedis instance/databaseのaddressとdatabase numberへ置き換えてください。
+`FLUSHALL`はそのRedis instanceのすべてのdatabaseにある全keyを削除します。
+保存内容の削除を意図している場合を除き、本番環境または共有Redis serverで`FLUSHDB`や`FLUSHALL`を使用しないでください。
+例に示したRedis addressとdatabase番号はローカル環境のdefaultです。
+実際に操作するRedis instanceとdatabaseのaddressおよびdatabase番号へ置き換えてください。
 
 <a id="21-bind-and-connect-endpoints"></a>
 ### 2.1. bindエンドポイントとconnectエンドポイント
 
-topology endpoint設定の`method bind`と`method connect`は、どちらのsideがsocket addressを所有するかを示します。
-ここでaddressとは、FairMQの接続に必要なendpoint connection information、つまりIP addressまたはhostnameとport numberです。
-bind-side socketはlocal endpointを開き、各peer addressを知らなくても、接続してきたconnect-side socketと通信できます。
-connect-side socketは、接続前にbind-side addressを知る必要があります。
-そのaddressはRedis内のNestDAQ service discovery/topology metadataから解決するか、固定setupではparameterで直接設定できます。
+topology endpoint設定の`method bind`と`method connect`は、local socketが設定されたendpointに対して実行する操作を示します。
+ここでaddressとは、FairMQの接続に必要なendpoint情報、つまりIP addressまたはhostnameとport numberです。
+bind側のsocketは設定されたendpointへbindし、接続を待ちます。
+connect側のsocketはそのendpointへの接続を開始するため、接続前にbind側のaddressを知る必要があります。
+そのaddressはRedis内のNestDAQ service discovery情報やtopology情報から解決するか、固定した構成ではparameterで直接設定できます。
 
 `link SERVICE CHANNEL PEER_SERVICE PEER_CHANNEL`は2つのendpoint definition間のlogical connectionを書き込みます。
 各device起動時にtopology pluginがdefinitionを読み、具体的なFairMQ channel propertyへ変換します。
@@ -300,8 +309,8 @@ connect-side socketは、接続前にbind-side addressを知る必要があり�
 <a id="22-topology-1-1sh"></a>
 ### 2.2. topology-1-1.sh
 
-このscriptは、**Sampler**と**Sink**を接続する単純な**PUSH-PULL** topologyを定義します。
-_N_個のSamplerと_N_個のSinkを起動すると、_N_組のSampler/Sink pairを形成します。
+このscriptは、 **Sampler** と **Sink** を接続する単純な **PUSH-PULL** topologyを定義します。
+_N_ 個のSamplerと _N_ 個のSinkを起動すると、 _N_ 組のSampler/Sink pairを形成します。
 各Samplerは、同じinstance indexを持つ1つのSinkへdataを送信します。
 
 ```bash
@@ -331,7 +340,7 @@ graph LR
 <a id="23-topology-n-n-msh"></a>
 ### 2.3. topology-n-n-m.sh
 
-このscriptは、_N_個の**Sampler**、_N_個の**fairmq-splitter**、_M_個の**Sink**を接続する単純な**PUSH-PULL** topologyを定義します。
+このscriptは、 _N_ 個のSampler、 _N_ 個のfairmq-splitter、 _M_ 個のSinkを接続する単純な **PUSH-PULL** topologyを定義します。
 各Samplerは同じinstance indexのfairmq-splitterへdataを送り、fairmq-splitterがSinkへdataを送ります。
 `autoSubChannel true` flagは、各sub-socketに異なる`address:port`を設定し、indexで区別できるようにします。
 fairmq-splitterは送信済みmessage数を用いたround-robinで送信先を決定します。
@@ -410,7 +419,7 @@ function param () {
 }
 ```
 
-第1 argumentはparameter groupまたはinstance idです。
+第1引数はparameter groupまたはinstance idです。
 残りはFairMQ/device optionになるfield/value pairです。
 
 ```bash
@@ -585,7 +594,7 @@ global namespaceへ生成するには`--no-namespace`を使用します。
 ```
 
 input pollingを生成する場合、skeletonは`Receive()`前にFairMQ pollerを使用します。
-output/DQM pollingを生成する場合は`Send()`前に`Poller::CheckOutput()`を使用します。
+output/DQM pollingを生成する場合は`Send()`前に`fair::mq::Poller::CheckOutput()`を使用します。
 outputは送信可能になるかstate transitionがpendingになるまでpoll-timeout単位で待ちます。
 DQMは即時送信できない場合sampleを破棄します。
 output/DQM exampleはdefaultでmultipart messageとして生成されます。

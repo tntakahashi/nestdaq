@@ -18,8 +18,12 @@ configuration from Redis.
 This script starts a FairMQ device with the NestDAQ plugins.
 CMake generates `start_device.sh` from `scripts/start_device.sh.in` and installs
 it under `<install-prefix>/scripts/`.
-Specify either a device provided by this repository or an executable whose path contains `fairmq-`.
+Specify either a device provided by this repository or a FairMQ-provided
+executable whose name contains `fairmq-`.
 Arguments after the device name are passed to the device and FairMQ, so plugin options such as `--service-name` and device-specific options such as `--max-iterations` can appear on the same command line.
+
+In shell examples throughout this README, a line beginning with `#` is a shell
+comment and is not executed.
 
 ```bash
   # Start the installed Sampler with its default options.
@@ -127,9 +131,6 @@ Choose the endpoint according to where the process runs:
   Docker commonly uses `host.docker.internal:4317`; Podman commonly uses
   `host.containers.internal:4317`.
 
-In the shell command examples below, lines beginning with `#` are comments for
-the reader and are not executed by the shell.
-
 ```bash
 # Reach the collector through the Podman host alias.
 NESTDAQ_OTLP_GRPC_ENDPOINT=host.containers.internal:4317 ./start_device.sh Sampler
@@ -232,18 +233,28 @@ The following table lists the default endpoint parameters.
 The last three parameters are specific to NestDAQ.
 The rest are defined in FairMQ.
 
-In this section, `[subindex]` is a bracketed numeric suffix in a `peer` string
-within the JSON passed to `--connect-config`, for example
-`Sampler:Sampler-0:out[0]`.
-It is command-line JSON notation parsed by `TopologyConfig`, not syntax written
-in C++ source code or in a topology shell script's `link` command.
-`autoSubChannel` controls whether a `peer` string without `[subindex]` means
-only subchannel `0` or all subchannels registered for the peer channel.
+FairMQ stores each named channel as a `std::vector<fair::mq::Channel>`.
+Each `fair::mq::Channel` wraps one FairMQ Socket, and the vector index identifies
+a subchannel.
+Device code selects a local subchannel with the index argument of `Send()` or
+`Receive()`; omitting that argument selects index `0`.
+
+In the JSON passed to `--connect-config`, a bracketed numeric suffix such as
+`[0]` selects a subchannel of the peer channel.
+This README uses `[subindex]` as a placeholder for suffixes such as `[0]` and
+`[1]`.
+For example, `Sampler:Sampler-0:out[0]` selects subchannel `0` of the peer's
+`out` channel.
+This is command-line JSON notation parsed by `TopologyConfig`, not C++ syntax or
+syntax used by a topology shell script's `link` command.
+When the suffix is omitted, `autoSubChannel false` resolves only peer
+subchannel `0`, while `autoSubChannel true` discovers and resolves every
+registered subchannel of the peer channel.
 Use `autoSubChannel false` for fixed 1:1-style connections such as
 `topology-1-1.sh`. Use `autoSubChannel true` for n:m-style fan-out or fan-in
 topologies such as `topology-n-n-m.sh` and `topology-2samplers-n-m.sh`, where
 the plugin discovers peer subchannels and updates `numSockets` accordingly.
-When the `peer` string includes `[subindex]`, only that subchannel is used.
+When the `peer` string includes `[subindex]`, only that peer subchannel is used.
 See [`plugins/README.md#251-autosubchannel`](../plugins/README.md#251-autosubchannel)
 for the detailed topology plugin behavior.
 
@@ -265,6 +276,10 @@ function link () {
 `endpoint SERVICE CHANNEL ...` writes fields to the Redis hash key
 `daq_service:topology:endpoint:SERVICE:CHANNEL`. The fields describe the FairMQ
 socket, for example `type push`, `method bind`, and `autoSubChannel false`.
+
+Flushing a Redis database means deleting all key-value pairs in the selected
+database so that it becomes empty; it does not remove the database number
+itself.
 
 The `endpoint()` helper uses Redis `HSET`, so rerunning a topology script only
 updates the fields written by that script. It does not delete fields that are
@@ -306,14 +321,16 @@ of the Redis instance/database you intend to operate on.
 
 ### 2.1. Bind and connect endpoints
 
-In topology endpoint settings, `method bind` and `method connect` describe
-which side owns the socket address. Here, an address means the endpoint
-connection information needed by FairMQ: an IP address or hostname plus a port
-number. A bind-side socket opens its local endpoint and can communicate with
-connect-side sockets that connect to it without knowing each peer address. A
-connect-side socket must know the bind-side address before it can connect. That
-address can be resolved from NestDAQ service discovery and topology metadata in
-Redis, or it can be set directly through parameters for a fixed setup.
+In topology endpoint settings, `method bind` and `method connect` specify the
+operation that the local socket performs on the configured endpoint.
+Here, an address means the endpoint information needed by FairMQ: an IP address
+or hostname plus a port number.
+A bind-side socket binds to the configured endpoint and waits for connections.
+A connect-side socket initiates a connection to that endpoint, so it must know
+the bind-side address before connecting.
+That address can be resolved from NestDAQ service discovery and topology
+metadata in Redis, or it can be set directly through parameters for a fixed
+setup.
 
 `link SERVICE CHANNEL PEER_SERVICE PEER_CHANNEL` writes a logical connection
 between two endpoint definitions. The topology plugin reads these definitions
@@ -625,7 +642,7 @@ Useful variants:
 
 When input polling is generated, the skeleton uses a FairMQ poller before
 `Receive()`. When output or DQM polling is generated, it uses
-`Poller::CheckOutput()` before `Send()`. Output waits in poll-timeout steps
+`fair::mq::Poller::CheckOutput()` before `Send()`. Output waits in poll-timeout steps
 until it can send or a state transition is pending. DQM drops the sample if it
 cannot send immediately. Output and DQM examples are generated as multipart
 messages by default. Use generator options `--single-output` or `--single-dqm`
