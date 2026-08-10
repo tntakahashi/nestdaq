@@ -58,7 +58,7 @@ When an option is omitted, the plugin uses the default shown in its table.
 | `--ttl-update-interval`          | `3`                        | TTL refresh interval in seconds. |
 | `--startup-state`                | `idle`                     | FairMQ state to which the plugin automatically advances the device from `Idle` during startup: `idle`, `initializing-device`, `initialized`, `bound`, `device-ready`, `ready`, or `running`. |
 | `--enable-uds`                   | `true`                     | Adds Unix domain socket (UDS) addresses only to ZeroMQ bind channels whose peers all have the same `hostIp` as this process. `true` and `1` enable it. |
-| `--connect-config`               | none                       | JavaScript Object Notation (JSON) string describing temporary message queue (MQ) channel connection parameters. Section 2.5.1 describes its peer syntax. |
+| `--connect-config`               | none                       | JavaScript Object Notation (JSON) string describing temporary message queue (MQ) channel connection parameters. Section 2.5.2 describes its structure and peer syntax. |
 | `--max-retry-to-resolve-address` | `10`                       | Maximum retry count for resolving connect addresses. |
 
 ### 2.2. DAQ Service Identity Defaults
@@ -93,8 +93,8 @@ Redis operations performed by `daq-webctl` are documented in [`controller/README
 | `daq_service{sep}{service}{sep}{id}{sep}updatedTime` | string | Last update timestamp | Written by `daq_service`; read by `daq-webctl` | Lightweight last-update key with TTL. |
 | `daq_service{sep}{service}{sep}{id}{sep}option` | hash | Selected FairMQ program options such as `severity`, `file-severity`, `verbosity`, `color`, `log-to-file`, `id`, `io-threads`, `transport`, `network-interface`, `init-timeout`, shared-memory options, `rate`, and `session` | Written by `daq_service` | Current option values for monitoring and debugging. |
 | `daq_service{sep}service-instance-index{sep}{service}` | hash | Field: numeric instance index; value: UUID | Read/write by `daq_service` | Allocates and reuses `{service}-{index}` instance IDs when `--id` is not given. |
-| `run_info{sep}run_number` | string integer | Current or next run number | Read by `daq_service` | Supplies the run number stored in run metadata. |
-| `daqctl` | pub/sub channel | JSON DAQ command messages | Subscribed by `daq_service` | Receives DAQ state-transition requests. |
+| `run_info{sep}run_number` | string integer | Current or next run number | Read by `daq_service`; read/written by `daq-webctl` | Supplies the run number stored in run metadata. |
+| `daqctl` | pub/sub channel | JSON DAQ command messages | Published by `daq-webctl` or another Redis client; subscribed by `daq_service` | Receives DAQ state-transition requests. |
 
 ### 2.4. DAQ Command Publish/Subscribe (Pub/Sub)
 
@@ -127,6 +127,18 @@ The `value` field accepts one of the following FairMQ or NestDAQ command strings
 BIND, COMPLETE INIT, CONNECT, END, INIT DEVICE, INIT TASK, RESET DEVICE,
 RESET TASK, RUN, STOP, exit, quit, reset, start
 ```
+
+Any Redis client can publish a correctly formed message to `daqctl`; using `daq-webctl` is not required.
+For example, the following `redis-cli` command publishes `RUN` to the `Sampler-0` device instance through a local Redis server:
+
+```sh
+# Publish a RUN request directly to the daqctl channel.
+redis-cli -u redis://127.0.0.1:6379 PUBLISH daqctl \
+  '{"command":"change_state","value":"RUN","services":["Sampler"],"instances":["Sampler:Sampler-0"]}'
+```
+
+Redis Pub/Sub channels are not scoped by Redis database number.
+Adjust the Redis endpoint, channel name, and configured separator for the target environment.
 
 Target selection supports the special lowercase string `"all"`:
 
@@ -196,15 +208,20 @@ For example, `Sampler-2` and `Sink-1` receive the message but ignore it because 
 
 ### 2.5. Topology and Channel Keys
 
-`daq_service` also writes channel metadata through `TopologyConfig`.
+The `TopologyConfig` object in each `daq_service` plugin reads the topology definition and publishes metadata for that device's channels and sockets.
+The bind side publishes addresses first, and the connect side reads those addresses to configure its local FairMQ sockets.
 
 | Key pattern | Redis type | Fields / value | Writer / reader | Purpose |
 |-------------|------------|----------------|-----------------|---------|
-| `daq_service{sep}{service}{sep}{id}{sep}channel{sep}{channel}` | hash | `name`, `type`, `method`, `address`, `transport`, buffer sizes, kernel sizes, `linger`, `rateLogging`, port range, `autoBind`, `numSockets`, `autoSubChannel`, `bound`, `waitForPeerConnection` | Written/read | Stored channel endpoint metadata. |
-| `daq_service{sep}{service}{sep}{id}{sep}channel{sep}{channel}{sep}peer` | list | Peer channel key strings | Written/read | Peer list for the channel. |
-| `daq_service{sep}{service}{sep}{id}{sep}socket{sep}chans.{channel}.{subindex}` | hash | Local subchannel/socket parameters plus `numSockets` and `autoSubChannel` | Written/read | Per-subchannel connection metadata. |
-| `daq_service{sep}topology{sep}endpoint...` | string/hash keys | Topology endpoint configuration | Read/scanned | External topology configuration used to resolve endpoints. |
-| `daq_service{sep}topology{sep}link...` | string/hash keys | Topology link configuration | Read/scanned | External topology configuration used to resolve links between services/channels. |
+| `daq_service{sep}{service}{sep}{id}{sep}channel{sep}{channel}` | hash | `name`, `type`, `method`, `address`, `transport`, buffer sizes, kernel sizes, `linger`, `rateLogging`, port range, `autoBind`, `num_sockets`, `autoSubChannel`, `bound`, `waitForPeerConnection` | Written by the local device's `TopologyConfig` for both bind and connect channels. During topology-link resolution, the connect side reads peer bind-channel metadata and its `bound` field. | Stored channel endpoint metadata. |
+| `daq_service{sep}{service}{sep}{id}{sep}channel{sep}{channel}{sep}peer` | list | Peer channel key strings | Written by each device's `TopologyConfig`. During topology-link resolution, the connect side reads its local peer list and the corresponding peer lists. | Peer list for the channel. |
+| `daq_service{sep}{service}{sep}{id}{sep}socket{sep}chans.{channel}.{subindex}` | hash | Local subchannel/socket parameters plus `num_sockets` and `autoSubChannel` | The bind side's `TopologyConfig` writes bound socket addresses. The connect side reads those records, resolves its addresses, and writes its own socket records. | Per-subchannel connection metadata. |
+| `daq_service{sep}topology{sep}endpoint...` | hash | Topology endpoint configuration | Written by `scripts/topology-*.sh` or another Redis client. Scanned and read by `TopologyConfig` in each device of the matching service. | External topology configuration used to define bind and connect channels. |
+| `daq_service{sep}topology{sep}link...` | string | Topology link configuration | Written by `scripts/topology-*.sh` or another Redis client. Scanned and read by `TopologyConfig` in devices on both sides of the link. | External topology configuration used to link services and channels. |
+
+The topology shell scripts write the `topology{sep}endpoint` and `topology{sep}link` keys through `redis-cli` before the devices start.
+The supplied scripts use Redis database `0` and the `:` separator; edit their Redis URI and key construction when the deployment uses different values.
+`scripts/mq-param.sh` writes parameter-configuration keys instead and does not write these topology keys.
 
 #### 2.5.1. `autoSubChannel`
 
@@ -214,30 +231,13 @@ a subchannel.
 Device code selects a local subchannel with the index argument of `Send()` or
 `Receive()`; omitting that argument selects index `0`.
 
-In the JSON passed to the NestDAQ `daq_service` plugin's `--connect-config`
-option, a numeric suffix such as `[0]` selects a peer subchannel.
-For example, `Sampler:Sampler-0:out[0]` selects subchannel `0` of the peer's
-`out` channel.
-This is JSON notation parsed by `TopologyConfig`, not C++ syntax or syntax used
-by a topology shell script's `link` command.
-The `{subindex}` text in the Redis key table above is a placeholder, whereas
-`[0]` is a suffix written in a `peer` string:
+For topology endpoint and link configuration, `autoSubChannel` controls whether `TopologyConfig` creates additional local subchannels from peer device instances discovered through Redis presence keys.
+Its default is `false`.
 
-```json
-{"in":{"type":"pull","peer":"Sampler:Sampler-0:out[0]"}}
-```
-
-The top-level key names the local channel, and `peer` accepts either one string
-or an array of strings.
-
-`autoSubChannel` controls how `TopologyConfig` expands a peer for which this
-subchannel suffix is omitted. Its default is `false`.
-
-- `autoSubChannel=false` resolves an unindexed peer to subchannel `0` only.
+- `autoSubChannel=false` keeps the fixed subchannel count from the channel configuration.
   This setting is suitable for 1:1 or other fixed connections.
-- `autoSubChannel=true` scans the peer-channel subchannel records already stored in Redis and connects to all matching subchannels.
+- `autoSubChannel=true` increases `num_sockets` from the discovered peer device instances on both bind and connect endpoints.
   This setting is suitable for n:m topologies in which the process discovers the number of peers or sockets while running.
-- When the peer string includes a suffix such as `[0]`, only that subchannel is resolved, regardless of `autoSubChannel`.
 
 The following diagram shows how each side's `autoSubChannel` setting changes the number of address-bearing channel sockets when a topology connects two services with different process counts.
 The diagram illustrates socket and subchannel counts, not fixed port assignments or message direction.
@@ -309,10 +309,37 @@ flowchart LR
     Topology --- CaseTT
 ```
 
-The plugin normally calculates `numSockets` from the topology.
-For channels with `autoSubChannel=true`, `numSockets` grows with the discovered peer instances and subchannels so that each FairMQ sub-socket can receive a distinct `address:port` and subchannel index.
+The plugin normally calculates `num_sockets` from the topology.
+For channels with `autoSubChannel=true`, `num_sockets` grows with the discovered peer device instances so that each FairMQ sub-socket can receive a distinct `address:port` and subchannel index.
 
-#### 2.5.2. Bind/Connect Sequence
+#### 2.5.2. `--connect-config`
+
+`--connect-config` defines local connect channels and their peers directly in a JSON string.
+`TopologyConfig` sets `method=connect` for every top-level channel in this JSON.
+When this option is not empty, `TopologyConfig` resolves connect addresses from these peer references instead of using topology-link peer resolution.
+
+The following example defines a local pull channel named `in` and connects it to subchannel `0` of the bind channel `out` owned by the `Sampler-0` instance of the `Sampler` service:
+
+```json
+{
+  "in": {
+    "type": "pull",
+    "peer": "Sampler:Sampler-0:out[0]"
+  }
+}
+```
+
+The top-level key `in` is the local channel name, `type` is its FairMQ socket type, and `peer` identifies the remote channel.
+With the default separator `:`, a fully qualified peer reference has the form `{service}:{instance-id}:{channel}[{subindex}]`.
+The `[0]` suffix selects remote subchannel `0`; it is JSON data parsed by `TopologyConfig`, not C++ syntax or syntax used by a topology shell script's `link` command.
+The `{subindex}` text in the Redis key table is a placeholder, whereas `[0]` is an actual suffix in the peer reference.
+`peer` accepts either one string or an array of strings.
+
+An explicit suffix such as `[0]` selects only that subchannel regardless of `autoSubChannel`.
+If the suffix is omitted and `autoSubChannel=false`, `TopologyConfig` selects subchannel `0`.
+The current unindexed `autoSubChannel=true` path does not match the stored `chans.{channel}.{subindex}` key pattern reliably; use explicit `[N]` suffixes or topology endpoint/link configuration instead.
+
+#### 2.5.3. Bind/Connect Sequence
 
 `TopologyConfig` synchronizes bind and connect endpoints through Redis during FairMQ state transitions.
 
@@ -328,7 +355,7 @@ sequenceDiagram
     TopologyConfig->>Redis: read topology endpoints and links
     TopologyConfig->>TopologyConfig: classify bind/connect channels
     TopologyConfig->>Redis: scan peer presence keys
-    TopologyConfig->>TopologyConfig: update numSockets when autoSubChannel=true
+    TopologyConfig->>TopologyConfig: update num_sockets when autoSubChannel=true
     TopologyConfig->>Redis: write channel metadata and peer lists
     TopologyConfig->>FairMQProperties: set initial chans.* properties
 
@@ -338,11 +365,11 @@ sequenceDiagram
         TopologyConfig->>Redis: mark bind channels bound=1
     end
     alt connect channels exist
-        TopologyConfig->>Redis: wait for peer bind channels bound=1
         alt explicit connect-config is set
-            TopologyConfig->>Redis: read peer health and socket records
+            TopologyConfig->>Redis: poll peer health and socket records
             TopologyConfig->>FairMQProperties: configConnect() sets connect addresses
         else topology links are used
+            TopologyConfig->>Redis: wait for peer bind channels bound=1
             TopologyConfig->>Redis: read peer lists and socket records
             TopologyConfig->>FairMQProperties: resolveConnectAddress() sets connect addresses
         end
