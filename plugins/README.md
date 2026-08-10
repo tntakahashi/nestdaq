@@ -100,7 +100,9 @@ Redis operations performed by `daq-webctl` are documented in [`controller/README
 
 Redis Pub/Sub delivers each `daqctl` message to every user device process subscribed to the channel.
 Redis does not filter messages by service or instance.
-Each subscribing device's `daq_service` plugin compares the message's `services` and `instances` arrays with that device's `service-name` and long instance id, such as `Sampler-0`.
+The fully qualified instance ID joins the `service-name`, configured separator, and instance ID.
+For example, the default separator produces `Sampler:Sampler-0` from the service name `Sampler` and instance ID `Sampler-0`.
+Each subscribing device's `daq_service` plugin compares the message's `services` and `instances` arrays with that device's service name and fully qualified instance ID.
 The plugin ignores the message when those arrays do not select that device instance.
 
 Messages published to `daqctl` have this shape:
@@ -110,7 +112,7 @@ Messages published to `daqctl` have this shape:
   "command": "change_state",
   "value": "RUN",
   "services": ["Sampler", "Sink"],
-  "instances": ["Sampler-0", "Sink-0"]
+  "instances": ["Sampler:Sampler-0", "Sink:Sink-0"]
 }
 ```
 
@@ -131,8 +133,8 @@ Target selection supports the special lowercase string `"all"`:
 - `services: ["all"]` targets every device, regardless of `instances`.
 - `services: ["Sampler"]` with `instances: ["all"]` targets every instance of
   the `Sampler` service.
-- `services: ["Sampler"]` with `instances: ["Sampler-0"]` targets only the
-  `Sampler-0` instance.
+- `services: ["Sampler"]` with `instances: ["Sampler:Sampler-0"]` targets only
+  the `Sampler-0` instance.
 - Other devices ignore the message.
 
 The implementation compares the literal string `"all"` without case conversion.
@@ -163,7 +165,7 @@ Examples:
   "command": "change_state",
   "value": "RUN",
   "services": ["Sampler"],
-  "instances": ["Sampler-0"]
+  "instances": ["Sampler:Sampler-0"]
 }
 ```
 
@@ -185,12 +187,12 @@ Target selected instances across services:
   "command": "change_state",
   "value": "RUN",
   "services": ["Sampler", "Sink"],
-  "instances": ["Sampler-0", "Sampler-1", "Sink-0"]
+  "instances": ["Sampler:Sampler-0", "Sampler:Sampler-1", "Sink:Sink-0"]
 }
 ```
 
 The last message is still delivered to every `daqctl` subscriber.
-For example, `Sampler-2` and `Sink-1` receive the message but ignore it because their long instance ids are not listed in `instances`.
+For example, `Sampler-2` and `Sink-1` receive the message but ignore it because their fully qualified instance IDs, `Sampler:Sampler-2` and `Sink:Sink-1`, are not listed in `instances`.
 
 ### 2.5. Topology and Channel Keys
 

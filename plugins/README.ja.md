@@ -105,7 +105,9 @@ timezone offsetは含みません。
 
 Redis Pub/Subは各`daqctl` messageを、このchannelをsubscribeするすべてのuser device processへ配信します。
 Redisはserviceやinstanceによってmessageをfilterしません。
-各deviceの`daq_service` pluginは、messageの`services`および`instances` arrayを、そのdeviceの`service-name`および`Sampler-0`のようなlong instance idと比較します。
+完全修飾instance IDは、`service-name`、設定済みseparator、instance IDを連結した値です。
+例えばdefault separatorでは、service name `Sampler`とinstance ID `Sampler-0`から`Sampler:Sampler-0`を生成します。
+各deviceの`daq_service` pluginは、messageの`services`および`instances` arrayを、そのdeviceのservice nameおよび完全修飾instance IDと比較します。
 これらのarrayがそのdevice instanceを選択していない場合、pluginはmessageを無視します。
 
 `daqctl`へpublishするmessageの形式は次のとおりです。
@@ -115,7 +117,7 @@ Redisはserviceやinstanceによってmessageをfilterしません。
   "command": "change_state",
   "value": "RUN",
   "services": ["Sampler", "Sink"],
-  "instances": ["Sampler-0", "Sink-0"]
+  "instances": ["Sampler:Sampler-0", "Sink:Sink-0"]
 }
 ```
 
@@ -131,15 +133,15 @@ BIND, COMPLETE INIT, CONNECT, END, INIT DEVICE, INIT TASK, RESET DEVICE,
 RESET TASK, RUN, STOP, exit, quit, reset, start
 ```
 
-target selectionは特殊なlowercase string `"all"`に対応します。
+target selectionは特殊な小文字の文字列`"all"`に対応します。
 
 - `services: ["all"]`は`instances`に関係なく全deviceを対象にします。
 - `services: ["Sampler"]`と`instances: ["all"]`は`Sampler` serviceの全instanceを対象にします。
-- `services: ["Sampler"]`と`instances: ["Sampler-0"]`は`Sampler-0` instanceだけを対象にします。
+- `services: ["Sampler"]`と`instances: ["Sampler:Sampler-0"]`は`Sampler-0` instanceだけを対象にします。
 - その他のdeviceはmessageを無視します。
 
-実装はcase conversionを行わず、literal string `"all"`と比較します。
-`"ALL"`や`"All"`ではなくlowercase `"all"`を使用してください。
+実装は大文字と小文字を変換せず、文字列`"all"`と比較します。
+`"ALL"`や`"All"`ではなく、小文字の`"all"`を使用してください。
 
 例：
 
@@ -166,7 +168,7 @@ target selectionは特殊なlowercase string `"all"`に対応します。
   "command": "change_state",
   "value": "RUN",
   "services": ["Sampler"],
-  "instances": ["Sampler-0"]
+  "instances": ["Sampler:Sampler-0"]
 }
 ```
 
@@ -188,12 +190,12 @@ serviceをまたいで選択したinstanceを対象にします。
   "command": "change_state",
   "value": "RUN",
   "services": ["Sampler", "Sink"],
-  "instances": ["Sampler-0", "Sampler-1", "Sink-0"]
+  "instances": ["Sampler:Sampler-0", "Sampler:Sampler-1", "Sink:Sink-0"]
 }
 ```
 
 最後のmessageも全`daqctl` subscriberへ配信されます。
-例えば`Sampler-2`と`Sink-1`もmessageを受信しますが、long instance idが`instances`にないため無視します。
+例えば`Sampler-2`と`Sink-1`もmessageを受信しますが、それぞれの完全修飾instance IDである`Sampler:Sampler-2`と`Sink:Sink-1`が`instances`にないため無視します。
 
 <a id="25-topology-and-channel-keys"></a>
 ### 2.5. トポロジーおよびchannel key

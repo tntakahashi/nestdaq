@@ -199,7 +199,7 @@ For `redis-publish`, [`plugins/README.md`](../plugins/README.md#24-daq-command-p
 | `{"command":"redis-get","value":"run_number"}` | Reads `run_info{sep}run_number` and `run_info{sep}latest_run_number`. |
 | `{"command":"redis-incr","value":"run_number"}` | Increments `run_info{sep}run_number`. |
 | `{"command":"redis-set","name":"wait-ready","value":"true"}` | Sets one of the known `run_info` values. Valid names are `run_number`, `wait-device-ready`, and `wait-ready`. |
-| `{"command":"redis-publish","value":"RUN","services":["Sampler"],"instances":["Sampler-0"]}` | Publishes a DAQ command to `daqctl`, with optional prerequisite command handling. |
+| `{"command":"redis-publish","value":"RUN","services":["Sampler"],"instances":["Sampler:Sampler-0"]}` | Publishes a DAQ command to `daqctl`, with optional prerequisite command handling. |
 
 The controller sends JSON messages back to browser clients.
 
