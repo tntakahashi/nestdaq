@@ -39,26 +39,29 @@ TTLの扱いはpluginごとに異なります。
 <a id="2-daq_service"></a>
 ## 2. daq_service
 
-`daq_service`は中心となるRedis service registry pluginです。
+`daq_service`はRedis service registry pluginです。
 device instanceの登録、TTLのrefresh、FairMQ state、health、topology、channel dataの書き込み、およびDAQ commandのsubscribeを行います。
 
 <a id="21-command-line-options"></a>
 ### 2.1. コマンドラインオプション
 
-| Option | デフォルト | 必須 | 説明 |
-| --- | --- | --- | --- |
-| `--service-name` | 空の場合はexecutable basename | No | Redis key pathで使用するservice name。 |
-| `--uuid` | 生成 | No | このservice instanceのuniversally unique identifier(UUID)。利用可能な場合、FairMQ device wrapperはtelemetryが生成した`service.instance.id`を再利用し、それ以外はpluginが生成します。 |
-| `--host-ip` | 検出値/設定値 | No | このservice addressとして保存するInternet Protocol(IP)addressまたはhostname。 |
-| `--hostname` | 検出値/設定値 | No | health dataへ保存するhost name。 |
-| `--registry-uri` | `tcp://127.0.0.1:6379/0` | No | DAQ service registryのRedis uniform resource identifier(URI)。 |
-| `--separator` | `:` | No | Redis keyを構成するときのseparator。 |
-| `--max-ttl` | `5` | No | 一時registry keyのTTL(seconds)。 |
-| `--ttl-update-interval` | `3` | No | TTL refresh interval(seconds)。 |
-| `--startup-state` | `idle` | No | startup state sequence target：`idle`、`initializing-device`、`initialized`、`bound`、`device-ready`、`ready`、`running`。 |
-| `--enable-uds` | `true` | No | 利用可能な場合、local inter-process communication(IPC)にUnix domain socket(UDS)を使用。 |
-| `--connect-config` | なし | No | 一時message queue(MQ)channel connection parameterを記述するJavaScript Object Notation(JSON)string。2.5.1節でpeer記法を説明します。 |
-| `--max-retry-to-resolve-address` | `10` | No | connect address解決の最大retry回数。 |
+この文書で説明するコマンドラインオプションは、すべて省略できます。
+省略した場合、pluginは各表に示すデフォルト値を使用します。
+
+| Option | デフォルト | 説明 |
+| --- | --- | --- |
+| `--service-name` | 空の場合はexecutable basename | Redis key pathで使用するservice name。 |
+| `--uuid` | 生成 | このservice instanceのuniversally unique identifier(UUID)。利用可能な場合、FairMQ device wrapperはtelemetryが生成した`service.instance.id`を再利用し、それ以外はpluginが生成します。 |
+| `--host-ip` | 検出値/設定値 | このservice addressとして保存するInternet Protocol(IP)addressまたはhostname。 |
+| `--hostname` | 検出値/設定値 | health dataへ保存するhost name。 |
+| `--registry-uri` | `tcp://127.0.0.1:6379/0` | DAQ service registryのRedis uniform resource identifier(URI)。 |
+| `--separator` | `:` | Redis keyを構成するときのseparator。 |
+| `--max-ttl` | `5` | 一時registry keyのTTL(seconds)。 |
+| `--ttl-update-interval` | `3` | TTL refresh interval(seconds)。 |
+| `--startup-state` | `idle` | startup state sequence target：`idle`、`initializing-device`、`initialized`、`bound`、`device-ready`、`ready`、`running`。 |
+| `--enable-uds` | `true` | 利用可能な場合、local inter-process communication(IPC)にUnix domain socket(UDS)を使用。 |
+| `--connect-config` | なし | 一時message queue(MQ)channel connection parameterを記述するJavaScript Object Notation(JSON)string。2.5.1節でpeer記法を説明します。 |
+| `--max-retry-to-resolve-address` | `10` | connect address解決の最大retry回数。 |
 
 <a id="22-daq-service-identity-defaults"></a>
 ### 2.2. DAQサービス識別情報の既定値
@@ -414,13 +417,13 @@ memory usageはmebibytes(MiB)単位のcurrent resident set size(RSS)です。
 <a id="31-command-line-options"></a>
 ### 3.1. コマンドラインオプション
 
-| Option | デフォルト | 必須 | 説明 |
-| --- | --- | --- | --- |
-| `--proc-stat-update-interval` | `1000` | No | process CPU/memory metricsのupdate interval(milliseconds)。 |
-| `--metrics-uri` | なし | No | metrics用Redis URI。空の場合は`--registry-uri`を使用。 |
-| `--retention` | `0` | No | RedisTimeSeries retention(milliseconds)。`0`はtrimなし。 |
-| `--recreate-ts` | `true` | No | `Running`へのtransition時にRedisTimeSeries keyを再作成。 |
-| `--metrics-max-ttl` | `3000` | No | instanceの最終metrics updateからの最大経過時間(milliseconds)。この時間を超えたinstanceのfieldをmetric hashから削除します。0以下の場合、この削除処理を無効にします。 |
+| Option | デフォルト | 説明 |
+| --- | --- | --- |
+| `--proc-stat-update-interval` | `1000` | process CPU/memory metricsのupdate interval(milliseconds)。 |
+| `--metrics-uri` | なし | metrics用Redis URI。空の場合は`--registry-uri`を使用。 |
+| `--retention` | `0` | RedisTimeSeries retention(milliseconds)。`0`はtrimなし。 |
+| `--recreate-ts` | `true` | `Running`へのtransition時にRedisTimeSeries keyを再作成。 |
+| `--metrics-max-ttl` | `3000` | instanceの最終metrics updateからの最大経過時間(milliseconds)。この時間を超えたinstanceのfieldをmetric hashから削除します。0以下の場合、この削除処理を無効にします。 |
 
 <a id="32-redis-keys-written-or-read"></a>
 ### 3.2. 書き込みまたは読み取りを行うRedis key
@@ -474,9 +477,9 @@ pluginは、この時間を超えたinstanceのfieldを登録済みmetric hash�
 <a id="41-command-line-options"></a>
 ### 4.1. コマンドラインオプション
 
-| Option | デフォルト | 必須 | 説明 |
-| --- | --- | --- | --- |
-| `--parameter-config-uri` | なし | No | parameter configuration用Redis URI。空の場合は`--registry-uri`を使用。 |
+| Option | デフォルト | 説明 |
+| --- | --- | --- |
+| `--parameter-config-uri` | なし | parameter configuration用Redis URI。空の場合は`--registry-uri`を使用。 |
 
 <a id="42-redis-keys-read-or-subscribed"></a>
 ### 4.2. 読み取りまたは購読するRedis key

@@ -37,26 +37,29 @@ TTL handling is different for each plugin:
 
 ## 2. daq_service
 
-`daq_service` is the main Redis service-registry plugin.
+`daq_service` is a Redis service-registry plugin.
 It registers a device instance, refreshes TTLs, writes FairMQ state, health, topology, and channel data, and subscribes to DAQ commands.
 
 <a id="21-runtime-options"></a>
 ### 2.1. Command-Line Options
 
-| Option                           | Default                    | Required | Description |
-|----------------------------------|----------------------------|----------|-------------|
-| `--service-name`                 | executable basename when empty | No       | Service name used in Redis key paths. |
-| `--uuid`                         | generated                  | No       | Universally unique identifier (UUID) of this service instance. FairMQ device wrappers reuse the telemetry-generated `service.instance.id` when available; otherwise the plugin generates one. |
-| `--host-ip`                      | detected/configured value  | No       | Internet Protocol (IP) address or hostname stored as this service address. |
-| `--hostname`                     | detected/configured value  | No       | Host name stored in health data. |
-| `--registry-uri`                 | `tcp://127.0.0.1:6379/0`   | No       | Redis uniform resource identifier (URI) for the DAQ service registry. |
-| `--separator`                    | `:`                        | No       | Separator used when composing Redis keys. |
-| `--max-ttl`                      | `5`                        | No       | TTL in seconds for transient registry keys. |
-| `--ttl-update-interval`          | `3`                        | No       | TTL refresh interval in seconds. |
-| `--startup-state`                | `idle`                     | No       | Startup state sequence target: `idle`, `initializing-device`, `initialized`, `bound`, `device-ready`, `ready`, or `running`. |
-| `--enable-uds`                   | `true`                     | No       | Use Unix domain sockets (UDS) for local inter-process communication (IPC) if available. |
-| `--connect-config`               | none                       | No       | JavaScript Object Notation (JSON) string describing temporary message queue (MQ) channel connection parameters. Section 2.5.1 describes its peer syntax. |
-| `--max-retry-to-resolve-address` | `10`                       | No       | Maximum retry count for resolving connect addresses. |
+All command-line options in this document are optional.
+When an option is omitted, the plugin uses the default shown in its table.
+
+| Option                           | Default                    | Description |
+|----------------------------------|----------------------------|-------------|
+| `--service-name`                 | executable basename when empty | Service name used in Redis key paths. |
+| `--uuid`                         | generated                  | Universally unique identifier (UUID) of this service instance. FairMQ device wrappers reuse the telemetry-generated `service.instance.id` when available; otherwise the plugin generates one. |
+| `--host-ip`                      | detected/configured value  | Internet Protocol (IP) address or hostname stored as this service address. |
+| `--hostname`                     | detected/configured value  | Host name stored in health data. |
+| `--registry-uri`                 | `tcp://127.0.0.1:6379/0`   | Redis uniform resource identifier (URI) for the DAQ service registry. |
+| `--separator`                    | `:`                        | Separator used when composing Redis keys. |
+| `--max-ttl`                      | `5`                        | TTL in seconds for transient registry keys. |
+| `--ttl-update-interval`          | `3`                        | TTL refresh interval in seconds. |
+| `--startup-state`                | `idle`                     | Startup state sequence target: `idle`, `initializing-device`, `initialized`, `bound`, `device-ready`, `ready`, or `running`. |
+| `--enable-uds`                   | `true`                     | Use Unix domain sockets (UDS) for local inter-process communication (IPC) if available. |
+| `--connect-config`               | none                       | JavaScript Object Notation (JSON) string describing temporary message queue (MQ) channel connection parameters. Section 2.5.1 describes its peer syntax. |
+| `--max-retry-to-resolve-address` | `10`                       | Maximum retry count for resolving connect addresses. |
 
 ### 2.2. DAQ Service Identity Defaults
 
@@ -409,13 +412,13 @@ Memory usage is the current resident set size (RSS) in mebibytes (MiB).
 <a id="31-runtime-options"></a>
 ### 3.1. Command-Line Options
 
-| Option                        | Default | Required | Description |
-|-------------------------------|---------|----------|-------------|
-| `--proc-stat-update-interval` | `1000`  | No       | Update interval in milliseconds for process CPU and memory metrics. |
-| `--metrics-uri`               | none    | No       | Redis URI for metrics. If empty, `--registry-uri` is used. |
-| `--retention`                 | `0`     | No       | RedisTimeSeries retention in milliseconds. `0` means no trimming. |
-| `--recreate-ts`               | `true`  | No       | Recreate RedisTimeSeries keys on transition to `Running`. |
-| `--metrics-max-ttl`           | `3000`  | No       | Maximum age in milliseconds since an instance's last metrics update. The plugin removes older instance fields from metric hashes. A value of zero or less disables this cleanup. |
+| Option                        | Default | Description |
+|-------------------------------|---------|-------------|
+| `--proc-stat-update-interval` | `1000`  | Update interval in milliseconds for process CPU and memory metrics. |
+| `--metrics-uri`               | none    | Redis URI for metrics. If empty, `--registry-uri` is used. |
+| `--retention`                 | `0`     | RedisTimeSeries retention in milliseconds. `0` means no trimming. |
+| `--recreate-ts`               | `true`  | Recreate RedisTimeSeries keys on transition to `Running`. |
+| `--metrics-max-ttl`           | `3000`  | Maximum age in milliseconds since an instance's last metrics update. The plugin removes older instance fields from metric hashes. A value of zero or less disables this cleanup. |
 
 ### 3.2. Redis Keys Written or Read
 
@@ -466,9 +469,9 @@ Instance-specific parameters override group parameters when both are present.
 <a id="41-runtime-options"></a>
 ### 4.1. Command-Line Options
 
-| Option                   | Default | Required | Description |
-|--------------------------|---------|----------|-------------|
-| `--parameter-config-uri` | none    | No       | Redis URI for parameter configuration. If empty, `--registry-uri` is used. |
+| Option                   | Default | Description |
+|--------------------------|---------|-------------|
+| `--parameter-config-uri` | none    | Redis URI for parameter configuration. If empty, `--registry-uri` is used. |
 
 ### 4.2. Redis Keys Read or Subscribed
 
