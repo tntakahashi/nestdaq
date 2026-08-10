@@ -548,12 +548,14 @@ memory usageはmebibytes (MiB) 単位のcurrent resident set size (RSS) です�
 | `ts{sep}{id}{sep}cpu-stat`, `ts{sep}{id}{sep}ram-stat`, `ts{sep}{id}{sep}state-id` | RedisTimeSeries | `TS.ADD`で追加するsample。labelは`service`, `id`, data type | Written | process/state time series。 |
 | `ts{sep}{id}{sep}{channel}[{subindex}]{sep}...` | RedisTimeSeries | `name`, `socket`, `transport`などのlabelを持つchannel rate/累積sample | Written | channel time series。 |
 
-pluginはFairMQのFairLogger throughput lineをlistenし、次のようなrecordをparseします。
+pluginはFairMQのFairLogger throughput lineをlistenし、次のような送信のみ、および受信のみのrecordをparseします。
 
 ```text
-data[0]: in: 123 (4.5 MB) out: 67 (8.9 MB)
+data[0]: in: 0 (0 MB) out: 67 (8.9 MB)
+data[0]: in: 123 (4.5 MB) out: 0 (0 MB)
 ```
 
+FairMQ channelは片方向にdataを転送する場合が多いため、通常はinput rateまたはoutput rateのどちらかが`0`になります。
 channel throughput metricsにはindex付きsubchannel recordだけを使用します。
 
 <a id="33-ttl-and-retention-details-metrics"></a>

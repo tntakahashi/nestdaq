@@ -533,12 +533,14 @@ Memory usage is the current resident set size (RSS) in mebibytes (MiB).
 | `ts{sep}{id}{sep}cpu-stat`, `ts{sep}{id}{sep}ram-stat`, `ts{sep}{id}{sep}state-id` | RedisTimeSeries | Samples added with `TS.ADD`; labels include `service`, `id`, and data type | Written | Process and state time series. |
 | `ts{sep}{id}{sep}{channel}[{subindex}]{sep}...` | RedisTimeSeries | Channel rate and cumulative samples with labels such as `name`, `socket`, and `transport` | Written | Channel time series. |
 
-The plugin listens for FairLogger throughput lines from FairMQ and parses records such as:
+The plugin listens for FairLogger throughput lines from FairMQ and parses records such as these output-only and input-only examples:
 
 ```text
-data[0]: in: 123 (4.5 MB) out: 67 (8.9 MB)
+data[0]: in: 0 (0 MB) out: 67 (8.9 MB)
+data[0]: in: 123 (4.5 MB) out: 0 (0 MB)
 ```
 
+FairMQ channels commonly transfer data in one direction, so either the input or output rate is usually zero.
 Only indexed subchannel records are used for channel throughput metrics.
 
 ### 3.3. TTL and Retention Details (metrics)
