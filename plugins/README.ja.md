@@ -30,8 +30,8 @@ TTLの扱いはpluginごとに異なります。
 
 - `daq_service`はRedis keyのexpirationを管理します。
   deviceの生存中はregistry keyをrefreshし、deviceが予期せず終了した場合はexpirationをfallback cleanup mechanismとして使用します。
-- `metrics`は通常、metric hashにRedis key TTLを設定しません。
-  代わりに、`--metrics-max-ttl`はinstanceの最終metrics updateから、そのinstanceのfieldをmetric hashから削除するまでの時間を指定します。
+- `metrics`はmetric hashおよびRedisTimeSeries keyにRedis expiration commandを実行しません。
+  代わりに、`--metrics-max-ttl`はplugin起動時に1回だけ行うcleanupで、共有metric hashから古いinstance fieldを削除するための経過時間を指定します。
   RedisTimeSeries retentionは`--retention`で別に制御します。
 - `parameter_config`はparameter keyへTTLを設定しません。
   Redis keyを書き込むproducerまたはoperatorがparameterのlifetimeを制御します。
@@ -521,9 +521,9 @@ memory usageはmebibytes (MiB) 単位のcurrent resident set size (RSS) です�
 | --- | --- | --- |
 | `--proc-stat-update-interval` | `1000` | process CPU/memory metricsのupdate interval (milliseconds)。 |
 | `--metrics-uri` | なし | metrics用Redis URI。空の場合は`--registry-uri`を使用。 |
-| `--retention` | `0` | RedisTimeSeries retention (milliseconds)。`0`はtrimなし。 |
-| `--recreate-ts` | `true` | `Running`へのtransition時にRedisTimeSeries keyを再作成。 |
-| `--metrics-max-ttl` | `3000` | instanceの最終metrics updateからの最大経過時間 (milliseconds)。この時間を超えたinstanceのfieldをmetric hashから削除します。0以下の場合、この削除処理を無効にします。 |
+| `--retention` | `0` | RedisTimeSeries内の最大timestampを基準としたsampleの最大経過時間 (milliseconds)。`0`はretentionによるtrimを無効にします。 |
+| `--recreate-ts` | `true` | `Ready`へのtransition時に登録済みRedisTimeSeries keyを削除し、`Running`へのtransition時に設定済みretentionとlabelを持つkeyを作成します。 |
+| `--metrics-max-ttl` | `3000` | plugin起動時に1回だけ行う古いfieldのcleanupで使用する経過時間 (milliseconds)。0以下の場合、このcleanupを無効にします。 |
 
 <a id="32-redis-keys-written-or-read"></a>
 ### 3.2. 書き込みまたは読み取りを行うRedis key
@@ -559,14 +559,35 @@ channel throughput metricsにはindex付きsubchannel recordだけを使用し�
 <a id="33-ttl-and-retention-details-metrics"></a>
 ### 3.3. TTLと保持期間の詳細 (metrics)
 
+| Mechanism | 削除対象 | 削除を判定する時点 | 結果 |
+| --- | --- | --- | --- |
+| `--metrics-max-ttl` | 共有metric hashにある、更新が止まったinstanceのfield | `metrics` plugin instanceの起動時に1回 | 対象hash fieldを`HDEL`で削除 |
+| `--retention` | 各RedisTimeSeries key内の古いsample | 後続sampleによって、その時系列の最大timestampが進んだとき | retention window外のsampleをtrim |
+| Redis `EXPIRE` | Redis key全体 | keyのwall-clock timeoutが経過したとき | keyとその内容をすべて削除。`metrics`は使用しない |
+
 `--metrics-max-ttl`はRedis key TTLではありません。
 `metrics{sep}last-update-ns`に記録されたinstanceの時刻について、許容する最大経過時間をmilliseconds単位で指定します。
-pluginは、この時間を超えたinstanceのfieldを登録済みmetric hashから`HDEL`で削除します。
+pluginは起動時に1回だけcleanupを行い、この時間を超えたinstanceのfieldを共有metric hashから`HDEL`で削除します。
+key単位の`EXPIRE`を使用すると、metricsを更新中のinstance fieldを含む共有hash全体が削除されるため、このcleanupが必要です。
+このcleanupはRedisTimeSeries keyまたはsampleを削除せず、現在の実装では周期的に実行されません。
 `--metrics-max-ttl`が0以下なら、このcleanupは無効です。
 
 `--retention`はpluginが作成するRedisTimeSeries keyだけに適用します。
 この値はmilliseconds単位で`TS.CREATE ... RETENTION`へ渡されます。
-`0`の場合、RedisTimeSeries sampleはretention timeによってtrimされません。
+[RedisTimeSeries retention](https://redis.io/docs/latest/commands/ts.create/)はRedisTimeSeries keyのwall-clock lifetimeではなく、その時系列で報告された最大timestampを基準とするsampleの最大経過時間です。
+RedisTimeSeriesは後続sampleの書き込み時に古いsampleを評価し、trimします。
+trimはretention windowより古いsampleを削除しますが、RedisTimeSeries keyおよびlabelは削除しません。
+`0`の場合、retentionによるsampleのtrimを無効にします。
+
+RedisTimeSeries keyにはRedis共通の[`EXPIRE`](https://redis.io/docs/latest/commands/expire/)を使用できますが、`metrics` pluginは使用しません。
+`EXPIRE`は個別sampleのtrimではなく、RedisTimeSeries key全体を削除します。
+processおよびchannel sampleは`TS.ADD`へ`*`を指定するため、Redis serverのclockからsample timestampが設定されます。
+
+`--recreate-ts=true`の場合、pluginは`Ready`へのtransition時に登録済みRedisTimeSeries keyを削除し、`Running`へのtransition時に再作成します。
+pluginは`TS.CREATE`の前にも、同名のkeyが存在すれば削除します。
+したがって既存sampleは削除され、新しいkeyには設定済みretentionとlabelが設定されます。
+`--recreate-ts=false`の場合、pluginは`TS.CREATE`を実行しません。
+存在しないkeyを`TS.ADD`が自動作成した場合、そのkeyにはpluginの`--retention` valueとlabelが適用されません。
 
 <a id="4-parameter_config"></a>
 ## 4. parameter_config

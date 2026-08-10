@@ -29,8 +29,8 @@ TTL handling is different for each plugin:
 
 - `daq_service` manages Redis key expiration.
   It refreshes registry keys while the device is alive and uses expiration as a fallback cleanup mechanism when a device terminates unexpectedly.
-- `metrics` does not generally set Redis key TTLs for metric hashes.
-  Instead, `--metrics-max-ttl` specifies how long fields may remain after an instance's last metrics update before the plugin removes them from the metric hashes.
+- `metrics` does not issue Redis expiration commands for metric hashes or RedisTimeSeries keys.
+  Instead, `--metrics-max-ttl` sets the age threshold for a one-time startup cleanup of stale instance fields in shared metric hashes.
   `--retention` controls RedisTimeSeries retention separately.
 - `parameter_config` does not set TTLs on parameter keys.
   The producer or operator that writes those Redis keys controls their lifetime.
@@ -507,9 +507,9 @@ Memory usage is the current resident set size (RSS) in mebibytes (MiB).
 |-------------------------------|---------|-------------|
 | `--proc-stat-update-interval` | `1000`  | Update interval in milliseconds for process CPU and memory metrics. |
 | `--metrics-uri`               | none    | Redis URI for metrics. If empty, `--registry-uri` is used. |
-| `--retention`                 | `0`     | RedisTimeSeries retention in milliseconds. `0` means no trimming. |
-| `--recreate-ts`               | `true`  | Recreate RedisTimeSeries keys on transition to `Running`. |
-| `--metrics-max-ttl`           | `3000`  | Maximum age in milliseconds since an instance's last metrics update. The plugin removes older instance fields from metric hashes. A value of zero or less disables this cleanup. |
+| `--retention`                 | `0`     | Maximum RedisTimeSeries sample age in milliseconds relative to the series' greatest timestamp. `0` disables retention-based trimming. |
+| `--recreate-ts`               | `true`  | Delete registered RedisTimeSeries keys on transition to `Ready` and create them with the configured retention and labels on transition to `Running`. |
+| `--metrics-max-ttl`           | `3000`  | Age threshold in milliseconds for the one-time stale-field cleanup performed when the plugin starts. A value of zero or less disables this cleanup. |
 
 ### 3.2. Redis Keys Written or Read
 
@@ -543,14 +543,34 @@ Only indexed subchannel records are used for channel throughput metrics.
 
 ### 3.3. TTL and Retention Details (metrics)
 
+| Mechanism | Target | When removal is evaluated | Result |
+|-----------|--------|---------------------------|--------|
+| `--metrics-max-ttl` | Fields for stale instances in shared metric hashes | Once, when a `metrics` plugin instance starts | Removes matching hash fields with `HDEL` |
+| `--retention` | Old samples in each RedisTimeSeries key | When a later sample advances that series' greatest timestamp | Trims samples outside the retention window |
+| Redis `EXPIRE` | A complete Redis key | When the key's wall-clock timeout elapses | Deletes the key and all of its contents; not used by `metrics` |
+
 `--metrics-max-ttl` is not a Redis key TTL.
 It is the maximum allowed age in milliseconds of an instance's timestamp in `metrics{sep}last-update-ns`.
-The plugin removes fields belonging to older instances from registered metric hashes with `HDEL`.
+When the plugin starts, it performs one cleanup pass and removes fields belonging to older instances from the shared metric hashes with `HDEL`.
+The cleanup is necessary because a key-level `EXPIRE` would remove the complete shared hash, including fields for instances that are still updating their metrics.
+It does not delete RedisTimeSeries keys or samples, and it is not repeated periodically by the current implementation.
 If `--metrics-max-ttl` is zero or negative, this cleanup is disabled.
 
 `--retention` applies only to RedisTimeSeries keys created by the plugin.
 The value is passed to `TS.CREATE ... RETENTION` in milliseconds.
-A value of `0` means that RedisTimeSeries does not trim samples by retention time.
+[RedisTimeSeries retention](https://redis.io/docs/latest/commands/ts.create/) is the maximum sample age relative to the greatest timestamp reported to that time-series key, not a wall-clock lifetime for the key.
+RedisTimeSeries evaluates and trims older samples when later samples are written.
+Trimming removes samples older than the retention window but does not delete the time-series key or its labels.
+A value of `0` disables retention-based sample trimming.
+
+RedisTimeSeries keys can use the generic Redis [`EXPIRE`](https://redis.io/docs/latest/commands/expire/) command, but the `metrics` plugin does not use it.
+`EXPIRE` would delete the complete time-series key rather than trim individual samples.
+The process and channel samples use `TS.ADD` with `*`, so Redis assigns the sample timestamp from the Redis server clock.
+
+With `--recreate-ts=true`, the plugin deletes its registered RedisTimeSeries keys on transition to `Ready` and creates them again on transition to `Running`.
+Before each `TS.CREATE`, the plugin also deletes any existing key with the same name.
+Existing samples in those keys are therefore discarded, and the newly created keys receive the configured retention and labels.
+With `--recreate-ts=false`, the plugin does not issue `TS.CREATE`; if `TS.ADD` creates a missing key automatically, the plugin's `--retention` value and labels are not applied to that key.
 
 ## 4. parameter_config
 
