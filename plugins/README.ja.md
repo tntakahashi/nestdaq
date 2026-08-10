@@ -528,25 +528,30 @@ memory usageはmebibytes (MiB) 単位のcurrent resident set size (RSS) です�
 <a id="32-redis-keys-written-or-read"></a>
 ### 3.2. 書き込みまたは読み取りを行うRedis key
 
+この表の`metrics`は、各NestDAQ device processへloadされたplugin instanceを指します。
+Writer / reader列には、metrics処理のために各keyへ直接accessする、このrepository内のcomponentを記載します。
+外部のRedis clientおよび可視化toolも、これらのkeyを読み取れます。
+現在の`daq-webctl`実装は、これらのmetrics keyを読み取りません。
+
 | Key pattern | Redis type | Field / value | Writer / reader | 目的 |
 | --- | --- | --- | --- | --- |
-| `metrics{sep}created-time` | hash | Field：`{id}`、value：作成timestamp | Written | device作成時刻。 |
-| `metrics{sep}hostname` | hash | Field：`{id}`、value：hostname | Written | host metadata。 |
-| `metrics{sep}host-ip` | hash | Field：`{id}`、value：host IP address | Written | host metadata。 |
-| `metrics{sep}state` | hash | Field：`{id}`、value：FairMQ state name | Written | string形式の現在state。 |
-| `metrics{sep}state-id` | hash | Field：`{id}`、value：数値FairMQ state ID | Written | 数値形式の現在state。 |
-| `metrics{sep}last-update` | hash | Field：`{id}`、value：timestamp | Written | 最終metrics update時刻。 |
-| `metrics{sep}last-update-ns` | hash | Field：`{id}`、value：nanoseconds単位timestamp | Written/read | stale metric fieldの識別。 |
-| `metrics{sep}cpu-stat` | hash | Field：`{id}`、value：CPU percent | Written | process CPU usage。 |
-| `metrics{sep}ram-stat` | hash | Field：`{id}`、value：current RSS MiB | Written | process memory usage。 |
-| `metrics{sep}msg-in`, `metrics{sep}msg-out` | hash | Field：`{id}{sep}{channel}[{subindex}]`、value：messages/second | Written | 現在のchannel message rate。 |
-| `metrics{sep}mb-in`, `metrics{sep}mb-out` | hash | Field：`{id}{sep}{channel}[{subindex}]`、value：MiB/second | Written | 現在のchannel throughput。 |
-| `metrics{sep}msg-in-sum`, `metrics{sep}msg-out-sum` | hash | Field：`{id}{sep}{channel}[{subindex}]`、value：累積rounded message count | Written | 累積message count。 |
-| `metrics{sep}mb-in-sum`, `metrics{sep}mb-out-sum` | hash | Field：`{id}{sep}{channel}[{subindex}]`、value：累積MiB | Written | 累積throughput。 |
-| `metrics{sep}num-msg`, `metrics{sep}mb` | hash | Field：`{id}{sep}{channel}[{subindex}].in` または `.out`、value：current rate | Written | 方向付きcurrent rate。 |
-| `metrics{sep}num-msg-sum`, `metrics{sep}mb-sum` | hash | Field：`{id}{sep}{channel}[{subindex}].in` または `.out`、value：累積値 | Written | 方向付き累積値。 |
-| `ts{sep}{id}{sep}cpu-stat`, `ts{sep}{id}{sep}ram-stat`, `ts{sep}{id}{sep}state-id` | RedisTimeSeries | `TS.ADD`で追加するsample。labelは`service`, `id`, data type | Written | process/state time series。 |
-| `ts{sep}{id}{sep}{channel}[{subindex}]{sep}...` | RedisTimeSeries | `name`, `socket`, `transport`などのlabelを持つchannel rate/累積sample | Written | channel time series。 |
+| `metrics{sep}created-time` | hash | Field：`{id}`、value：作成timestamp | `metrics`がwrite。repository内に専用readerなし | device作成時刻。 |
+| `metrics{sep}hostname` | hash | Field：`{id}`、value：hostname | `metrics`がwrite。repository内に専用readerなし | host metadata。 |
+| `metrics{sep}host-ip` | hash | Field：`{id}`、value：host IP address | `metrics`がwrite。repository内に専用readerなし | host metadata。 |
+| `metrics{sep}state` | hash | Field：`{id}`、value：FairMQ state name | `metrics`がwrite。repository内に専用readerなし | string形式の現在state。 |
+| `metrics{sep}state-id` | hash | Field：`{id}`、value：数値FairMQ state ID | `metrics`がwrite。repository内に専用readerなし | 数値形式の現在state。 |
+| `metrics{sep}last-update` | hash | Field：`{id}`、value：timestamp | `metrics`がwrite。repository内に専用readerなし | 最終metrics update時刻。 |
+| `metrics{sep}last-update-ns` | hash | Field：`{id}`、value：nanoseconds単位timestamp | `metrics`がwriteし、起動時cleanupでread | stale metric fieldの識別。 |
+| `metrics{sep}cpu-stat` | hash | Field：`{id}`、value：CPU percent | `metrics`がwrite。repository内に専用readerなし | process CPU usage。 |
+| `metrics{sep}ram-stat` | hash | Field：`{id}`、value：current RSS MiB | `metrics`がwrite。repository内に専用readerなし | process memory usage。 |
+| `metrics{sep}msg-in`, `metrics{sep}msg-out` | hash | Field：`{id}{sep}{channel}[{subindex}]`、value：messages/second | `metrics`がwriteし、起動時cleanupでread | 現在のchannel message rate。 |
+| `metrics{sep}mb-in`, `metrics{sep}mb-out` | hash | Field：`{id}{sep}{channel}[{subindex}]`、value：MiB/second | `metrics`がwriteし、起動時cleanupでread | 現在のchannel throughput。 |
+| `metrics{sep}msg-in-sum`, `metrics{sep}msg-out-sum` | hash | Field：`{id}{sep}{channel}[{subindex}]`、value：累積rounded message count | `metrics`がwriteし、起動時cleanupでread | 累積message count。 |
+| `metrics{sep}mb-in-sum`, `metrics{sep}mb-out-sum` | hash | Field：`{id}{sep}{channel}[{subindex}]`、value：累積MiB | `metrics`がwriteし、起動時cleanupでread | 累積throughput。 |
+| `metrics{sep}num-msg`, `metrics{sep}mb` | hash | Field：`{id}{sep}{channel}[{subindex}].in` または `.out`、value：current rate | `metrics`がwriteし、起動時cleanupでread | 方向付きcurrent rate。 |
+| `metrics{sep}num-msg-sum`, `metrics{sep}mb-sum` | hash | Field：`{id}{sep}{channel}[{subindex}].in` または `.out`、value：累積値 | `metrics`がwriteし、起動時cleanupでread | 方向付き累積値。 |
+| `ts{sep}{id}{sep}cpu-stat`, `ts{sep}{id}{sep}ram-stat`, `ts{sep}{id}{sep}state-id` | RedisTimeSeries | `TS.ADD`で追加するsample。labelは`service`, `id`, data type | `metrics`が存在確認、作成、write。repository内にsample readerなし | process/state time series。 |
+| `ts{sep}{id}{sep}{channel}[{subindex}]{sep}...` | RedisTimeSeries | `name`, `socket`, `transport`などのlabelを持つchannel rate/累積sample | `metrics`が存在確認、作成、write。repository内にsample readerなし | channel time series。 |
 
 pluginはFairMQのFairLogger throughput lineをlistenし、次のようなinput、output、およびData Quality Monitoring (DQM; データ品質監視) channelのrecordをparseします。
 

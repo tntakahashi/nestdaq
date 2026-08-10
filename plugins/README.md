@@ -513,25 +513,30 @@ Memory usage is the current resident set size (RSS) in mebibytes (MiB).
 
 ### 3.2. Redis Keys Written or Read
 
+In this table, `metrics` means the plugin instance loaded in each NestDAQ device process.
+The writer/reader column lists components in this repository that directly access each key for metrics processing.
+External Redis clients and visualization tools may also read these keys.
+The current `daq-webctl` implementation does not read these metrics keys.
+
 | Key pattern | Redis type | Fields / value | Writer / reader | Purpose |
 |-------------|------------|----------------|-----------------|---------|
-| `metrics{sep}created-time` | hash | Field: `{id}`; value: creation timestamp | Written | Device creation time. |
-| `metrics{sep}hostname` | hash | Field: `{id}`; value: hostname | Written | Host metadata. |
-| `metrics{sep}host-ip` | hash | Field: `{id}`; value: host IP address | Written | Host metadata. |
-| `metrics{sep}state` | hash | Field: `{id}`; value: FairMQ state name | Written | Current state as a string. |
-| `metrics{sep}state-id` | hash | Field: `{id}`; value: numeric FairMQ state ID | Written | Current state as a numeric value. |
-| `metrics{sep}last-update` | hash | Field: `{id}`; value: timestamp | Written | Last metrics update time. |
-| `metrics{sep}last-update-ns` | hash | Field: `{id}`; value: timestamp in nanoseconds | Written/read | Used to identify stale metric fields. |
-| `metrics{sep}cpu-stat` | hash | Field: `{id}`; value: CPU percent | Written | Process CPU usage. |
-| `metrics{sep}ram-stat` | hash | Field: `{id}`; value: current RSS MiB | Written | Process memory usage. |
-| `metrics{sep}msg-in`, `metrics{sep}msg-out` | hash | Field: `{id}{sep}{channel}[{subindex}]`; value: messages per second | Written | Current channel message rate. |
-| `metrics{sep}mb-in`, `metrics{sep}mb-out` | hash | Field: `{id}{sep}{channel}[{subindex}]`; value: MiB per second | Written | Current channel throughput. |
-| `metrics{sep}msg-in-sum`, `metrics{sep}msg-out-sum` | hash | Field: `{id}{sep}{channel}[{subindex}]`; value: cumulative rounded message count | Written | Accumulated message counts. |
-| `metrics{sep}mb-in-sum`, `metrics{sep}mb-out-sum` | hash | Field: `{id}{sep}{channel}[{subindex}]`; value: cumulative MiB | Written | Accumulated throughput. |
-| `metrics{sep}num-msg`, `metrics{sep}mb` | hash | Field: `{id}{sep}{channel}[{subindex}].in` or `.out`; value: current rate | Written | Direction-qualified current rates. |
-| `metrics{sep}num-msg-sum`, `metrics{sep}mb-sum` | hash | Field: `{id}{sep}{channel}[{subindex}].in` or `.out`; value: cumulative value | Written | Direction-qualified cumulative values. |
-| `ts{sep}{id}{sep}cpu-stat`, `ts{sep}{id}{sep}ram-stat`, `ts{sep}{id}{sep}state-id` | RedisTimeSeries | Samples added with `TS.ADD`; labels include `service`, `id`, and data type | Written | Process and state time series. |
-| `ts{sep}{id}{sep}{channel}[{subindex}]{sep}...` | RedisTimeSeries | Channel rate and cumulative samples with labels such as `name`, `socket`, and `transport` | Written | Channel time series. |
+| `metrics{sep}created-time` | hash | Field: `{id}`; value: creation timestamp | `metrics` writes; no dedicated in-repo reader | Device creation time. |
+| `metrics{sep}hostname` | hash | Field: `{id}`; value: hostname | `metrics` writes; no dedicated in-repo reader | Host metadata. |
+| `metrics{sep}host-ip` | hash | Field: `{id}`; value: host IP address | `metrics` writes; no dedicated in-repo reader | Host metadata. |
+| `metrics{sep}state` | hash | Field: `{id}`; value: FairMQ state name | `metrics` writes; no dedicated in-repo reader | Current state as a string. |
+| `metrics{sep}state-id` | hash | Field: `{id}`; value: numeric FairMQ state ID | `metrics` writes; no dedicated in-repo reader | Current state as a numeric value. |
+| `metrics{sep}last-update` | hash | Field: `{id}`; value: timestamp | `metrics` writes; no dedicated in-repo reader | Last metrics update time. |
+| `metrics{sep}last-update-ns` | hash | Field: `{id}`; value: timestamp in nanoseconds | `metrics` writes and reads during startup cleanup | Used to identify stale metric fields. |
+| `metrics{sep}cpu-stat` | hash | Field: `{id}`; value: CPU percent | `metrics` writes; no dedicated in-repo reader | Process CPU usage. |
+| `metrics{sep}ram-stat` | hash | Field: `{id}`; value: current RSS MiB | `metrics` writes; no dedicated in-repo reader | Process memory usage. |
+| `metrics{sep}msg-in`, `metrics{sep}msg-out` | hash | Field: `{id}{sep}{channel}[{subindex}]`; value: messages per second | `metrics` writes and reads during startup cleanup | Current channel message rate. |
+| `metrics{sep}mb-in`, `metrics{sep}mb-out` | hash | Field: `{id}{sep}{channel}[{subindex}]`; value: MiB per second | `metrics` writes and reads during startup cleanup | Current channel throughput. |
+| `metrics{sep}msg-in-sum`, `metrics{sep}msg-out-sum` | hash | Field: `{id}{sep}{channel}[{subindex}]`; value: cumulative rounded message count | `metrics` writes and reads during startup cleanup | Accumulated message counts. |
+| `metrics{sep}mb-in-sum`, `metrics{sep}mb-out-sum` | hash | Field: `{id}{sep}{channel}[{subindex}]`; value: cumulative MiB | `metrics` writes and reads during startup cleanup | Accumulated throughput. |
+| `metrics{sep}num-msg`, `metrics{sep}mb` | hash | Field: `{id}{sep}{channel}[{subindex}].in` or `.out`; value: current rate | `metrics` writes and reads during startup cleanup | Direction-qualified current rates. |
+| `metrics{sep}num-msg-sum`, `metrics{sep}mb-sum` | hash | Field: `{id}{sep}{channel}[{subindex}].in` or `.out`; value: cumulative value | `metrics` writes and reads during startup cleanup | Direction-qualified cumulative values. |
+| `ts{sep}{id}{sep}cpu-stat`, `ts{sep}{id}{sep}ram-stat`, `ts{sep}{id}{sep}state-id` | RedisTimeSeries | Samples added with `TS.ADD`; labels include `service`, `id`, and data type | `metrics` checks existence, creates, and writes; no in-repo sample reader | Process and state time series. |
+| `ts{sep}{id}{sep}{channel}[{subindex}]{sep}...` | RedisTimeSeries | Channel rate and cumulative samples with labels such as `name`, `socket`, and `transport` | `metrics` checks existence, creates, and writes; no in-repo sample reader | Channel time series. |
 
 The plugin listens for FairLogger throughput lines from FairMQ and parses records such as these input, output, and Data Quality Monitoring (DQM) channel examples:
 
