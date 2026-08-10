@@ -354,15 +354,18 @@ sequenceDiagram
     participant PeerDevices as Peer device processes<br/>(separate processes)
     Note over Device,FairMQProperties: Same NestDAQ device process
 
+    PeerDevices->>Redis: write/refresh presence keys
     Device->>TopologyConfig: InitializingDevice
     TopologyConfig->>Redis: read topology endpoints and links
     TopologyConfig->>TopologyConfig: classify bind/connect channels
     TopologyConfig->>Redis: scan peer presence keys
     TopologyConfig->>TopologyConfig: update num_sockets when autoSubChannel=true
     TopologyConfig->>Redis: write channel metadata and peer lists
+    PeerDevices->>Redis: write channel metadata and peer lists
     TopologyConfig->>FairMQProperties: set initial chans.* properties
 
     Device->>TopologyConfig: Bound
+    PeerDevices->>Redis: publish bind socket addresses and bound=1
     alt bind channels exist
         TopologyConfig->>Redis: write this device's socket address records
         TopologyConfig->>Redis: mark bind channels bound=1
@@ -379,6 +382,7 @@ sequenceDiagram
         TopologyConfig->>Redis: write resolved connect channel addresses
     end
     alt waitForPeerConnection=true on bind channels
+        PeerDevices->>Redis: publish FairMQ state updates
         TopologyConfig->>Redis: read peer FairMQ states
         Redis-->>TopologyConfig: peer states are connection-ready
     end
@@ -388,6 +392,8 @@ Bind channels write their own addresses to Redis first.
 Connect channels wait for the peer bind channel to become `bound=1`, resolve the peer socket addresses from Redis, and write the resulting FairMQ `chans.*` properties.
 A bind channel with `waitForPeerConnection=false` skips the final wait for the peer to become ready.
 A reset or cancellation interrupts these waiting steps.
+The diagram shows topology metadata exchange through Redis.
+The FairMQ data-socket connection between device processes is established after address resolution and is not shown.
 
 ### 2.6. TTL Details (daq_service)
 

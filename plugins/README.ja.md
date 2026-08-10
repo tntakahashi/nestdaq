@@ -363,15 +363,18 @@ sequenceDiagram
     participant PeerDevices as Peer device process<br/>(別process)
     Note over Device,FairMQProperties: 同じNestDAQ device process
 
+    PeerDevices->>Redis: presence keyをwrite/refresh
     Device->>TopologyConfig: InitializingDevice
     TopologyConfig->>Redis: topology endpointとlinkを読み取る
     TopologyConfig->>TopologyConfig: bind/connect channelを分類
     TopologyConfig->>Redis: peer presence keyをscan
     TopologyConfig->>TopologyConfig: autoSubChannel=trueならnum_socketsを更新
     TopologyConfig->>Redis: channel metadataとpeer listを書き込む
+    PeerDevices->>Redis: channel metadataとpeer listを書き込む
     TopologyConfig->>FairMQProperties: 初期chans.* propertyを設定
 
     Device->>TopologyConfig: Bound
+    PeerDevices->>Redis: bind socket addressとbound=1を書き込む
     alt bind channelが存在
         TopologyConfig->>Redis: このdeviceのsocket address recordを書き込む
         TopologyConfig->>Redis: bind channelをbound=1に設定
@@ -388,6 +391,7 @@ sequenceDiagram
         TopologyConfig->>Redis: 解決したconnect channel addressを書き込む
     end
     alt bind channelでwaitForPeerConnection=true
+        PeerDevices->>Redis: FairMQ stateの更新を書き込む
         TopologyConfig->>Redis: peer FairMQ stateを読み取る
         Redis-->>TopologyConfig: peer stateがconnection-ready
     end
@@ -397,6 +401,8 @@ bind channelは最初に自身のaddressをRedisへ書き込みます。
 connect channelはpeer bind channelが`bound=1`になるのを待ち、Redisからpeer socket addressを解決して、結果をFairMQ `chans.*` propertyへ書き込みます。
 `waitForPeerConnection=false`のbind channelは、最後のpeer-ready waitを省略します。
 resetまたはcancellationはwait stepを中断します。
+この図はRedisを介したtopology metadataの交換を示します。
+device process間のFairMQ data socket connectionはaddress解決後に確立されるため、この図には含めていません。
 
 <a id="26-ttl-details-daq_service"></a>
 ### 2.6. TTLの詳細 (daq_service)
