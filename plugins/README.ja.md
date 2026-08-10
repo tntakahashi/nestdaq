@@ -4,19 +4,16 @@
 
 [トップ: NestDAQ](../README.ja.md) | [前へ: スクリプト](../scripts/README.ja.md) | [次へ: Web controller](../controller/README.ja.md)
 
-NestDAQは、service情報のRedisへのpublish、device動作中のprocessおよびchannel metricsの収集、Redis-backed configuration keyからのFairMQ program optionのloadを行うFairMQ pluginをinstallします。
-
-pluginはshared libraryとしてbuildされます。
+NestDAQは3つのFairMQ pluginをshared libraryとしてinstallします。
 
 | Plugin name | Library | 目的 |
 | --- | --- | --- |
-| `daq_service` | `libFairMQPlugin_daq_service.so` | FairMQ deviceをRedisへ登録し、health/state dataをpublishし、data acquisition(DAQ)commandを処理し、topology/channel metadataをpublishします。 |
-| `metrics` | `libFairMQPlugin_metrics.so` | process metricsおよびFairMQ channel throughput metricsをRedisとRedisTimeSeriesへpublishします。 |
+| `daq_service` | `libFairMQPlugin_daq_service.so` | FairMQ deviceをRedisへ登録し、health/stateおよびtopology/channel dataを書き込み、data acquisition(DAQ)commandを処理します。 |
+| `metrics` | `libFairMQPlugin_metrics.so` | process metricsおよびFairMQ channel throughput metricsをRedisとRedisTimeSeriesへ書き込みます。 |
 | `parameter_config` | `libFairMQPlugin_parameter_config.so` | Redisからparameterを読み取り、FairMQ program propertyへ反映します。 |
 
-3つのpluginはすべて、想定する動作のためにRedis serverへの接続を必要とします。
-`metrics` pluginはtime-series keyを作成して更新するため、RedisTimeSeriesも必要です。
-したがって、標準のNestDAQ plugin構成にはRedis serverとRedisTimeSeriesの両方が必要です。
+loadした各pluginは、想定する動作のためにRedis serverへの接続を必要とします。
+RedisTimeSeriesが必要なのは、time-series keyを作成して更新する`metrics` pluginをloadする場合だけです。
 `daq_service`と`parameter_config`はRedisのcore commandを使用し、RedisTimeSeriesを必要としません。
 
 pluginをloadする正確なoptionは、FairMQとFairMQを使用するexecutableが定義します。
@@ -43,7 +40,7 @@ TTLの扱いはpluginごとに異なります。
 ## 2. daq_service
 
 `daq_service`は中心となるRedis service registry pluginです。
-device instanceの登録、TTLのrefresh、FairMQ stateとhealth dataのpublish、DAQ commandのsubscribe、他serviceが使用するtopologyおよびchannel metadataの書き込みを行います。
+device instanceの登録、TTLのrefresh、FairMQ state、health、topology、channel dataの書き込み、およびDAQ commandのsubscribeを行います。
 
 <a id="21-command-line-options"></a>
 ### 2.1. コマンドラインオプション
@@ -52,8 +49,8 @@ device instanceの登録、TTLのrefresh、FairMQ stateとhealth dataのpublish�
 | --- | --- | --- | --- |
 | `--service-name` | 空の場合はexecutable basename | No | Redis key pathで使用するservice name。 |
 | `--uuid` | 生成 | No | このservice instanceのuniversally unique identifier(UUID)。利用可能な場合、FairMQ device wrapperはtelemetryが生成した`service.instance.id`を再利用し、それ以外はpluginが生成します。 |
-| `--host-ip` | 検出値/設定値 | No | このservice addressとしてpublishするInternet Protocol(IP)addressまたはhostname。 |
-| `--hostname` | 検出値/設定値 | No | health dataへpublishするhost name。 |
+| `--host-ip` | 検出値/設定値 | No | このservice addressとして保存するInternet Protocol(IP)addressまたはhostname。 |
+| `--hostname` | 検出値/設定値 | No | health dataへ保存するhost name。 |
 | `--registry-uri` | `tcp://127.0.0.1:6379/0` | No | DAQ service registryのRedis uniform resource identifier(URI)。 |
 | `--separator` | `:` | No | Redis keyを構成するときのseparator。 |
 | `--max-ttl` | `5` | No | 一時registry keyのTTL(seconds)。 |
@@ -204,7 +201,7 @@ web controllerの前提wait logicも同じtarget selectionを使用します。
 
 | Key pattern | Redis type | Field / value | Writer / reader | 目的 |
 | --- | --- | --- | --- | --- |
-| `daq_service{sep}{service}{sep}{id}{sep}channel{sep}{channel}` | hash | `name`, `type`, `method`, `address`, `transport`、buffer/kernel size、`linger`, `rateLogging`、port range、`autoBind`, `numSockets`, `autoSubChannel`, `bound`, `waitForPeerConnection` | Written/read | publishされたchannel endpoint metadata。 |
+| `daq_service{sep}{service}{sep}{id}{sep}channel{sep}{channel}` | hash | `name`, `type`, `method`, `address`, `transport`、buffer/kernel size、`linger`, `rateLogging`、port range、`autoBind`, `numSockets`, `autoSubChannel`, `bound`, `waitForPeerConnection` | Written/read | 保存されたchannel endpoint metadata。 |
 | `daq_service{sep}{service}{sep}{id}{sep}channel{sep}{channel}{sep}peer` | list | peer channel key string | Written/read | channelのpeer list。 |
 | `daq_service{sep}{service}{sep}{id}{sep}socket{sep}chans.{channel}.{subindex}` | hash | local subchannel/socket parameterと`numSockets`, `autoSubChannel` | Written/read | subchannelごとのconnection metadata。 |
 | `daq_service{sep}topology{sep}endpoint...` | string/hash key | topology endpoint configuration | Read/scanned | endpoint解決に使用する外部topology configuration。 |
@@ -235,7 +232,7 @@ defaultは`false`です。
 
 - `autoSubChannel=false`はindexなしpeerをsubchannel `0`だけへ解決します。
   1:1などの固定connectionに適します。
-- `autoSubChannel=true`はRedisへpublish済みのpeer channel subchannel recordをscanし、一致する全subchannelへ接続します。
+- `autoSubChannel=true`はRedisへ保存済みのpeer channel subchannel recordをscanし、一致する全subchannelへ接続します。
   process動作中にpeerまたはsocket数を検出するn:m topologyに適します。
 - peer stringが`[0]`などのsuffixを含む場合、`autoSubChannel`に関係なく、そのsubchannelだけを解決します。
 
@@ -355,7 +352,7 @@ sequenceDiagram
     end
 ```
 
-bind channelは最初にlocal addressをpublishします。
+bind channelは最初にlocal addressをRedisへ書き込みます。
 connect channelはpeer bind channelが`bound=1`になるのを待ち、Redisからpeer socket addressを解決して、結果をFairMQ `chans.*` propertyへ書き込みます。
 `waitForPeerConnection=false`のbind channelは、最後のpeer-ready waitを省略します。
 resetまたはcancellationはwait stepを中断します。
@@ -409,7 +406,7 @@ TTL expiration自体にRedis keyspace notificationは不要です。
 <a id="3-metrics"></a>
 ## 3. metrics
 
-`metrics`はprocess-level metricsとFairMQ channel throughput metricsをpublishします。
+`metrics`はprocess-level metricsとFairMQ channel throughput metricsをRedisへ記録します。
 process central processing unit(CPU)usageはtop/htop形式で、1 CPU coreを完全に使用すると約`100`、2 coreを完全に使用すると約`200`です。
 memory usageはmebibytes(MiB)単位のcurrent resident set size(RSS)です。
 

@@ -4,19 +4,16 @@
 
 [Top: NestDAQ](../README.md) | [Previous: Scripts](../scripts/README.md) | [Next: Web controller](../controller/README.md)
 
-NestDAQ installs FairMQ plugins that publish service information to Redis, collect process and channel metrics while a device is running, and load FairMQ program options from Redis-backed configuration keys.
-
-The plugins are built as shared libraries:
+NestDAQ installs three FairMQ plugins as shared libraries:
 
 | Plugin name        | Library                               | Purpose |
 |--------------------|----------------------------------------|---------|
-| `daq_service`      | `libFairMQPlugin_daq_service.so`       | Registers the FairMQ device in Redis, publishes health/state data, handles data acquisition (DAQ) commands, and publishes topology/channel metadata. |
-| `metrics`          | `libFairMQPlugin_metrics.so`           | Publishes process metrics and FairMQ channel throughput metrics to Redis and RedisTimeSeries. |
+| `daq_service`      | `libFairMQPlugin_daq_service.so`       | Registers the FairMQ device in Redis, writes health/state and topology/channel data, and handles data acquisition (DAQ) commands. |
+| `metrics`          | `libFairMQPlugin_metrics.so`           | Writes process metrics and FairMQ channel throughput metrics to Redis and RedisTimeSeries. |
 | `parameter_config` | `libFairMQPlugin_parameter_config.so`  | Reads parameters from Redis and mirrors them into FairMQ program properties. |
 
-All three plugins require access to a Redis server for their intended operation.
-The `metrics` plugin additionally requires RedisTimeSeries because it creates and updates time-series keys.
-The standard NestDAQ plugin setup therefore requires both Redis server and RedisTimeSeries.
+Each loaded plugin requires access to a Redis server for its intended operation.
+RedisTimeSeries is required only when the `metrics` plugin is loaded because that plugin creates and updates time-series keys.
 The `daq_service` and `parameter_config` plugins use core Redis commands and do not require RedisTimeSeries.
 
 FairMQ and the executable that uses it define the exact option for loading plugins.
@@ -41,7 +38,7 @@ TTL handling is different for each plugin:
 ## 2. daq_service
 
 `daq_service` is the main Redis service-registry plugin.
-It registers a device instance, refreshes TTLs, publishes FairMQ state and health data, subscribes to DAQ commands, and writes topology and channel metadata used by other services.
+It registers a device instance, refreshes TTLs, writes FairMQ state, health, topology, and channel data, and subscribes to DAQ commands.
 
 <a id="21-runtime-options"></a>
 ### 2.1. Command-Line Options
@@ -50,8 +47,8 @@ It registers a device instance, refreshes TTLs, publishes FairMQ state and healt
 |----------------------------------|----------------------------|----------|-------------|
 | `--service-name`                 | executable basename when empty | No       | Service name used in Redis key paths. |
 | `--uuid`                         | generated                  | No       | Universally unique identifier (UUID) of this service instance. FairMQ device wrappers reuse the telemetry-generated `service.instance.id` when available; otherwise the plugin generates one. |
-| `--host-ip`                      | detected/configured value  | No       | Internet Protocol (IP) address or hostname published as this service address. |
-| `--hostname`                     | detected/configured value  | No       | Host name published in health data. |
+| `--host-ip`                      | detected/configured value  | No       | Internet Protocol (IP) address or hostname stored as this service address. |
+| `--hostname`                     | detected/configured value  | No       | Host name stored in health data. |
 | `--registry-uri`                 | `tcp://127.0.0.1:6379/0`   | No       | Redis uniform resource identifier (URI) for the DAQ service registry. |
 | `--separator`                    | `:`                        | No       | Separator used when composing Redis keys. |
 | `--max-ttl`                      | `5`                        | No       | TTL in seconds for transient registry keys. |
@@ -199,7 +196,7 @@ Controllers such as `daq-webctl` can poll or scan these keys to build state summ
 
 | Key pattern | Redis type | Fields / value | Writer / reader | Purpose |
 |-------------|------------|----------------|-----------------|---------|
-| `daq_service{sep}{service}{sep}{id}{sep}channel{sep}{channel}` | hash | `name`, `type`, `method`, `address`, `transport`, buffer sizes, kernel sizes, `linger`, `rateLogging`, port range, `autoBind`, `numSockets`, `autoSubChannel`, `bound`, `waitForPeerConnection` | Written/read | Published channel endpoint metadata. |
+| `daq_service{sep}{service}{sep}{id}{sep}channel{sep}{channel}` | hash | `name`, `type`, `method`, `address`, `transport`, buffer sizes, kernel sizes, `linger`, `rateLogging`, port range, `autoBind`, `numSockets`, `autoSubChannel`, `bound`, `waitForPeerConnection` | Written/read | Stored channel endpoint metadata. |
 | `daq_service{sep}{service}{sep}{id}{sep}channel{sep}{channel}{sep}peer` | list | Peer channel key strings | Written/read | Peer list for the channel. |
 | `daq_service{sep}{service}{sep}{id}{sep}socket{sep}chans.{channel}.{subindex}` | hash | Local subchannel/socket parameters plus `numSockets` and `autoSubChannel` | Written/read | Per-subchannel connection metadata. |
 | `daq_service{sep}topology{sep}endpoint...` | string/hash keys | Topology endpoint configuration | Read/scanned | External topology configuration used to resolve endpoints. |
@@ -234,7 +231,7 @@ subchannel suffix is omitted. Its default is `false`.
 
 - `autoSubChannel=false` resolves an unindexed peer to subchannel `0` only.
   This setting is suitable for 1:1 or other fixed connections.
-- `autoSubChannel=true` scans the peer-channel subchannel records already published in Redis and connects to all matching subchannels.
+- `autoSubChannel=true` scans the peer-channel subchannel records already stored in Redis and connects to all matching subchannels.
   This setting is suitable for n:m topologies in which the process discovers the number of peers or sockets while running.
 - When the peer string includes a suffix such as `[0]`, only that subchannel is resolved, regardless of `autoSubChannel`.
 
@@ -353,7 +350,7 @@ sequenceDiagram
     end
 ```
 
-Bind channels publish their local addresses first.
+Bind channels write their local addresses to Redis first.
 Connect channels wait for the peer bind channel to become `bound=1`, resolve the peer socket addresses from Redis, and write the resulting FairMQ `chans.*` properties.
 A bind channel with `waitForPeerConnection=false` skips the final wait for the peer to become ready.
 A reset or cancellation interrupts these waiting steps.
@@ -405,7 +402,7 @@ The `parameter_config` plugin does not set TTLs on parameter keys.
 
 ## 3. metrics
 
-`metrics` publishes process-level metrics and FairMQ channel throughput metrics.
+`metrics` records process-level metrics and FairMQ channel throughput metrics in Redis.
 Process central processing unit (CPU) usage follows the top/htop convention: one fully used CPU core is approximately `100`, and two fully used cores are approximately `200`.
 Memory usage is the current resident set size (RSS) in mebibytes (MiB).
 
