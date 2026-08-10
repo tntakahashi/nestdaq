@@ -530,7 +530,7 @@ memory usageはmebibytes (MiB) 単位のcurrent resident set size (RSS) です�
 
 この表の`metrics`は、各NestDAQ device processへloadされたplugin instanceを指します。
 Writer / reader列には、metrics処理のために各keyへ直接accessする、このrepository内のcomponentを記載します。
-外部のRedis clientおよび可視化toolも、これらのkeyを読み取れます。
+Redisへ接続するように設定したGrafanaやSlowDashなどの外部可視化toolは、これらのmetricsを読み取り、dashboardやgraphの表示に利用できます。
 現在の`daq-webctl`実装は、これらのmetrics keyを読み取りません。
 
 | Key pattern | Redis type | Field / value | Writer / reader | 目的 |

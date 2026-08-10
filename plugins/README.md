@@ -515,7 +515,7 @@ Memory usage is the current resident set size (RSS) in mebibytes (MiB).
 
 In this table, `metrics` means the plugin instance loaded in each NestDAQ device process.
 The writer/reader column lists components in this repository that directly access each key for metrics processing.
-External Redis clients and visualization tools may also read these keys.
+External visualization tools, such as Grafana or SlowDash configured to access Redis, may read these metrics and use them to create dashboards and plots.
 The current `daq-webctl` implementation does not read these metrics keys.
 
 | Key pattern | Redis type | Fields / value | Writer / reader | Purpose |
