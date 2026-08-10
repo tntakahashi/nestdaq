@@ -360,8 +360,8 @@ sequenceDiagram
     participant DaqService as daq_service
     participant TopologyConfig
     participant FairMQProperties as FairMQ property
-    participant Redis as Redis server<br/>(別process)
-    participant PeerDevices as Peer device process<br/>(別process)
+    participant Redis as Redis server<br/> (別process)
+    participant PeerDevices as Peer device process<br/> (別process)
     Note over Device,FairMQProperties: 同じNestDAQ device process
 
     par 各deviceが自身のregistry entryを維持
@@ -474,7 +474,7 @@ pluginは2つの方法でRedis keyをrefreshします。
 
 ```mermaid
 sequenceDiagram
-  participant Device as User device process<br/>(daq_service)
+  participant Device as User device process<br/> (daq_service)
   participant Redis as Redis
   participant WebCtl as daq-webctl
 
@@ -553,6 +553,24 @@ Redisへ接続するように設定したGrafanaやSlowDashなどの外部可視
 | `ts{sep}{id}{sep}cpu-stat`, `ts{sep}{id}{sep}ram-stat`, `ts{sep}{id}{sep}state-id` | RedisTimeSeries | `TS.ADD`で追加するsample。labelは`service`, `id`, data type | `metrics`が存在確認、作成、write。repository内にsample readerなし | process/state time series。 |
 | `ts{sep}{id}{sep}{channel}[{subindex}]{sep}...` | RedisTimeSeries | `name`, `socket`, `transport`などのlabelを持つchannel rate/累積sample | `metrics`が存在確認、作成、write。repository内にsample readerなし | channel time series。 |
 
+<a id="321-redistimeseries-labels"></a>
+#### 3.2.1. RedisTimeSeries label
+
+`metrics` pluginは、RedisTimeSeries keyを明示的に作成するときにlabelを追加します。
+可視化toolは、これらのlabelを使ってseriesの絞り込みやgroup化を行えます。
+
+| Label | 対象series | Value |
+| --- | --- | --- |
+| `service` | すべてのprocess、state、channel series | FairMQの`service-name` propertyのvalue。 |
+| `id` | すべてのprocess、state、channel series | FairMQ deviceの`id` propertyのvalue。 |
+| `data` | すべてのprocess、state、channel series | `cpu-stat`、`ram-stat`、`state-id`、`msg-in`、`msg-out`、`mb-in`、`mb-out`など、測定値の種類。累積seriesには対応する`-sum` suffixが付きます。 |
+| `name` | channel seriesのみ | `<channel>[<index>]`形式のFairMQ subchannel name。 |
+| `socket` | channel seriesのみ | `push`、`pull`、`pub`、`sub`などのFairMQ socket type。 |
+| `transport` | channel seriesのみ | channelに設定したFairMQ transport。 |
+
+これらのlabelは、pluginが`TS.CREATE`を実行した場合だけ設定されます。
+`--recreate-ts=false`で、存在しないseriesを`TS.ADD`が暗黙に作成した場合、そのseriesにこれらのlabelは付きません。
+
 pluginはFairMQのFairLogger throughput lineをlistenし、次のようなinput、output、およびData Quality Monitoring (DQM; データ品質監視) channelのrecordをparseします。
 
 ```text
@@ -614,16 +632,26 @@ pluginは`TS.CREATE`の前にも、同名のkeyが存在すれば削除します
 <a id="42-redis-keys-read-or-subscribed"></a>
 ### 4.2. 読み取りまたは購読するRedis key
 
+Redis clientがparameter valueを書き込みます。
+付属の`scripts/mq-param.sh`はhash parameterを書き込む手段の1つであり、operatorや他のapplicationが`redis-cli`などのRedis clientを使用することもできます。
+各NestDAQ device processへloadされた`parameter_config` pluginは、そのprocessのgroup keyとinstance keyを読み取り、取得したvalueをFairMQ program propertyへ書き込みます。
+
 | Key pattern | Redis type | Field / value | Writer / reader | 目的 |
 | --- | --- | --- | --- | --- |
-| `parameters{sep}{id}` | hash | Field：option name、value：option value string | Read | instance固有parameter set。 |
-| `parameters{sep}{group}` | hash | Field：option name、value：option value string | Read | group default parameter set。`{group}`は`{id}`末尾の数値`-N` suffixを除いて生成。 |
-| `parameters{sep}{id}{sep}*` | string/list/hash/set/zset | instance key配下の追加structured parameter | Read/scanned | instanceごとのstructured parameter value。 |
-| `parameters{sep}{group}{sep}*` | string/list/hash/set/zset | group key配下の追加structured parameter | Read/scanned | group-level structured parameter value。 |
-| `__keyspace@{db}__:{key}` | pub/sub channel | Redis keyspace notification event | Subscribed | instance/group parameter keyのlive reloadをtrigger。 |
+| `parameters{sep}{id}` | hash | Field：option name、value：option value string | `mq-param.sh`または他のRedis clientがwrite。`parameter_config`がread | instance固有parameter set。 |
+| `parameters{sep}{group}` | hash | Field：option name、value：option value string | `mq-param.sh`または他のRedis clientがwrite。`parameter_config`がread | group default parameter set。`{group}`は`{id}`末尾の数値`-N` suffixを除いて生成。 |
+| `parameters{sep}{id}{sep}*` | string/list/hash/set/zset | instance key配下の追加structured parameter | Redis clientがwrite。`parameter_config`がscanしてread | instanceごとのstructured parameter value。 |
+| `parameters{sep}{group}{sep}*` | string/list/hash/set/zset | group key配下の追加structured parameter | Redis clientがwrite。`parameter_config`がscanしてread | group-level structured parameter value。 |
+| `__keyspace@{db}__:{key}` | pub/sub channel | Redis keyspace notification event | Redisがpublish。`parameter_config`がsubscribe | instance/group parameter keyのlive reloadをtrigger。 |
 
 string keyは最後のpath componentをoption nameとして使用します。
 hash valueはmap-like property、list valueはarray-like property、set valueはset、sorted-set valueはmemberからscoreへのmapになります。
+
+ここでlive reloadとは、動作中の`parameter_config` pluginがRedis keyspace notificationを受信し、group keyとinstance keyを再度読み取って、device processを再起動せずにFairMQ program propertyを更新する処理です。
+pluginは最上位のgroup hash keyとinstance hash keyのnotificationをsubscribeします。
+配下のstructured keyだけを変更しても、直接reloadをtriggerしません。
+pluginはprogram propertyを更新しますが、deviceの動作が直ちに変わるのは、device実装がproperty changeを監視するか、propertyを再度読み取る場合だけです。
+現在の実装はRedisに存在するvalueを上書きするだけであり、fieldまたはkeyを削除しても、対応する既存のFairMQ propertyは削除されません。
 
 live reloadには、Redis serverでkeyspace notificationを有効にする必要があります。
 初期parameter loadにはkeyspace notificationは不要です。

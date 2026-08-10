@@ -351,8 +351,8 @@ sequenceDiagram
     participant DaqService as daq_service
     participant TopologyConfig
     participant FairMQProperties as FairMQ properties
-    participant Redis as Redis server<br/>(separate process)
-    participant PeerDevices as Peer device processes<br/>(separate processes)
+    participant Redis as Redis server<br/> (separate process)
+    participant PeerDevices as Peer device processes<br/> (separate processes)
     Note over Device,FairMQProperties: Same NestDAQ device process
 
     par Each device maintains its own registry entries
@@ -462,7 +462,7 @@ The plugin refreshes Redis keys in two ways:
 
 ```mermaid
 sequenceDiagram
-  participant Device as User device process<br/>(daq_service)
+  participant Device as User device process<br/> (daq_service)
   participant Redis as Redis
   participant WebCtl as daq-webctl
 
@@ -538,6 +538,23 @@ The current `daq-webctl` implementation does not read these metrics keys.
 | `ts{sep}{id}{sep}cpu-stat`, `ts{sep}{id}{sep}ram-stat`, `ts{sep}{id}{sep}state-id` | RedisTimeSeries | Samples added with `TS.ADD`; labels include `service`, `id`, and data type | `metrics` checks existence, creates, and writes; no in-repo sample reader | Process and state time series. |
 | `ts{sep}{id}{sep}{channel}[{subindex}]{sep}...` | RedisTimeSeries | Channel rate and cumulative samples with labels such as `name`, `socket`, and `transport` | `metrics` checks existence, creates, and writes; no in-repo sample reader | Channel time series. |
 
+#### 3.2.1. RedisTimeSeries Labels
+
+The `metrics` plugin adds labels when it explicitly creates a RedisTimeSeries key.
+Visualization tools can filter or group series by these labels.
+
+| Label | Series | Value |
+|-------|--------|-------|
+| `service` | All process, state, and channel series | The value of the FairMQ `service-name` property. |
+| `id` | All process, state, and channel series | The value of the FairMQ device `id` property. |
+| `data` | All process, state, and channel series | The measured value type, such as `cpu-stat`, `ram-stat`, `state-id`, `msg-in`, `msg-out`, `mb-in`, or `mb-out`. Cumulative series use the corresponding `-sum` suffix. |
+| `name` | Channel series only | The FairMQ subchannel name in `<channel>[<index>]` form. |
+| `socket` | Channel series only | The FairMQ socket type, such as `push`, `pull`, `pub`, or `sub`. |
+| `transport` | Channel series only | The FairMQ transport configured for the channel. |
+
+These labels are applied only when the plugin runs `TS.CREATE`.
+If `--recreate-ts=false` and `TS.ADD` implicitly creates a missing series, that series does not receive these labels.
+
 The plugin listens for FairLogger throughput lines from FairMQ and parses records such as these input, output, and Data Quality Monitoring (DQM) channel examples:
 
 ```text
@@ -595,16 +612,26 @@ Instance-specific parameters override group parameters when both are present.
 
 ### 4.2. Redis Keys Read or Subscribed
 
+Redis clients write the parameter values.
+The supplied `scripts/mq-param.sh` is one such writer for hash parameters; operators or other applications may use `redis-cli` or another Redis client instead.
+The `parameter_config` plugin loaded in each NestDAQ device process reads the keys for its group and instance and writes the resulting values to that process's FairMQ program properties.
+
 | Key pattern | Redis type | Fields / value | Writer / reader | Purpose |
 |-------------|------------|----------------|-----------------|---------|
-| `parameters{sep}{id}` | hash | Field: option name; value: option value string | Read | Instance-specific parameter set. |
-| `parameters{sep}{group}` | hash | Field: option name; value: option value string | Read | Group default parameter set. `{group}` is derived from `{id}` by removing a trailing numeric `-N` suffix. |
-| `parameters{sep}{id}{sep}*` | string/list/hash/set/zset | Additional structured parameters below the instance key | Read/scanned | Per-instance structured parameter values. |
-| `parameters{sep}{group}{sep}*` | string/list/hash/set/zset | Additional structured parameters below the group key | Read/scanned | Group-level structured parameter values. |
-| `__keyspace@{db}__:{key}` | pub/sub channel | Redis keyspace notification events | Subscribed | Triggers live reload for the instance and group parameter keys. |
+| `parameters{sep}{id}` | hash | Field: option name; value: option value string | `mq-param.sh` or another Redis client writes; `parameter_config` reads | Instance-specific parameter set. |
+| `parameters{sep}{group}` | hash | Field: option name; value: option value string | `mq-param.sh` or another Redis client writes; `parameter_config` reads | Group default parameter set. `{group}` is derived from `{id}` by removing a trailing numeric `-N` suffix. |
+| `parameters{sep}{id}{sep}*` | string/list/hash/set/zset | Additional structured parameters below the instance key | A Redis client writes; `parameter_config` scans and reads | Per-instance structured parameter values. |
+| `parameters{sep}{group}{sep}*` | string/list/hash/set/zset | Additional structured parameters below the group key | A Redis client writes; `parameter_config` scans and reads | Group-level structured parameter values. |
+| `__keyspace@{db}__:{key}` | pub/sub channel | Redis keyspace notification events | Redis publishes; `parameter_config` subscribes | Triggers live reload for the instance and group parameter keys. |
 
 String keys use the last path component as the option name.
 Hash values become map-like properties, list values become array-like properties, set values become sets, and sorted-set values become maps from members to scores.
+
+Here, live reload means that a running `parameter_config` plugin receives a Redis keyspace notification, reads the group and instance parameter keys again, and updates the FairMQ program properties without restarting the device process.
+The plugin subscribes to notifications for the top-level group and instance hash keys.
+Changing only a nested structured key does not directly trigger a reload.
+The plugin updates program properties, but a device changes its behavior immediately only if its implementation observes property changes or reads the property again.
+The current implementation overwrites values found in Redis; deleting a field or key does not clear the corresponding existing FairMQ property.
 
 Redis keyspace notifications must be enabled on the Redis server for live reloads.
 Initial parameter loading does not require keyspace notifications.
