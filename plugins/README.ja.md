@@ -31,7 +31,7 @@ TTLの扱いはpluginごとに異なります。
 - `daq_service`はRedis keyのexpirationを管理します。
   deviceの生存中はregistry keyをrefreshし、deviceが予期せず終了した場合はexpirationをfallback cleanup mechanismとして使用します。
 - `metrics`は通常、metric hashにRedis key TTLを設定しません。
-  代わりに、`--metrics-max-ttl`をstale field cleanup thresholdとして使用します。
+  代わりに、`--metrics-max-ttl`はinstanceの最終metrics updateから、そのinstanceのfieldをmetric hashから削除するまでの時間を指定します。
   RedisTimeSeries retentionは`--retention`で別に制御します。
 - `parameter_config`はparameter keyへTTLを設定しません。
   Redis keyを書き込むproducerまたはoperatorがparameterのlifetimeを制御します。
@@ -400,7 +400,8 @@ processがcrashするかRedis connectionを失うと、refresh停止後にTTL ex
 
 TTL expiration自体にRedis keyspace notificationは不要です。
 ただし、`daq-webctl`が次のpolling cycleを待たずに消失instanceを検出するにはexpired key eventが必要です。
-`metrics` pluginは`--metrics-max-ttl`をRedis key TTLではなくstale field cleanup thresholdとして使用します。
+`metrics` pluginは`--metrics-max-ttl`をRedis key TTLとして使用しません。
+metricsのupdateが停止したinstanceのfieldを削除するために使用します。
 `parameter_config` pluginはparameter keyへTTLを設定しません。
 
 <a id="3-metrics"></a>
@@ -419,7 +420,7 @@ memory usageはmebibytes(MiB)単位のcurrent resident set size(RSS)です。
 | `--metrics-uri` | なし | No | metrics用Redis URI。空の場合は`--registry-uri`を使用。 |
 | `--retention` | `0` | No | RedisTimeSeries retention(milliseconds)。`0`はtrimなし。 |
 | `--recreate-ts` | `true` | No | `Running`へのtransition時にRedisTimeSeries keyを再作成。 |
-| `--metrics-max-ttl` | `3000` | No | metrics fieldの最大TTL(milliseconds)。0以下ならTTL cleanupなし。 |
+| `--metrics-max-ttl` | `3000` | No | instanceの最終metrics updateからの最大経過時間(milliseconds)。この時間を超えたinstanceのfieldをmetric hashから削除します。0以下の場合、この削除処理を無効にします。 |
 
 <a id="32-redis-keys-written-or-read"></a>
 ### 3.2. 書き込みまたは読み取りを行うRedis key
@@ -456,8 +457,8 @@ channel throughput metricsにはindex付きsubchannel recordだけを使用し�
 ### 3.3. TTLと保持期間の詳細(metrics)
 
 `--metrics-max-ttl`はRedis key TTLではありません。
-milliseconds単位のstale field cleanup thresholdです。
-pluginは`metrics{sep}last-update-ns`を読み、最終updateがthresholdより古いinstanceを見つけ、登録済みmetric hashからそのfieldを`HDEL`で削除します。
+`metrics{sep}last-update-ns`に記録されたinstanceの時刻について、許容する最大経過時間をmilliseconds単位で指定します。
+pluginは、この時間を超えたinstanceのfieldを登録済みmetric hashから`HDEL`で削除します。
 `--metrics-max-ttl`が0以下なら、このcleanupは無効です。
 
 `--retention`はpluginが作成するRedisTimeSeries keyだけに適用します。

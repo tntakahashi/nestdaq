@@ -30,7 +30,7 @@ TTL handling is different for each plugin:
 - `daq_service` manages Redis key expiration.
   It refreshes registry keys while the device is alive and uses expiration as a fallback cleanup mechanism when a device terminates unexpectedly.
 - `metrics` does not generally set Redis key TTLs for metric hashes.
-  Instead, `--metrics-max-ttl` defines a stale-field cleanup threshold.
+  Instead, `--metrics-max-ttl` specifies how long fields may remain after an instance's last metrics update before the plugin removes them from the metric hashes.
   `--retention` controls RedisTimeSeries retention separately.
 - `parameter_config` does not set TTLs on parameter keys.
   The producer or operator that writes those Redis keys controls their lifetime.
@@ -397,7 +397,7 @@ If the process crashes or loses its Redis connection, TTL expiration removes tra
 
 Redis keyspace notifications are not required for TTL expiration itself.
 However, `daq-webctl` needs expired-key events to detect disappeared instances without waiting for its next polling cycle.
-The `metrics` plugin uses `--metrics-max-ttl` as a stale-field cleanup threshold, not as a Redis key TTL.
+The `metrics` plugin uses `--metrics-max-ttl` to remove fields for instances that have stopped updating their metrics, not as a Redis key TTL.
 The `parameter_config` plugin does not set TTLs on parameter keys.
 
 ## 3. metrics
@@ -415,7 +415,7 @@ Memory usage is the current resident set size (RSS) in mebibytes (MiB).
 | `--metrics-uri`               | none    | No       | Redis URI for metrics. If empty, `--registry-uri` is used. |
 | `--retention`                 | `0`     | No       | RedisTimeSeries retention in milliseconds. `0` means no trimming. |
 | `--recreate-ts`               | `true`  | No       | Recreate RedisTimeSeries keys on transition to `Running`. |
-| `--metrics-max-ttl`           | `3000`  | No       | Maximum TTL in milliseconds for metrics fields. If zero or negative, no TTL cleanup is applied. |
+| `--metrics-max-ttl`           | `3000`  | No       | Maximum age in milliseconds since an instance's last metrics update. The plugin removes older instance fields from metric hashes. A value of zero or less disables this cleanup. |
 
 ### 3.2. Redis Keys Written or Read
 
@@ -450,8 +450,8 @@ Only indexed subchannel records are used for channel throughput metrics.
 ### 3.3. TTL and Retention Details (metrics)
 
 `--metrics-max-ttl` is not a Redis key TTL.
-It defines a stale-field cleanup threshold in milliseconds.
-The plugin reads `metrics{sep}last-update-ns`, finds instances whose last update is older than the threshold, and removes their fields from registered metric hashes with `HDEL`.
+It is the maximum allowed age in milliseconds of an instance's timestamp in `metrics{sep}last-update-ns`.
+The plugin removes fields belonging to older instances from registered metric hashes with `HDEL`.
 If `--metrics-max-ttl` is zero or negative, this cleanup is disabled.
 
 `--retention` applies only to RedisTimeSeries keys created by the plugin.
