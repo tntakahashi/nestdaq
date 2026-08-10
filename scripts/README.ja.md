@@ -227,20 +227,10 @@ flowchart TB
 
 最後の3 parameterはNestDAQ固有で、その他はFairMQで定義されています。
 
-FairMQでは、同じ名前のchannelを`std::vector<fair::mq::Channel>`として保持します。
-各`fair::mq::Channel`は1つのFairMQ Socketを包み、vectorのindexがsubchannelを識別します。
-deviceのC++コードでは、`Send()`または`Receive()`のindex引数でlocal subchannelを選択します。
-index引数を省略すると`0`を使用します。
-
-`--connect-config`へ渡すJSONでは、`[0]`のような数字付きsuffixでpeer channelのsubchannelを指定します。
-このREADMEでは、`[0]`や`[1]`などのsuffixを`[subindex]`と表記します。
-例えば`Sampler:Sampler-0:out[0]`は、接続相手の`out` channelにあるsubchannel `0`を指定します。
-これは`TopologyConfig`が解釈するcommand-line JSONの記法であり、C++の構文やtopology shell scriptの`link` commandに記述する構文ではありません。
-suffixを省略した場合、`autoSubChannel false`は接続相手のsubchannel `0`だけを解決し、`autoSubChannel true`は接続相手の登録済みsubchannelをすべて検出して解決します。
 `topology-1-1.sh`のような固定1:1 connectionには`autoSubChannel false`を使用します。
 `topology-n-n-m.sh`や`topology-2samplers-n-m.sh`のようなn:m fan-out/fan-in topologyでは`autoSubChannel true`を使用し、pluginがpeer subchannelを検出して`numSockets`を更新します。
-`peer` stringに`[subindex]`を明示した場合は、接続相手のそのsubchannelだけを使用します。
-詳細は[`plugins/README.ja.md#251-autosubchannel`](../plugins/README.ja.md#251-autosubchannel)を参照してください。
+channelの表現、`--connect-config`のpeer記法、pluginの詳細な動作については、
+[`plugins/README.ja.md#251-autosubchannel`](../plugins/README.ja.md#251-autosubchannel)を参照してください。
 
 topology scriptはendpointとlink definitionをRedis DB `0`へ書き込みます。
 helper functionは次の形式です。

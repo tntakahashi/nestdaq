@@ -60,7 +60,7 @@ device instanceの登録、TTLのrefresh、FairMQ stateとhealth dataのpublish�
 | `--ttl-update-interval` | `3` | No | TTL refresh interval(seconds)。 |
 | `--startup-state` | `idle` | No | startup state sequence target：`idle`、`initializing-device`、`initialized`、`bound`、`device-ready`、`ready`、`running`。 |
 | `--enable-uds` | `true` | No | 利用可能な場合、local inter-process communication(IPC)にUnix domain socket(UDS)を使用。 |
-| `--connect-config` | なし | No | 一時message queue(MQ)channel connection parameterを記述するJavaScript Object Notation(JSON)string。 |
+| `--connect-config` | なし | No | 一時message queue(MQ)channel connection parameterを記述するJavaScript Object Notation(JSON)string。2.5.1節でpeer記法を説明します。 |
 | `--max-retry-to-resolve-address` | `10` | No | connect address解決の最大retry回数。 |
 
 <a id="22-daq-service-identity-defaults"></a>
@@ -213,13 +213,31 @@ web controllerの前提wait logicも同じtarget selectionを使用します。
 <a id="251-autosubchannel"></a>
 #### 2.5.1. `autoSubChannel`
 
-`autoSubChannel`は、明示的な`[subindex]`なしでtopology peerが書かれた場合に、`TopologyConfig`がFairMQ subchannelを展開する方法を制御します。
+FairMQでは、同じ名前のchannelを`std::vector<fair::mq::Channel>`として保持します。
+各`fair::mq::Channel`は1つのFairMQ Socketを包み、vectorのindexがsubchannelを識別します。
+deviceのC++コードでは、`Send()`または`Receive()`のindex引数でlocal subchannelを選択します。
+index引数を省略すると`0`を使用します。
+
+NestDAQの`daq_service` pluginが提供する`--connect-config` optionへ渡すJSONでは、`[0]`のような数字付きsuffixで接続相手のsubchannelを指定します。
+例えば`Sampler:Sampler-0:out[0]`は、接続相手の`out` channelにあるsubchannel `0`を指定します。
+これは`TopologyConfig`が解釈するJSONの記法であり、C++の構文やtopology shell scriptの`link` commandに記述する構文ではありません。
+上のRedis key表にある`{subindex}`はplaceholderですが、`[0]`は`peer` stringへ実際に記述するsuffixです。
+
+```json
+{"in":{"type":"pull","peer":"Sampler:Sampler-0:out[0]"}}
+```
+
+最上位のkeyはlocal channel nameです。
+`peer`には1つのstringまたはstring配列を指定できます。
+
+`autoSubChannel`は、このsubchannel suffixを省略したpeerを`TopologyConfig`が展開する方法を制御します。
+defaultは`false`です。
 
 - `autoSubChannel=false`はindexなしpeerをsubchannel `0`だけへ解決します。
   1:1などの固定connectionに適します。
 - `autoSubChannel=true`はRedisへpublish済みのpeer channel subchannel recordをscanし、一致する全subchannelへ接続します。
   process動作中にpeerまたはsocket数を検出するn:m topologyに適します。
-- peer stringが`[subindex]`を含む場合、`autoSubChannel`に関係なく、そのsubchannelだけを解決します。
+- peer stringが`[0]`などのsuffixを含む場合、`autoSubChannel`に関係なく、そのsubchannelだけを解決します。
 
 次の図は、process数が異なる2つのserviceをtopologyが接続するとき、各sideの`autoSubChannel`設定によってaddressを持つchannel socket数がどう変わるかを示します。
 この図はsocketおよびsubchannel数の例であり、固定port numberの割り当てやmessage方向を示すものではありません。

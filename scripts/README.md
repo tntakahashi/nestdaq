@@ -233,30 +233,13 @@ The following table lists the default endpoint parameters.
 The last three parameters are specific to NestDAQ.
 The rest are defined in FairMQ.
 
-FairMQ stores each named channel as a `std::vector<fair::mq::Channel>`.
-Each `fair::mq::Channel` wraps one FairMQ Socket, and the vector index identifies
-a subchannel.
-Device code selects a local subchannel with the index argument of `Send()` or
-`Receive()`; omitting that argument selects index `0`.
-
-In the JSON passed to `--connect-config`, a bracketed numeric suffix such as
-`[0]` selects a subchannel of the peer channel.
-This README uses `[subindex]` as a placeholder for suffixes such as `[0]` and
-`[1]`.
-For example, `Sampler:Sampler-0:out[0]` selects subchannel `0` of the peer's
-`out` channel.
-This is command-line JSON notation parsed by `TopologyConfig`, not C++ syntax or
-syntax used by a topology shell script's `link` command.
-When the suffix is omitted, `autoSubChannel false` resolves only peer
-subchannel `0`, while `autoSubChannel true` discovers and resolves every
-registered subchannel of the peer channel.
 Use `autoSubChannel false` for fixed 1:1-style connections such as
 `topology-1-1.sh`. Use `autoSubChannel true` for n:m-style fan-out or fan-in
 topologies such as `topology-n-n-m.sh` and `topology-2samplers-n-m.sh`, where
 the plugin discovers peer subchannels and updates `numSockets` accordingly.
-When the `peer` string includes `[subindex]`, only that peer subchannel is used.
 See [`plugins/README.md#251-autosubchannel`](../plugins/README.md#251-autosubchannel)
-for the detailed topology plugin behavior.
+for the channel representation, `--connect-config` peer syntax, and detailed
+plugin behavior.
 
 Topology scripts write endpoint and link definitions to Redis DB `0`. Their
 helper functions have this shape:

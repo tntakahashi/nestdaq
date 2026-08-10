@@ -58,7 +58,7 @@ It registers a device instance, refreshes TTLs, publishes FairMQ state and healt
 | `--ttl-update-interval`          | `3`                        | No       | TTL refresh interval in seconds. |
 | `--startup-state`                | `idle`                     | No       | Startup state sequence target: `idle`, `initializing-device`, `initialized`, `bound`, `device-ready`, `ready`, or `running`. |
 | `--enable-uds`                   | `true`                     | No       | Use Unix domain sockets (UDS) for local inter-process communication (IPC) if available. |
-| `--connect-config`               | none                       | No       | JavaScript Object Notation (JSON) string describing temporary message queue (MQ) channel connection parameters. |
+| `--connect-config`               | none                       | No       | JavaScript Object Notation (JSON) string describing temporary message queue (MQ) channel connection parameters. Section 2.5.1 describes its peer syntax. |
 | `--max-retry-to-resolve-address` | `10`                       | No       | Maximum retry count for resolving connect addresses. |
 
 ### 2.2. DAQ Service Identity Defaults
@@ -207,13 +207,36 @@ Controllers such as `daq-webctl` can poll or scan these keys to build state summ
 
 #### 2.5.1. `autoSubChannel`
 
-`autoSubChannel` controls how `TopologyConfig` expands FairMQ subchannels when a topology peer is written without an explicit `[subindex]`.
+FairMQ stores each named channel as a `std::vector<fair::mq::Channel>`.
+Each `fair::mq::Channel` wraps one FairMQ Socket, and the vector index identifies
+a subchannel.
+Device code selects a local subchannel with the index argument of `Send()` or
+`Receive()`; omitting that argument selects index `0`.
+
+In the JSON passed to the NestDAQ `daq_service` plugin's `--connect-config`
+option, a numeric suffix such as `[0]` selects a peer subchannel.
+For example, `Sampler:Sampler-0:out[0]` selects subchannel `0` of the peer's
+`out` channel.
+This is JSON notation parsed by `TopologyConfig`, not C++ syntax or syntax used
+by a topology shell script's `link` command.
+The `{subindex}` text in the Redis key table above is a placeholder, whereas
+`[0]` is a suffix written in a `peer` string:
+
+```json
+{"in":{"type":"pull","peer":"Sampler:Sampler-0:out[0]"}}
+```
+
+The top-level key names the local channel, and `peer` accepts either one string
+or an array of strings.
+
+`autoSubChannel` controls how `TopologyConfig` expands a peer for which this
+subchannel suffix is omitted. Its default is `false`.
 
 - `autoSubChannel=false` resolves an unindexed peer to subchannel `0` only.
   This setting is suitable for 1:1 or other fixed connections.
 - `autoSubChannel=true` scans the peer-channel subchannel records already published in Redis and connects to all matching subchannels.
   This setting is suitable for n:m topologies in which the process discovers the number of peers or sockets while running.
-- When the peer string includes `[subindex]`, only that subchannel is resolved, regardless of `autoSubChannel`.
+- When the peer string includes a suffix such as `[0]`, only that subchannel is resolved, regardless of `autoSubChannel`.
 
 The following diagram shows how each side's `autoSubChannel` setting changes the number of address-bearing channel sockets when a topology connects two services with different process counts.
 The diagram illustrates socket and subchannel counts, not fixed port assignments or message direction.
