@@ -1,15 +1,15 @@
-# ClickStack OpenTelemetry(OTel)バックエンド
+# ClickStack OpenTelemetry (OTel) バックエンド
 
 [English](README.md) | [日本語](README.ja.md)
 
 [トップ: NestDAQ](../../../README.ja.md) | [前の保存先候補: Victoria](../victoria/README.ja.md) | [次へ: Package installer](../../installers/README.ja.md)
 
 このローカル検証用スタックは、ClickStack OpenTelemetry CollectorでOpenTelemetryのログ、メトリクス、トレースを受信します。
-受信したデータをClickHouseに保存し、ClickStackユーザーインターフェース(UI)で表示します。
+受信したデータをClickHouseに保存し、ClickStackユーザーインターフェース (UI) で表示します。
 
 このバックエンドは実験的で、まだ十分に検証されていません。
 
-この文書で**Compose**とは、Docker Compose (`docker compose`)またはPodman Compose (`podman compose`)を指します。
+この文書で**Compose**とは、Docker Compose (`docker compose`) またはPodman Compose (`podman compose`) を指します。
 どちらかを使用してこのスタックを管理します。
 
 このディレクトリから起動します。
@@ -47,8 +47,8 @@ production環境では、明示的な認証情報、retention policy、backup po
 
 - ClickStack UI: `http://localhost:8080`
 - ClickHouse HTTP: `http://localhost:8123`
-- OpenTelemetry Protocol(OTLP) Google remote procedure call(gRPC) receiver: `localhost:4317`
-- OTLP Hypertext Transfer Protocol(HTTP) receiver: `http://localhost:4318`
+- OpenTelemetry Protocol (OTLP) Google remote procedure call (gRPC) receiver: `localhost:4317`
+- OTLP Hypertext Transfer Protocol (HTTP) receiver: `http://localhost:4318`
 
 <a id="3-nestdaq-telemetry-endpoint-examples"></a>
 ## 3. NestDAQテレメトリーエンドポイントの例

@@ -8,7 +8,7 @@ NestDAQは3つのFairMQ pluginをshared libraryとしてinstallします。
 
 | Plugin name | Library | 目的 |
 | --- | --- | --- |
-| `daq_service` | `libFairMQPlugin_daq_service.so` | FairMQ deviceをRedisへ登録し、health/stateおよびtopology/channel dataを書き込み、data acquisition(DAQ)commandを処理します。 |
+| `daq_service` | `libFairMQPlugin_daq_service.so` | FairMQ deviceをRedisへ登録し、health/stateおよびtopology/channel dataを書き込み、data acquisition (DAQ) commandを処理します。 |
 | `metrics` | `libFairMQPlugin_metrics.so` | process metricsおよびFairMQ channel throughput metricsをRedisとRedisTimeSeriesへ書き込みます。 |
 | `parameter_config` | `libFairMQPlugin_parameter_config.so` | Redisからparameterを読み取り、FairMQ program propertyへ反映します。 |
 
@@ -24,7 +24,7 @@ default separatorは`:`です。
 その他のplaceholderは`{service}`、`{id}`、`{channel}`、`{subindex}`です。
 
 <a id="1-time-to-live-ttl-behavior"></a>
-## 1. Time To Live(TTL)の動作
+## 1. Time To Live (TTL) の動作
 
 TTLの扱いはpluginごとに異なります。
 
@@ -50,36 +50,41 @@ device instanceの登録、TTLのrefresh、FairMQ state、health、topology、ch
 
 | Option | デフォルト | 説明 |
 | --- | --- | --- |
-| `--service-name` | 空の場合はexecutable basename | Redis key pathで使用するservice name。 |
-| `--uuid` | 生成 | このservice instanceのuniversally unique identifier(UUID)。利用可能な場合、FairMQ device wrapperはtelemetryが生成した`service.instance.id`を再利用し、それ以外はpluginが生成します。 |
-| `--host-ip` | 検出値/設定値 | このservice addressとして保存するInternet Protocol(IP)addressまたはhostname。 |
-| `--hostname` | 検出値/設定値 | health dataへ保存するhost name。 |
-| `--registry-uri` | `tcp://127.0.0.1:6379/0` | DAQ service registryのRedis uniform resource identifier(URI)。 |
+| `--service-name` | 空の場合はexecutable basename | Redis key pathおよびhealthの`serviceName` fieldで使用する、このNestDAQ device processのservice name。 |
+| `--uuid` | 生成 | このNestDAQ device processのUUID。この値は、`--otel-service-instance-id`を設定しない限り、telemetryの`service.instance.id`のデフォルト値になります。`--uuid`を省略すると、標準FairMQ device wrapperは生成したtelemetry UUIDをこのpropertyへcopyします。このpropertyが存在しない場合、pluginがUUIDを生成します。 |
+| `--host-ip` | 検出値/設定値 | healthの`hostIp` fieldへ保存する、このNestDAQ device processのaddress。名前解決可能なhostnameも指定できます。省略した場合、pluginは設定されたnetwork interfaceを使用し、取得できなければdefault routeのinterfaceを使用します。 |
+| `--hostname` | 検出値/設定値 | healthの`hostName` fieldへ保存するhost name。省略した場合、pluginはoperating systemのhostnameを使用します。 |
+| `--registry-uri` | `tcp://127.0.0.1:6379/0` | DAQ service registryのRedis uniform resource identifier (URI)。 |
 | `--separator` | `:` | Redis keyを構成するときのseparator。 |
-| `--max-ttl` | `5` | 一時registry keyのTTL(seconds)。 |
-| `--ttl-update-interval` | `3` | TTL refresh interval(seconds)。 |
-| `--startup-state` | `idle` | startup state sequence target：`idle`、`initializing-device`、`initialized`、`bound`、`device-ready`、`ready`、`running`。 |
-| `--enable-uds` | `true` | 利用可能な場合、local inter-process communication(IPC)にUnix domain socket(UDS)を使用。 |
-| `--connect-config` | なし | 一時message queue(MQ)channel connection parameterを記述するJavaScript Object Notation(JSON)string。2.5.1節でpeer記法を説明します。 |
+| `--max-ttl` | `5` | 一時registry keyのTTL (seconds)。 |
+| `--ttl-update-interval` | `3` | TTL refresh interval (seconds)。 |
+| `--startup-state` | `idle` | startup時にpluginがdeviceを`Idle`から自動的に進めるFairMQ state：`idle`、`initializing-device`、`initialized`、`bound`、`device-ready`、`ready`、`running`。 |
+| `--enable-uds` | `true` | すべてのpeerの`hostIp`がこのprocessと同じZeroMQ bind channelだけにUnix domain socket (UDS) addressを追加します。`true`または`1`で有効になります。 |
+| `--connect-config` | なし | 一時message queue (MQ) channel connection parameterを記述するJavaScript Object Notation (JSON) string。2.5.1節でpeer記法を説明します。 |
 | `--max-retry-to-resolve-address` | `10` | connect address解決の最大retry回数。 |
 
 <a id="22-daq-service-identity-defaults"></a>
 ### 2.2. DAQサービス識別情報の既定値
 
-`daq_service`は、Redisに保存してcontrollerに表示するservice nameとして`--service-name`を使用します。
+`daq_service`は、Redis key path、healthの`serviceName` field、およびcontrollerの表示で、このNestDAQ device processのservice nameとして`--service-name`を使用します。
 `--service-name`が未設定または空の場合、pluginはexecutable nameの最後のpath componentを使用します。
 
 FairMQの`--id` optionが設定されている場合、その値をNestDAQ service instance idとして使用します。
 `--id`が未設定または空の場合、`daq_service`は`daq_service{sep}service-instance-index{sep}{service}`で数値indexを割り当て、instance idを`Sampler-0`のような`{service-name}-{index}`に設定します。
 `--uuid`値はinstance idとは別で、presence、health、index再利用においてこのprocessを識別します。
+また、`--otel-service-instance-id`を明示的に設定しない限り、telemetryの`service.instance.id`のデフォルト値になります。
+`--uuid`を省略すると、標準FairMQ device wrapperは生成したtelemetry UUIDを`uuid` propertyへcopyします。`uuid` propertyが存在しない場合、pluginが生成します。
 
 <a id="23-redis-keys-written-or-read"></a>
 ### 2.3. 書き込みまたは読み取りを行うRedis key
 
+Health dataは、device identity、host情報、FairMQ state、およびlifecycle timestampを含むRedis hash dataです。
+controllerはstatus表示に使用し、pluginはconnection resolutionに`hostIp` fieldを使用します。
+
 | Key pattern | Redis type | Field / value | Writer / reader | 目的 |
 | --- | --- | --- | --- | --- |
 | `daq_service{sep}{service}{sep}{id}{sep}presence` | string | TTL付きでrefreshされるUUID string | Written | device instanceのpresence marker。 |
-| `daq_service{sep}{service}{sep}{id}{sep}health` | hash | `instanceID`, `uuid`, `hostName`, `hostIp`, `serviceName`, `createdTime`, `updatedTime`, `uptime`。run timing記録時は`start_time`, `start_time_ns`, `stop_time`, `stop_time_ns`も含む | Written | device instanceのhealth/lifecycle metadata。 |
+| `daq_service{sep}{service}{sep}{id}{sep}health` | hash | `instanceID`, `uuid`, `hostName`, `hostIp`, `serviceName`, `fair:mq:state`, `createdTime`, `updated_time`, `uptime`。run timing記録時は`start_time`, `start_time_ns`, `stop_time`, `stop_time_ns`も含む | Written | device instanceのhealth/lifecycle metadata。 |
 | `daq_service{sep}{service}{sep}{id}{sep}fair-mq-state` | string | FairMQ state name | Written | TTL付きの現在のFairMQ state。 |
 | `daq_service{sep}{service}{sep}{id}{sep}updatedTime` | string | 最終update timestamp | Written | TTL付きの軽量な最終update key。 |
 | `daq_service{sep}{service}{sep}{id}{sep}option` | hash | `severity`, `file-severity`, `verbosity`, `color`, `log-to-file`, `id`, `io-threads`, `transport`, `network-interface`, `init-timeout`、shared-memory option、`rate`, `session`などのFairMQ program option | Written | monitoring/debugging用の現在のoption値。 |
@@ -91,7 +96,7 @@ FairMQの`--id` optionが設定されている場合、その値をNestDAQ servi
 | `daqctl` | pub/sub channel | JSON DAQ command message | pluginがsubscribe、controller/operatorがpublish | controller commandを受信。 |
 
 <a id="24-daq-command-publishsubscribe-pubsub"></a>
-### 2.4. DAQ commandのPublish/Subscribe(Pub/Sub)
+### 2.4. DAQ commandのPublish/Subscribe (Pub/Sub)
 
 `daq_service`は`daqctl`をsubscribeし、対象に一致するcommand messageをlocal service instanceのFairMQ state transitionへ変換します。
 controllerや他のoperatorはこのchannelへcommand messageをpublishします。
@@ -361,7 +366,7 @@ connect channelはpeer bind channelが`bound=1`になるのを待ち、Redisか�
 resetまたはcancellationはwait stepを中断します。
 
 <a id="26-ttl-details-daq_service"></a>
-### 2.6. TTLの詳細(daq_service)
+### 2.6. TTLの詳細 (daq_service)
 
 `daq_service`はseconds単位の`--max-ttl`を使用します。
 defaultは`5` secondsです。
@@ -411,19 +416,19 @@ metricsのupdateが停止したinstanceのfieldを削除するために使用し
 ## 3. metrics
 
 `metrics`はprocess-level metricsとFairMQ channel throughput metricsをRedisへ記録します。
-process central processing unit(CPU)usageはtop/htop形式で、1 CPU coreを完全に使用すると約`100`、2 coreを完全に使用すると約`200`です。
-memory usageはmebibytes(MiB)単位のcurrent resident set size(RSS)です。
+process central processing unit (CPU) usageはtop/htop形式で、1 CPU coreを完全に使用すると約`100`、2 coreを完全に使用すると約`200`です。
+memory usageはmebibytes (MiB) 単位のcurrent resident set size (RSS) です。
 
 <a id="31-command-line-options"></a>
 ### 3.1. コマンドラインオプション
 
 | Option | デフォルト | 説明 |
 | --- | --- | --- |
-| `--proc-stat-update-interval` | `1000` | process CPU/memory metricsのupdate interval(milliseconds)。 |
+| `--proc-stat-update-interval` | `1000` | process CPU/memory metricsのupdate interval (milliseconds)。 |
 | `--metrics-uri` | なし | metrics用Redis URI。空の場合は`--registry-uri`を使用。 |
-| `--retention` | `0` | RedisTimeSeries retention(milliseconds)。`0`はtrimなし。 |
+| `--retention` | `0` | RedisTimeSeries retention (milliseconds)。`0`はtrimなし。 |
 | `--recreate-ts` | `true` | `Running`へのtransition時にRedisTimeSeries keyを再作成。 |
-| `--metrics-max-ttl` | `3000` | instanceの最終metrics updateからの最大経過時間(milliseconds)。この時間を超えたinstanceのfieldをmetric hashから削除します。0以下の場合、この削除処理を無効にします。 |
+| `--metrics-max-ttl` | `3000` | instanceの最終metrics updateからの最大経過時間 (milliseconds)。この時間を超えたinstanceのfieldをmetric hashから削除します。0以下の場合、この削除処理を無効にします。 |
 
 <a id="32-redis-keys-written-or-read"></a>
 ### 3.2. 書き込みまたは読み取りを行うRedis key
@@ -457,7 +462,7 @@ data[0]: in: 123 (4.5 MB) out: 67 (8.9 MB)
 channel throughput metricsにはindex付きsubchannel recordだけを使用します。
 
 <a id="33-ttl-and-retention-details-metrics"></a>
-### 3.3. TTLと保持期間の詳細(metrics)
+### 3.3. TTLと保持期間の詳細 (metrics)
 
 `--metrics-max-ttl`はRedis key TTLではありません。
 `metrics{sep}last-update-ns`に記録されたinstanceの時刻について、許容する最大経過時間をmilliseconds単位で指定します。
@@ -499,7 +504,7 @@ live reloadには、Redis serverでkeyspace notificationを有効にする必要
 初期parameter loadにはkeyspace notificationは不要です。
 
 <a id="43-ttl-details-parameter_config"></a>
-### 4.3. TTLの詳細(parameter_config)
+### 4.3. TTLの詳細 (parameter_config)
 
 `parameter_config`はparameter keyに対して`EXPIRE`、`SETEX`、`DEL`を呼びません。
 parameter keyを読み、live reload用にkeyspace notificationをsubscribeします。

@@ -12,7 +12,7 @@ production deploymentではRedis Stack Serverを推奨します。
 
 scriptは`latest`ではなく固定されたimage tagを使用します。
 
-- 開発用Redis Stack(RedisInsightを含む): `docker.io/redis/redis-stack:7.4.0-v8`
+- 開発用Redis Stack (RedisInsightを含む): `docker.io/redis/redis-stack:7.4.0-v8`
 - production向けRedis Stack Serverのみ: `docker.io/redis/redis-stack-server:7.4.0-v8`
 - 公式Redis 8.2.7 image: `docker.io/library/redis:8.2.7`
 - RedisInsightを含むRedis Stack 7.2: `docker.io/redis/redis-stack:7.2.0-v20`
@@ -126,7 +126,7 @@ scriptは、scriptの隣にある`redis-stack-server-data/`をcontainer内の`/d
 同名のcontainerがすでに存在する場合にscriptを失敗させるには、`REDIS_CONTAINER_REPLACE=0`を設定します。
 
 <a id="7-security-enhanced-linux-selinux"></a>
-## 7. Security-Enhanced Linux(SELinux)
+## 7. Security-Enhanced Linux (SELinux)
 
 SELinux label optionは`REDIS_VOLUME_MODE=bind`の場合に限り使用されます。
 SELinuxが有効なhostでcontainerがdata directoryへ書き込めるよう、bind mountではデフォルトで`:Z` label optionを使用します。
@@ -142,7 +142,7 @@ rootless Podmanでは通常、container rootがcontainerを実行するhost user
 そのため、作成されたdirectoryは追加のpermission変更なしで書き込み可能です。
 
 SELinux labelingとUnix permissionは、それぞれ独立した制御です。
-`:Z` mount labelはSELinuxが有効なhostでcontainerからdirectoryへのaccessを許可しますが、user identifierまたはgroup identifier(uid/gid)のpermission不一致は解消しません。
+`:Z` mount labelはSELinuxが有効なhostでcontainerからdirectoryへのaccessを許可しますが、user identifierまたはgroup identifier (uid/gid) のpermission不一致は解消しません。
 rootful containerは、bind mountしたdirectoryにhost root所有のfileを作成する場合があります。
 bind mountしたdirectoryに書き込めない場合は、このhelper scriptの外部でhost側のownershipまたはpermissionを明示的に調整してください。
 

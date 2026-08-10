@@ -283,7 +283,7 @@ For Redis 7.x maintenance settings, inspect `cmake/dependencies/redis-server-7.c
 
 | Package                                                                  | Version (default) | CMake options to modify versions |
 | :--                                                                      | :--               | :--                              |
-| [ZeroMQ(libzmq)](https://github.com/zeromq/libzmq)                       | 4.3.5             | `ZeroMQ_VERSION`                 |
+| [ZeroMQ (libzmq)](https://github.com/zeromq/libzmq)                      | 4.3.5             | `ZeroMQ_VERSION`                 |
 | [Boost](https://github.com/boostorg/boost)                               | 1.85.0            | `Boost_VERSION`                  | 
 | [FairLogger](https://github.com/FairRootGroup/FairLogger)                | 2.3.0             | `FairLogger_VERSION`             |
 | [FairMQ](https://github.com/FairRootGroup/FairMQ)                        | 1.10.0 with GCC 9.1 or later; 1.9.2 with older GCC | `FairMQ_VERSION` |

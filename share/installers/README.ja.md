@@ -98,8 +98,8 @@ Redisはdistribution codenameまたはRPM repositoryごとにpackageを公開し
 設定されたRedis repositoryが`REDIS_VERSION`を提供していない場合、installerは別のRedis versionをインストールせずに失敗します。
 
 DebianおよびUbuntuでは、Redis公式APT repositoryがdistribution codenameごとにpackageを公開しています。
-Debian 12(`bookworm`)、Debian 13(`trixie`)、Ubuntu 22.04(`jammy`)、Ubuntu 24.04(`noble`)では、固定されたpackage setを使用してRedis `7.2.14`、`7.4.9`、`8.2.7`をインストールできます。
-現在、Ubuntu 26.04(`resolute`)では`8.8.0`などの新しいRedis packageだけが提供されています。
+Debian 12 (`bookworm`)、Debian 13 (`trixie`)、Ubuntu 22.04 (`jammy`)、Ubuntu 24.04 (`noble`) では、固定されたpackage setを使用してRedis `7.2.14`、`7.4.9`、`8.2.7`をインストールできます。
+現在、Ubuntu 26.04 (`resolute`) では`8.8.0`などの新しいRedis packageだけが提供されています。
 そのため、`7.2.14`、`7.4.9`、`8.2.7`を固定したinstallはUbuntu 26.04で失敗します。
 
 AlmaLinux/RHEL系systemでは、対応するRocky Linux major version向けのRedis公式RPM repositoryを使用します。
@@ -119,13 +119,13 @@ RHEL系systemでは常にRedis公式RPM repositoryを設定し、distributionの
 | --- | --- | --- | --- | --- |
 | AlmaLinux 8 | `rockylinux8` RPM repo | なし | なし | あり |
 | AlmaLinux 9 | `rockylinux9` RPM repo | なし | なし | あり |
-| AlmaLinux 9 | AppStream `redis:7` module(このinstallerでは不使用) | あり | なし | なし |
-| AlmaLinux 10 | `rockylinux10` RPM repo | なし | なし | なし(`8.8.0`を利用可能) |
+| AlmaLinux 9 | AppStream `redis:7` module (このinstallerでは不使用) | あり | なし | なし |
+| AlmaLinux 10 | `rockylinux10` RPM repo | なし | なし | なし (`8.8.0`を利用可能) |
 | Debian 12 | `bookworm` APT repo | あり | あり | あり |
 | Debian 13 | `trixie` APT repo | あり | あり | あり |
 | Ubuntu 22.04 | `jammy` APT repo | あり | あり | あり |
 | Ubuntu 24.04 | `noble` APT repo | あり | あり | あり |
-| Ubuntu 26.04 | `resolute` APT repo | なし | なし | なし(`8.8.0`を利用可能) |
+| Ubuntu 26.04 | `resolute` APT repo | なし | なし | なし (`8.8.0`を利用可能) |
 
 公式インストール手順:
 
@@ -147,7 +147,7 @@ versionの選択には`OTELCOL_CONTRIB_VERSION`を使用します。
 OTELCOL_CONTRIB_VERSION=0.155.0 ./install-otelcol-contrib.sh install
 ```
 
-インストール後、serviceを起動する前に、packageで設定された場所(通常は`/etc/otelcol-contrib/config.yaml`)へCollector configurationを配置するか、既存の設定を編集してください。
+インストール後、serviceを起動する前に、packageで設定された場所 (通常は`/etc/otelcol-contrib/config.yaml`) へCollector configurationを配置するか、既存の設定を編集してください。
 
 公式のインストールおよびrelease手順:
 

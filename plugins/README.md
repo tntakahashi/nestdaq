@@ -48,34 +48,39 @@ When an option is omitted, the plugin uses the default shown in its table.
 
 | Option                           | Default                    | Description |
 |----------------------------------|----------------------------|-------------|
-| `--service-name`                 | executable basename when empty | Service name used in Redis key paths. |
-| `--uuid`                         | generated                  | Universally unique identifier (UUID) of this service instance. FairMQ device wrappers reuse the telemetry-generated `service.instance.id` when available; otherwise the plugin generates one. |
-| `--host-ip`                      | detected/configured value  | Internet Protocol (IP) address or hostname stored as this service address. |
-| `--hostname`                     | detected/configured value  | Host name stored in health data. |
+| `--service-name`                 | executable basename when empty | Service name of this NestDAQ device process, used in Redis key paths and the health `serviceName` field. |
+| `--uuid`                         | generated                  | UUID of this NestDAQ device process. This value supplies the default telemetry `service.instance.id` unless `--otel-service-instance-id` is set. When `--uuid` is omitted, the standard FairMQ device wrapper copies its generated telemetry UUID to this property; if the property is absent, the plugin generates a UUID. |
+| `--host-ip`                      | detected/configured value  | Address of this NestDAQ device process, stored in the health `hostIp` field. A resolvable hostname is accepted. If omitted, the plugin uses the configured network interface or the default-route interface. |
+| `--hostname`                     | detected/configured value  | Host name stored in the health `hostName` field. If omitted, the plugin uses the operating system hostname. |
 | `--registry-uri`                 | `tcp://127.0.0.1:6379/0`   | Redis uniform resource identifier (URI) for the DAQ service registry. |
 | `--separator`                    | `:`                        | Separator used when composing Redis keys. |
 | `--max-ttl`                      | `5`                        | TTL in seconds for transient registry keys. |
 | `--ttl-update-interval`          | `3`                        | TTL refresh interval in seconds. |
-| `--startup-state`                | `idle`                     | Startup state sequence target: `idle`, `initializing-device`, `initialized`, `bound`, `device-ready`, `ready`, or `running`. |
-| `--enable-uds`                   | `true`                     | Use Unix domain sockets (UDS) for local inter-process communication (IPC) if available. |
+| `--startup-state`                | `idle`                     | FairMQ state to which the plugin automatically advances the device from `Idle` during startup: `idle`, `initializing-device`, `initialized`, `bound`, `device-ready`, `ready`, or `running`. |
+| `--enable-uds`                   | `true`                     | Adds Unix domain socket (UDS) addresses only to ZeroMQ bind channels whose peers all have the same `hostIp` as this process. `true` and `1` enable it. |
 | `--connect-config`               | none                       | JavaScript Object Notation (JSON) string describing temporary message queue (MQ) channel connection parameters. Section 2.5.1 describes its peer syntax. |
 | `--max-retry-to-resolve-address` | `10`                       | Maximum retry count for resolving connect addresses. |
 
 ### 2.2. DAQ Service Identity Defaults
 
-`daq_service` uses `--service-name` as the service name stored in Redis and shown by controllers.
+`daq_service` uses `--service-name` as this NestDAQ device process's service name in Redis key paths, the health `serviceName` field, and controller displays.
 When `--service-name` is not set or is empty, the plugin uses the final path component of the executable name.
 
 When set, the FairMQ `--id` option supplies the NestDAQ service instance id.
 When `--id` is not set or is empty, `daq_service` allocates a numeric index in `daq_service{sep}service-instance-index{sep}{service}` and sets the instance id to `{service-name}-{index}`, such as `Sampler-0`.
 The `--uuid` value is separate from the instance id and identifies the process for presence, health, and index reuse.
+It also supplies the default telemetry `service.instance.id` unless `--otel-service-instance-id` is set explicitly.
+When `--uuid` is omitted, the standard FairMQ device wrapper copies its generated telemetry UUID to the `uuid` property; if no `uuid` property exists, the plugin generates one.
 
 ### 2.3. Redis Keys Written or Read
+
+Health data is a Redis hash containing device identity, host details, FairMQ state, and lifecycle timestamps.
+Controllers use it for status reporting, and the plugin uses its `hostIp` field for connection resolution.
 
 | Key pattern | Redis type | Fields / value | Writer / reader | Purpose |
 |-------------|------------|----------------|-----------------|---------|
 | `daq_service{sep}{service}{sep}{id}{sep}presence` | string | UUID string, refreshed with TTL | Written | Presence marker for one device instance. |
-| `daq_service{sep}{service}{sep}{id}{sep}health` | hash | `instanceID`, `uuid`, `hostName`, `hostIp`, `serviceName`, `createdTime`, `updatedTime`, `uptime`; also `start_time`, `start_time_ns`, `stop_time`, `stop_time_ns` when run timing is recorded | Written | Health and lifecycle metadata for one device instance. |
+| `daq_service{sep}{service}{sep}{id}{sep}health` | hash | `instanceID`, `uuid`, `hostName`, `hostIp`, `serviceName`, `fair:mq:state`, `createdTime`, `updated_time`, `uptime`; also `start_time`, `start_time_ns`, `stop_time`, `stop_time_ns` when run timing is recorded | Written | Health and lifecycle metadata for one device instance. |
 | `daq_service{sep}{service}{sep}{id}{sep}fair-mq-state` | string | FairMQ state name | Written | Current FairMQ state with TTL. |
 | `daq_service{sep}{service}{sep}{id}{sep}updatedTime` | string | Last update timestamp | Written | Lightweight last-update key with TTL. |
 | `daq_service{sep}{service}{sep}{id}{sep}option` | hash | Selected FairMQ program options such as `severity`, `file-severity`, `verbosity`, `color`, `log-to-file`, `id`, `io-threads`, `transport`, `network-interface`, `init-timeout`, shared-memory options, `rate`, and `session` | Written | Current option values for monitoring and debugging. |

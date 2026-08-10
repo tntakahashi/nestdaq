@@ -213,7 +213,7 @@ git switch --detach <release-tag>
 
 upstream repositoryの開発に貢献する人は、最初に`spadi-alliance/nestdaq`を自身のGitHub accountへforkします。
 最新開発版をビルドする場合は、自身のforkをcloneし、upstream repositoryを変更の取得元として使用する`upstream` remoteに登録し、forkの`origin/develop`をtrackするlocal `develop`ブランチを作成します。
-更新はupstreamからpullしますが、push先は自身のfork (`origin`)にあるbranchだけにします。
+更新はupstreamからpullしますが、push先は自身のfork (`origin`) にあるbranchだけにします。
 
 ```bash
 # forkをcloneし、upstream remoteとlocal development branchを設定
@@ -253,7 +253,7 @@ cmake --build ./build-external
 ```
 
 - 上記のcommandでは、CMakeの`ExternalProject`を使用して各依存関係をclone、build、installします。
-  `cmake --build`に渡す`--parallel`(または`-j`)optionでは、内部の`ExternalProject` buildを制御できません。
+  `cmake --build`に渡す`--parallel` (または`-j`) optionでは、内部の`ExternalProject` buildを制御できません。
   初回configure時に`-DBUILD_PARALLEL_LEVEL=xxx`を使用して、内部ビルドの並列数を指定してください。
   `nproc`commandはsystemで使用可能なCPU core数を表示するため、メモリー使用量が過大になる場合は、より小さい値を指定してください。
 - 依存関係のデフォルトバージョンを以下に示します。
@@ -296,9 +296,9 @@ Redis 7.xの保守用設定については`cmake/dependencies/redis-server-7.cma
 <a id="versions-of-installed-external-dependencies"></a>
 ### 2.4 インストールされる外部依存関係のバージョン
 
-| パッケージ                                                               | バージョン(デフォルト) | バージョン変更用CMakeオプション |
+| パッケージ                                                               | バージョン (デフォルト) | バージョン変更用CMakeオプション |
 | :--                                                                      | :--                      | :--                              |
-| [ZeroMQ(libzmq)](https://github.com/zeromq/libzmq)                       | 4.3.5                    | `ZeroMQ_VERSION`                 |
+| [ZeroMQ (libzmq)](https://github.com/zeromq/libzmq)                      | 4.3.5                    | `ZeroMQ_VERSION`                 |
 | [Boost](https://github.com/boostorg/boost)                               | 1.85.0                   | `Boost_VERSION`                  |
 | [FairLogger](https://github.com/FairRootGroup/FairLogger)                | 2.3.0                    | `FairLogger_VERSION`             |
 | [FairMQ](https://github.com/FairRootGroup/FairMQ)                        | GCC 9.1以降では1.10.0、それより古いGCCでは1.9.2 | `FairMQ_VERSION` |
@@ -381,7 +381,7 @@ AlmaLinux 8のGCC 8.5では、RediSearchが`<ranges>`などのC++20機能を使�
 AlmaLinux 8でGCC 8.5を使用して依存関係をビルドする場合は、必要なC++20機能をサポートする新しいcompiler toolchainを使用しない限り、`-DREDIS_BUILD_REDISEARCH=OFF`を渡してください。
 デフォルトのRedis module versionは、Redis 8.2.7 source treeが選択するmoduleのrelease tagに従います。
 
-| パッケージ                                                               | バージョン(デフォルト) | CMakeオプション |
+| パッケージ                                                               | バージョン (デフォルト) | CMakeオプション |
 | :--                                                                      | :--                      | :--             |
 | [Redis](https://github.com/redis/redis)                                  | 8.2.7                    | `Redis_VERSION` |
 | [RedisBloom](https://github.com/RedisBloom/RedisBloom)                   | 8.2.12                   | `RedisBloom_VERSION`, `REDIS_BUILD_REDISBLOOM` |
@@ -457,7 +457,7 @@ repositoryには、ローカル検証用のCompose構成を[`share/otel-collecto
 ここで**Compose**とは、`docker compose`または`podman compose`を指します。
 この構成では、OpenTelemetry Collector Contrib、OpenSearch、OpenSearch Dashboardsなどをコンテナで実行します。
 これらのserviceとtoolは、NestDAQのビルドには必要ありません。
-提供するCompose構成はlocal validation向けであり、security設定が簡略化されている場合があるため、production環境で使用する前にpassword、authentication、network公開範囲、Transport Layer Security (TLS)について検討し、必要に応じて強化してください。
+提供するCompose構成はlocal validation向けであり、security設定が簡略化されている場合があるため、production環境で使用する前にpassword、authentication、network公開範囲、Transport Layer Security (TLS) について検討し、必要に応じて強化してください。
 
 NestDAQアプリケーションの稼働中に必要となる外部serviceは、コンテナまたはhost packageで用意できます。
 
@@ -487,7 +487,7 @@ VictoriaとClickHouseの構成はexperimentalであり、未検証です。
 
 - [`opensearch/`](share/otel-collector-compose/opensearch/README.ja.md): logとtraceをOpenSearchへ保存し、OpenSearch Dashboardsで表示します。
 - [`victoria/`](share/otel-collector-compose/victoria/README.ja.md): log、metrics、traceをVictoriaLogs、VictoriaMetrics、VictoriaTracesへ保存し、Grafanaで表示します。
-- [`clickhouse/`](share/otel-collector-compose/clickhouse/README.ja.md): log、metrics、traceをClickStack/ClickHouseへ保存し、ClickStack user interface (UI)で表示します。
+- [`clickhouse/`](share/otel-collector-compose/clickhouse/README.ja.md): log、metrics、traceをClickStack/ClickHouseへ保存し、ClickStack user interface (UI) で表示します。
 
 デフォルトでは、Compose stackはOpenTelemetry Protocol (OTLP) gRPCを`localhost:4317`、OTLP HTTPを`localhost:4318`で公開します。
 port、volume、認証情報、SELinux、rootless Podmanに関する注意事項は、[`share/otel-collector-compose/README.ja.md`](share/otel-collector-compose/README.ja.md)およびbackend固有のREADMEを参照してください。

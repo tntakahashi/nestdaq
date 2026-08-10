@@ -1,11 +1,11 @@
-# データ収集(DAQ)Webコントローラー実装
+# データ収集 (DAQ) Webコントローラー実装
 
 [English](README.md) | [日本語](README.ja.md)
 
 [トップ: NestDAQ](../README.ja.md) | [前へ: Plugin](../plugins/README.ja.md) | [次へ: Web controller assets](../share/controller/README.ja.md)
 
 このディレクトリには、NestDAQ web controller processである`daq-webctl`の実装があります。
-`daq-webctl`は、ブラウザuser interface(UI)用のHypertext Transfer Protocol(HTTP)server、対話的client用のWebSocket session、およびRedisをbackendとするDAQ device制御操作を提供します。
+`daq-webctl`は、ブラウザuser interface (UI) 用のHypertext Transfer Protocol (HTTP) server、対話的client用のWebSocket session、およびRedisをbackendとするDAQ device制御操作を提供します。
 
 `daq-webctl`が配信するstatic browser assetについては、[`share/controller/README.ja.md`](../share/controller/README.ja.md)に記載されています。
 
@@ -25,10 +25,10 @@ controllerはOpenTelemetryへ直接linkしません。
 | :-- | :-- |
 | `run_daq-webctl.cxx` | executable entry point、command-line parsing、logging、telemetry、Redis設定、server起動。 |
 | `HttpWebSocketServer` | Boost.Asio I/O context、signal handling、listener、worker threadを所有します。 |
-| `Listener` | Transmission Control Protocol(TCP)connectionを受け付け、HTTP sessionを開始します。 |
+| `Listener` | Transmission Control Protocol (TCP) connectionを受け付け、HTTP sessionを開始します。 |
 | `HttpSession` | HTTP requestを処理し、WebSocket requestをupgradeします。 |
 | `WebSocketSession` | 1つのWebSocket client connectionを管理します。 |
-| `WebSocketHandle` | WebSocket clientから受信したJavaScript Object Notation(JSON)messageをdispatchします。 |
+| `WebSocketHandle` | WebSocket clientから受信したJavaScript Object Notation (JSON) messageをdispatchします。 |
 | `WebGui` | RedisをbackendとするDAQ制御、state polling、command publishを実装します。 |
 | `beast_tools` | 共通のBoost.Beast HTTP response helperを提供します。 |
 | `DaqWebControlDefaultDocRootPath.h.in` | `--doc-root`で使用する、インストール済みdefault document root pathを生成します。 |
@@ -94,13 +94,13 @@ user device process間のFairMQ data-channel trafficは別経路であり、`daq
 
 `daq-webctl`は以下のoptionを受け付けます。
 OpenTelemetry optionも、`daq-webctl` component用の共通NestDAQ telemetry option helperを通じて利用できます。
-`--otel-service-instance-id`を指定しない場合、`daq-webctl`は生成したuniversally unique identifier(UUID)をOpenTelemetryの`service.instance.id` resource attributeへ記録します。
+`--otel-service-instance-id`を指定しない場合、`daq-webctl`は生成したuniversally unique identifier (UUID) をOpenTelemetryの`service.instance.id` resource attributeへ記録します。
 OpenTelemetry optionの一覧は[`nestdaq/telemetry/README.ja.md`](../nestdaq/telemetry/README.ja.md)を参照してください。
 
 | Option | 既定値 | 説明 |
 | :-- | :-- | :-- |
 | `--help`, `-h` | none | command-line helpを表示して終了します。 |
-| `--http-uri` | `http://0.0.0.0:8080` | `scheme://address:port`形式のHTTP server uniform resource identifier(URI)。 |
+| `--http-uri` | `http://0.0.0.0:8080` | `scheme://address:port`形式のHTTP server uniform resource identifier (URI)。 |
 | `--threads` | `1` | HTTP server worker thread数。 |
 | `--doc-root` | installed controller document root | HTMLとstatic fileを配信するdirectory。 |
 | `--pre-run` | `echo "pre-run command"` | `RUN`をpublishする前に実行するscript pathまたはcommand line。 |
@@ -172,7 +172,7 @@ OpenTelemetry optionの一覧とresource attributeの詳細は[`nestdaq/telemetr
 ## 6. Redisコマンドインターフェース
 
 `daq-webctl`は`daq_service` pluginが実装するRedis command interfaceを使用します。
-DAQ command key、`daqctl` Publish/Subscribe(Pub/Sub)channel、message形式、受け付けるcommand value、および`RUN`/`STOP` sequenceについては、[`plugins/README.ja.md`](../plugins/README.ja.md#24-daq-command-publishsubscribe-pubsub)に記載されています。
+DAQ command key、`daqctl` Publish/Subscribe (Pub/Sub) channel、message形式、受け付けるcommand value、および`RUN`/`STOP` sequenceについては、[`plugins/README.ja.md`](../plugins/README.ja.md#24-daq-command-publishsubscribe-pubsub)に記載されています。
 
 起動時に`daq-webctl`はRedis `notify-keyspace-events`を`AKE`に設定し、expired key eventを含むkey-event notificationを受信できるようにします。
 さらに、ブラウザのstate summaryを構築するため、`daq_service{sep}*{sep}*{sep}fair-mq-state`と`daq_service{sep}*{sep}*{sep}updatedTime`をpollします。

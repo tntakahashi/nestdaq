@@ -70,8 +70,8 @@
   局所的な可読性、外部libraryの規約、または一般的な短縮形に従って構いません。
 - `public struct`のdata field: `snake_case`。
 - `private`および`protected`の`class` data member: `fPascalCase`。
-- `static` data member: `fg`で開始します(例: `fgPascalCase`)。
-- `static` variable: `g`で開始します(例: `gPascalCase`)。
+- `static` data member: `fg`で開始します (例: `fgPascalCase`)。
+- `static` variable: `g`で開始します (例: `gPascalCase`)。
 - constant: `k`で開始する`kPascalCase`、または`SCREAMING_SNAKE_CASE`を使用します。
 - macro名: `SCREAMING_SNAKE_CASE`。
 - enum constant: `kPascalCase`、`PascalCase` / `UpperCamelCase`、または`SCREAMING_SNAKE_CASE`。

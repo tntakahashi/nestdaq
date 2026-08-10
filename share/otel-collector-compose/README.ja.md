@@ -4,7 +4,7 @@
 
 [トップ: NestDAQ](../../README.ja.md) | [前へ: Redis container](../redis-stack-container/README.ja.md) | [次へ: OpenSearch設定](opensearch/README.ja.md)
 
-この文書で**Compose**とは、Docker Compose (`docker compose`)またはPodman Compose (`podman compose`)を指します。
+この文書で**Compose**とは、Docker Compose (`docker compose`) またはPodman Compose (`podman compose`) を指します。
 このディレクトリには、ローカル検証用のCompose構成が含まれています。
 各構成はOpenTelemetry CollectorでOpenTelemetryデータを受信し、選択したバックエンドに保存します。
 
@@ -18,7 +18,7 @@
 - [`opensearch/`](opensearch/README.ja.md): OpenSearchにログとトレースを保存し、OpenSearch Dashboardsで表示します。
 - [`victoria/`](victoria/README.ja.md): VictoriaLogs、VictoriaMetrics、VictoriaTracesにログ、メトリクス、トレースを保存し、Grafanaで表示します。
   このバックエンドは実験的で、まだ十分に検証されていません。
-- [`clickhouse/`](clickhouse/README.ja.md): ClickStackにログ、メトリクス、トレースを保存し、ClickStackユーザーインターフェース(UI)で表示します。
+- [`clickhouse/`](clickhouse/README.ja.md): ClickStackにログ、メトリクス、トレースを保存し、ClickStackユーザーインターフェース (UI) で表示します。
   このバックエンドは実験的で、まだ十分に検証されていません。
 
 <a id="1-start"></a>
@@ -106,4 +106,4 @@ OTLP HTTPでは、`/v1/logs`、`/v1/metrics`、`/v1/traces`など、テレメト
 すべてのスタックは固定されたデフォルトのイメージを使用します。
 バックエンドのREADMEに記載された環境変数でイメージを上書きできます。
 
-Security-Enhanced Linux(SELinux)が有効なシステムでは、Composeファイルがbind mountされたパスに`:Z`ラベルオプションを適用します。
+Security-Enhanced Linux (SELinux) が有効なシステムでは、Composeファイルがbind mountされたパスに`:Z`ラベルオプションを適用します。
