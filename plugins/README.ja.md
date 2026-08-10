@@ -351,14 +351,17 @@ suffixを省略して`autoSubChannel=false`を設定した場合、`TopologyConf
 #### 2.5.3. bind/connectシーケンス
 
 `TopologyConfig`はFairMQ state transition中にRedisを通じてbind endpointとconnect endpointを同期します。
+次の図にある`Device`、`TopologyConfig`、`FairMQ property`は、同じNestDAQ device processに属します。
+Redis serverおよび各peer deviceは、それぞれ別のprocessで動作します。
 
 ```mermaid
 sequenceDiagram
     participant Device
     participant TopologyConfig
-    participant Redis
-    participant PeerDevices as Peer device
     participant FairMQProperties as FairMQ property
+    participant Redis as Redis server<br/>(別process)
+    participant PeerDevices as Peer device process<br/>(別process)
+    Note over Device,FairMQProperties: 同じNestDAQ device process
 
     Device->>TopologyConfig: InitializingDevice
     TopologyConfig->>Redis: topology endpointとlinkを読み取る

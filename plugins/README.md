@@ -342,14 +342,17 @@ The current unindexed `autoSubChannel=true` path does not match the stored `chan
 #### 2.5.3. Bind/Connect Sequence
 
 `TopologyConfig` synchronizes bind and connect endpoints through Redis during FairMQ state transitions.
+`Device`, `TopologyConfig`, and `FairMQ properties` in the following diagram belong to the same NestDAQ device process.
+The Redis server and each peer device run in separate processes.
 
 ```mermaid
 sequenceDiagram
     participant Device
     participant TopologyConfig
-    participant Redis
-    participant PeerDevices as Peer devices
     participant FairMQProperties as FairMQ properties
+    participant Redis as Redis server<br/>(separate process)
+    participant PeerDevices as Peer device processes<br/>(separate processes)
+    Note over Device,FairMQProperties: Same NestDAQ device process
 
     Device->>TopologyConfig: InitializingDevice
     TopologyConfig->>Redis: read topology endpoints and links
