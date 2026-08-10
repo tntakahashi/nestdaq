@@ -56,7 +56,7 @@ Redis serverの正確なpatch versionが必要な場合は、起動後に上記�
 
 - Redis: `localhost:6379`
 
-scriptは、scriptの隣にある`redis-8.2.7-data`をcontainer内の`/data`へbind mountします。
+scriptは、scriptの隣にある`redis-8.2.7-data/`をcontainer内の`/data/`へbind mountします。
 このhelperは公式Redis imageを使用するため、`REDIS_ARGS`に指定した追加のRedis server argumentをcontainer commandのargumentとして渡します。
 
 <a id="3-start-redis-stack-72"></a>
@@ -96,8 +96,8 @@ Redis Stack Serverだけを実行します。
 - Redis: `localhost:6379`
 - RedisInsight: `http://localhost:8001`
 
-scriptは、scriptの隣にある`redis-stack-data`をcontainer内の`/data`へbind mountします。
-さらに、`redisinsight-data`を`/redisinsight`へbind mountします。
+scriptは、scriptの隣にある`redis-stack-data/`をcontainer内の`/data/`へbind mountします。
+さらに、`redisinsight-data/`を`/redisinsight/`へbind mountします。
 RedisInsightは、mountされたdirectory内に内部subdirectoryを作成できます。
 
 <a id="5-start-redis-stack-server-only"></a>
@@ -114,7 +114,7 @@ RedisInsightは、mountされたdirectory内に内部subdirectoryを作成でき
 
 - Redis: `localhost:6379`
 
-scriptは、scriptの隣にある`redis-stack-server-data`をcontainer内の`/data`へbind mountします。
+scriptは、scriptの隣にある`redis-stack-server-data/`をcontainer内の`/data/`へbind mountします。
 
 <a id="6-rerun-behavior"></a>
 ## 6. 再実行時の動作
@@ -207,10 +207,10 @@ bind mount用data directoryは`THIS_SCRIPT_DIR`からの相対pathです。
 | `REDIS_INSIGHT_PORT` | `8001` | RedisInsight port `8001`に割り当てるhost port。RedisInsightを含むhelperだけで使用します。 |
 | `REDIS_CONTAINER_RUN_FLAGS` | `--rm -it` | `docker run`または`podman run`へ渡すflag。非対話的な検証には`-d --rm`を使用します。 |
 | `REDIS_VOLUME_MODE` | `bind` | storage mode。host bind mountには`bind`、named volumeには`volume`を使用します。 |
-| `REDIS_DATA_VOLUME` | container nameに基づくvolume | `/data`にmountするnamed volume。`volume` modeだけで使用します。 |
-| `REDIS_INSIGHT_VOLUME` | container nameに基づくvolume | `/redisinsight`にmountするnamed volume。RedisInsightを含むhelperの`volume` modeだけで使用します。 |
-| `REDIS_DATA_DIR` | scriptの隣のdata directory | `/data`にbind mountするhost directory。`bind` modeだけで使用します。 |
-| `REDIS_INSIGHT_DATA_DIR` | script固有のRedisInsight data directory | `/redisinsight`にbind mountするhost directory。RedisInsightを含むhelperの`bind` modeだけで使用します。 |
+| `REDIS_DATA_VOLUME` | container nameに基づくvolume | `/data/`にmountするnamed volume。`volume` modeだけで使用します。 |
+| `REDIS_INSIGHT_VOLUME` | container nameに基づくvolume | `/redisinsight/`にmountするnamed volume。RedisInsightを含むhelperの`volume` modeだけで使用します。 |
+| `REDIS_DATA_DIR` | scriptの隣のdata directory | `/data/`にbind mountするhost directory。`bind` modeだけで使用します。 |
+| `REDIS_INSIGHT_DATA_DIR` | script固有のRedisInsight data directory | `/redisinsight/`にbind mountするhost directory。RedisInsightを含むhelperの`bind` modeだけで使用します。 |
 | `REDIS_VOLUME_LABEL` | `Z` | SELinux bind mount label option。`bind` modeだけで使用します。共有labelingには`z`、無効にするには空の値を使用します。 |
 | `REDIS_ARGS` | 空 | 追加のRedis server argument。Redis Stack imageではimageの`REDIS_ARGS` environment variableを通して渡され、公式Redis 8.2.7 helperではcommand argumentとして渡されます。 |
 | `REDIS_ARGS_MODE` | `env`または`argv` | `run-redis-stack-server.sh`が使用するargumentの受け渡しmode。Redis Stack imageには`env`、公式Redis imageには`argv`を使用します。 |

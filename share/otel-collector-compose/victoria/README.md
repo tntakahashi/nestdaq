@@ -84,7 +84,7 @@ A NestDAQ device container or `daq-webctl` container in the same Compose network
 | `VICTORIAMETRICS_DATA_DIR` | `./victoriametrics-data` | Host directory for VictoriaMetrics data. |
 | `VICTORIALOGS_DATA_DIR` | `./victorialogs-data` | Host directory for VictoriaLogs data. |
 | `VICTORIATRACES_DATA_DIR` | `./victoriatraces-data` | Host directory for VictoriaTraces data. |
-| `GRAFANA_DATA_DIR` | `./grafana-data` | Host directory bind-mounted to `/var/lib/grafana`. |
+| `GRAFANA_DATA_DIR` | `./grafana-data` | Host directory bind-mounted to `/var/lib/grafana/`. |
 | `GRAFANA_ADMIN_PASSWORD` | `admin` | Grafana admin password. |
 | `GRAFANA_PROVISIONING_DIR` | `./grafana/provisioning` | Grafana provisioning directory. |
 | `OTEL_COLLECTOR_CONFIG_FILE` | `./otel-collector-config-victoria.yaml` | Collector config file. |

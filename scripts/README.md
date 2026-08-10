@@ -22,7 +22,7 @@ services and register the required configuration before starting devices with
 
 - Start a Redis server.
 - Start an OpenTelemetry Collector backend, for example the Compose setup run
-  with `docker compose` or `podman compose` under `share/otel-collector-compose`.
+  with `docker compose` or `podman compose` under `share/otel-collector-compose/`.
 - Start `daq-webctl` if you want to control devices from the browser user
   interface.
 - Register topology settings in Redis with a `topology-*.sh` script.
@@ -469,7 +469,7 @@ Generator options:
 
 | Option | Default | Description |
 | :-- | :-- | :-- |
-| `--output DIR`, `-o DIR` | `./CLASS_NAME` | Write generated files under `DIR`. |
+| `--output DIR`, `-o DIR` | `./CLASS_NAME/` | Write generated files under `DIR`. |
 | `--force` | off | Overwrite existing generated files. |
 | `--dry-run` | off | Print the files that would be generated without writing them. |
 | `--interactive` | off | Prompt for generation choices instead of specifying all options on the command line. |

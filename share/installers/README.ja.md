@@ -10,7 +10,7 @@
 
 これらのscriptは、管理者が管理するhostでの利用を想定しています。
 rootとして実行しない場合は`sudo`を使用します。
-packageは`/usr`、`/etc`、package managerのrepository directory、systemd unit directoryなど、systemが管理する場所にインストールされるため、root権限が必要です。
+packageは`/usr/`、`/etc/`、package managerのrepository directory、systemd unit directoryなど、systemが管理する場所にインストールされるため、root権限が必要です。
 
 DebianおよびUbuntuでは`apt-get`を使用します。
 AlmaLinux、Rocky Linux、RHEL、CentOS、FedoraなどのRHEL系systemでは`dnf`を優先し、`dnf`が利用できない場合は`yum`を使用します。

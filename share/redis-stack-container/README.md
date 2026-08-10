@@ -54,7 +54,7 @@ Default endpoint:
 
 - Redis: `localhost:6379`
 
-The script bind-mounts `redis-8.2.7-data`, located next to the script, at `/data` in the container.
+The script bind-mounts `redis-8.2.7-data/`, located next to the script, at `/data/` in the container.
 Because this helper uses the official Redis image, it passes additional Redis server arguments from `REDIS_ARGS` as container command arguments.
 
 ## 3. Start Redis Stack 7.2
@@ -92,8 +92,8 @@ Default endpoints:
 - Redis: `localhost:6379`
 - RedisInsight: `http://localhost:8001`
 
-The script bind-mounts `redis-stack-data`, located next to the script, at `/data` in the container.
-It also bind-mounts `redisinsight-data` at `/redisinsight`, allowing RedisInsight to create its internal subdirectories within that directory.
+The script bind-mounts `redis-stack-data/`, located next to the script, at `/data/` in the container.
+It also bind-mounts `redisinsight-data/` at `/redisinsight/`, allowing RedisInsight to create its internal subdirectories within that directory.
 
 ## 5. Start Redis Stack Server Only
 
@@ -108,7 +108,7 @@ Default endpoint:
 
 - Redis: `localhost:6379`
 
-The script bind-mounts `redis-stack-server-data`, located next to the script, at `/data` in the container.
+The script bind-mounts `redis-stack-server-data/`, located next to the script, at `/data/` in the container.
 
 ## 6. Rerun Behavior
 
@@ -196,10 +196,10 @@ Bind-mounted data directories are relative to `THIS_SCRIPT_DIR`, so a copied ins
 | `REDIS_INSIGHT_PORT` | `8001` | Host port mapped to RedisInsight port `8001`; used only by RedisInsight-enabled helpers. |
 | `REDIS_CONTAINER_RUN_FLAGS` | `--rm -it` | Flags passed to `docker run` or `podman run`. Use `-d --rm` for non-interactive validation. |
 | `REDIS_VOLUME_MODE` | `bind` | Storage mode. Use `bind` for host bind mounts or `volume` for named volumes. |
-| `REDIS_DATA_VOLUME` | Container-name-based volume | Named volume mounted to `/data`; used only in `volume` mode. |
-| `REDIS_INSIGHT_VOLUME` | Container-name-based volume | Named volume mounted to `/redisinsight`; used only by RedisInsight-enabled helpers in `volume` mode. |
-| `REDIS_DATA_DIR` | Data directory next to the script | Host directory bind-mounted to `/data`; used only in `bind` mode. |
-| `REDIS_INSIGHT_DATA_DIR` | Script-specific RedisInsight data directory | Host directory bind-mounted to `/redisinsight`; used only by RedisInsight-enabled helpers in `bind` mode. |
+| `REDIS_DATA_VOLUME` | Container-name-based volume | Named volume mounted to `/data/`; used only in `volume` mode. |
+| `REDIS_INSIGHT_VOLUME` | Container-name-based volume | Named volume mounted to `/redisinsight/`; used only by RedisInsight-enabled helpers in `volume` mode. |
+| `REDIS_DATA_DIR` | Data directory next to the script | Host directory bind-mounted to `/data/`; used only in `bind` mode. |
+| `REDIS_INSIGHT_DATA_DIR` | Script-specific RedisInsight data directory | Host directory bind-mounted to `/redisinsight/`; used only by RedisInsight-enabled helpers in `bind` mode. |
 | `REDIS_VOLUME_LABEL` | `Z` | SELinux bind-mount label option; used only in `bind` mode. Use `z` for shared labeling or an empty value to disable. |
 | `REDIS_ARGS` | empty | Extra Redis server arguments. Redis Stack images receive this through the image `REDIS_ARGS` environment variable; the official Redis 8.2.7 helper passes it as command arguments. |
 | `REDIS_ARGS_MODE` | `env` or `argv` | Argument passing mode used by `run-redis-stack-server.sh`. Use `env` for Redis Stack images and `argv` for official Redis images. |

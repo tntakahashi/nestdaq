@@ -226,7 +226,7 @@ Create a working branch in your fork before modifying the source; see [`CONTRIBU
 
 ### 2.2 Build and installation procedure
 
-The remaining commands build whichever branch is checked out in `nestdaq`.
+The remaining commands build whichever branch is checked out in `nestdaq/`.
 
 ```bash
 # Configure an out-of-source dependency build under ./build-external
@@ -246,7 +246,7 @@ cmake --build ./build-external
   The `nproc` command prints the number of available CPU cores; specify a smaller value if the build consumes too much memory.
 - The default dependency versions are listed below.
   To override a version, pass `-Dxxxx_VERSION=yyyy` to CMake.
-- If Doxygen is found during the external dependency configure step, `doxygen-awesome-css` is installed as an optional documentation asset under `./install/share/doxygen-awesome-css`.
+- If Doxygen is found during the external dependency configure step, `doxygen-awesome-css` is installed as an optional documentation asset under `./install/share/doxygen-awesome-css/`.
 - To use Ninja instead of Make, add `-G Ninja` to the CMake options.
 - To use `mold` instead of the system `ld`, add the linker flags appropriate for the GCC version:
   - GCC 12.1 or later: add `-DCMAKE_EXE_LINKER_FLAGS="-fuse-ld=mold"` and `-DCMAKE_SHARED_LINKER_FLAGS="-fuse-ld=mold"` to the CMake options.
@@ -299,7 +299,7 @@ For Redis 7.x maintenance settings, inspect `cmake/dependencies/redis-server-7.c
 #### 2.4.1 Redis Server, Redis Modules, and Redis Web GUI
 
 The standard NestDAQ plugin set requires Redis server and RedisTimeSeries while the plugins run, but they are not direct library dependencies.
-See the [`plugins` documentation](plugins/README.md) for the requirements of each plugin.
+See the [`plugins/` documentation](plugins/README.md) for the requirements of each plugin.
 [Redis Stack](https://redis.io/about/redis-stack/) combines Redis with RedisBloom, RediSearch, RedisJSON, and RedisTimeSeries.
 Redis Stack Server contains Redis and these modules.
 Starting with Redis 8, [the capabilities previously provided by these modules are built into Redis Open Source](https://redis.io/docs/latest/operate/oss_and_stack/stack-with-enterprise/modules-lifecycle/), which replaces the separate Redis Stack distribution.
@@ -354,7 +354,7 @@ See [`share/installers/README.md`](share/installers/README.md) for package and s
 
 If a container or host package provides Redis Stack, add `-DWITH_REDIS_STACK=OFF` to the external dependency configure command.
 The Redis Stack CMake files and helper shell scripts under `cmake/dependencies/` are intended for Redis 8 or later.
-Redis 7.x uses a separate CMake path because RedisTimeSeries 1.x is built as a standalone module rather than through the Redis 8 `redis/modules` tree.
+Redis 7.x uses a separate CMake path because RedisTimeSeries 1.x is built as a standalone module rather than through the Redis 8 `redis/modules/` tree.
 
 By default, the package installer installs Redis 8.2.7 with Redis Stack modules but without RedisInsight.
 When RedisInsight is required and the repository provides the package, use the Redis Stack container helper or set `REDIS_PACKAGE=redis-stack` and `REDIS_VERSION=latest`.
@@ -394,10 +394,10 @@ cmake --build ./build --parallel $(nproc)
 cmake --install ./build
 ```
 
-- The example installs both the main NestDAQ package and its external dependencies in `./install`.
+- The example installs both the main NestDAQ package and its external dependencies in `./install/`.
   If the external dependencies are installed elsewhere, specify their location with `-DCMAKE_PREFIX_PATH=xxx`.
-- When `doxygen-awesome-css` is available, it is installed with the generated documentation under `./install/share/doc/nestdaq/doxygen-awesome-css`.
-- When `-DNestDAQ_BUILD_DOCS=ON` and Doxygen is available, the HTML documentation is generated under `./build/docs/html` and installed under `./install/share/doc/nestdaq/html`.
+- When `doxygen-awesome-css` is available, it is installed with the generated documentation under `./install/share/doc/nestdaq/doxygen-awesome-css/`.
+- When `-DNestDAQ_BUILD_DOCS=ON` and Doxygen is available, the HTML documentation is generated under `./build/docs/html/` and installed under `./install/share/doc/nestdaq/html/`.
 
 ### Verbose CMake builds
 
@@ -476,7 +476,7 @@ See [`share/otel-collector-compose/README.md`](share/otel-collector-compose/READ
 
 For host package installation and systemd-managed services, use [`share/installers/README.md`](share/installers/README.md).
 Those scripts use `apt-get` on Debian and Ubuntu systems and `dnf` or `yum` on RHEL-family systems.
-They install files in system-managed locations such as `/usr` and `/etc`.
+They install files in system-managed locations such as `/usr/` and `/etc/`.
 
 ## 4. Examples
 
@@ -486,4 +486,4 @@ See [`examples/README.md`](examples/README.md) for details about their behavior,
 
 Installing FairMQ also installs several FairMQ example executables and their launch scripts because FairMQ enables `BUILD_EXAMPLES` by default.
 These `fairmq-ex-*` and `fairmq-start-ex-*` files are provided by FairMQ and are separate from the three NestDAQ examples described here.
-FairMQ also installs the generic device executables `fairmq-bsampler`, `fairmq-merger`, `fairmq-multiplier`, `fairmq-proxy`, `fairmq-sink`, and `fairmq-splitter` from its `fairmq/devices` directory.
+FairMQ also installs the generic device executables `fairmq-bsampler`, `fairmq-merger`, `fairmq-multiplier`, `fairmq-proxy`, `fairmq-sink`, and `fairmq-splitter` from its `fairmq/devices/` directory.

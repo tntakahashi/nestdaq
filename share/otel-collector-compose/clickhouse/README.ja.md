@@ -74,9 +74,9 @@ http://localhost:4318/v1/traces
 | `CLICKHOUSE_HTTP_PORT` | `8123` | ClickHouse HTTPに割り当てるホストポート。 |
 | `OTEL_COLLECTOR_GRPC_PORT` | `4317` | OTLP gRPCに割り当てるホストポート。 |
 | `OTEL_COLLECTOR_HTTP_PORT` | `4318` | OTLP HTTPに割り当てるホストポート。 |
-| `CLICKSTACK_DB_DIR` | `./clickstack-db` | `/data/db`にbind mountするホストディレクトリ。 |
-| `CLICKSTACK_CLICKHOUSE_DATA_DIR` | `./clickstack-clickhouse-data` | `/var/lib/clickhouse`にbind mountするホストディレクトリ。 |
-| `CLICKSTACK_CLICKHOUSE_LOG_DIR` | `./clickstack-clickhouse-logs` | `/var/log/clickhouse-server`にbind mountするホストディレクトリ。 |
+| `CLICKSTACK_DB_DIR` | `./clickstack-db` | `/data/db/`にbind mountするホストディレクトリ。 |
+| `CLICKSTACK_CLICKHOUSE_DATA_DIR` | `./clickstack-clickhouse-data` | `/var/lib/clickhouse/`にbind mountするホストディレクトリ。 |
+| `CLICKSTACK_CLICKHOUSE_LOG_DIR` | `./clickstack-clickhouse-logs` | `/var/log/clickhouse-server/`にbind mountするホストディレクトリ。 |
 
 <a id="5-stop"></a>
 ## 5. 停止

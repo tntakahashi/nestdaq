@@ -79,7 +79,7 @@ NestDAQテレメトリーはexport前に`service.name`内のASCII大文字を小
 
 OpenSearchはコンテナー内の`uid=1000,gid=1000`で実行されます。
 ここで`uid/gid`はuser identifier/group identifierを意味します。
-rootless Podmanでは、`/usr/share/opensearch/data`にbind mountするホストディレクトリが、Podmanのユーザー名前空間から見たコンテナーのuid/gidによって読み書きできる必要があります。
+rootless Podmanでは、`/usr/share/opensearch/data/`にbind mountするホストディレクトリが、Podmanのユーザー名前空間から見たコンテナーのuid/gidによって読み書きできる必要があります。
 
 ```bash
 # Podmanのユーザー名前空間内で、コンテナーのユーザー用にデータディレクトリを準備します。
@@ -114,7 +114,7 @@ OpenSearchコンテナープロセスのuser IDは変更されず、コンテナ
 | `OPENSEARCH_DASHBOARDS_PORT` | `5601` | OpenSearch Dashboardsに割り当てるホストポート。 |
 | `OTEL_COLLECTOR_GRPC_PORT` | `4317` | OTLP gRPCに割り当てるホストポート。 |
 | `OTEL_COLLECTOR_HTTP_PORT` | `4318` | OTLP HTTPに割り当てるホストポート。 |
-| `OPENSEARCH_DATA_DIR` | `./opensearch-data` | `/usr/share/opensearch/data`にbind mountするホストディレクトリ。 |
+| `OPENSEARCH_DATA_DIR` | `./opensearch-data` | `/usr/share/opensearch/data/`にbind mountするホストディレクトリ。 |
 | `OTEL_COLLECTOR_CONFIG_FILE` | `./otel-collector-config-opensearch.yaml` | Collector設定ファイル。 |
 | `OPENSEARCH_DASHBOARDS_CONFIG_FILE` | `./opensearch_dashboards.yaml` | OpenSearch Dashboards設定ファイル。 |
 | `OPENSEARCH_DASHBOARDS_SETUP_SCRIPT` | `./opensearch-dashboards/setup-dashboards.js` | Dashboards初期設定script。 |
@@ -137,7 +137,7 @@ podman compose -f compose-opensearch.yaml down
 ```
 
 `down`ではOpenSearchデータディレクトリを削除しません。
-デフォルトでは`./opensearch-data`が`/usr/share/opensearch/data`にbind mountされます。
+デフォルトでは`./opensearch-data/`が`/usr/share/opensearch/data/`にbind mountされます。
 同じ`OPENSEARCH_DATA_DIR`でこのCompose構成を再び起動すると、OpenSearchは以前のデータを再利用します。
 
 保存されたログ、トレース、index、OpenSearch metadataを破棄したい場合に限り、OpenSearchデータディレクトリを削除してください。

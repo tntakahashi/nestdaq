@@ -86,7 +86,7 @@ http://victoriatraces:10428/insert/opentelemetry/v1/traces
 | `VICTORIAMETRICS_DATA_DIR` | `./victoriametrics-data` | VictoriaMetricsデータ用のホストディレクトリ。 |
 | `VICTORIALOGS_DATA_DIR` | `./victorialogs-data` | VictoriaLogsデータ用のホストディレクトリ。 |
 | `VICTORIATRACES_DATA_DIR` | `./victoriatraces-data` | VictoriaTracesデータ用のホストディレクトリ。 |
-| `GRAFANA_DATA_DIR` | `./grafana-data` | `/var/lib/grafana`にbind mountするホストディレクトリ。 |
+| `GRAFANA_DATA_DIR` | `./grafana-data` | `/var/lib/grafana/`にbind mountするホストディレクトリ。 |
 | `GRAFANA_ADMIN_PASSWORD` | `admin` | Grafana管理者パスワード。 |
 | `GRAFANA_PROVISIONING_DIR` | `./grafana/provisioning` | Grafana provisioningディレクトリ。 |
 | `OTEL_COLLECTOR_CONFIG_FILE` | `./otel-collector-config-victoria.yaml` | Collector設定ファイル。 |

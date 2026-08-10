@@ -9,7 +9,7 @@ They provide an alternative to the local **Compose** examples, where Compose mea
 
 The scripts are intended for hosts managed by an administrator.
 They use `sudo` unless run as root.
-Because they install packages into system-managed locations such as `/usr`, `/etc`, package-manager repository directories, and systemd unit directories, they require root privileges.
+Because they install packages into system-managed locations such as `/usr/`, `/etc/`, package-manager repository directories, and systemd unit directories, they require root privileges.
 
 On Debian and Ubuntu systems, the scripts use `apt-get`.
 On RHEL-family systems such as AlmaLinux, Rocky Linux, RHEL, CentOS, and Fedora, the scripts prefer `dnf` and fall back to `yum` when `dnf` is unavailable.

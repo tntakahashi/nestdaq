@@ -238,7 +238,7 @@ source codeを変更する前に、自身のfork内で作業ブランチを作�
 <a id="22-build-and-install-the-external-dependencies"></a>
 ### 2.2 外部依存関係のビルドとインストール方法
 
-以下のコマンドは、`nestdaq`でcheckoutされているbranchをビルドします。
+以下のコマンドは、`nestdaq/`でcheckoutされているbranchをビルドします。
 
 ```bash
 # ./build-externalにout-of-sourceの依存関係ビルドをconfigure
@@ -258,7 +258,7 @@ cmake --build ./build-external
   `nproc`commandはsystemで使用可能なCPU core数を表示するため、メモリー使用量が過大になる場合は、より小さい値を指定してください。
 - 依存関係のデフォルトバージョンを以下に示します。
   バージョンを上書きするには、CMakeに`-Dxxxx_VERSION=yyyy`を渡します。
-- 外部依存関係の構成時にDoxygenが見つかった場合、ドキュメント表示用の追加ファイルとして`doxygen-awesome-css`を`./install/share/doxygen-awesome-css`以下にインストールします。
+- 外部依存関係の構成時にDoxygenが見つかった場合、ドキュメント表示用の追加ファイルとして`doxygen-awesome-css`を`./install/share/doxygen-awesome-css/`以下にインストールします。
 - Makeの代わりにNinjaを使用するには、CMakeオプションに`-G Ninja`を追加します。
 - systemの`ld`の代わりに`mold`を使用する場合は、GCC versionに応じたlinker flagを追加します。
   - GCC 12.1以降: CMake optionに`-DCMAKE_EXE_LINKER_FLAGS="-fuse-ld=mold"`と`-DCMAKE_SHARED_LINKER_FLAGS="-fuse-ld=mold"`を追加します。
@@ -314,7 +314,7 @@ Redis 7.xの保守用設定については`cmake/dependencies/redis-server-7.cma
 #### 2.4.1 Redis server、Redis module、Redis Web GUI
 
 標準のNestDAQ plugin構成では、pluginの動作中にRedis serverとRedisTimeSeriesが必要ですが、これらは直接のライブラリ依存関係ではありません。
-各pluginの要件は[`plugins`のドキュメント](plugins/README.ja.md)を参照してください。
+各pluginの要件は[`plugins/`のドキュメント](plugins/README.ja.md)を参照してください。
 [Redis Stack](https://redis.io/about/redis-stack/)は、RedisにRedisBloom、RediSearch、RedisJSON、RedisTimeSeriesを組み合わせたdistributionです。
 Redis Stack ServerはRedisとこれらのmoduleを含みます。
 Redis 8以降では、[これらのmoduleが従来提供していた機能がRedis Open Sourceへ組み込まれ](https://redis.io/docs/latest/operate/oss_and_stack/stack-with-enterprise/modules-lifecycle/)、個別のRedis Stack distributionを置き換えました。
@@ -369,7 +369,7 @@ Packageおよびserviceの管理方法は[`share/installers/README.ja.md`](share
 
 Redis Stackをコンテナまたはhost packageで用意する場合は、外部依存関係のconfigure commandに`-DWITH_REDIS_STACK=OFF`を追加してください。
 `cmake/dependencies/`以下にあるRedis Stack用CMake fileとhelper shell scriptは、Redis 8以降を対象としています。
-Redis 7.xではRedisTimeSeries 1.xをRedis 8の`redis/modules`tree経由ではなくstandalone moduleとしてビルドするため、別のCMake経路を使用します。
+Redis 7.xではRedisTimeSeries 1.xをRedis 8の`redis/modules/`tree経由ではなくstandalone moduleとしてビルドするため、別のCMake経路を使用します。
 
 package installerは、デフォルトでRedis Stack moduleを含むRedis 8.2.7をインストールしますが、RedisInsightは含みません。
 RedisInsightが必要でrepositoryに該当packageがある場合は、Redis Stack container helper、または`REDIS_PACKAGE=redis-stack`と`REDIS_VERSION=latest`を使用してください。
@@ -409,10 +409,10 @@ cmake --build ./build --parallel $(nproc)
 cmake --install ./build
 ```
 
-- 上記の例では、NestDAQ main packageと外部依存関係の両方を`./install`にインストールします。
+- 上記の例では、NestDAQ main packageと外部依存関係の両方を`./install/`にインストールします。
   外部依存関係を別の場所にインストールした場合は、`-DCMAKE_PREFIX_PATH=xxx`でそのディレクトリを指定してください。
-- `doxygen-awesome-css`が利用できる場合は、生成したdocumentとともに`./install/share/doc/nestdaq/doxygen-awesome-css`へインストールします。
-- `-DNestDAQ_BUILD_DOCS=ON`でDoxygenが利用できる場合は、HTML documentを`./build/docs/html`に生成し、`./install/share/doc/nestdaq/html`へインストールします。
+- `doxygen-awesome-css`が利用できる場合は、生成したdocumentとともに`./install/share/doc/nestdaq/doxygen-awesome-css/`へインストールします。
+- `-DNestDAQ_BUILD_DOCS=ON`でDoxygenが利用できる場合は、HTML documentを`./build/docs/html/`に生成し、`./install/share/doc/nestdaq/html/`へインストールします。
 
 <a id="verbose-cmake-builds"></a>
 ### CMakeビルドの詳細表示
@@ -494,7 +494,7 @@ port、volume、認証情報、SELinux、rootless Podmanに関する注意事項
 
 host packageとしてインストールし、systemdで管理する場合は、[`share/installers/README.ja.md`](share/installers/README.ja.md)を使用してください。
 これらのscriptはDebianおよびUbuntu systemでは`apt-get`、RHEL系systemでは`dnf`または`yum`を使用します。
-fileは`/usr`や`/etc`などのsystem管理領域へインストールされます。
+fileは`/usr/`や`/etc/`などのsystem管理領域へインストールされます。
 
 <a id="4-examples"></a>
 ## 4. サンプル
@@ -505,4 +505,4 @@ NestDAQのメインビルドには、これらのサンプルがデフォルト�
 
 FairMQは`BUILD_EXAMPLES`をデフォルトで有効にするため、FairMQをインストールすると複数のFairMQ example executableと起動scriptもインストールされます。
 これらの`fairmq-ex-*`および`fairmq-start-ex-*` fileはFairMQが提供するものであり、ここで説明する3つのNestDAQサンプルとは別です。
-FairMQの`fairmq/devices`ディレクトリにあるgeneric device executableの`fairmq-bsampler`、`fairmq-merger`、`fairmq-multiplier`、`fairmq-proxy`、`fairmq-sink`、`fairmq-splitter`もインストールされます。
+FairMQの`fairmq/devices/`ディレクトリにあるgeneric device executableの`fairmq-bsampler`、`fairmq-merger`、`fairmq-multiplier`、`fairmq-proxy`、`fairmq-sink`、`fairmq-splitter`もインストールされます。

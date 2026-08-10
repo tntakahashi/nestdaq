@@ -71,9 +71,9 @@ http://localhost:4318/v1/traces
 | `CLICKHOUSE_HTTP_PORT` | `8123` | Host port mapped to ClickHouse HTTP. |
 | `OTEL_COLLECTOR_GRPC_PORT` | `4317` | Host port mapped to OTLP gRPC. |
 | `OTEL_COLLECTOR_HTTP_PORT` | `4318` | Host port mapped to OTLP HTTP. |
-| `CLICKSTACK_DB_DIR` | `./clickstack-db` | Host directory bind-mounted to `/data/db`. |
-| `CLICKSTACK_CLICKHOUSE_DATA_DIR` | `./clickstack-clickhouse-data` | Host directory bind-mounted to `/var/lib/clickhouse`. |
-| `CLICKSTACK_CLICKHOUSE_LOG_DIR` | `./clickstack-clickhouse-logs` | Host directory bind-mounted to `/var/log/clickhouse-server`. |
+| `CLICKSTACK_DB_DIR` | `./clickstack-db` | Host directory bind-mounted to `/data/db/`. |
+| `CLICKSTACK_CLICKHOUSE_DATA_DIR` | `./clickstack-clickhouse-data` | Host directory bind-mounted to `/var/lib/clickhouse/`. |
+| `CLICKSTACK_CLICKHOUSE_LOG_DIR` | `./clickstack-clickhouse-logs` | Host directory bind-mounted to `/var/log/clickhouse-server/`. |
 
 ## 5. Stop
 

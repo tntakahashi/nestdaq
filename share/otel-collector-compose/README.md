@@ -24,7 +24,7 @@ Choose one backend directory explicitly:
 ## 1. Start
 
 After installation, copy the installed setup to a working directory.
-If `./otel-collector-compose` already exists, remove it first or choose a different destination.
+If `./otel-collector-compose/` already exists, remove it first or choose a different destination.
 In the shell command examples below, lines beginning with `#` are explanatory comments for the reader and are not executed by the shell.
 
 ```bash

@@ -75,7 +75,7 @@ A NestDAQ device container or `daq-webctl` container in the same Compose network
 
 OpenSearch runs as container `uid=1000,gid=1000`.
 Here, `uid/gid` means user identifier/group identifier.
-With rootless Podman, the host directory bind-mounted to `/usr/share/opensearch/data` must be readable and writable by that container uid/gid as seen from the Podman user namespace:
+With rootless Podman, the host directory bind-mounted to `/usr/share/opensearch/data/` must be readable and writable by that container uid/gid as seen from the Podman user namespace:
 
 ```bash
 # Prepare the data directory for the container's user in the Podman user namespace.
@@ -110,7 +110,7 @@ It does not change the user ID of the OpenSearch container process, which remain
 | `OPENSEARCH_DASHBOARDS_PORT` | `5601` | Host port mapped to OpenSearch Dashboards. |
 | `OTEL_COLLECTOR_GRPC_PORT` | `4317` | Host port mapped to OTLP gRPC. |
 | `OTEL_COLLECTOR_HTTP_PORT` | `4318` | Host port mapped to OTLP HTTP. |
-| `OPENSEARCH_DATA_DIR` | `./opensearch-data` | Host directory bind-mounted to `/usr/share/opensearch/data`. |
+| `OPENSEARCH_DATA_DIR` | `./opensearch-data` | Host directory bind-mounted to `/usr/share/opensearch/data/`. |
 | `OTEL_COLLECTOR_CONFIG_FILE` | `./otel-collector-config-opensearch.yaml` | Collector config file. |
 | `OPENSEARCH_DASHBOARDS_CONFIG_FILE` | `./opensearch_dashboards.yaml` | OpenSearch Dashboards config file. |
 | `OPENSEARCH_DASHBOARDS_SETUP_SCRIPT` | `./opensearch-dashboards/setup-dashboards.js` | Initial Dashboards setup script. |
@@ -132,7 +132,7 @@ podman compose -f compose-opensearch.yaml down
 ```
 
 The `down` command does not delete the OpenSearch data directory.
-By default, `./opensearch-data` is bind-mounted to `/usr/share/opensearch/data`.
+By default, `./opensearch-data/` is bind-mounted to `/usr/share/opensearch/data/`.
 If you start this Compose setup again with the same `OPENSEARCH_DATA_DIR`, OpenSearch reuses the previous data.
 
 Delete the OpenSearch data directory only when you want to discard the stored logs, traces, indexes, and OpenSearch metadata:

@@ -23,7 +23,7 @@ NestDAQ exampleをローカル環境で実行する場合は、`start_device.sh`
 起動する前に外部serviceを起動し、必要な設定を登録します。
 
 - Redis serverを起動します。
-- `share/otel-collector-compose`配下にある、`docker compose`または`podman compose`で実行するCompose setupなどのOpenTelemetry Collector backendを起動します。
+- `share/otel-collector-compose/`配下にある、`docker compose`または`podman compose`で実行するCompose setupなどのOpenTelemetry Collector backendを起動します。
 - browser user interfaceからdeviceを制御する場合は`daq-webctl`を起動します。
 - `topology-*.sh` scriptでtopology設定をRedisへ登録します。
 - exampleが`parameter_config` pluginからparameterを読み取る場合は、`mq-param.sh`でparameter設定をRedisへ登録します。
@@ -437,7 +437,7 @@ generator option：
 
 | Option | デフォルト | 説明 |
 | :-- | :-- | :-- |
-| `--output DIR`, `-o DIR` | `./CLASS_NAME` | 生成fileを`DIR`配下へ書き込み。 |
+| `--output DIR`, `-o DIR` | `./CLASS_NAME/` | 生成fileを`DIR`配下へ書き込み。 |
 | `--force` | off | 既存の生成fileを上書き。 |
 | `--dry-run` | off | 書き込まず生成予定fileを表示。 |
 | `--interactive` | off | command lineですべて指定する代わりにgeneration choiceを対話入力。 |
