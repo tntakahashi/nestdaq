@@ -30,7 +30,7 @@ The provider must be installed and discoverable in `PATH`.
 
 ## 1. Components
 
-- `otel-collector`: receives OpenTelemetry Protocol (OTLP) logs and traces over Google remote procedure call (gRPC) and Hypertext Transfer Protocol (HTTP).
+- `otel-collector`: receives OpenTelemetry Protocol (OTLP) logs and traces over Google remote procedure call (gRPC) and HTTP.
 - `opensearch`: stores logs and traces exported by the collector.
 - `opensearch-dashboards`: provides the web user interface (UI) for OpenSearch.
 - `opensearch-dashboards-setup`: creates initial Data Views for logs and traces if they do not already exist.

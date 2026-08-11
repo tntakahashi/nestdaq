@@ -54,7 +54,7 @@ device instanceの登録、TTLのrefresh、FairMQ state、health、topology、ch
 | `--uuid` | 生成 | このNestDAQ device processのUUID。この値は、`--otel-service-instance-id`を設定しない限り、telemetryの`service.instance.id`のデフォルト値になります。`--uuid`を省略すると、標準FairMQ device wrapperは生成したtelemetry UUIDをこのpropertyへcopyします。このpropertyが存在しない場合、pluginがUUIDを生成します。 |
 | `--host-ip` | 検出値/設定値 | healthの`hostIp` fieldへ保存する、このNestDAQ device processのaddress。名前解決可能なhostnameも指定できます。省略した場合、pluginは設定されたnetwork interfaceを使用し、取得できなければdefault routeのinterfaceを使用します。 |
 | `--hostname` | 検出値/設定値 | healthの`hostName` fieldへ保存するhost name。省略した場合、pluginはoperating systemのhostnameを使用します。 |
-| `--registry-uri` | `tcp://127.0.0.1:6379/0` | DAQ service registryのRedis uniform resource identifier (URI)。 |
+| `--registry-uri` | `tcp://127.0.0.1:6379/0` | DAQ service registryのRedis URI。 |
 | `--separator` | `:` | Redis keyを構成するときのseparator。 |
 | `--max-ttl` | `5` | 一時registry keyのTTL (seconds)。 |
 | `--ttl-update-interval` | `3` | TTL refresh interval (seconds)。 |

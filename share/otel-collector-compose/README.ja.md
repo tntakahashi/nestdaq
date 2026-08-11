@@ -57,7 +57,7 @@ docker compose -f compose-clickhouse.yaml up
 Podmanでは、同じファイルを`podman compose`で使用してください。
 
 複数のスタックを同時に実行する場合は、`GRAFANA_PORT`、`CLICKSTACK_UI_PORT`、`OTEL_COLLECTOR_GRPC_PORT`、`OTEL_COLLECTOR_HTTP_PORT`など、競合するホストポートを上書きしてください。
-OTLPはOpenTelemetry Protocol、gRPCはGoogle remote procedure call、HTTPはHypertext Transfer Protocolを意味します。
+OTLPはOpenTelemetry Protocol、gRPCはGoogle remote procedure callを意味します。
 
 各バックエンドディレクトリは自己完結しています。
 バックエンドディレクトリだけをコピーし、そのコピー先からスタックを実行できます。

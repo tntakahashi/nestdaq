@@ -46,7 +46,7 @@ Production deployments should use explicit credentials, retention and backup pol
 - ClickStack UI: `http://localhost:8080`
 - ClickHouse HTTP: `http://localhost:8123`
 - OpenTelemetry Protocol (OTLP) Google remote procedure call (gRPC) receiver: `localhost:4317`
-- OTLP Hypertext Transfer Protocol (HTTP) receiver: `http://localhost:4318`
+- OTLP HTTP receiver: `http://localhost:4318`
 
 ## 3. NestDAQ Telemetry Endpoint Examples
 

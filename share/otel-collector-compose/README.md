@@ -56,7 +56,7 @@ docker compose -f compose-clickhouse.yaml up
 For Podman, use the same files with `podman compose`.
 
 If you run multiple stacks at the same time, override conflicting host ports such as `GRAFANA_PORT`, `CLICKSTACK_UI_PORT`, `OTEL_COLLECTOR_GRPC_PORT`, and `OTEL_COLLECTOR_HTTP_PORT`.
-OTLP means OpenTelemetry Protocol, gRPC means Google remote procedure call, and HTTP means Hypertext Transfer Protocol.
+OTLP means OpenTelemetry Protocol, and gRPC means Google remote procedure call.
 
 Each backend directory is self-contained.
 You can copy one backend directory and run the stack from the copied directory.

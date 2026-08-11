@@ -52,7 +52,7 @@ When an option is omitted, the plugin uses the default shown in its table.
 | `--uuid`                         | generated                  | UUID of this NestDAQ device process. This value supplies the default telemetry `service.instance.id` unless `--otel-service-instance-id` is set. When `--uuid` is omitted, the standard FairMQ device wrapper copies its generated telemetry UUID to this property; if the property is absent, the plugin generates a UUID. |
 | `--host-ip`                      | detected/configured value  | Address of this NestDAQ device process, stored in the health `hostIp` field. A resolvable hostname is accepted. If omitted, the plugin uses the configured network interface or the default-route interface. |
 | `--hostname`                     | detected/configured value  | Host name stored in the health `hostName` field. If omitted, the plugin uses the operating system hostname. |
-| `--registry-uri`                 | `tcp://127.0.0.1:6379/0`   | Redis uniform resource identifier (URI) for the DAQ service registry. |
+| `--registry-uri`                 | `tcp://127.0.0.1:6379/0`   | Redis URI for the DAQ service registry. |
 | `--separator`                    | `:`                        | Separator used when composing Redis keys. |
 | `--max-ttl`                      | `5`                        | TTL in seconds for transient registry keys. |
 | `--ttl-update-interval`          | `3`                        | TTL refresh interval in seconds. |

@@ -36,7 +36,7 @@ Applications should use `TelemetryLibrary`, `Telemetry`, `Counter`, `Histogram`,
 
 Each signal accepts a comma-separated protocol list.
 The supported protocols are `console`, `otlp-http`, and `otlp-grpc`.
-OTLP means OpenTelemetry Protocol, HTTP means Hypertext Transfer Protocol, and gRPC means Google remote procedure call.
+OTLP means OpenTelemetry Protocol, and gRPC means Google remote procedure call.
 The plugin also accepts the aliases `http`, `otlp_http`, `grpc`, and `otlp_grpc`.
 An empty protocol disables the signal.
 

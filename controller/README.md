@@ -5,7 +5,7 @@
 [Top: NestDAQ](../README.md) | [Previous: Plugins](../plugins/README.md) | [Next: Web controller assets](../share/controller/README.md)
 
 This directory contains the implementation of `daq-webctl`, the NestDAQ web controller process.
-It provides a Hypertext Transfer Protocol (HTTP) server for the browser user interface (UI), WebSocket sessions for interactive clients, and Redis-backed control operations for DAQ devices.
+It provides an HTTP server for the browser user interface (UI), WebSocket sessions for interactive clients, and Redis-backed control operations for DAQ devices.
 
 The static browser assets served by `daq-webctl` are documented separately in [`share/controller/README.md`](../share/controller/README.md).
 
@@ -96,7 +96,7 @@ See [`nestdaq/telemetry/README.md`](../nestdaq/telemetry/README.md) for the comp
 | Option | Default | Description |
 | :-- | :-- | :-- |
 | `--help`, `-h` | none | Print command-line help and exit. |
-| `--http-uri` | `http://0.0.0.0:8080` | HTTP server uniform resource identifier (URI) in `scheme://address:port` form. |
+| `--http-uri` | `http://0.0.0.0:8080` | HTTP server URI in `scheme://address:port` form. |
 | `--threads` | `1` | Number of HTTP server worker threads. |
 | `--doc-root` | installed controller document root | Directory used to serve HTML and static files. |
 | `--pre-run` | `echo "pre-run command"` | Script path or command line executed before publishing `RUN`. |

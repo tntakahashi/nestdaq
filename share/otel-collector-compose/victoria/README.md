@@ -60,7 +60,7 @@ http://victoriatraces:10428/insert/opentelemetry/v1/traces
 - VictoriaTraces: `http://localhost:10428`
 - Grafana: `http://localhost:3000`
 - OTLP Google remote procedure call (gRPC) receiver: `localhost:4317`
-- OTLP Hypertext Transfer Protocol (HTTP) receiver: `http://localhost:4318`
+- OTLP HTTP receiver: `http://localhost:4318`
 
 Host processes use the `localhost` endpoints above.
 A NestDAQ device container or `daq-webctl` container in the same Compose network should use `otel-collector:4317` for OTLP gRPC or `http://otel-collector:4318` for OTLP HTTP.

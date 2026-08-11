@@ -36,7 +36,7 @@ applicationは内部実装fileへ依存せず、`TelemetryLibrary`、`Telemetry`
 
 各signalはcomma区切りのprotocol listを受け取ります。
 対応protocolは`console`、`otlp-http`、`otlp-grpc`です。
-OTLPはOpenTelemetry Protocol、HTTPはHypertext Transfer Protocol、gRPCはGoogle remote procedure callの略です。
+OTLPはOpenTelemetry Protocol、gRPCはGoogle remote procedure callの略です。
 pluginはaliasの`http`、`otlp_http`、`grpc`、`otlp_grpc`も受け付けます。
 空のprotocolはsignalを無効にします。
 

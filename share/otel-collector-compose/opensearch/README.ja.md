@@ -31,7 +31,7 @@ Compose providerをインストールし、`PATH`から検出できるように�
 <a id="1-components"></a>
 ## 1. コンポーネント
 
-- `otel-collector`: OpenTelemetry Protocol (OTLP) のログとトレースを、Google remote procedure call (gRPC) およびHypertext Transfer Protocol (HTTP) で受信します。
+- `otel-collector`: OpenTelemetry Protocol (OTLP) のログとトレースを、Google remote procedure call (gRPC) およびHTTPで受信します。
 - `opensearch`: Collectorがexportしたログとトレースを保存します。
 - `opensearch-dashboards`: OpenSearchのWebユーザーインターフェース (UI) を提供します。
 - `opensearch-dashboards-setup`: ログとトレースの初期Data Viewが存在しない場合に作成します。

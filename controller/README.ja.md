@@ -5,7 +5,7 @@
 [トップ: NestDAQ](../README.ja.md) | [前へ: Plugin](../plugins/README.ja.md) | [次へ: Web controller assets](../share/controller/README.ja.md)
 
 このディレクトリには、NestDAQ web controller processである`daq-webctl`の実装があります。
-`daq-webctl`は、ブラウザuser interface (UI) 用のHypertext Transfer Protocol (HTTP) server、対話的client用のWebSocket session、およびRedisをbackendとするDAQ device制御操作を提供します。
+`daq-webctl`は、ブラウザuser interface (UI) 用のHTTP server、対話的client用のWebSocket session、およびRedisをbackendとするDAQ device制御操作を提供します。
 
 `daq-webctl`が配信するstatic browser assetについては、[`share/controller/README.ja.md`](../share/controller/README.ja.md)に記載されています。
 
@@ -100,7 +100,7 @@ OpenTelemetry optionの一覧は[`nestdaq/telemetry/README.ja.md`](../nestdaq/te
 | Option | 既定値 | 説明 |
 | :-- | :-- | :-- |
 | `--help`, `-h` | none | command-line helpを表示して終了します。 |
-| `--http-uri` | `http://0.0.0.0:8080` | `scheme://address:port`形式のHTTP server uniform resource identifier (URI)。 |
+| `--http-uri` | `http://0.0.0.0:8080` | `scheme://address:port`形式のHTTP server URI。 |
 | `--threads` | `1` | HTTP server worker thread数。 |
 | `--doc-root` | installed controller document root | HTMLとstatic fileを配信するdirectory。 |
 | `--pre-run` | `echo "pre-run command"` | `RUN`をpublishする前に実行するscript pathまたはcommand line。 |

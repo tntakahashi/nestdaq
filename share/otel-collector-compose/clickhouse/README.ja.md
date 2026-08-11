@@ -48,7 +48,7 @@ production環境では、明示的な認証情報、retention policy、backup po
 - ClickStack UI: `http://localhost:8080`
 - ClickHouse HTTP: `http://localhost:8123`
 - OpenTelemetry Protocol (OTLP) Google remote procedure call (gRPC) receiver: `localhost:4317`
-- OTLP Hypertext Transfer Protocol (HTTP) receiver: `http://localhost:4318`
+- OTLP HTTP receiver: `http://localhost:4318`
 
 <a id="3-nestdaq-telemetry-endpoint-examples"></a>
 ## 3. NestDAQテレメトリーエンドポイントの例
