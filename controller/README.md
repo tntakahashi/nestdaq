@@ -1,22 +1,21 @@
-# Data Acquisition (DAQ) Web Controller Implementation
+# Data Acquisition (DAQ) `daq-webctl` Implementation
 
 [English](README.md) | [日本語](README.ja.md)
 
-[Top: NestDAQ](../README.md) | [Previous: Plugins](../plugins/README.md) | [Next: Web controller browser files](../share/controller/README.md)
+[Top: NestDAQ](../README.md) | [Previous: Plugins](../plugins/README.md) | [Next: `daq-webctl` browser UI files](../share/controller/README.md)
 
 This directory contains the implementation of `daq-webctl`, the NestDAQ web controller process.
 It provides an HTTP server for the browser user interface (UI), WebSocket sessions for interactive clients, and Redis-backed control operations for DAQ devices.
 
-The static browser files served by `daq-webctl` are documented separately in [`share/controller/README.md`](../share/controller/README.md).
+The HTML, JavaScript, and CSS files served by `daq-webctl` are documented separately in [`share/controller/README.md`](../share/controller/README.md).
 
 <a id="1-runtime-role"></a>
-## 1. Controller Responsibilities
+## 1. `daq-webctl` Responsibilities
 
 `daq-webctl` listens on an HTTP endpoint, serves the configured document root, and accepts WebSocket clients.
 It translates browser commands into Redis-backed DAQ control operations and sends state updates to connected WebSocket clients.
 
-At startup, `daq-webctl` configures FairLogger output and can load the optional NestDAQ OpenTelemetry plugin through the shared telemetry loader.
-The controller does not link OpenTelemetry directly.
+At startup, `daq-webctl` configures FairLogger output and can load the optional NestDAQ OpenTelemetry plugin.
 
 ## 2. Main Components
 
@@ -30,20 +29,21 @@ The controller does not link OpenTelemetry directly.
 | `WebSocketHandle` | Dispatches JavaScript Object Notation (JSON) messages received from WebSocket clients. |
 | `WebGui` | Implements Redis-backed DAQ control, state polling, and command publication. |
 | `beast_tools` | Provides shared Boost.Beast HTTP response helpers. |
-| `DaqWebControlDefaultDocRootPath.h.in` | Generates the default installed document root path used by `--doc-root`. |
+| `DaqWebControlDefaultDocRootPath.h.in` | Generates the default installed `daq-webctl` document root path used by `--doc-root`. |
 
 ## 3. Typical Usage
 
 Lines beginning with `#` inside shell command examples are comments for the reader and are not executed by the shell.
 
 ```sh
-# Start the controller with local HTTP and Redis endpoints.
+# Start daq-webctl with local HTTP and Redis endpoints.
 daq-webctl --http-uri=http://0.0.0.0:8080 --redis-uri=tcp://127.0.0.1:6379
 ```
 
-After the process starts, open `http://localhost:8080/` or `http://localhost:8080/daq-webctl.html`.
+After `daq-webctl` starts, open `http://localhost:8080/`, `http://localhost:8080/index.html`, or `http://localhost:8080/daq-webctl.html`.
+The installed `index.html` is a symbolic link to `daq-webctl.html`, and a request for `/` resolves to `index.html`.
 The Redis server and DAQ devices must be available for control operations to succeed.
-Set the run number before entering the Running state.
+Set the run number with `daq-webctl` before a DAQ device enters the Running state.
 
 Use `daq-webctl --help` to inspect the available HTTP, Redis, FairLogger, and OpenTelemetry options.
 
@@ -60,7 +60,7 @@ sequenceDiagram
   participant Redis as Redis
   participant Device as User device process<br/>(daq_service plugin)
 
-  Browser->>WebCtl: HTTP GET / or /daq-webctl.html
+  Browser->>WebCtl: HTTP GET /, /index.html, or /daq-webctl.html
   WebCtl-->>Browser: HTML/JS/CSS
   Browser->>WebCtl: WebSocket connect
   WebCtl->>Redis: CONFIG SET notify-keyspace-events AKE
@@ -89,36 +89,35 @@ FairMQ data-channel traffic between user device processes follows a separate pat
 ## 5. Command-Line Options
 
 `daq-webctl` accepts the following options.
-OpenTelemetry options are available through the shared NestDAQ telemetry option helper for the `daq-webctl` component.
-When `--otel-service-instance-id` is not specified, `daq-webctl` records a generated universally unique identifier (UUID) in the OpenTelemetry `service.instance.id` resource attribute.
+OpenTelemetry options are also available.
+When `--otel-service-instance-id` is not specified, `daq-webctl` records a generated UUID in the OpenTelemetry `service.instance.id` resource attribute.
 See [`nestdaq/telemetry/README.md`](../nestdaq/telemetry/README.md) for the complete OpenTelemetry option list.
 
 | Option | Default | Description |
 | :-- | :-- | :-- |
 | `--help`, `-h` | none | Print command-line help and exit. |
-| `--http-uri` | `http://0.0.0.0:8080` | HTTP server URI in `scheme://address:port` form. |
+| `--http-uri` | `http://0.0.0.0:8080` | Endpoint on which `daq-webctl` listens for HTTP connections, in `scheme://address:port` form. |
 | `--threads` | `1` | Number of HTTP server worker threads. |
-| `--doc-root` | installed controller document root | Directory used to serve HTML and static files. |
+| `--doc-root` | installed `daq-webctl` document root | Directory from which `daq-webctl` serves HTML, JavaScript, and CSS files. |
 | `--pre-run` | `echo "pre-run command"` | Script path or command line executed before publishing `RUN`. |
 | `--post-run` | `echo "post-run command"` | Script path or command line executed after publishing `RUN`. |
 | `--pre-stop` | `echo "pre-stop command"` | Script path or command line executed before publishing `STOP`. |
 | `--post-stop` | `echo "post-stop command"` | Script path or command line executed after publishing `STOP`. |
-| `--redis-uri` | `tcp://127.0.0.1:6379` | Redis server URI. A database number can be included as `/N`. |
+| `--redis-uri` | `tcp://127.0.0.1:6379` | Redis server URI. Append `/N` to the URI to select database `N`; omitting it selects database `0`. |
 | `--separator` | `:` | Separator used when composing Redis key paths. |
 | `--poll-interval` | `500` | State polling interval in milliseconds. |
-| `--log-to-file` | empty | FairLogger output file. If set, console logging is disabled. |
+| `--log-to-file` | empty string (not specified) | FairLogger output file. A non-empty path enables file logging and disables console logging. |
 | `--file-severity` | `info` | FairLogger file severity. |
-| `--severity` | `info` | FairLogger console severity. |
+| `--severity` | `info` | FairLogger console severity. Set it to `nolog` to disable console logging without enabling file logging. |
 | `--verbosity` | `medium` | FairLogger verbosity. |
 | `--color` | `true` | Enable FairLogger console colors. |
 
 ### 5.1. OpenTelemetry Options
 
-`daq-webctl` uses the shared NestDAQ OpenTelemetry option helper with `daq-webctl` as the default `service.name`.
-The controller does not link OpenTelemetry directly.
-If `--otel-library` is non-empty and the library can be found, the controller loads the telemetry library dynamically when the process starts.
+The default OpenTelemetry `service.name` for `daq-webctl` is `daq-webctl`.
+If `--otel-library` is non-empty and the library can be found, `daq-webctl` loads the telemetry library dynamically when the process starts.
 
-Common controller telemetry options are:
+Common `daq-webctl` telemetry options are:
 
 | Option | Default | Description |
 | :-- | :-- | :-- |
@@ -138,7 +137,7 @@ Common controller telemetry options are:
 The following example sends `daq-webctl` logs to a local OpenTelemetry Collector by OTLP gRPC:
 
 ```sh
-# Start the controller and export its logs to the local collector over OTLP gRPC.
+# Start daq-webctl and export its logs to the local collector over OTLP gRPC.
 daq-webctl \
   --http-uri=http://0.0.0.0:8080 \
   --redis-uri=tcp://127.0.0.1:6379 \
@@ -191,7 +190,7 @@ Configured pre/post hooks run around the corresponding `RUN` and `STOP` requests
 ## 7. WebSocket Messages
 
 Browser clients send JSON commands to the WebSocket endpoint.
-The controller executes Redis operations or publishes Redis Pub/Sub messages.
+`daq-webctl` executes Redis operations or publishes Redis Pub/Sub messages.
 For `redis-publish`, [`plugins/README.md`](../plugins/README.md#24-daq-command-publishsubscribe-pubsub) documents the Redis Pub/Sub command message shape, accepted command values, and `services` / `instances` target selection rules.
 
 | Client message | Effect |
@@ -201,9 +200,9 @@ For `redis-publish`, [`plugins/README.md`](../plugins/README.md#24-daq-command-p
 | `{"command":"redis-set","name":"wait-ready","value":"true"}` | Sets one of the known `run_info` values. Valid names are `run_number`, `wait-device-ready`, and `wait-ready`. |
 | `{"command":"redis-publish","value":"RUN","services":["Sampler"],"instances":["Sampler:Sampler-0"]}` | Publishes a DAQ command to `daqctl`, with optional prerequisite command handling. |
 
-The controller sends JSON messages back to browser clients.
+`daq-webctl` sends JSON messages back to browser clients.
 
-| Controller message | Meaning |
+| `daq-webctl` message | Meaning |
 | :-- | :-- |
 | `{"type":"set run_number","value":"..."}` | Updated run number. |
 | `{"type":"set latest_run_number","value":"..."}` | Updated latest run number. |
@@ -225,4 +224,4 @@ The `state-summary-table` message contains:
 The resulting summary is broadcast to all connected WebSocket clients.
 
 Redis expired key events are processed separately.
-When a `presence` key expires, the controller derives the service and instance from the key name and updates connected clients so that the UI reflects the missing instance.
+When a `presence` key expires, `daq-webctl` derives the service and instance from the key name and updates connected clients so that the UI reflects the missing instance.
