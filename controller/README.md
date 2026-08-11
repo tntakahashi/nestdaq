@@ -110,7 +110,7 @@ See [`nestdaq/telemetry/README.md`](../nestdaq/telemetry/README.md) for the comp
 | `--poll-interval` | `500` | State polling interval in milliseconds. |
 | `--log-to-file` | empty string (not specified) | FairLogger output file. A non-empty path enables file logging and disables console logging. |
 | `--file-severity` | `info` | FairLogger file severity. |
-| `--severity` | `info` | FairLogger console severity. Set it to `nolog` to disable console logging without enabling file logging. |
+| `--severity` | `info` | FairLogger console severity. Set it to `nolog` to stop log output to the console. |
 | `--verbosity` | `medium` | FairLogger verbosity. |
 | `--color` | `true` | Enable FairLogger console colors. |
 

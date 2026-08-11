@@ -114,7 +114,7 @@ OpenTelemetry optionの一覧は[`nestdaq/telemetry/README.ja.md`](../nestdaq/te
 | `--poll-interval` | `500` | millisecond単位のstate polling interval。 |
 | `--log-to-file` | 空文字列 (未指定) | FairLogger output file。空でないpathを指定するとfile loggingを有効にし、console loggingを無効にします。 |
 | `--file-severity` | `info` | FairLogger file severity。 |
-| `--severity` | `info` | FairLogger console severity。file loggingを有効にせずconsole loggingだけを停止するには、`nolog`を指定します。 |
+| `--severity` | `info` | FairLogger console severity。consoleへのlog出力を停止するには、`nolog`を指定します。 |
 | `--verbosity` | `medium` | FairLogger verbosity。 |
 | `--color` | `true` | FairLogger console colorを有効にします。 |
 
