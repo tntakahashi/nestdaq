@@ -2,12 +2,12 @@
 
 [English](README.md) | [日本語](README.ja.md)
 
-[Top: NestDAQ](../README.md) | [Previous: Plugins](../plugins/README.md) | [Next: Web controller assets](../share/controller/README.md)
+[Top: NestDAQ](../README.md) | [Previous: Plugins](../plugins/README.md) | [Next: Web controller browser files](../share/controller/README.md)
 
 This directory contains the implementation of `daq-webctl`, the NestDAQ web controller process.
 It provides an HTTP server for the browser user interface (UI), WebSocket sessions for interactive clients, and Redis-backed control operations for DAQ devices.
 
-The static browser assets served by `daq-webctl` are documented separately in [`share/controller/README.md`](../share/controller/README.md).
+The static browser files served by `daq-webctl` are documented separately in [`share/controller/README.md`](../share/controller/README.md).
 
 <a id="1-runtime-role"></a>
 ## 1. Controller Responsibilities

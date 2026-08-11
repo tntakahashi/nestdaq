@@ -246,7 +246,7 @@ cmake --build ./build-external
   The `nproc` command prints the number of available CPU cores; specify a smaller value if the build consumes too much memory.
 - The default dependency versions are listed below.
   To override a version, pass `-Dxxxx_VERSION=yyyy` to CMake.
-- If Doxygen is found during the external dependency configure step, `doxygen-awesome-css` is installed as an optional documentation asset under `./install/share/doxygen-awesome-css/`.
+- If Doxygen is found during the external dependency configure step, the optional `doxygen-awesome-css` files are installed under `./install/share/doxygen-awesome-css/`.
 - To use Ninja instead of Make, add `-G Ninja` to the CMake options.
 - To use `mold` instead of the system `ld`, add the linker flags appropriate for the GCC version:
   - GCC 12.1 or later: add `-DCMAKE_EXE_LINKER_FLAGS="-fuse-ld=mold"` and `-DCMAKE_SHARED_LINKER_FLAGS="-fuse-ld=mold"` to the CMake options.
@@ -426,7 +426,7 @@ VERBOSE=1 cmake --build ./build
 | `NESTDAQ_ENABLE_CLANG_TIDY` | `OFF` | Run `clang-tidy` during the NestDAQ build. This requires the `clang-tidy` command, provided by `clang-tools-extra` on AlmaLinux. |
 | `NestDAQ_BUILD_DOCS` | `OFF` | Build and install Doxygen documentation. This requires `doxygen`; if Doxygen is not found, documentation generation is skipped. If `dot` from Graphviz is available, Doxygen can use it to generate diagrams. |
 | `NestDAQ_BUILD_EXAMPLES` | `ON` | Build and install `Sampler`, `Sink`, and `NullDevice` with the main NestDAQ build. Set this to `OFF` to skip them. |
-| `NESTDAQ_DOXYGEN_AWESOME_DIR` | discovered from `CMAKE_PREFIX_PATH` or install prefix | Directory containing `doxygen-awesome-css` assets used by generated documentation. |
+| `NESTDAQ_DOXYGEN_AWESOME_DIR` | discovered from `CMAKE_PREFIX_PATH` or install prefix | Directory containing the `doxygen-awesome-css` files used by generated documentation. |
 | `BUILD_TESTING` | `ON` | Build NestDAQ tests when enabled. |
 
 ## Run local OpenTelemetry Collector and backend containers

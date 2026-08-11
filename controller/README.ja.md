@@ -2,12 +2,12 @@
 
 [English](README.md) | [日本語](README.ja.md)
 
-[トップ: NestDAQ](../README.ja.md) | [前へ: Plugin](../plugins/README.ja.md) | [次へ: Web controller assets](../share/controller/README.ja.md)
+[トップ: NestDAQ](../README.ja.md) | [前へ: Plugin](../plugins/README.ja.md) | [次へ: Web controller用ブラウザーfile](../share/controller/README.ja.md)
 
 このディレクトリには、NestDAQ web controller processである`daq-webctl`の実装があります。
 `daq-webctl`は、ブラウザuser interface (UI) 用のHTTP server、対話的client用のWebSocket session、およびRedisをbackendとするDAQ device制御操作を提供します。
 
-`daq-webctl`が配信するstatic browser assetについては、[`share/controller/README.ja.md`](../share/controller/README.ja.md)に記載されています。
+`daq-webctl`が配信するstatic browser fileについては、[`share/controller/README.ja.md`](../share/controller/README.ja.md)に記載されています。
 
 <a id="1-controller-responsibilities"></a>
 ## 1. コントローラーの役割

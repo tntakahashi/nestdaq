@@ -15,7 +15,7 @@ For build commands, dependency versions, and user-facing options, see [`INSTALL.
 | `NestDAQBuildSettings.cmake` | Helper functions for optional `clang-tidy` integration and install RPATH setup. |
 | `GitHelper.cmake` | Reads Git tag, commit, branch, dirty-state, and remote metadata used to derive the project version. |
 | `NestDAQExamplesStandalone.cmake` | Shared setup used when `examples/` is configured as its own standalone CMake project. |
-| `PatchDoxygenAwesomeCssRefs.cmake` | Post-processes generated Doxygen HTML so pages refer to the installed `doxygen-awesome-css` asset path. |
+| `PatchDoxygenAwesomeCssRefs.cmake` | Post-processes generated Doxygen HTML so pages refer to the installed `doxygen-awesome-css` file path. |
 
 ## 2. Installed Package Files
 
@@ -51,7 +51,7 @@ The [Redis Stack](../INSTALL.md#external-runtime-components) build also uses `Fe
 | `dependencies/fmt.cmake` | Builds fmt when required by spdlog or selected explicitly by dependency options. |
 | `dependencies/redis-stack.cmake` | Builds Redis Stack components for Redis 8 or later: Redis, RedisBloom, RediSearch, RedisJSON, and RedisTimeSeries. The default Redis 8.2.7 module versions follow the release tags selected by Redis 8.2.7 itself. |
 | `dependencies/redis-server-7.cmake` | Builds Redis 7.x server with standalone RedisTimeSeries. Redis 7.4 uses Redis 7.4.9 and RedisTimeSeries 1.12.14 by default; Redis 7.2 uses Redis 7.2.14 and RedisTimeSeries 1.10.24 by default. |
-| `dependencies/doxygen-awesome-css.cmake` | Builds or installs the doxygen-awesome-css assets used by generated documentation. |
+| `dependencies/doxygen-awesome-css.cmake` | Builds or installs the doxygen-awesome-css files used by generated documentation. |
 | `dependencies/patch_redisearch.cmake` | Applies local RediSearch CMake compatibility patches during the Redis Stack dependency build. |
 | `dependencies/patch_redisjson.cmake` | Applies local RedisJSON build compatibility patches during the Redis Stack dependency build. |
 | `dependencies/build_redis-stack_with_temp_rust.sh` | Wrapper used by the Redis Stack build to provide a temporary Rust toolchain environment when needed. |

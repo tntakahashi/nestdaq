@@ -16,7 +16,7 @@
 | `NestDAQBuildSettings.cmake` | 必要に応じて有効にできる`clang-tidy`連携とinstall RPATH設定のhelper function。 |
 | `GitHelper.cmake` | project versionの導出に使用するGit tag、commit、branch、dirty state、remote metadataを読み取ります。 |
 | `NestDAQExamplesStandalone.cmake` | `examples/`を独立したCMake projectとしてconfigureするときに使用する共通設定。 |
-| `PatchDoxygenAwesomeCssRefs.cmake` | 生成されたDoxygen HTMLを後処理し、pageがインストール済みの`doxygen-awesome-css` asset pathを参照するようにします。 |
+| `PatchDoxygenAwesomeCssRefs.cmake` | 生成されたDoxygen HTMLを後処理し、pageがインストール済みの`doxygen-awesome-css` file pathを参照するようにします。 |
 
 <a id="2-installed-package-files"></a>
 ## 2. インストールされるパッケージファイル
@@ -54,7 +54,7 @@
 | `dependencies/fmt.cmake` | spdlogで必要な場合、またはdependency optionで明示的に選択した場合にfmtをビルドします。 |
 | `dependencies/redis-stack.cmake` | Redis 8以降向けRedis Stack component (Redis、RedisBloom、RediSearch、RedisJSON、RedisTimeSeries) をビルドします。defaultのRedis 8.2.7 module versionはRedis 8.2.7自身が選択しているrelease tagに従います。 |
 | `dependencies/redis-server-7.cmake` | standalone RedisTimeSeriesとともにRedis 7.x serverをビルドします。defaultでは、Redis 7.4はRedis 7.4.9とRedisTimeSeries 1.12.14を使用し、Redis 7.2はRedis 7.2.14とRedisTimeSeries 1.10.24を使用します。 |
-| `dependencies/doxygen-awesome-css.cmake` | 生成ドキュメントで使用するdoxygen-awesome-css assetをビルドまたはインストールします。 |
+| `dependencies/doxygen-awesome-css.cmake` | 生成ドキュメントで使用するdoxygen-awesome-css fileをビルドまたはインストールします。 |
 | `dependencies/patch_redisearch.cmake` | Redis Stack dependency build中に、ローカルのRediSearch CMake互換patchを適用します。 |
 | `dependencies/patch_redisjson.cmake` | Redis Stack dependency build中に、ローカルのRedisJSON build互換patchを適用します。 |
 | `dependencies/build_redis-stack_with_temp_rust.sh` | 必要な場合に一時的なRust toolchain環境を提供する、Redis Stack build用wrapper。 |
