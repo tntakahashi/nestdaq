@@ -12,6 +12,10 @@ NestDAQ installs three FairMQ plugins as shared libraries:
 | `metrics`          | `libFairMQPlugin_metrics.so`           | Writes process metrics and FairMQ channel throughput metrics to Redis and RedisTimeSeries. |
 | `parameter_config` | `libFairMQPlugin_parameter_config.so`  | Reads parameters from Redis and mirrors them into FairMQ program properties. |
 
+In this document, a FairMQ program property means a named configuration value in a device process's FairMQ program-options store.
+The collection behaves as a typed key/value store; FairMQ defines it as `std::map<std::string, boost::any>`, rather than `std::unordered_map<std::string, std::any>`.
+The device and its plugins read and update the same store.
+
 Each loaded plugin requires access to a Redis server for its intended operation.
 RedisTimeSeries is required only when the `metrics` plugin is loaded because that plugin creates and updates time-series keys.
 The `daq_service` and `parameter_config` plugins use core Redis commands and do not require RedisTimeSeries.
@@ -343,8 +347,6 @@ The current unindexed `autoSubChannel=true` path does not match the stored `chan
 
 `TopologyConfig` synchronizes bind and connect endpoints through Redis during FairMQ state transitions.
 `Device`, `TopologyConfig`, and `FairMQ properties` in the following diagram belong to the same NestDAQ device process.
-Here, a FairMQ property is a named configuration value in the process's FairMQ program-options store.
-The device and its plugins read and update this shared store.
 The Redis server and each peer device run in separate processes.
 
 ```mermaid
@@ -645,14 +647,16 @@ If a later `TS.ADD` creates a missing key automatically, the plugin's `--retenti
 
 ## 4. parameter_config
 
-`parameter_config` reads Redis parameter keys and mirrors their values into FairMQ program properties.
-These are the named configuration values in the FairMQ program-options store described above; command-line parsing, plugins, and the device use the same store.
-The plugin applies Redis values with `SetProperty`, and device code obtains them through its FairMQ configuration interface, such as `fConfig` or `GetProperty`.
-Instance-specific parameters override group parameters when both are present.
+`parameter_config` reads Redis parameter keys and uses `SetProperty` to copy their values into the FairMQ program properties described above.
+Device code obtains the resulting values through its FairMQ configuration interface, such as `fConfig` or `GetProperty`.
 
-The initial read occurs in the `parameter_config` plugin constructor after command-line parsing and before the FairMQ device state machine starts.
-It is not triggered by a state transition: the plugin reads the group parameters and then the instance parameters before `Init()` or `InitTask()` runs.
-After the initial read, the plugin starts its keyspace-notification subscriber for later live reloads.
+The plugin reads and applies parameters at two times:
+
+1. During plugin construction, after command-line parsing and before the FairMQ device state machine starts. This initial read is not triggered by a state transition and finishes before `Init()` or `InitTask()` runs.
+2. After startup, when the keyspace-notification subscriber receives a change event for the group or instance parameter hash. The subscriber reads the parameters again and calls `SetProperty` for the values found in Redis.
+
+Each read processes the group parameter key first and the instance parameter key second.
+If both keys define the same property, the instance-specific value is applied last and overrides the group value.
 
 <a id="41-runtime-options"></a>
 ### 4.1. Command-Line Options
@@ -665,7 +669,6 @@ After the initial read, the plugin starts its keyspace-notification subscriber f
 
 Scripts that invoke a Redis client, or applications that use a Redis client directly, write the parameter values.
 The supplied `scripts/mq-param.sh` is one such script for hash parameters, but it does not provide examples for every supported Redis data type.
-The `parameter_config` plugin loaded in each NestDAQ device process reads the keys for its group and instance and writes the resulting values to that process's FairMQ program properties.
 
 | Key pattern | Redis type | Fields / value | Writer / reader | Purpose |
 |-------------|------------|----------------|-----------------|---------|
@@ -675,10 +678,21 @@ The `parameter_config` plugin loaded in each NestDAQ device process reads the ke
 | `parameters{sep}{group}{sep}*` | string/list/hash/set/zset | Additional structured parameters below the group key | A script invoking a Redis client, or another Redis client, writes; `parameter_config` scans and reads | Group-level structured parameter values. |
 | `__keyspace@{db}__:{key}` | pub/sub channel | Redis keyspace notification events | Redis publishes; `parameter_config` subscribes | Triggers live reload for the instance and group parameter keys. |
 
-String keys use the last path component as the option name.
-Hash values become map-like properties, list values become array-like properties, set values become sets, and sorted-set values become maps from members to scores.
+The following examples use the default `:` separator and show how additional structured Redis keys become FairMQ properties.
 
-Here, live reload means that a running `parameter_config` plugin receives a Redis keyspace notification, reads the group and instance parameter keys again, and updates the FairMQ program properties without restarting the device process.
+| Redis command | Resulting FairMQ property |
+|---------------|---------------------------|
+| `SET parameters:Sampler-0:text Hello` | `text` with the string value `Hello` |
+| `HSET parameters:Sampler-0:limits low 1 high 10` | `limits:low` with string value `1` and `limits:high` with string value `10` |
+| `RPUSH parameters:Sampler-0:inputs in0 in1` | `parameters:Sampler-0:inputs` with a `std::vector<std::string>` value |
+| `SADD parameters:Sampler-0:tags primary monitor` | `parameters:Sampler-0:tags` with a `std::unordered_set<std::string>` value |
+| `ZADD parameters:Sampler-0:weights 1.0 low 2.0 high` | `parameters:Sampler-0:weights` with a `std::unordered_map<std::string, double>` member-to-score value |
+
+For a string key, the last path component becomes the property name.
+For a nested hash, the last path component prefixes each hash field.
+List, set, and sorted-set readers retain the complete Redis key as the property name.
+
+Here, live reload means the second parameter-read timing described above: the plugin updates FairMQ program properties without restarting the device process or repeating a state transition.
 The plugin subscribes to notifications for the top-level group and instance hash keys.
 Changing only a nested structured key does not directly trigger a reload.
 The plugin updates program properties, but a device changes its behavior immediately only if its implementation observes property changes or reads the property again.
@@ -686,6 +700,22 @@ The current implementation overwrites values found in Redis; deleting a field or
 
 Redis keyspace notifications must be enabled on the Redis server for live reloads.
 Initial parameter loading does not require keyspace notifications.
+The `K` category enables keyspace channels, and `A` enables events for the Redis data types used by `parameter_config`.
+Configure the Redis server persistently in `redis.conf` as follows:
+
+```text
+notify-keyspace-events KA
+```
+
+For a temporary setting that lasts until the Redis server restarts, use `redis-cli` with the parameter-configuration Redis URI:
+
+```bash
+redis-cli -u redis://127.0.0.1:6379/2 CONFIG SET notify-keyspace-events KA
+redis-cli -u redis://127.0.0.1:6379/2 CONFIG GET notify-keyspace-events
+```
+
+`AKE`, which `daq-webctl` sets when it connects to the same Redis server, also includes the required keyspace notifications.
+See the [`daq-webctl` Redis command interface](../controller/README.md#6-redis-command-interface) for that behavior.
 
 ### 4.3. TTL Details (parameter_config)
 

@@ -12,6 +12,10 @@ NestDAQは3つのFairMQ pluginをshared libraryとしてinstallします。
 | `metrics` | `libFairMQPlugin_metrics.so` | process metricsおよびFairMQ channel throughput metricsをRedisとRedisTimeSeriesへ書き込みます。 |
 | `parameter_config` | `libFairMQPlugin_parameter_config.so` | Redisからparameterを読み取り、FairMQ program propertyへ反映します。 |
 
+この文書では、FairMQ program propertyを、device processのFairMQ program option storeにある名前付き設定値という意味で使用します。
+collectionは型付きkey/value storeとして使用でき、FairMQでは`std::unordered_map<std::string, std::any>`ではなく、`std::map<std::string, boost::any>`として定義されています。
+deviceとpluginは同じstoreを読み書きします。
+
 loadした各pluginは、想定する動作のためにRedis serverへの接続を必要とします。
 RedisTimeSeriesが必要なのは、time-series keyを作成して更新する`metrics` pluginをloadする場合だけです。
 `daq_service`と`parameter_config`はRedisのcore commandを使用し、RedisTimeSeriesを必要としません。
@@ -352,8 +356,6 @@ suffixを省略して`autoSubChannel=false`を設定した場合、`TopologyConf
 
 `TopologyConfig`はFairMQ state transition中にRedisを通じてbind endpointとconnect endpointを同期します。
 次の図にある`Device`、`TopologyConfig`、`FairMQ property`は、同じNestDAQ device processに属します。
-ここでFairMQ propertyとは、このprocessのFairMQ program option storeにある、名前を持つ設定値です。
-deviceとpluginは、この共通storeを読み書きします。
 Redis serverおよび各peer deviceは、それぞれ別のprocessで動作します。
 
 ```mermaid
@@ -663,14 +665,16 @@ pluginは`TS.CREATE`の前にも、同名のkeyが存在すれば削除します
 <a id="4-parameter_config"></a>
 ## 4. parameter_config
 
-`parameter_config`はRedis parameter keyを読み取り、値をFairMQ program propertyへ反映します。
-FairMQ program propertyは、前述したFairMQ program option store内の名前を持つ設定値です。command-line parsing、plugin、およびdeviceは同じstoreを使用します。
-pluginは`SetProperty`でRedis valueを反映し、device codeは`fConfig`や`GetProperty`などのFairMQ configuration interfaceから値を取得します。
-両方が存在する場合、instance固有parameterはgroup parameterをoverrideします。
+`parameter_config`はRedis parameter keyを読み取り、`SetProperty`でRedisにある値を前述のFairMQ program propertyへ反映します。
+device codeは、`fConfig`や`GetProperty`などのFairMQ configuration interfaceから反映後の値を取得します。
 
-初期parameterは、command-line parsingの後、FairMQ device state machineを開始する前に、`parameter_config` pluginのconstructorで読み取ります。
-この処理はstate transitionによってtriggerされるものではありません。pluginは`Init()`や`InitTask()`を実行する前に、group parameter、instance parameterの順で読み取ります。
-初期readの後、pluginは後続のlive reloadに使用するkeyspace notification subscriberを開始します。
+pluginは、次の2つの時点でparameterを読み取り、反映します。
+
+1. command-line parsingの後、FairMQ device state machineを開始する前のplugin construction時。初期readはstate transitionによってtriggerされず、`Init()`または`InitTask()`より前に完了します。
+2. 起動後、keyspace notification subscriberがgroup parameter hashまたはinstance parameter hashの変更eventを受信した時。subscriberはparameterを再度読み取り、Redisに存在するvalueについて`SetProperty`を呼び出します。
+
+各readではgroup parameter key、instance parameter keyの順に処理します。
+両方のkeyに同じpropertyがある場合、後から反映するinstance固有valueがgroup valueを上書きします。
 
 <a id="41-command-line-options"></a>
 ### 4.1. コマンドラインオプション
@@ -684,7 +688,6 @@ pluginは`SetProperty`でRedis valueを反映し、device codeは`fConfig`や`Ge
 
 Redis clientを呼び出すscript、またはRedis clientを直接使用するapplicationがparameter valueを書き込みます。
 付属の`scripts/mq-param.sh`はhash parameterを書き込むscriptの1つですが、対応するすべてのRedis data typeの例を提供しているわけではありません。
-各NestDAQ device processへloadされた`parameter_config` pluginは、そのprocessのgroup keyとinstance keyを読み取り、取得したvalueをFairMQ program propertyへ書き込みます。
 
 | Key pattern | Redis type | Field / value | Writer / reader | 目的 |
 | --- | --- | --- | --- | --- |
@@ -694,10 +697,21 @@ Redis clientを呼び出すscript、またはRedis clientを直接使用するap
 | `parameters{sep}{group}{sep}*` | string/list/hash/set/zset | group key配下の追加structured parameter | Redis clientを呼び出すscript、または他のRedis clientがwrite。`parameter_config`がscanしてread | group-level structured parameter value。 |
 | `__keyspace@{db}__:{key}` | pub/sub channel | Redis keyspace notification event | Redisがpublish。`parameter_config`がsubscribe | instance/group parameter keyのlive reloadをtrigger。 |
 
-string keyは最後のpath componentをoption nameとして使用します。
-hash valueはmap-like property、list valueはarray-like property、set valueはset、sorted-set valueはmemberからscoreへのmapになります。
+次の例ではdefaultのseparator `:`を使用し、追加のstructured Redis keyがFairMQ propertyへ変換される方法を示します。
 
-ここでlive reloadとは、動作中の`parameter_config` pluginがRedis keyspace notificationを受信し、group keyとinstance keyを再度読み取って、device processを再起動せずにFairMQ program propertyを更新する処理です。
+| Redis command | 生成されるFairMQ property |
+| --- | --- |
+| `SET parameters:Sampler-0:text Hello` | string value `Hello`を持つ`text` |
+| `HSET parameters:Sampler-0:limits low 1 high 10` | string value `1`を持つ`limits:low`と、string value `10`を持つ`limits:high` |
+| `RPUSH parameters:Sampler-0:inputs in0 in1` | `std::vector<std::string>` valueを持つ`parameters:Sampler-0:inputs` |
+| `SADD parameters:Sampler-0:tags primary monitor` | `std::unordered_set<std::string>` valueを持つ`parameters:Sampler-0:tags` |
+| `ZADD parameters:Sampler-0:weights 1.0 low 2.0 high` | memberからscoreへの`std::unordered_map<std::string, double>` valueを持つ`parameters:Sampler-0:weights` |
+
+string keyでは最後のpath componentをproperty nameとして使用します。
+配下のhashでは、最後のpath componentを各hash fieldのprefixにします。
+list、set、およびsorted-setでは、Redis key全体をproperty nameとして使用します。
+
+ここでlive reloadとは、前述した2番目のparameter readを指します。device processの再起動やstate transitionの再実行を行わずにFairMQ program propertyを更新します。
 pluginは最上位のgroup hash keyとinstance hash keyのnotificationをsubscribeします。
 配下のstructured keyだけを変更しても、直接reloadをtriggerしません。
 pluginはprogram propertyを更新しますが、deviceの動作が直ちに変わるのは、device実装がproperty changeを監視するか、propertyを再度読み取る場合だけです。
@@ -705,6 +719,22 @@ pluginはprogram propertyを更新しますが、deviceの動作が直ちに変�
 
 live reloadには、Redis serverでkeyspace notificationを有効にする必要があります。
 初期parameter loadにはkeyspace notificationは不要です。
+`K` categoryはkeyspace channelを有効にし、`A` categoryは`parameter_config`が使用するRedis data typeのeventを有効にします。
+永続的に設定する場合は、`redis.conf`に次の設定を記述します。
+
+```text
+notify-keyspace-events KA
+```
+
+Redis serverを再起動するまで有効な一時設定には、parameter configuration用Redis URIを指定して`redis-cli`を実行します。
+
+```bash
+redis-cli -u redis://127.0.0.1:6379/2 CONFIG SET notify-keyspace-events KA
+redis-cli -u redis://127.0.0.1:6379/2 CONFIG GET notify-keyspace-events
+```
+
+`daq-webctl`が同じRedis serverへの接続時に設定する`AKE`にも、必要なkeyspace notificationが含まれます。
+この動作は[`daq-webctl`のRedis command interface](../controller/README.ja.md#6-redis-command-interface)を参照してください。
 
 <a id="43-ttl-details-parameter_config"></a>
 ### 4.3. TTLの詳細 (parameter_config)
