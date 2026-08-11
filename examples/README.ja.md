@@ -717,7 +717,7 @@ private:
 FairMQはprogram optionを`fair::mq::ProgOptions`で管理します。
 property collectionは`std::map<std::string, boost::any>`として定義されていますが、user device codeからこのmapを直接操作しません。
 基底classの`fair::mq::Device`は、protected pointer memberとして`fConfig`を宣言しています。
-その派生classであるuser deviceは、`fConfig->GetProperty<T>(name)`などを呼び出して個別のoptionを読み取ります。
+`fair::mq::Device`の派生classであるuser deviceは、`fConfig->GetProperty<T>(name)`などを呼び出して個別のoptionを読み取ります。
 
 現在のNestDAQ exampleとskeleton codeでは、論理的な値が数値の場合でも、custom
 optionを通常`std::string`として登録します。以下の`InitTask()`実装では、数値optionを

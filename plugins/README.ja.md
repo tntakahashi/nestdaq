@@ -664,6 +664,9 @@ pluginは`TS.CREATE`の前にも、同名のkeyが存在すれば削除します
 `parameter_config`はRedis parameter keyを読み取り、`SetProperty`でRedisにある値をFairMQ program optionへ反映します。
 `fair::mq::ProgOptions`、`fConfig`、およびdevice側からのaccess方法は、[コマンドラインオプションと型変換](../examples/README.ja.md#43-command-line-options-and-type-conversion)を参照してください。
 
+Redis keyspace notificationは、keyの変更時にPub/Sub eventを発行するRedisの機能です。
+`parameter_config`はこのeventをsubscribeし、device processを再起動せずに変更されたparameterを再読込します。この文書では、この動作をlive reloadと呼びます。
+
 pluginは、次の2つの時点でparameterを読み取り、反映します。
 
 1. **初期parameter load：** command-line parsingの後、FairMQ device state machineを開始する前のplugin construction時に、group parameter keyとinstance parameter keyを1回読み取り、`SetProperty`でvalueを反映します。この処理は`Init()`または`InitTask()`より前に完了します。

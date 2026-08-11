@@ -646,6 +646,9 @@ If a later `TS.ADD` creates a missing key automatically, the plugin's `--retenti
 `parameter_config` reads Redis parameter keys and uses `SetProperty` to apply their values to FairMQ program options.
 See [Command-Line Options and Type Conversion](../examples/README.md#43-command-line-options-and-type-conversion) for `fair::mq::ProgOptions`, `fConfig`, and device-side access.
 
+Redis keyspace notifications are a Redis feature that publishes Pub/Sub events when keys change.
+`parameter_config` subscribes to these events to reload changed parameters without restarting the device process; this document calls that behavior live reload.
+
 The plugin reads and applies parameters at two times:
 
 1. **Initial parameter loading:** During plugin construction, after command-line parsing and before the FairMQ device state machine starts, the plugin reads the group and instance parameter keys once and applies their values with `SetProperty`. This operation finishes before `Init()` or `InitTask()` runs.
