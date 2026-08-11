@@ -15,7 +15,7 @@
 `daq-webctl`はHTTP endpointをlistenし、設定されたdocument rootを配信して、WebSocket clientを受け付けます。
 ブラウザから受信したcommandをRedisをbackendとするDAQ制御操作へ変換し、接続中のWebSocket clientへstate updateを返します。
 
-起動時に`daq-webctl`はFairLogger出力を設定し、必要に応じてNestDAQ OpenTelemetry pluginをloadできます。
+`daq-webctl`は起動時にFairLogger出力を設定し、必要に応じてNestDAQ OpenTelemetry pluginをloadできます。
 
 <a id="2-main-components"></a>
 ## 2. 主要コンポーネント
@@ -174,7 +174,7 @@ OpenTelemetry optionの一覧とresource attributeの詳細は[`nestdaq/telemetr
 DAQ command key、`daqctl` Publish/Subscribe (Pub/Sub) channel、message形式、受け付けるcommand value、および`RUN`/`STOP` sequenceについては、[`plugins/README.ja.md`](../plugins/README.ja.md#24-daq-command-publishsubscribe-pubsub)に記載されています。
 `daq-webctl`以外のcustom controllerを開発する場合も、このsectionで説明するRedis keyとPub/Sub interfaceを利用できます。
 
-起動時に`daq-webctl`はRedis `notify-keyspace-events`を`AKE`に設定し、expired key eventを含むkey-event notificationを受信できるようにします。
+`daq-webctl`は起動時にRedis `notify-keyspace-events`を`AKE`に設定し、expired key eventを含むkey-event notificationを受信できるようにします。
 さらに、ブラウザのstate summaryを構築するため、`daq_service{sep}*{sep}*{sep}fair-mq-state`と`daq_service{sep}*{sep}*{sep}updatedTime`をpollします。
 
 次の表は、`daq-webctl`が直接操作するRedis keyおよびchannelを示します。
@@ -191,10 +191,10 @@ DAQ command key、`daqctl` Publish/Subscribe (Pub/Sub) channel、message形式�
 | `daqctl` | publish | 選択したdevice instanceへDAQ state transition要求を送信。 |
 
 `daq-webctl`は`RUN`要求を処理するときに、`run_info{sep}run_number`を`run_info{sep}latest_run_number`へcopyします。
-2つのwait flagの設定に応じて、前提となる`CONNECT`および`INIT TASK`要求を送信し、選択したdeviceを待ってから`RUN`を送信します。
-前提となるstate transitionを待つ場合にも、同じ`services`および`instances`の選択を使用します。
-`STOP`要求を処理するときは、前提となるstate transitionを行わずに`STOP`を送信します。
-設定済みのpre/post hookは、対応する`RUN`および`STOP`要求の前後で実行します。
+`wait-device-ready`が有効な場合は`CONNECT`を、`wait-ready`が有効な場合は`INIT TASK`を`RUN`より先に送信し、選択したdeviceが所定のstateへ遷移するまで待ちます。
+これらの要求には、`RUN`と同じ`services`および`instances`を指定します。
+`STOP`要求では、事前のstate transitionを行わずに`STOP`を送信します。
+`--pre-run`と`--post-run`は`RUN`送信の前後に、`--pre-stop`と`--post-stop`は`STOP`送信の前後に実行します。
 
 <a id="7-websocket-messages"></a>
 ## 7. WebSocketメッセージ
