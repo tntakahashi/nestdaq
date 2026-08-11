@@ -42,7 +42,9 @@ daq-webctl --http-uri=http://0.0.0.0:8080 --redis-uri=tcp://127.0.0.1:6379
 
 After `daq-webctl` starts, open `http://localhost:8080/`, `http://localhost:8080/index.html`, or `http://localhost:8080/daq-webctl.html`.
 The installed `index.html` is a symbolic link to `daq-webctl.html`, and a request for `/` resolves to `index.html`.
-The Redis server and DAQ devices must be available for control operations to succeed.
+Start the Redis server before `daq-webctl`.
+When exporting telemetry through an OpenTelemetry Collector, start the Collector and its telemetry storage before `daq-webctl` as well.
+See the [local run sequence](../examples/README.md#31-local-run-sequence) for the complete startup order.
 Set the run number with `daq-webctl` before a DAQ device enters the Running state.
 
 Use `daq-webctl --help` to inspect the available HTTP, Redis, FairLogger, and OpenTelemetry options.
