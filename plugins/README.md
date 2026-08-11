@@ -592,8 +592,25 @@ Only indexed subchannel records are used for channel throughput metrics.
 
 ### 3.3. TTL and Retention Details (metrics)
 
-A shared metric hash is one Redis hash key, such as `metrics{sep}cpu-stat`, that stores fields for multiple device instances.
-Each field name identifies an instance, and its value contains that instance's metric.
+In this section, a shared metric hash means one of the `metrics{sep}...` Redis hashes listed in Section 3.2.
+This is a descriptive term used by this document, not a Redis data-type name.
+One hash key stores fields for multiple device instances: each field name is an instance ID, and its value is that instance's metric.
+For example, with the default `:` separator, the following command may return CPU metrics for three instances:
+
+```bash
+redis-cli --raw -u redis://127.0.0.1:6379/1 HGETALL metrics:cpu-stat
+```
+
+```text
+Sampler-0
+12.5
+Sampler-1
+8.2
+Sink-0
+4.1
+```
+
+The `ts{sep}...` RedisTimeSeries keys in Section 3.2 are separate per-instance keys and are not shared metric hashes.
 
 | Mechanism | Target | When removal is evaluated | Result |
 |-----------|--------|---------------------------|--------|

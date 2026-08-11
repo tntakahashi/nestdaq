@@ -609,8 +609,25 @@ channel throughput metricsにはindex付きsubchannel recordだけを使用し�
 <a id="33-ttl-and-retention-details-metrics"></a>
 ### 3.3. TTLと保持期間の詳細 (metrics)
 
-共有metric hashとは、`metrics{sep}cpu-stat`など、複数のdevice instanceのfieldを格納する1つのRedis hash keyです。
-各field nameがinstanceを識別し、そのvalueに該当instanceのmetricを格納します。
+この節で共有metric hashと呼ぶものは、3.2の表にある`metrics{sep}...`形式のRedis hashです。
+これはRedis data typeの名称ではなく、この文書で構造を説明するために使用する表現です。
+1つのhash keyが複数のdevice instanceのfieldを持ち、各field nameがinstance ID、そのvalueが該当instanceのmetricです。
+例えばdefaultのseparator `:`を使用する場合、次のcommandで3つのinstanceのCPU metricsが返されることがあります。
+
+```bash
+redis-cli --raw -u redis://127.0.0.1:6379/1 HGETALL metrics:cpu-stat
+```
+
+```text
+Sampler-0
+12.5
+Sampler-1
+8.2
+Sink-0
+4.1
+```
+
+3.2の表にある`ts{sep}...`形式のRedisTimeSeries keyはinstanceごとに分かれたkeyであり、共有metric hashには含みません。
 
 | Mechanism | 削除対象 | 削除を判定する時点 | 結果 |
 | --- | --- | --- | --- |
