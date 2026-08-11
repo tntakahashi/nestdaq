@@ -172,7 +172,7 @@ OpenTelemetry optionの一覧とresource attributeの詳細は[`nestdaq/telemetr
 
 `daq-webctl`は`daq_service` pluginが実装するRedis command interfaceを使用します。
 DAQ command key、`daqctl` Publish/Subscribe (Pub/Sub) channel、message形式、受け付けるcommand value、および`RUN`/`STOP` sequenceについては、[`plugins/README.ja.md`](../plugins/README.ja.md#24-daq-command-publishsubscribe-pubsub)に記載されています。
-同じRedis keyとPub/Sub interfaceを使用するcustom controllerを開発する場合は、このsectionを実装の出発点として参照できます。
+`daq-webctl`以外のcustom controllerを開発する場合も、このsectionで説明するRedis keyとPub/Sub interfaceを利用できます。
 
 起動時に`daq-webctl`はRedis `notify-keyspace-events`を`AKE`に設定し、expired key eventを含むkey-event notificationを受信できるようにします。
 さらに、ブラウザのstate summaryを構築するため、`daq_service{sep}*{sep}*{sep}fair-mq-state`と`daq_service{sep}*{sep}*{sep}updatedTime`をpollします。
