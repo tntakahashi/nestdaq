@@ -199,7 +199,7 @@ DAQ command key、`daqctl` Publish/Subscribe (Pub/Sub) channel、message形式�
 <a id="7-websocket-messages"></a>
 ## 7. WebSocketメッセージ
 
-browser clientはWebSocket endpointへJSON commandを送信します。
+web browserはWebSocket clientとして動作し、`daq-webctl`が提供するWebSocket server endpointへJSON commandを送信します。
 `daq-webctl`はRedis操作を実行するか、Redis Pub/Sub messageをpublishします。
 `redis-publish`のRedis Pub/Sub command message形式、受け付けるcommand value、および`services` / `instances` target選択規則については、[`plugins/README.ja.md`](../plugins/README.ja.md#24-daq-command-publishsubscribe-pubsub)に記載されています。
 
