@@ -166,6 +166,7 @@ See [`nestdaq/telemetry/README.md`](../nestdaq/telemetry/README.md) for the comp
 
 `daq-webctl` uses the Redis command interface implemented by the `daq_service` plugin.
 DAQ command keys, the `daqctl` Publish/Subscribe (Pub/Sub) channel, message shape, accepted command values, and `RUN`/`STOP` sequencing are documented in [`plugins/README.md`](../plugins/README.md#24-daq-command-publishsubscribe-pubsub).
+A custom controller can use the same Redis keys and Pub/Sub interface; this section provides a starting point for implementing one.
 
 At startup, `daq-webctl` sets Redis `notify-keyspace-events` to `AKE` so that it can receive key-event notifications, including expired key events.
 It also polls `daq_service{sep}*{sep}*{sep}fair-mq-state` and `daq_service{sep}*{sep}*{sep}updatedTime` to build browser state summaries.
