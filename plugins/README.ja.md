@@ -717,23 +717,9 @@ pluginは最上位のgroup hash keyとinstance hash keyのnotificationをsubscri
 pluginはprogram propertyを更新しますが、deviceの動作が直ちに変わるのは、device実装がproperty changeを監視するか、propertyを再度読み取る場合だけです。
 現在の実装はRedisに存在するvalueを上書きするだけであり、fieldまたはkeyを削除しても、対応する既存のFairMQ program option valueは削除されません。
 
-live reloadには、Redis serverでkeyspace notificationを有効にする必要があります。
+`daq-webctl`は同じRedis serverへの接続時に`notify-keyspace-events`を`AKE`へ設定し、live reloadに必要なnotificationを有効にします。
+この構成では、追加のRedis設定は不要です。
 初期parameter loadにはkeyspace notificationは不要です。
-`K` categoryはkeyspace channelを有効にし、`A` categoryは`parameter_config`が使用するRedis data typeのeventを有効にします。
-永続的に設定する場合は、`redis.conf`に次の設定を記述します。
-
-```text
-notify-keyspace-events KA
-```
-
-Redis serverを再起動するまで有効な一時設定には、parameter configuration用Redis URIを指定して`redis-cli`を実行します。
-
-```bash
-redis-cli -u redis://127.0.0.1:6379/2 CONFIG SET notify-keyspace-events KA
-redis-cli -u redis://127.0.0.1:6379/2 CONFIG GET notify-keyspace-events
-```
-
-`daq-webctl`が同じRedis serverへの接続時に設定する`AKE`にも、必要なkeyspace notificationが含まれます。
 この動作は[`daq-webctl`のRedis command interface](../controller/README.ja.md#6-redis-command-interface)を参照してください。
 
 <a id="43-ttl-details-parameter_config"></a>

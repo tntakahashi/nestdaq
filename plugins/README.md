@@ -698,23 +698,9 @@ Changing only a nested structured key does not directly trigger a reload.
 The plugin updates program properties, but a device changes its behavior immediately only if its implementation observes property changes or reads the property again.
 The current implementation overwrites values found in Redis; deleting a field or key does not clear the corresponding existing FairMQ program option value.
 
-Redis keyspace notifications must be enabled on the Redis server for live reloads.
+When `daq-webctl` connects to the same Redis server, it sets `notify-keyspace-events` to `AKE`, which enables the notifications required for live reload.
+No additional Redis setting is needed in this configuration.
 Initial parameter loading does not require keyspace notifications.
-The `K` category enables keyspace channels, and `A` enables events for the Redis data types used by `parameter_config`.
-Configure the Redis server persistently in `redis.conf` as follows:
-
-```text
-notify-keyspace-events KA
-```
-
-For a temporary setting that lasts until the Redis server restarts, use `redis-cli` with the parameter-configuration Redis URI:
-
-```bash
-redis-cli -u redis://127.0.0.1:6379/2 CONFIG SET notify-keyspace-events KA
-redis-cli -u redis://127.0.0.1:6379/2 CONFIG GET notify-keyspace-events
-```
-
-`AKE`, which `daq-webctl` sets when it connects to the same Redis server, also includes the required keyspace notifications.
 See the [`daq-webctl` Redis command interface](../controller/README.md#6-redis-command-interface) for that behavior.
 
 ### 4.3. TTL Details (parameter_config)
