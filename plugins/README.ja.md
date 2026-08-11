@@ -10,12 +10,7 @@ NestDAQは3つのFairMQ pluginをshared libraryとしてinstallします。
 | --- | --- | --- |
 | `daq_service` | `libFairMQPlugin_daq_service.so` | FairMQ deviceをRedisへ登録し、health/stateおよびtopology/channel dataを書き込み、data acquisition (DAQ) commandを処理します。 |
 | `metrics` | `libFairMQPlugin_metrics.so` | process metricsおよびFairMQ channel throughput metricsをRedisとRedisTimeSeriesへ書き込みます。 |
-| `parameter_config` | `libFairMQPlugin_parameter_config.so` | Redisからparameterを読み取り、FairMQ program propertyへ反映します。 |
-
-この文書では、FairMQ program propertyを、device processのFairMQ program option storeにある名前付き設定値という意味で使用します。
-collectionは型付きkey/value storeとして使用でき、`std::map<std::string, boost::any>`として定義されています。
-device実装は、`fair::mq::Device`から継承した`fConfig` memberを通じてこのstoreを使用します。
-deviceとpluginは同じstoreを読み書きします。
+| `parameter_config` | `libFairMQPlugin_parameter_config.so` | Redisからparameterを読み取り、FairMQ program optionへ反映します。 |
 
 loadした各pluginはRedis serverへの接続を必要とします。
 RedisTimeSeriesが必要なのは、time-series keyを作成して更新する`metrics` pluginをloadする場合だけです。
@@ -666,13 +661,13 @@ pluginは`TS.CREATE`の前にも、同名のkeyが存在すれば削除します
 <a id="4-parameter_config"></a>
 ## 4. parameter_config
 
-`parameter_config`はRedis parameter keyを読み取り、`SetProperty`でRedisにある値を前述のFairMQ program propertyへ反映します。
-device codeは、`fConfig`や`GetProperty`などのFairMQ configuration interfaceから反映後の値を取得します。
+`parameter_config`はRedis parameter keyを読み取り、`SetProperty`でRedisにある値をFairMQ program optionへ反映します。
+`fair::mq::ProgOptions`、`fConfig`、およびdevice側からのaccess方法は、[コマンドラインオプションと型変換](../examples/README.ja.md#43-command-line-options-and-type-conversion)を参照してください。
 
 pluginは、次の2つの時点でparameterを読み取り、反映します。
 
-1. command-line parsingの後、FairMQ device state machineを開始する前のplugin construction時。このreadは`Init()`または`InitTask()`より前に完了します。
-2. 起動後、keyspace notification subscriberがgroup parameter hashまたはinstance parameter hashの変更eventを受信した時。subscriberはparameterを再度読み取り、Redisに存在するvalueについて`SetProperty`を呼び出します。
+1. **初期parameter load：** command-line parsingの後、FairMQ device state machineを開始する前のplugin construction時に、group parameter keyとinstance parameter keyを1回読み取り、`SetProperty`でvalueを反映します。この処理は`Init()`または`InitTask()`より前に完了します。
+2. **Live reload：** 起動後、keyspace notification subscriberがgroup parameter hashまたはinstance parameter hashの変更eventを受信すると、parameterを再度読み取り、Redisに存在するvalueについて`SetProperty`を呼び出します。
 
 各readではgroup parameter key、instance parameter keyの順に処理します。
 両方のkeyに同じpropertyがある場合、後から反映するinstance固有valueがgroup valueを上書きします。
@@ -713,11 +708,11 @@ string keyでは最後のpath componentをproperty nameとして使用します�
 配下のhashでは、最後のpath componentを各hash fieldのprefixにします。
 list、set、およびsorted-setでは、Redis key全体をproperty nameとして使用します。
 
-ここでlive reloadとは、前述した2番目のparameter readを指します。device processの再起動やstate transitionの再実行を行わずにFairMQ program propertyを更新します。
+live reloadでは、device processの再起動やstate transitionの再実行を行わずにFairMQ program optionを更新します。
 pluginは最上位のgroup hash keyとinstance hash keyのnotificationをsubscribeします。
 配下のstructured keyだけを変更しても、直接reloadをtriggerしません。
 pluginはprogram propertyを更新しますが、deviceの動作が直ちに変わるのは、device実装がproperty changeを監視するか、propertyを再度読み取る場合だけです。
-現在の実装はRedisに存在するvalueを上書きするだけであり、fieldまたはkeyを削除しても、対応する既存のFairMQ propertyは削除されません。
+現在の実装はRedisに存在するvalueを上書きするだけであり、fieldまたはkeyを削除しても、対応する既存のFairMQ program option valueは削除されません。
 
 live reloadには、Redis serverでkeyspace notificationを有効にする必要があります。
 初期parameter loadにはkeyspace notificationは不要です。

@@ -156,7 +156,8 @@ host package managerで`otelcol-contrib`をインストールした場合は、C
    notificationを有効にします。永続的な`redis.conf`設定と一時的な`redis-cli`
    commandは
    [`plugins/README.ja.md`](../plugins/README.ja.md#42-redis-keys-read-or-subscribed)
-   を参照してください。初期parameter loadでは、この設定は不要です。
+   を参照してください。device process起動時にparameterを最初に読み取る処理では、
+   この設定は不要です。
 
 <a id="3121-start-with-a-configuration-file"></a>
 ##### 3.1.2.1. 設定fileを使用して起動
@@ -712,6 +713,11 @@ private:
 
 <a id="43-command-line-options-and-type-conversion"></a>
 ### 4.3. コマンドラインオプションと型変換
+
+FairMQはprogram optionを`fair::mq::ProgOptions`で管理します。
+property collectionは`std::map<std::string, boost::any>`として定義されていますが、user device codeからこのmapを直接操作しません。
+基底classの`fair::mq::Device`は、protected pointer memberとして`fConfig`を宣言しています。
+その派生classであるuser deviceは、`fConfig->GetProperty<T>(name)`などを呼び出して個別のoptionを読み取ります。
 
 現在のNestDAQ exampleとskeleton codeでは、論理的な値が数値の場合でも、custom
 optionを通常`std::string`として登録します。以下の`InitTask()`実装では、数値optionを

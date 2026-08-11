@@ -10,12 +10,7 @@ NestDAQ installs three FairMQ plugins as shared libraries:
 |--------------------|----------------------------------------|---------|
 | `daq_service`      | `libFairMQPlugin_daq_service.so`       | Registers the FairMQ device in Redis, writes health/state and topology/channel data, and handles data acquisition (DAQ) commands. |
 | `metrics`          | `libFairMQPlugin_metrics.so`           | Writes process metrics and FairMQ channel throughput metrics to Redis and RedisTimeSeries. |
-| `parameter_config` | `libFairMQPlugin_parameter_config.so`  | Reads parameters from Redis and mirrors them into FairMQ program properties. |
-
-In this document, a FairMQ program property means a named configuration value in a device process's FairMQ program-options store.
-The collection behaves as a typed key/value store and is defined as `std::map<std::string, boost::any>`.
-Device implementations access this store through the `fConfig` member inherited from `fair::mq::Device`.
-The device and its plugins read and update the same store.
+| `parameter_config` | `libFairMQPlugin_parameter_config.so`  | Reads parameters from Redis and applies them to FairMQ program options. |
 
 Each loaded plugin requires access to a Redis server.
 RedisTimeSeries is required only when the `metrics` plugin is loaded because that plugin creates and updates time-series keys.
@@ -648,13 +643,13 @@ If a later `TS.ADD` creates a missing key automatically, the plugin's `--retenti
 
 ## 4. parameter_config
 
-`parameter_config` reads Redis parameter keys and uses `SetProperty` to copy their values into the FairMQ program properties described above.
-Device code obtains the resulting values through its FairMQ configuration interface, such as `fConfig` or `GetProperty`.
+`parameter_config` reads Redis parameter keys and uses `SetProperty` to apply their values to FairMQ program options.
+See [Command-Line Options and Type Conversion](../examples/README.md#43-command-line-options-and-type-conversion) for `fair::mq::ProgOptions`, `fConfig`, and device-side access.
 
 The plugin reads and applies parameters at two times:
 
-1. During plugin construction, after command-line parsing and before the FairMQ device state machine starts. This read finishes before `Init()` or `InitTask()` runs.
-2. After startup, when the keyspace-notification subscriber receives a change event for the group or instance parameter hash. The subscriber reads the parameters again and calls `SetProperty` for the values found in Redis.
+1. **Initial parameter loading:** During plugin construction, after command-line parsing and before the FairMQ device state machine starts, the plugin reads the group and instance parameter keys once and applies their values with `SetProperty`. This operation finishes before `Init()` or `InitTask()` runs.
+2. **Live reload:** After startup, the keyspace-notification subscriber receives a change event for the group or instance parameter hash. The subscriber reads the parameters again and calls `SetProperty` for the values found in Redis.
 
 Each read processes the group parameter key first and the instance parameter key second.
 If both keys define the same property, the instance-specific value is applied last and overrides the group value.
@@ -694,11 +689,11 @@ For a string key, the last path component becomes the property name.
 For a nested hash, the last path component prefixes each hash field.
 List, set, and sorted-set readers retain the complete Redis key as the property name.
 
-Here, live reload means the second parameter-read timing described above: the plugin updates FairMQ program properties without restarting the device process or repeating a state transition.
+During live reload, the plugin updates FairMQ program options without restarting the device process or repeating a state transition.
 The plugin subscribes to notifications for the top-level group and instance hash keys.
 Changing only a nested structured key does not directly trigger a reload.
 The plugin updates program properties, but a device changes its behavior immediately only if its implementation observes property changes or reads the property again.
-The current implementation overwrites values found in Redis; deleting a field or key does not clear the corresponding existing FairMQ property.
+The current implementation overwrites values found in Redis; deleting a field or key does not clear the corresponding existing FairMQ program option value.
 
 Redis keyspace notifications must be enabled on the Redis server for live reloads.
 Initial parameter loading does not require keyspace notifications.

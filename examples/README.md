@@ -149,7 +149,8 @@ uses `localhost:4317`.
    notifications on this server. See
    [`plugins/README.md`](../plugins/README.md#42-redis-keys-read-or-subscribed)
    for the persistent `redis.conf` setting and the temporary `redis-cli`
-   command. Initial parameter loading does not require this setting.
+   command. Reading the parameters once when the device process starts does
+   not require this setting.
 
 <a id="3121-start-with-a-configuration-file"></a>
 ##### 3.1.2.1. Start with a configuration file
@@ -700,6 +701,11 @@ is normally called from `InitTask()`.
 | `PostRun()` | Flush, drain, or release run-time resources after RUNNING ends. |
 
 ### 4.3. Command-Line Options and Type Conversion
+
+FairMQ stores program options in `fair::mq::ProgOptions`.
+The property collection is defined as `std::map<std::string, boost::any>`, but user device code does not access this map directly.
+`fair::mq::Device` declares `fConfig` as a protected pointer member.
+A derived user device reads an individual option through this member with calls such as `fConfig->GetProperty<T>(name)`.
 
 In current NestDAQ examples and skeleton code, custom options are normally
 registered as `std::string`, even when the logical value is numeric. The
