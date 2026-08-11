@@ -343,6 +343,8 @@ The current unindexed `autoSubChannel=true` path does not match the stored `chan
 
 `TopologyConfig` synchronizes bind and connect endpoints through Redis during FairMQ state transitions.
 `Device`, `TopologyConfig`, and `FairMQ properties` in the following diagram belong to the same NestDAQ device process.
+Here, a FairMQ property is a named configuration value in the process's FairMQ program-options store.
+The device and its plugins read and update this shared store.
 The Redis server and each peer device run in separate processes.
 
 ```mermaid
@@ -590,17 +592,19 @@ Only indexed subchannel records are used for channel throughput metrics.
 
 ### 3.3. TTL and Retention Details (metrics)
 
+A shared metric hash is one Redis hash key, such as `metrics{sep}cpu-stat`, that stores fields for multiple device instances.
+Each field name identifies an instance, and its value contains that instance's metric.
+
 | Mechanism | Target | When removal is evaluated | Result |
 |-----------|--------|---------------------------|--------|
 | `--metrics-max-ttl` | Fields for stale instances in shared metric hashes | Once, when a `metrics` plugin instance starts | Removes matching hash fields with `HDEL` |
 | `--retention` | Old samples in each RedisTimeSeries key | When a later sample advances that series' greatest timestamp | Trims samples outside the retention window |
 | Redis `EXPIRE` | A complete Redis key | When the key's wall-clock timeout elapses | Deletes the key and all of its contents; not used by `metrics` |
 
-`--metrics-max-ttl` is not a Redis key TTL.
+`--metrics-max-ttl` is not a Redis key's TTL.
 It is the maximum allowed age in milliseconds of an instance's timestamp in `metrics{sep}last-update-ns`.
 When the plugin starts, it performs one cleanup pass and removes fields belonging to older instances from the shared metric hashes with `HDEL`.
 The cleanup is necessary because a key-level `EXPIRE` would remove the complete shared hash, including fields for instances that are still updating their metrics.
-It does not delete RedisTimeSeries keys or samples, and it is not repeated periodically by the current implementation.
 If `--metrics-max-ttl` is zero or negative, this cleanup is disabled.
 
 `--retention` applies only to RedisTimeSeries keys created by the plugin.
@@ -612,17 +616,26 @@ A value of `0` disables retention-based sample trimming.
 
 RedisTimeSeries keys can use the generic Redis [`EXPIRE`](https://redis.io/docs/latest/commands/expire/) command, but the `metrics` plugin does not use it.
 `EXPIRE` would delete the complete time-series key rather than trim individual samples.
-The process and channel samples use `TS.ADD` with `*`, so Redis assigns the sample timestamp from the Redis server clock.
+The process and channel samples pass `*` as the timestamp argument to `TS.ADD`.
+RedisTimeSeries therefore records the current Unix time in milliseconds when the Redis server processes each command.
+The timestamp comes from the Redis server host clock, not from the device process clock or the exact time at which the metric was measured; command buffering and network delay can shift it to a slightly later time.
 
 With `--recreate-ts=true`, the plugin deletes its registered RedisTimeSeries keys on transition to `Ready` and creates them again on transition to `Running`.
 Before each `TS.CREATE`, the plugin also deletes any existing key with the same name.
 Existing samples in those keys are therefore discarded, and the newly created keys receive the configured retention and labels.
-With `--recreate-ts=false`, the plugin does not issue `TS.CREATE`; if `TS.ADD` creates a missing key automatically, the plugin's `--retention` value and labels are not applied to that key.
+With `--recreate-ts=false`, the plugin does not delete and recreate RedisTimeSeries keys with `TS.CREATE` during the `Ready` and `Running` transitions.
+If a later `TS.ADD` creates a missing key automatically, the plugin's `--retention` value and labels are not applied to that key.
 
 ## 4. parameter_config
 
 `parameter_config` reads Redis parameter keys and mirrors their values into FairMQ program properties.
+These are the named configuration values in the FairMQ program-options store described above; command-line parsing, plugins, and the device use the same store.
+The plugin applies Redis values with `SetProperty`, and device code obtains them through its FairMQ configuration interface, such as `fConfig` or `GetProperty`.
 Instance-specific parameters override group parameters when both are present.
+
+The initial read occurs in the `parameter_config` plugin constructor after command-line parsing and before the FairMQ device state machine starts.
+It is not triggered by a state transition: the plugin reads the group parameters and then the instance parameters before `Init()` or `InitTask()` runs.
+After the initial read, the plugin starts its keyspace-notification subscriber for later live reloads.
 
 <a id="41-runtime-options"></a>
 ### 4.1. Command-Line Options

@@ -352,6 +352,8 @@ suffixを省略して`autoSubChannel=false`を設定した場合、`TopologyConf
 
 `TopologyConfig`はFairMQ state transition中にRedisを通じてbind endpointとconnect endpointを同期します。
 次の図にある`Device`、`TopologyConfig`、`FairMQ property`は、同じNestDAQ device processに属します。
+ここでFairMQ propertyとは、このprocessのFairMQ program option storeにある、名前を持つ設定値です。
+deviceとpluginは、この共通storeを読み書きします。
 Redis serverおよび各peer deviceは、それぞれ別のprocessで動作します。
 
 ```mermaid
@@ -607,17 +609,19 @@ channel throughput metricsにはindex付きsubchannel recordだけを使用し�
 <a id="33-ttl-and-retention-details-metrics"></a>
 ### 3.3. TTLと保持期間の詳細 (metrics)
 
+共有metric hashとは、`metrics{sep}cpu-stat`など、複数のdevice instanceのfieldを格納する1つのRedis hash keyです。
+各field nameがinstanceを識別し、そのvalueに該当instanceのmetricを格納します。
+
 | Mechanism | 削除対象 | 削除を判定する時点 | 結果 |
 | --- | --- | --- | --- |
 | `--metrics-max-ttl` | 共有metric hashにある、更新が止まったinstanceのfield | `metrics` plugin instanceの起動時に1回 | 対象hash fieldを`HDEL`で削除 |
 | `--retention` | 各RedisTimeSeries key内の古いsample | 後続sampleによって、その時系列の最大timestampが進んだとき | retention window外のsampleをtrim |
 | Redis `EXPIRE` | Redis key全体 | keyのwall-clock timeoutが経過したとき | keyとその内容をすべて削除。`metrics`は使用しない |
 
-`--metrics-max-ttl`はRedis key TTLではありません。
+`--metrics-max-ttl`はRedis keyのTTLではありません。
 `metrics{sep}last-update-ns`に記録されたinstanceの時刻について、許容する最大経過時間をmilliseconds単位で指定します。
 pluginは起動時に1回だけcleanupを行い、この時間を超えたinstanceのfieldを共有metric hashから`HDEL`で削除します。
 key単位の`EXPIRE`を使用すると、metricsを更新中のinstance fieldを含む共有hash全体が削除されるため、このcleanupが必要です。
-このcleanupはRedisTimeSeries keyまたはsampleを削除せず、現在の実装では周期的に実行されません。
 `--metrics-max-ttl`が0以下なら、このcleanupは無効です。
 
 `--retention`はpluginが作成するRedisTimeSeries keyだけに適用します。
@@ -629,19 +633,27 @@ trimはretention windowより古いsampleを削除しますが、RedisTimeSeries
 
 RedisTimeSeries keyにはRedis共通の[`EXPIRE`](https://redis.io/docs/latest/commands/expire/)を使用できますが、`metrics` pluginは使用しません。
 `EXPIRE`は個別sampleのtrimではなく、RedisTimeSeries key全体を削除します。
-processおよびchannel sampleは`TS.ADD`へ`*`を指定するため、Redis serverのclockからsample timestampが設定されます。
+processおよびchannel sampleでは、`TS.ADD`のtimestamp引数に`*`を指定します。
+このためRedisTimeSeriesは、Redis serverが各commandを処理した時点のUnix timeをmilliseconds単位でsample timestampとして記録します。
+timestampはdevice processのclockやmetricを測定した厳密な時刻ではなく、Redis server hostのclockを基準とするため、commandのbufferingやnetwork遅延によって測定時刻より少し後になる場合があります。
 
 `--recreate-ts=true`の場合、pluginは`Ready`へのtransition時に登録済みRedisTimeSeries keyを削除し、`Running`へのtransition時に再作成します。
 pluginは`TS.CREATE`の前にも、同名のkeyが存在すれば削除します。
 したがって既存sampleは削除され、新しいkeyには設定済みretentionとlabelが設定されます。
-`--recreate-ts=false`の場合、pluginは`TS.CREATE`を実行しません。
-存在しないkeyを`TS.ADD`が自動作成した場合、そのkeyにはpluginの`--retention` valueとlabelが適用されません。
+`--recreate-ts=false`の場合、pluginは`Ready`および`Running`へのtransition時に、RedisTimeSeries keyの削除と`TS.CREATE`による再作成を行いません。
+その後、存在しないkeyを`TS.ADD`が自動作成した場合、そのkeyにはpluginの`--retention` valueとlabelが適用されません。
 
 <a id="4-parameter_config"></a>
 ## 4. parameter_config
 
 `parameter_config`はRedis parameter keyを読み取り、値をFairMQ program propertyへ反映します。
+FairMQ program propertyは、前述したFairMQ program option store内の名前を持つ設定値です。command-line parsing、plugin、およびdeviceは同じstoreを使用します。
+pluginは`SetProperty`でRedis valueを反映し、device codeは`fConfig`や`GetProperty`などのFairMQ configuration interfaceから値を取得します。
 両方が存在する場合、instance固有parameterはgroup parameterをoverrideします。
+
+初期parameterは、command-line parsingの後、FairMQ device state machineを開始する前に、`parameter_config` pluginのconstructorで読み取ります。
+この処理はstate transitionによってtriggerされるものではありません。pluginは`Init()`や`InitTask()`を実行する前に、group parameter、instance parameterの順で読み取ります。
+初期readの後、pluginは後続のlive reloadに使用するkeyspace notification subscriberを開始します。
 
 <a id="41-command-line-options"></a>
 ### 4.1. コマンドラインオプション
