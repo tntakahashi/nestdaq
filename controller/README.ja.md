@@ -158,12 +158,10 @@ daq-webctl \
 
 ここでComposeとは、`docker compose`または`podman compose`で管理するcontainer構成を指します。
 
-- host processからComposeでpublishされたcollector portへ接続:
+- host processからOpenSearch Composeでpublishされたcollector portへ接続:
   `localhost:4317`。
-- 同じOpenSearchまたはVictoria Compose network内の`daq-webctl` container:
+- 同じOpenSearch Compose network内の`daq-webctl` container:
   `otel-collector:4317`。
-- 同じClickStack Compose network内の`daq-webctl` container:
-  `clickstack:4317`。
 
 metricsとtracesはdefaultで無効です。
 collectorを使用しないローカルdebugでは、`--otel-metric-protocol=console`や`--otel-trace-protocol=console`などのconsole exporterを使用します。

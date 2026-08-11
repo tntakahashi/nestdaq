@@ -152,11 +152,9 @@ daq-webctl \
 Choose the OTLP endpoint according to where `daq-webctl` runs.
 Here, Compose means a container setup managed with `docker compose` or `podman compose`.
 
-- Host process to a compose-published collector port: `localhost:4317`.
-- `daq-webctl` container in the same OpenSearch or Victoria compose network:
+- Host process to the collector port published by the OpenSearch Compose setup: `localhost:4317`.
+- `daq-webctl` container in the same OpenSearch Compose network:
   `otel-collector:4317`.
-- `daq-webctl` container in the same ClickStack compose network:
-  `clickstack:4317`.
 
 Metrics and traces are disabled by default.
 For local debugging without a collector, use console exporters such as `--otel-metric-protocol=console` or `--otel-trace-protocol=console`.
