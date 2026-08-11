@@ -13,10 +13,11 @@ NestDAQは3つのFairMQ pluginをshared libraryとしてinstallします。
 | `parameter_config` | `libFairMQPlugin_parameter_config.so` | Redisからparameterを読み取り、FairMQ program propertyへ反映します。 |
 
 この文書では、FairMQ program propertyを、device processのFairMQ program option storeにある名前付き設定値という意味で使用します。
-collectionは型付きkey/value storeとして使用でき、FairMQでは`std::unordered_map<std::string, std::any>`ではなく、`std::map<std::string, boost::any>`として定義されています。
+collectionは型付きkey/value storeとして使用でき、`std::map<std::string, boost::any>`として定義されています。
+device実装は、`fair::mq::Device`から継承した`fConfig` memberを通じてこのstoreを使用します。
 deviceとpluginは同じstoreを読み書きします。
 
-loadした各pluginは、想定する動作のためにRedis serverへの接続を必要とします。
+loadした各pluginはRedis serverへの接続を必要とします。
 RedisTimeSeriesが必要なのは、time-series keyを作成して更新する`metrics` pluginをloadする場合だけです。
 `daq_service`と`parameter_config`はRedisのcore commandを使用し、RedisTimeSeriesを必要としません。
 
@@ -670,7 +671,7 @@ device codeは、`fConfig`や`GetProperty`などのFairMQ configuration interfac
 
 pluginは、次の2つの時点でparameterを読み取り、反映します。
 
-1. command-line parsingの後、FairMQ device state machineを開始する前のplugin construction時。初期readはstate transitionによってtriggerされず、`Init()`または`InitTask()`より前に完了します。
+1. command-line parsingの後、FairMQ device state machineを開始する前のplugin construction時。このreadは`Init()`または`InitTask()`より前に完了します。
 2. 起動後、keyspace notification subscriberがgroup parameter hashまたはinstance parameter hashの変更eventを受信した時。subscriberはparameterを再度読み取り、Redisに存在するvalueについて`SetProperty`を呼び出します。
 
 各readではgroup parameter key、instance parameter keyの順に処理します。
@@ -688,6 +689,7 @@ pluginは、次の2つの時点でparameterを読み取り、反映します。
 
 Redis clientを呼び出すscript、またはRedis clientを直接使用するapplicationがparameter valueを書き込みます。
 付属の`scripts/mq-param.sh`はhash parameterを書き込むscriptの1つですが、対応するすべてのRedis data typeの例を提供しているわけではありません。
+実装内容と引数の例は[`mq-param.sh`の説明](../scripts/README.ja.md#31-mq-paramsh)を参照してください。
 
 | Key pattern | Redis type | Field / value | Writer / reader | 目的 |
 | --- | --- | --- | --- | --- |

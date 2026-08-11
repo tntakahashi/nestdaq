@@ -13,10 +13,11 @@ NestDAQ installs three FairMQ plugins as shared libraries:
 | `parameter_config` | `libFairMQPlugin_parameter_config.so`  | Reads parameters from Redis and mirrors them into FairMQ program properties. |
 
 In this document, a FairMQ program property means a named configuration value in a device process's FairMQ program-options store.
-The collection behaves as a typed key/value store; FairMQ defines it as `std::map<std::string, boost::any>`, rather than `std::unordered_map<std::string, std::any>`.
+The collection behaves as a typed key/value store and is defined as `std::map<std::string, boost::any>`.
+Device implementations access this store through the `fConfig` member inherited from `fair::mq::Device`.
 The device and its plugins read and update the same store.
 
-Each loaded plugin requires access to a Redis server for its intended operation.
+Each loaded plugin requires access to a Redis server.
 RedisTimeSeries is required only when the `metrics` plugin is loaded because that plugin creates and updates time-series keys.
 The `daq_service` and `parameter_config` plugins use core Redis commands and do not require RedisTimeSeries.
 
@@ -652,7 +653,7 @@ Device code obtains the resulting values through its FairMQ configuration interf
 
 The plugin reads and applies parameters at two times:
 
-1. During plugin construction, after command-line parsing and before the FairMQ device state machine starts. This initial read is not triggered by a state transition and finishes before `Init()` or `InitTask()` runs.
+1. During plugin construction, after command-line parsing and before the FairMQ device state machine starts. This read finishes before `Init()` or `InitTask()` runs.
 2. After startup, when the keyspace-notification subscriber receives a change event for the group or instance parameter hash. The subscriber reads the parameters again and calls `SetProperty` for the values found in Redis.
 
 Each read processes the group parameter key first and the instance parameter key second.
@@ -669,6 +670,7 @@ If both keys define the same property, the instance-specific value is applied la
 
 Scripts that invoke a Redis client, or applications that use a Redis client directly, write the parameter values.
 The supplied `scripts/mq-param.sh` is one such script for hash parameters, but it does not provide examples for every supported Redis data type.
+See the [`mq-param.sh` documentation](../scripts/README.md#31-mq-paramsh) for its implementation and argument examples.
 
 | Key pattern | Redis type | Fields / value | Writer / reader | Purpose |
 |-------------|------------|----------------|-----------------|---------|

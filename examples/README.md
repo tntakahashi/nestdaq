@@ -145,6 +145,11 @@ uses `localhost:4317`.
    a container. Use the endpoint of the Redis server started in
    this step consistently in `daq-webctl`, `start_device.sh`, and the
    topology/parameter helper scripts.
+   When using `parameter_config` live reload, enable Redis keyspace
+   notifications on this server. See
+   [`plugins/README.md`](../plugins/README.md#42-redis-keys-read-or-subscribed)
+   for the persistent `redis.conf` setting and the temporary `redis-cli`
+   command. Initial parameter loading does not require this setting.
 
 <a id="3121-start-with-a-configuration-file"></a>
 ##### 3.1.2.1. Start with a configuration file

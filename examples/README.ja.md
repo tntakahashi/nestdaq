@@ -152,6 +152,11 @@ host package managerで`otelcol-contrib`をインストールした場合は、C
    Redisには、ローカルでビルドしたserver、`systemd`管理のhost package、または
    containerを使用できます。このstepで起動したRedisのendpointを、`daq-webctl`、
    `start_device.sh`、topology/parameter helper scriptで一貫して使用します。
+   `parameter_config`のlive reloadを使用する場合、このRedis serverでkeyspace
+   notificationを有効にします。永続的な`redis.conf`設定と一時的な`redis-cli`
+   commandは
+   [`plugins/README.ja.md`](../plugins/README.ja.md#42-redis-keys-read-or-subscribed)
+   を参照してください。初期parameter loadでは、この設定は不要です。
 
 <a id="3121-start-with-a-configuration-file"></a>
 ##### 3.1.2.1. 設定fileを使用して起動
