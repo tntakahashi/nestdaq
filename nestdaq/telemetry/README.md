@@ -186,7 +186,8 @@ logger.info("event accepted");
 ```
 
 The `logger` above is a different object from the spdlog default logger.
-The usual spdlog member functions, such as `logger.info(...)` and `logger.warn(...)`, do not automatically attach source-location metadata.
+The usual spdlog member functions, such as `logger.info(...)` and `logger.warn(...)`, still record the body, timestamps, severity, logger name, log level, and thread ID.
+However, these member functions do not automatically attach source-location metadata.
 Use the standard spdlog macros when OpenTelemetry records should include the file path, line number, and function name:
 
 ```cpp
@@ -213,6 +214,7 @@ spdlog::info("event accepted");
 ```
 
 After this call, free functions such as `spdlog::info(...)` and the default-logger macros use this logger.
+Free functions such as `spdlog::info(...)` record the same metadata as the member functions in Section 4.1, but do not attach source-location metadata.
 Use the default-logger macros to attach source-location metadata:
 
 ```cpp
@@ -310,9 +312,9 @@ The alias has the same `fair::Severity` value as `warn`, `10`.
 | `--spdlog-console-pattern` | `NESTDAQ_SPDLOG_CONSOLE_PATTERN` | `[%Y-%m-%d %H:%M:%S.%e] [%n] [%l] %v` | spdlog native console sink pattern. |
 | `--spdlog-native-console` | `NESTDAQ_SPDLOG_NATIVE_CONSOLE` | `true` | Enable spdlog native console output independently from the OTel spdlog sink. |
 | `--spdlog-async` | `NESTDAQ_SPDLOG_ASYNC` | `false` | Use `spdlog::async_logger` for NestDAQ helper loggers. |
-| `--spdlog-async-queue-size` | `NESTDAQ_SPDLOG_ASYNC_QUEUE_SIZE` | `8192` | Queue size for async spdlog helper loggers. |
+| `--spdlog-async-queue-size` | `NESTDAQ_SPDLOG_ASYNC_QUEUE_SIZE` | `8192` | Number of items that the async spdlog helper queue can hold; this is not a byte count. |
 | `--spdlog-async-thread-count` | `NESTDAQ_SPDLOG_ASYNC_THREAD_COUNT` | `1` | Worker thread count for async spdlog helper loggers. |
-| `--spdlog-async-overflow-policy` | `NESTDAQ_SPDLOG_ASYNC_OVERFLOW_POLICY` | `block` | Queue overflow policy: `block`, `overrun_oldest`, or `discard_new`. |
+| `--spdlog-async-overflow-policy` | `NESTDAQ_SPDLOG_ASYNC_OVERFLOW_POLICY` | `block` | Queue overflow policy. See Section 7.7 for the behavior of each value. |
 | `--otel-metric-export-interval-ms` | none | `1000` | Periodic metric export interval in milliseconds. |
 | `--otel-log-http-json` | none | `true` | Use JavaScript Object Notation (JSON) content type for OTLP HTTP logs. |
 | `--otel-metric-http-json` | none | `true` | Use JSON content type for OTLP HTTP metrics. |
@@ -370,7 +372,11 @@ my-device --otel-log-protocol
 ### 7.5. spdlog Native Console Format
 
 Set the spdlog pattern to use its native console sink with a custom pattern.
-The native console sink is enabled by default and can run alongside the OTel spdlog sink:
+The native console sink is enabled by default and can run alongside the OTel spdlog sink.
+`--spdlog-console-pattern` applies only to the native console sink attached by `createSpdlogLogger()`.
+It does not affect application-attached file sinks or output from the OTel spdlog sink.
+The OTel spdlog sink stores the message before pattern formatting in the LogRecord body and records the timestamps, severity, logger name, thread ID, and available source location in separate fields or attributes.
+Therefore, an spdlog pattern is not required to preserve metadata in OpenTelemetry.
 See the official spdlog Wiki page [Custom formatting](https://github.com/gabime/spdlog/wiki/3.-Custom-formatting) for the complete list of pattern flags.
 In the following example, `%n` is the logger name, `%l` is the log level, and `%v` is the log message payload.
 
@@ -408,6 +414,8 @@ my-device \
 
 The `block` overflow policy avoids losing log records but can make caller threads wait when the queue is full.
 `overrun_oldest` drops old queued records, and `discard_new` drops newly submitted records when the queue is full.
+`--spdlog-async-queue-size` specifies the number of items that the queue can hold.
+One log record normally occupies one item, and a flush request also occupies one item; the value is not a byte limit.
 The async queue size and worker count are applied when an async helper logger is created.
 Changing these settings later does not modify existing loggers.
 

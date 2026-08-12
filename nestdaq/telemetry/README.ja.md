@@ -190,7 +190,8 @@ logger.info("event accepted");
 ```
 
 上の`logger`はspdlogの既定ロガーとは別のオブジェクトです。
-`logger.info(...)`や`logger.warn(...)`などの通常のspdlogメンバー関数は、ソース位置メタデータを自動では付加しません。
+`logger.info(...)`や`logger.warn(...)`などの通常のspdlogメンバー関数でも、`Body`、タイムスタンプ、重大度、ロガー名、ログレベル、スレッドIDを記録します。
+ただし、これらのメンバー関数はソース位置メタデータを自動では付加しません。
 OpenTelemetryレコードへファイルパス、行番号、関数名を含める場合は、標準spdlogマクロを使用します。
 
 ```cpp
@@ -217,6 +218,7 @@ spdlog::info("event accepted");
 ```
 
 設定後は、`spdlog::info(...)`などのフリー関数と既定ロガー用マクロがこのロガーを使用します。
+`spdlog::info(...)`などのフリー関数でも、4.1節のメンバー関数と同じメタデータを記録しますが、ソース位置メタデータは付加しません。
 ソース位置メタデータを付加する場合は、既定ロガー用マクロを使用します。
 
 ```cpp
@@ -318,9 +320,9 @@ spdlogのフィルター処理は、引き続きspdlogロガーおよびシン�
 | `--spdlog-console-pattern` | `NESTDAQ_SPDLOG_CONSOLE_PATTERN` | `[%Y-%m-%d %H:%M:%S.%e] [%n] [%l] %v` | spdlogネイティブコンソールシンクのパターン。 |
 | `--spdlog-native-console` | `NESTDAQ_SPDLOG_NATIVE_CONSOLE` | `true` | OTel spdlogシンクとは独立してspdlogネイティブコンソール出力を有効化。 |
 | `--spdlog-async` | `NESTDAQ_SPDLOG_ASYNC` | `false` | NestDAQヘルパーロガーに`spdlog::async_logger`を使用。 |
-| `--spdlog-async-queue-size` | `NESTDAQ_SPDLOG_ASYNC_QUEUE_SIZE` | `8192` | 非同期spdlogヘルパーロガーのキューサイズ。 |
+| `--spdlog-async-queue-size` | `NESTDAQ_SPDLOG_ASYNC_QUEUE_SIZE` | `8192` | 非同期spdlogヘルパーロガーのキューへ保持できる項目数。バイト数ではありません。 |
 | `--spdlog-async-thread-count` | `NESTDAQ_SPDLOG_ASYNC_THREAD_COUNT` | `1` | 非同期spdlogヘルパーロガーのワーカースレッド数。 |
-| `--spdlog-async-overflow-policy` | `NESTDAQ_SPDLOG_ASYNC_OVERFLOW_POLICY` | `block` | キューのオーバーフローポリシー：`block`、`overrun_oldest`、`discard_new`。 |
+| `--spdlog-async-overflow-policy` | `NESTDAQ_SPDLOG_ASYNC_OVERFLOW_POLICY` | `block` | キューのオーバーフローポリシー。各値の動作は7.7節を参照してください。 |
 | `--otel-metric-export-interval-ms` | なし | `1000` | 定期的なメトリクスのエクスポート間隔 (ミリ秒)。 |
 | `--otel-log-http-json` | なし | `true` | OTLP HTTPログでJavaScript Object Notation (JSON) コンテントタイプを使用。 |
 | `--otel-metric-http-json` | なし | `true` | OTLP HTTPメトリクスでJSONコンテントタイプを使用。 |
@@ -380,6 +382,10 @@ my-device --otel-log-protocol
 
 spdlogパターンを設定し、カスタムパターンのspdlogネイティブコンソールシンクを使用します。
 ネイティブコンソールシンクは既定で有効で、OTel spdlogシンクと同時に動作できます。
+`--spdlog-console-pattern`は、`createSpdlogLogger()`が接続するネイティブコンソールシンクだけに適用されます。
+アプリケーションが接続したファイルシンクや、OTel spdlogシンクの出力には影響しません。
+OTel spdlogシンクは、パターン適用前のメッセージをLogRecordの`Body`へ保存し、タイムスタンプ、重大度、ロガー名、スレッドID、存在する場合はソース位置を個別のフィールドまたは属性として記録します。
+そのため、OTelへメタデータを記録するためにspdlogパターンを設定する必要はありません。
 使用できるパターンフラグの一覧は、spdlog公式Wikiの[Custom formatting](https://github.com/gabime/spdlog/wiki/3.-Custom-formatting)を参照してください。
 以下の例では、`%n`がロガー名、`%l`がログレベル、`%v`がログメッセージ本文を表します。
 
@@ -417,6 +423,8 @@ my-device \
 
 `block`オーバーフローポリシーはログレコードの消失を防ぎますが、キュー満杯時に呼び出し元スレッドを待たせることがあります。
 `overrun_oldest`はキュー内の古いレコードを破棄し、`discard_new`はキュー満杯時に新しく送信されたレコードを破棄します。
+`--spdlog-async-queue-size`はキューへ保持できる項目数を指定します。
+通常、1つのログレコードが1項目を使用し、フラッシュ要求も1項目を使用します。バイト単位の上限ではありません。
 非同期キューサイズとワーカー数は非同期ヘルパーロガー作成時に適用されます。
 後から設定を変更しても、既存ロガーは変更されません。
 
