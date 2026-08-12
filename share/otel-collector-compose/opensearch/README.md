@@ -16,19 +16,6 @@ Run the following commands from `opensearch/` in that working copy.
 When changing the data location with `OPENSEARCH_DATA_DIR`, create the directory before startup and give the container suitable ownership and permissions.
 The `:Z` option already present in the Compose file applies the SELinux label.
 See Section 4 for ownership and permission examples for rootless Podman.
-In the shell command examples below, lines beginning with `#` are explanatory comments for the reader and are not executed by the shell.
-
-```bash
-# Start the OpenSearch validation stack with Docker Compose.
-docker compose -f compose-opensearch.yaml up
-```
-
-For Podman:
-
-```bash
-# Start the OpenSearch validation stack with Podman Compose.
-podman compose -f compose-opensearch.yaml up
-```
 
 ## 1. Components
 
@@ -79,26 +66,32 @@ OpenSearch runs as container `uid=1000,gid=1000`.
 Here, `uid/gid` means user identifier/group identifier.
 With rootless Podman, the host directory bind-mounted to `/usr/share/opensearch/data/` must be readable and writable by that container uid/gid as seen from the Podman user namespace:
 
+### 4.1. Without `keep-id`
+
+Use `podman unshare` to set ownership and permissions as seen from the Podman user namespace:
+
 ```bash
 # Prepare the data directory for the container's user in the Podman user namespace.
 mkdir -p ./opensearch-data
 podman unshare chown -R 1000:1000 ./opensearch-data
 podman unshare chmod -R u+rwX ./opensearch-data
-# Start the stack with the prepared data directory.
-podman compose -f compose-opensearch.yaml up
 ```
 
-Alternatively, map the container's `1000:1000` user to the host user that starts Podman Compose:
+Start the stack with the command in Section 6.2 after preparing the directory.
+
+### 4.2. With `keep-id`
+
+Alternatively, map the container's `1000:1000` user to the host user that starts Podman Compose.
+Create the data directory as the host user before starting the stack:
 
 ```bash
-# Create the data directory and start the stack with an explicit user mapping.
+# Create the data directory as the host user.
 mkdir -p ./opensearch-data
-PODMAN_USERNS="keep-id:uid=1000,gid=1000" \
-podman compose --in-pod=false -f compose-opensearch.yaml up
 ```
 
 The `PODMAN_USERNS` setting changes the user namespace mapping.
 It does not change the user ID of the OpenSearch container process, which remains `uid=1000,gid=1000` inside the container.
+Start the stack with the command in Section 6.3.
 
 <a id="5-runtime-options"></a>
 ## 5. Environment Variables
@@ -117,21 +110,67 @@ It does not change the user ID of the OpenSearch container process, which remain
 | `OPENSEARCH_DASHBOARDS_CONFIG_FILE` | `./opensearch_dashboards.yaml` | OpenSearch Dashboards config file. |
 | `OPENSEARCH_DASHBOARDS_SETUP_SCRIPT` | `./opensearch-dashboards/setup-dashboards.js` | Initial Dashboards setup script. |
 
-## 6. Stop
+<a id="6-start"></a>
+## 6. Start
+
+In the shell command examples below, lines beginning with `#` are explanatory comments for the reader and are not executed by the shell.
+
+### 6.1. Docker Compose
+
+```bash
+# Start the OpenSearch validation stack with Docker Compose.
+docker compose -f compose-opensearch.yaml up
+```
+
+### 6.2. Podman Compose without `keep-id`
+
+Prepare the data directory as described in Section 4.1 before running this command:
+
+```bash
+# Start the OpenSearch validation stack with Podman Compose.
+podman compose -f compose-opensearch.yaml up
+```
+
+### 6.3. Podman Compose with `keep-id`
+
+Prepare the data directory as described in Section 4.2 before running this command:
+
+```bash
+# Start the stack while mapping the container's uid/gid to the host user.
+PODMAN_USERNS="keep-id:uid=1000,gid=1000" \
+podman compose --in-pod=false -f compose-opensearch.yaml up
+```
+
+<a id="7-stop"></a>
+## 7. Stop
 
 Stop and remove the local validation containers and network:
+
+### 7.1. Docker Compose
 
 ```bash
 # Stop and remove the Docker validation containers and network.
 docker compose -f compose-opensearch.yaml down
 ```
 
-For Podman:
+### 7.2. Podman Compose without `keep-id`
 
 ```bash
 # Stop and remove the Podman validation containers and network.
 podman compose -f compose-opensearch.yaml down
 ```
+
+### 7.3. Podman Compose with `keep-id`
+
+Use the same user namespace settings as at startup:
+
+```bash
+# Stop and remove the Podman validation containers and network.
+PODMAN_USERNS="keep-id:uid=1000,gid=1000" \
+podman compose --in-pod=false -f compose-opensearch.yaml down
+```
+
+### 7.4. OpenSearch data
 
 The `down` command does not delete the OpenSearch data directory.
 By default, `./opensearch-data/` is bind-mounted to `/usr/share/opensearch/data/`.

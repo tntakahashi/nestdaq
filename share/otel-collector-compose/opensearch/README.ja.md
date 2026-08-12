@@ -15,19 +15,6 @@
 `OPENSEARCH_DATA_DIR`でデータ保存先を変更する場合は、起動前にディレクトリを作成し、コンテナーから書き込める所有権と権限を設定してください。
 Composeファイルに設定済みの`:Z`オプションが、SELinuxラベルを適用します。
 ルートレスPodmanで必要になる所有権と権限の設定例は4節を参照してください。
-以下のシェルコマンド例では、`#`で始まる行は読者向けの説明コメントであり、シェルでは実行されません。
-
-```bash
-# Docker ComposeでOpenSearchの検証用スタックを起動します。
-docker compose -f compose-opensearch.yaml up
-```
-
-Podmanの場合:
-
-```bash
-# Podman ComposeでOpenSearchの検証用スタックを起動します。
-podman compose -f compose-opensearch.yaml up
-```
 
 <a id="1-components"></a>
 ## 1. コンポーネント
@@ -82,26 +69,34 @@ OpenSearchはコンテナー内の`uid=1000,gid=1000`で実行されます。
 ここで`uid/gid`はユーザー識別子とグループ識別子を意味します。
 ルートレスPodmanでは、`/usr/share/opensearch/data/`にバインドマウントするホストディレクトリが、Podmanのユーザー名前空間から見たコンテナーの`uid/gid`によって読み書きできる必要があります。
 
+<a id="4-1-without-keep-id"></a>
+### 4.1. `keep-id`を使用しない場合
+
+`podman unshare`を使用し、Podmanのユーザー名前空間から見た所有権と権限を設定します。
+
 ```bash
 # Podmanのユーザー名前空間内で、コンテナーのユーザー用にデータディレクトリを準備します。
 mkdir -p ./opensearch-data
 podman unshare chown -R 1000:1000 ./opensearch-data
 podman unshare chmod -R u+rwX ./opensearch-data
-# 準備したデータディレクトリを使用してスタックを起動します。
-podman compose -f compose-opensearch.yaml up
 ```
 
+ディレクトリを準備した後、6.2節のコマンドでスタックを起動します。
+
+<a id="4-2-with-keep-id"></a>
+### 4.2. `keep-id`を使用する場合
+
 代わりに、コンテナーの`1000:1000`ユーザーをPodman Composeを起動するホストユーザーに対応付けることもできます。
+スタックを起動する前に、ホストユーザーとしてデータディレクトリを作成します。
 
 ```bash
-# データディレクトリを作成し、明示的なユーザーマッピングでスタックを起動します。
+# ホストユーザーとしてデータディレクトリを作成します。
 mkdir -p ./opensearch-data
-PODMAN_USERNS="keep-id:uid=1000,gid=1000" \
-podman compose --in-pod=false -f compose-opensearch.yaml up
 ```
 
 `PODMAN_USERNS`の設定はユーザー名前空間のマッピングを変更します。
 OpenSearchコンテナープロセスのユーザーIDは変更されず、コンテナー内では引き続き`uid=1000,gid=1000`です。
+6.3節のコマンドでスタックを起動します。
 
 <a id="5-environment-variables"></a>
 ## 5. 環境変数
@@ -120,22 +115,74 @@ OpenSearchコンテナープロセスのユーザーIDは変更されず、コ�
 | `OPENSEARCH_DASHBOARDS_CONFIG_FILE` | `./opensearch_dashboards.yaml` | OpenSearch Dashboards設定ファイル。 |
 | `OPENSEARCH_DASHBOARDS_SETUP_SCRIPT` | `./opensearch-dashboards/setup-dashboards.js` | Dashboards初期設定スクリプト。 |
 
-<a id="6-stop"></a>
-## 6. 停止
+<a id="6-start"></a>
+## 6. 起動
+
+以下のシェルコマンド例では、`#`で始まる行は読者向けの説明コメントであり、シェルでは実行されません。
+
+<a id="6-1-docker-compose"></a>
+### 6.1. Docker Compose
+
+```bash
+# Docker ComposeでOpenSearchの検証用スタックを起動します。
+docker compose -f compose-opensearch.yaml up
+```
+
+<a id="6-2-podman-compose-without-keep-id"></a>
+### 6.2. `keep-id`を使用しないPodman Compose
+
+このコマンドを実行する前に、4.1節に従ってデータディレクトリを準備してください。
+
+```bash
+# Podman ComposeでOpenSearchの検証用スタックを起動します。
+podman compose -f compose-opensearch.yaml up
+```
+
+<a id="6-3-podman-compose-with-keep-id"></a>
+### 6.3. `keep-id`を使用するPodman Compose
+
+このコマンドを実行する前に、4.2節に従ってデータディレクトリを準備してください。
+
+```bash
+# コンテナーのuid/gidをホストユーザーに対応付けてスタックを起動します。
+PODMAN_USERNS="keep-id:uid=1000,gid=1000" \
+podman compose --in-pod=false -f compose-opensearch.yaml up
+```
+
+<a id="7-stop"></a>
+## 7. 停止
 
 ローカル検証用コンテナーとネットワークを停止して削除します。
+
+<a id="7-1-docker-compose"></a>
+### 7.1. Docker Compose
 
 ```bash
 # Dockerの検証用コンテナーとネットワークを停止して削除します。
 docker compose -f compose-opensearch.yaml down
 ```
 
-Podmanの場合:
+<a id="7-2-podman-compose-without-keep-id"></a>
+### 7.2. `keep-id`を使用しないPodman Compose
 
 ```bash
 # Podmanの検証用コンテナーとネットワークを停止して削除します。
 podman compose -f compose-opensearch.yaml down
 ```
+
+<a id="7-3-podman-compose-with-keep-id"></a>
+### 7.3. `keep-id`を使用するPodman Compose
+
+起動時と同じユーザー名前空間の設定を使用します。
+
+```bash
+# Podmanの検証用コンテナーとネットワークを停止して削除します。
+PODMAN_USERNS="keep-id:uid=1000,gid=1000" \
+podman compose --in-pod=false -f compose-opensearch.yaml down
+```
+
+<a id="7-4-opensearch-data"></a>
+### 7.4. OpenSearchデータ
 
 `down`ではOpenSearchデータディレクトリを削除しません。
 デフォルトでは`./opensearch-data/`が`/usr/share/opensearch/data/`にバインドマウントされます。
