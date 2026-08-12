@@ -11,7 +11,7 @@
 どちらかを使用してこのスタックを管理します。
 
 このディレクトリから起動します。
-以下のshellコマンド例では、`#`で始まる行は読者向けの説明コメントであり、shellでは実行されません。
+以下のシェルコマンド例では、`#`で始まる行は読者向けの説明コメントであり、シェルでは実行されません。
 
 ```bash
 # Docker ComposeでOpenSearchの検証用スタックを起動します。
@@ -25,42 +25,42 @@ Podmanの場合:
 podman compose -f compose-opensearch.yaml up
 ```
 
-`podman compose`を使用するには、`podman-compose`やDocker Compose pluginなどのCompose providerが必要です。
-Compose providerをインストールし、`PATH`から検出できるようにしてください。
+`podman compose`を使用するには、`podman-compose`やDocker ComposeプラグインなどのComposeプロバイダーが必要です。
+Composeプロバイダーをインストールし、`PATH`から検出できるようにしてください。
 
 <a id="1-components"></a>
 ## 1. コンポーネント
 
-- `otel-collector`: OpenTelemetry Protocol (OTLP) のログとトレースを、Google remote procedure call (gRPC) およびHTTPで受信します。
-- `opensearch`: Collectorがexportしたログとトレースを保存します。
-- `opensearch-dashboards`: OpenSearchのWebユーザーインターフェース (UI) を提供します。
+- `otel-collector`: OpenTelemetry Protocol (OTLP) のログとトレースを、Googleリモートプロシージャコール (gRPC) およびHTTPで受信します。
+- `opensearch`: コレクターがエクスポートしたログとトレースを保存します。
+- `opensearch-dashboards`: OpenSearchのウェブユーザーインターフェース (UI) を提供します。
 - `opensearch-dashboards-setup`: ログとトレースの初期Data Viewが存在しない場合に作成します。
 
-OpenSearch 3.xを含むOpenSearch 2.12以降では、同梱のdemo security設定をインストールする場合に`OPENSEARCH_INITIAL_ADMIN_PASSWORD`が必要です。
-このローカル検証用Compose構成ではdemo設定のinstallerとSecurity pluginを無効にしているため、OpenSearchの管理者パスワードは不要です。
+OpenSearch 3.xを含むOpenSearch 2.12以降では、同梱のデモセキュリティ設定をインストールする場合に`OPENSEARCH_INITIAL_ADMIN_PASSWORD`が必要です。
+このローカル検証用Compose構成では、デモ設定のインストーラーとSecurityプラグインを無効にしているため、OpenSearchの管理者パスワードは不要です。
 
 スタックの起動後に`http://localhost:5601/app/discover`を開いてください。
-setup serviceは`otel-logs-*`と`otel-traces-*`のData Viewを作成します。
-default Data Viewがまだ設定されていない場合に限り、`otel-logs-*`をdefaultに設定します。
+セットアップサービスは`otel-logs-*`と`otel-traces-*`のData Viewを作成します。
+デフォルトのData Viewがまだ設定されていない場合に限り、`otel-logs-*`をデフォルトに設定します。
 
 <a id="2-collector-pipelines"></a>
-## 2. Collectorパイプライン
+## 2. コレクターのパイプライン
 
-Collectorは、次の名前のindexにログを保存します。
+コレクターは、次の名前のインデックスにログを保存します。
 
 ```text
 otel-logs-%{service.name}-yyyy.MM.dd
 ```
 
-トレースは次の名前のindexに保存します。
+トレースは次の名前のインデックスに保存します。
 
 ```text
 otel-traces-%{service.name}-yyyy.MM.dd
 ```
 
-`service.name`がない場合、Collectorは`unknown-service`を使用します。
-OpenSearchのindex名には小文字が必要です。
-NestDAQテレメトリーはexport前に`service.name`内のASCII大文字を小文字に変換します。
+`service.name`がない場合、コレクターは`unknown-service`を使用します。
+OpenSearchのインデックス名には小文字が必要です。
+NestDAQテレメトリーはエクスポート前に`service.name`内のASCII大文字を小文字に変換します。
 このCompose構成を使用する外部OTLPクライアントも、`service.name`を小文字で送信してください。
 
 <a id="3-ports"></a>
@@ -68,18 +68,18 @@ NestDAQテレメトリーはexport前に`service.name`内のASCII大文字を小
 
 - OpenSearch: `http://localhost:9200`
 - OpenSearch Dashboards: `http://localhost:5601`
-- OTLP gRPC receiver: `localhost:4317`
-- OTLP HTTP receiver: `http://localhost:4318`
+- OTLP gRPCレシーバー: `localhost:4317`
+- OTLP HTTPレシーバー: `http://localhost:4318`
 
 ホストプロセスは上記の`localhost`エンドポイントを使用します。
-同じComposeネットワーク内のNestDAQ deviceコンテナーまたは`daq-webctl`コンテナーは、OTLP gRPCには`otel-collector:4317`を、OTLP HTTPには`http://otel-collector:4318`を使用してください。
+同じComposeネットワーク内のNestDAQデバイスコンテナーまたは`daq-webctl`コンテナーは、OTLP gRPCには`otel-collector:4317`を、OTLP HTTPには`http://otel-collector:4318`を使用してください。
 
 <a id="4-rootless-podman"></a>
-## 4. Rootless Podman
+## 4. ルートレスPodman
 
 OpenSearchはコンテナー内の`uid=1000,gid=1000`で実行されます。
-ここで`uid/gid`はuser identifier/group identifierを意味します。
-rootless Podmanでは、`/usr/share/opensearch/data/`にbind mountするホストディレクトリが、Podmanのユーザー名前空間から見たコンテナーのuid/gidによって読み書きできる必要があります。
+ここで`uid/gid`はユーザー識別子とグループ識別子を意味します。
+ルートレスPodmanでは、`/usr/share/opensearch/data/`にバインドマウントするホストディレクトリが、Podmanのユーザー名前空間から見たコンテナーの`uid/gid`によって読み書きできる必要があります。
 
 ```bash
 # Podmanのユーザー名前空間内で、コンテナーのユーザー用にデータディレクトリを準備します。
@@ -100,24 +100,24 @@ podman compose --in-pod=false -f compose-opensearch.yaml up
 ```
 
 `PODMAN_USERNS`の設定はユーザー名前空間のマッピングを変更します。
-OpenSearchコンテナープロセスのuser IDは変更されず、コンテナー内では引き続き`uid=1000,gid=1000`です。
+OpenSearchコンテナープロセスのユーザーIDは変更されず、コンテナー内では引き続き`uid=1000,gid=1000`です。
 
 <a id="5-environment-variables"></a>
 ## 5. 環境変数
 
 | 変数 | デフォルト | 説明 |
 | :-- | :-- | :-- |
-| `OTEL_COLLECTOR_IMAGE` | `docker.io/otel/opentelemetry-collector-contrib:0.155.0` | Collectorイメージ。 |
+| `OTEL_COLLECTOR_IMAGE` | `docker.io/otel/opentelemetry-collector-contrib:0.155.0` | コレクターイメージ。 |
 | `OPENSEARCH_IMAGE` | `docker.io/opensearchproject/opensearch:2.19.5` | OpenSearchイメージ。 |
 | `OPENSEARCH_DASHBOARDS_IMAGE` | `docker.io/opensearchproject/opensearch-dashboards:2.19.5` | OpenSearch Dashboardsイメージ。 |
 | `OPENSEARCH_PORT` | `9200` | OpenSearchに割り当てるホストポート。 |
 | `OPENSEARCH_DASHBOARDS_PORT` | `5601` | OpenSearch Dashboardsに割り当てるホストポート。 |
 | `OTEL_COLLECTOR_GRPC_PORT` | `4317` | OTLP gRPCに割り当てるホストポート。 |
 | `OTEL_COLLECTOR_HTTP_PORT` | `4318` | OTLP HTTPに割り当てるホストポート。 |
-| `OPENSEARCH_DATA_DIR` | `./opensearch-data` | `/usr/share/opensearch/data/`にbind mountするホストディレクトリ。 |
-| `OTEL_COLLECTOR_CONFIG_FILE` | `./otel-collector-config-opensearch.yaml` | Collector設定ファイル。 |
+| `OPENSEARCH_DATA_DIR` | `./opensearch-data` | `/usr/share/opensearch/data/`にバインドマウントするホストディレクトリ。 |
+| `OTEL_COLLECTOR_CONFIG_FILE` | `./otel-collector-config-opensearch.yaml` | コレクター設定ファイル。 |
 | `OPENSEARCH_DASHBOARDS_CONFIG_FILE` | `./opensearch_dashboards.yaml` | OpenSearch Dashboards設定ファイル。 |
-| `OPENSEARCH_DASHBOARDS_SETUP_SCRIPT` | `./opensearch-dashboards/setup-dashboards.js` | Dashboards初期設定script。 |
+| `OPENSEARCH_DASHBOARDS_SETUP_SCRIPT` | `./opensearch-dashboards/setup-dashboards.js` | Dashboards初期設定スクリプト。 |
 
 <a id="6-stop"></a>
 ## 6. 停止
@@ -137,19 +137,19 @@ podman compose -f compose-opensearch.yaml down
 ```
 
 `down`ではOpenSearchデータディレクトリを削除しません。
-デフォルトでは`./opensearch-data/`が`/usr/share/opensearch/data/`にbind mountされます。
+デフォルトでは`./opensearch-data/`が`/usr/share/opensearch/data/`にバインドマウントされます。
 同じ`OPENSEARCH_DATA_DIR`でこのCompose構成を再び起動すると、OpenSearchは以前のデータを再利用します。
 
-保存されたログ、トレース、index、OpenSearch metadataを破棄したい場合に限り、OpenSearchデータディレクトリを削除してください。
+保存されたログ、トレース、インデックス、OpenSearchメタデータを破棄したい場合に限り、OpenSearchデータディレクトリを削除してください。
 
 ```bash
 # 保存されたOpenSearchデータを完全に破棄します。
 rm -rf ./opensearch-data
 ```
 
-rootless Podmanでは、ファイル所有権のためユーザー名前空間経由で削除する必要がある場合があります。
+ルートレスPodmanでは、ファイル所有権のためユーザー名前空間経由で削除する必要がある場合があります。
 
 ```bash
-# rootless Podmanのデータをユーザー名前空間経由で破棄します。
+# ルートレスPodmanのデータをユーザー名前空間経由で破棄します。
 podman unshare rm -rf ./opensearch-data
 ```

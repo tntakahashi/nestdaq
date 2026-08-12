@@ -2,7 +2,7 @@
 
 [English](README.md) | [日本語](README.ja.md)
 
-[トップ: NestDAQ](../../../README.ja.md) | [前の保存先候補: Victoria](../victoria/README.ja.md) | [次へ: Package installer](../../installers/README.ja.md)
+[トップ: NestDAQ](../../../README.ja.md) | [前の保存先候補: Victoria](../victoria/README.ja.md) | [次へ: パッケージインストーラー](../../installers/README.ja.md)
 
 このローカル検証用スタックは、ClickStack OpenTelemetry CollectorでOpenTelemetryのログ、メトリクス、トレースを受信します。
 受信したデータをClickHouseに保存し、ClickStackユーザーインターフェース (UI) で表示します。
@@ -13,7 +13,7 @@
 どちらかを使用してこのスタックを管理します。
 
 このディレクトリから起動します。
-以下のshellコマンド例では、`#`で始まる行は読者向けの説明コメントであり、shellでは実行されません。
+以下のシェルコマンド例では、`#`で始まる行は読者向けの説明コメントであり、シェルでは実行されません。
 
 ```bash
 # Docker ComposeでClickHouseの検証用スタックを起動します。
@@ -27,8 +27,8 @@ Podmanの場合:
 podman compose -f compose-clickhouse.yaml up
 ```
 
-`podman compose`を使用するには、`podman-compose`やDocker Compose pluginなどのCompose providerが必要です。
-Compose providerをインストールし、`PATH`から検出できるようにしてください。
+`podman compose`を使用するには、`podman-compose`やDocker ComposeプラグインなどのComposeプロバイダーが必要です。
+Composeプロバイダーをインストールし、`PATH`から検出できるようにしてください。
 
 <a id="1-components"></a>
 ## 1. コンポーネント
@@ -37,24 +37,24 @@ Compose providerをインストールし、`PATH`から検出できるように�
 
 ClickStack UIを`http://localhost:8080`で開いてください。
 初回利用時にUIユーザーを作成します。
-ClickStackはローカルのClickHouse instanceに接続し、ログ、メトリクス、トレース用のdata sourceを準備します。
+ClickStackはローカルのClickHouseインスタンスに接続し、ログ、メトリクス、トレース用のデータソースを準備します。
 
 このスタックはローカル検証用です。
-production環境では、明示的な認証情報、retention policy、backup policy、およびこのsample Composeファイルの外部で管理するdeployment topologyを使用してください。
+本番環境では、明示的な認証情報、保持ポリシー、バックアップポリシー、およびこのサンプルComposeファイルの外部で管理する配備トポロジーを使用してください。
 
 <a id="2-ports"></a>
 ## 2. ポート
 
 - ClickStack UI: `http://localhost:8080`
 - ClickHouse HTTP: `http://localhost:8123`
-- OpenTelemetry Protocol (OTLP) Google remote procedure call (gRPC) receiver: `localhost:4317`
-- OTLP HTTP receiver: `http://localhost:4318`
+- OpenTelemetry Protocol (OTLP) Googleリモートプロシージャコール (gRPC) レシーバー: `localhost:4317`
+- OTLP HTTPレシーバー: `http://localhost:4318`
 
 <a id="3-nestdaq-telemetry-endpoint-examples"></a>
 ## 3. NestDAQテレメトリーエンドポイントの例
 
 ホストプロセスはOTLP/gRPCに`localhost:4317`、OTLP/HTTPに`http://localhost:4318`を使用します。
-同じComposeネットワーク内のNestDAQ deviceコンテナーまたは`daq-webctl`コンテナーは、OTLP gRPCに`clickstack:4317`、OTLP HTTPに`http://clickstack:4318`を使用してください。
+同じComposeネットワーク内のNestDAQデバイスコンテナーまたは`daq-webctl`コンテナーは、OTLP gRPCに`clickstack:4317`、OTLP HTTPに`http://clickstack:4318`を使用してください。
 
 例えば、HTTPエンドポイントでは次のパスを使用します。
 
@@ -69,14 +69,14 @@ http://localhost:4318/v1/traces
 
 | 変数 | デフォルト | 説明 |
 | :-- | :-- | :-- |
-| `CLICKSTACK_IMAGE` | `docker.io/clickhouse/clickstack-all-in-one:2` | ClickStack all-in-oneイメージ。 |
+| `CLICKSTACK_IMAGE` | `docker.io/clickhouse/clickstack-all-in-one:2` | ClickStack一体型イメージ。 |
 | `CLICKSTACK_UI_PORT` | `8080` | ClickStack UIに割り当てるホストポート。 |
 | `CLICKHOUSE_HTTP_PORT` | `8123` | ClickHouse HTTPに割り当てるホストポート。 |
 | `OTEL_COLLECTOR_GRPC_PORT` | `4317` | OTLP gRPCに割り当てるホストポート。 |
 | `OTEL_COLLECTOR_HTTP_PORT` | `4318` | OTLP HTTPに割り当てるホストポート。 |
-| `CLICKSTACK_DB_DIR` | `./clickstack-db` | `/data/db/`にbind mountするホストディレクトリ。 |
-| `CLICKSTACK_CLICKHOUSE_DATA_DIR` | `./clickstack-clickhouse-data` | `/var/lib/clickhouse/`にbind mountするホストディレクトリ。 |
-| `CLICKSTACK_CLICKHOUSE_LOG_DIR` | `./clickstack-clickhouse-logs` | `/var/log/clickhouse-server/`にbind mountするホストディレクトリ。 |
+| `CLICKSTACK_DB_DIR` | `./clickstack-db` | `/data/db/`にバインドマウントするホストディレクトリ。 |
+| `CLICKSTACK_CLICKHOUSE_DATA_DIR` | `./clickstack-clickhouse-data` | `/var/lib/clickhouse/`にバインドマウントするホストディレクトリ。 |
+| `CLICKSTACK_CLICKHOUSE_LOG_DIR` | `./clickstack-clickhouse-logs` | `/var/log/clickhouse-server/`にバインドマウントするホストディレクトリ。 |
 
 <a id="5-stop"></a>
 ## 5. 停止
@@ -107,10 +107,10 @@ rm -rf ./clickstack-db \
        ./clickstack-clickhouse-logs
 ```
 
-rootless Podmanでは、ファイル所有権のためユーザー名前空間経由で削除する必要がある場合があります。
+ルートレスPodmanでは、ファイル所有権のためユーザー名前空間経由で削除する必要がある場合があります。
 
 ```bash
-# rootless Podmanのデータとログをユーザー名前空間経由で破棄します。
+# ルートレスPodmanのデータとログをユーザー名前空間経由で破棄します。
 podman unshare rm -rf ./clickstack-db \
                        ./clickstack-clickhouse-data \
                        ./clickstack-clickhouse-logs

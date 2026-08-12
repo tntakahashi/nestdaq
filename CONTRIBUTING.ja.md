@@ -9,33 +9,33 @@
 <a id="forking-workflow"></a>
 ## フォークを使用した開発手順
 
-このドキュメントで**upstream repository**とは、[github.com/spadi-alliance/nestdaq](https://github.com/spadi-alliance/nestdaq)を指します。
+このドキュメントで**上流リポジトリ**とは、[github.com/spadi-alliance/nestdaq](https://github.com/spadi-alliance/nestdaq)を指します。
 
 - `main`ブランチにはNestDAQの最新リリース版が含まれ、利用者やその他の非開発者が通常使用します。
 - `develop`ブランチには、NestDAQの最新開発版が含まれます。
-- 開発を始める前に、upstream repositoryを自身のGitHub accountへforkしてください。
-- 開発を始める前に、自身のforkをupstreamの`develop`ブランチと同期してください。
-- 自身のforkで変更を行い、commitを自身のforkへpushしてください。
-- upstream repositoryには作業ブランチを作成しないでください。
-- upstreamの`main`および`develop`ブランチは保護されており、直接pushできません。
-- 自身のforkから、upstreamの`develop`ブランチを対象としてPull RequestまたはDraft Pull Requestを作成してください。
-- upstreamの`main`ブランチへ変更を反映できるのは、権限を持つmaintainerだけです。
-- upstreamの`main`を対象とするPull Requestは、upstreamの`develop`ブランチから作成するものだけを許可します。
-- forkやその他のbranchからupstreamの`main`へのPull Requestは受け付けません。
-- 変更が最終レビューの準備段階にない場合でも、早期のフィードバックが有用であればDraft Pull Requestを使用してください。
+- 開発を始める前に、上流リポジトリを自身のGitHubアカウントへフォークしてください。
+- 開発を始める前に、自身のフォークを上流の`develop`ブランチと同期してください。
+- 自身のフォークで変更を行い、コミットを自身のフォークへプッシュしてください。
+- 上流リポジトリには作業ブランチを作成しないでください。
+- 上流の`main`および`develop`ブランチは保護されており、直接プッシュできません。
+- 自身のフォークから、上流の`develop`ブランチを対象としてプルリクエストまたはドラフトプルリクエストを作成してください。
+- 上流の`main`ブランチへ変更を反映できるのは、権限を持つメンテナーだけです。
+- 上流の`main`を対象とするプルリクエストは、上流の`develop`ブランチから作成するものだけを許可します。
+- フォークやその他のブランチから上流の`main`へのプルリクエストは受け付けません。
+- 変更が最終レビューの準備段階にない場合でも、早期のフィードバックが有用であればドラフトプルリクエストを使用してください。
 
 <a id="commits-and-pull-requests"></a>
-## コミットとPull Request
+## コミットとプルリクエスト
 
 - 関連のない複数の変更を1つの巨大なコミットにまとめることは避けてください。
 - 個別にレビューできる変更は、意図ごとにコミットを分けてください。
-- Pull Requestは、慎重にレビューできる規模に保ってください。
-- 関連のない変更が多数蓄積するまで待たず、こまめにPull Requestを作成してください。
+- プルリクエストは、慎重にレビューできる規模に保ってください。
+- 関連のない変更が多数蓄積するまで待たず、こまめにプルリクエストを作成してください。
 
 <a id="formatting"></a>
 ## フォーマット
 
-- Pull Requestを作成する前、またはDraft Pull Requestをレビュー可能な状態へ変更する前に、フォーマッターを適用してください。
+- プルリクエストを作成する前、またはドラフトプルリクエストをレビュー可能な状態へ変更する前に、フォーマッターを適用してください。
 - C/C++ファイルには`astyle`を適用してください。
 - 変更で触れたファイルだけをフォーマットしてください。
 - 関係のないファイルを再フォーマットしないでください。
@@ -43,9 +43,9 @@
 <a id="static-analysis"></a>
 ## 静的解析
 
-- Pull Requestを作成する前に`clang-tidy`を実行してください。
+- プルリクエストを作成する前に`clang-tidy`を実行してください。
 - リポジトリ内の[`.clang-tidy`](.clang-tidy)設定を使用してください。
-- Pull Request自体がclang-tidyの方針に関するものでない限り、プロジェクトのコードに追加のチェックを有効にしないでください。
+- プルリクエスト自体がclang-tidyの方針に関するものでない限り、プロジェクトのコードに追加のチェックを有効にしないでください。
 - CMakeを介して`clang-tidy`を実行するには、`-DNESTDAQ_ENABLE_CLANG_TIDY=ON`を指定して構成してください。
 
 <a id="code-style-and-naming"></a>
@@ -60,22 +60,22 @@
 ### 命名規則
 
 - `PascalCase`と`UpperCamelCase`は同じ命名形式を意味します。
-- `class`名およびtype名: `PascalCase` / `UpperCamelCase`。
+- `class`名および型名: `PascalCase` / `UpperCamelCase`。
 - `namespace`名: `snake_case`。
-- functionおよびmember functionにはlower camel case / `camelCase`を優先します。
+- 関数およびメンバー関数にはローワーキャメルケース / `camelCase`を優先します。
   既存スタイルとの一貫性を保つ場合は、`PascalCase` / `UpperCamelCase`も許容します。
-- variableには`snake_case`を優先します。
-  既存スタイルとの一貫性を保つ場合は、lower camel case / `camelCase`も許容します。
-- `using` aliasは命名規則の対象外です。
-  局所的な可読性、外部libraryの規約、または一般的な短縮形に従って構いません。
-- `public struct`のdata field: `snake_case`。
-- `private`および`protected`の`class` data member: `fPascalCase`。
-- `static` data member: `fg`で開始します (例: `fgPascalCase`)。
-- `static` variable: `g`で開始します (例: `gPascalCase`)。
-- constant: `k`で開始する`kPascalCase`、または`SCREAMING_SNAKE_CASE`を使用します。
-- macro名: `SCREAMING_SNAKE_CASE`。
-- enum constant: `kPascalCase`、`PascalCase` / `UpperCamelCase`、または`SCREAMING_SNAKE_CASE`。
-- NestDAQ codeのbase `namespace`: `nestdaq`。
+- 変数には`snake_case`を優先します。
+  既存スタイルとの一貫性を保つ場合は、ローワーキャメルケース / `camelCase`も許容します。
+- `using`による別名は命名規則の対象外です。
+  局所的な可読性、外部ライブラリの規約、または一般的な短縮形に従って構いません。
+- `public struct`のデータフィールド: `snake_case`。
+- `private`および`protected`の`class`データメンバー: `fPascalCase`。
+- `static`データメンバー: `fg`で開始します (例: `fgPascalCase`)。
+- `static`変数: `g`で開始します (例: `gPascalCase`)。
+- 定数: `k`で開始する`kPascalCase`、または`SCREAMING_SNAKE_CASE`を使用します。
+- マクロ名: `SCREAMING_SNAKE_CASE`。
+- 列挙定数: `kPascalCase`、`PascalCase` / `UpperCamelCase`、または`SCREAMING_SNAKE_CASE`。
+- NestDAQコードの基底`namespace`: `nestdaq`。
 
 <a id="file-naming"></a>
 ### ファイル名

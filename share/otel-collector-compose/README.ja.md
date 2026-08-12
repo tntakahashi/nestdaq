@@ -1,8 +1,8 @@
-# OpenTelemetry Collectorコンテナ構成
+# OpenTelemetry Collectorコンテナー構成
 
 [English](README.md) | [日本語](README.ja.md)
 
-[トップ: NestDAQ](../../README.ja.md) | [前へ: Redis container](../redis-stack-container/README.ja.md) | [次へ: OpenSearch設定](opensearch/README.ja.md)
+[トップ: NestDAQ](../../README.ja.md) | [前へ: Redisコンテナー](../redis-stack-container/README.ja.md) | [次へ: OpenSearch設定](opensearch/README.ja.md)
 
 この文書で**Compose**とは、Docker Compose (`docker compose`) またはPodman Compose (`podman compose`) を指します。
 このディレクトリには、ローカル検証用のCompose構成が含まれています。
@@ -26,7 +26,7 @@
 
 インストール後、インストール済みの構成を作業ディレクトリへコピーします。
 `./otel-collector-compose/`がすでに存在する場合は、先に削除するか別のコピー先を選択してください。
-以下のshellコマンド例では、`#`で始まる行は読者向けの説明コメントであり、shellでは実行されません。
+以下のシェルコマンド例では、`#`で始まる行は読者向けの説明コメントであり、シェルでは実行されません。
 
 ```bash
 # インストール済みの構成をコピーし、作業用コピーへ移動します。
@@ -57,7 +57,7 @@ docker compose -f compose-clickhouse.yaml up
 Podmanでは、同じファイルを`podman compose`で使用してください。
 
 複数のスタックを同時に実行する場合は、`GRAFANA_PORT`、`CLICKSTACK_UI_PORT`、`OTEL_COLLECTOR_GRPC_PORT`、`OTEL_COLLECTOR_HTTP_PORT`など、競合するホストポートを上書きしてください。
-OTLPはOpenTelemetry Protocol、gRPCはGoogle remote procedure callを意味します。
+OTLPはOpenTelemetry Protocol、gRPCはGoogleリモートプロシージャコールを意味します。
 
 各バックエンドディレクトリは自己完結しています。
 バックエンドディレクトリだけをコピーし、そのコピー先からスタックを実行できます。
@@ -75,16 +75,16 @@ docker compose -f compose-opensearch.yaml down
 Podmanでは、同じComposeファイルを`podman compose`で使用してください。
 
 `down`コマンドはローカル検証用のコンテナーとネットワークを停止して削除します。
-bind mountされたバックエンドデータディレクトリは削除しません。
+バインドマウントされたバックエンドデータディレクトリは削除しません。
 同じデータディレクトリを使用して同じバックエンドを再び起動すると、以前のデータが再利用されます。
 保存されたバックエンドデータを破棄したい場合に限り、これらのディレクトリを削除してください。
-正確なディレクトリ名は、各バックエンドのREADMEを参照してください。
+正確なディレクトリ名は、各バックエンドのREADMEファイルを参照してください。
 
 <a id="3-telemetry-endpoints"></a>
 ## 3. テレメトリーエンドポイント
 
 NestDAQプロセスを実行する場所に応じて、テレメトリーエンドポイントを選択してください。
-同じ規則がNestDAQ deviceプロセスと`daq-webctl`の両方に適用されます。
+同じ規則がNestDAQデバイスプロセスと`daq-webctl`の両方に適用されます。
 
 | 送信元の場所 | OpenSearch/Victoriaエンドポイント | ClickStackエンドポイント |
 | :-- | :-- | :-- |
@@ -92,18 +92,18 @@ NestDAQプロセスを実行する場所に応じて、テレメトリーエン�
 | 同じComposeネットワーク内のコンテナー | `otel-collector:4317`または`http://otel-collector:4318` | `clickstack:4317`または`http://clickstack:4318` |
 | Composeネットワーク外からホストの公開ポートを使用するコンテナー | Docker: `host.docker.internal:4317`; Podman: `host.containers.internal:4317` | Docker: `host.docker.internal:4317`; Podman: `host.containers.internal:4317` |
 
-OTLP HTTPでは、`/v1/logs`、`/v1/metrics`、`/v1/traces`など、テレメトリークライアントが必要とするsignal固有のパスを使用してください。
+OTLP HTTPでは、`/v1/logs`、`/v1/metrics`、`/v1/traces`など、テレメトリークライアントが必要とするシグナル固有のパスを使用してください。
 
 <a id="4-backend-details"></a>
 ## 4. バックエンドの詳細
 
-各バックエンドのREADMEを参照してください。
+各バックエンドのREADMEファイルを参照してください。
 
 - `opensearch/README.ja.md`
 - `victoria/README.ja.md`
 - `clickhouse/README.ja.md`
 
 すべてのスタックは固定されたデフォルトのイメージを使用します。
-バックエンドのREADMEに記載された環境変数でイメージを上書きできます。
+バックエンドのREADMEファイルに記載された環境変数でイメージを上書きできます。
 
-Security-Enhanced Linux (SELinux) が有効なシステムでは、Composeファイルがbind mountされたパスに`:Z`ラベルオプションを適用します。
+Security-Enhanced Linux (SELinux) が有効なシステムでは、Composeファイルがバインドマウントされたパスに`:Z`ラベルオプションを適用します。

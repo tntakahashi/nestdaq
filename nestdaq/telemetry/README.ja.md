@@ -2,112 +2,112 @@
 
 [English](README.md) | [日本語](README.ja.md)
 
-[トップ: NestDAQ](../../README.ja.md) | [前へ: Web controller用ブラウザーfile](../../share/controller/README.ja.md) | [次へ: Redis container](../../share/redis-stack-container/README.ja.md)
+[トップ: NestDAQ](../../README.ja.md) | [前へ: ウェブコントローラー用ブラウザーファイル](../../share/controller/README.ja.md) | [次へ: Redisコンテナ](../../share/redis-stack-container/README.ja.md)
 
-NestDAQテレメトリーは、FairMQベースのdevice向け、およびcontroller processである`daq-webctl`向けに、必要に応じて有効にできるOpenTelemetry統合です。
-application executableはbuild時に`opentelemetry-cpp`へlinkしません。
-代わりに、NestDAQはtelemetry plugin `libnestdaq_otel.so`を`dlopen()`で動的にloadします。
+NestDAQテレメトリーは、FairMQベースのデバイス向け、およびコントローラープロセスである`daq-webctl`向けに、必要に応じて有効にできるOpenTelemetry統合です。
+アプリケーションの実行ファイルはビルド時に`opentelemetry-cpp`へリンクしません。
+代わりに、NestDAQはテレメトリープラグイン`libnestdaq_otel.so`を`dlopen()`で動的に読み込みます。
 
-pluginは3種類のOpenTelemetry signalをexportできます。
-デフォルト列は、対応するprotocol optionまたは環境変数で設定を変更しなかった場合のexporter選択を示します。
+プラグインは3種類のOpenTelemetryシグナルをエクスポートできます。
+既定値の列は、対応するプロトコルオプションまたは環境変数で設定を変更しなかった場合のエクスポーター選択を示します。
 
-| Signal | デフォルト | NestDAQ内のsource |
+| シグナル | 既定値 | NestDAQ内のソース |
 | --- | --- | --- |
-| Logs | `console` exporter | process全体のFairLogger custom sink、およびloggerへ明示的に接続したNestDAQ spdlog sink |
-| Metrics | 無効 | processのCPU time/utilization、memory usage、FairMQ channel throughput、FairMQ stateの自動計装、およびuser counter/histogram/gauge API |
-| Traces | 無効 | `Telemetry::startSpan()`とRAII `TelemetrySpan`でuser codeが明示的に作成するspan。frameworkによる自動生成はありません |
+| ログ | `console`エクスポーター | プロセス全体のFairLoggerカスタムシンク、およびロガーへ明示的に接続したNestDAQ spdlogシンク |
+| メトリクス | 無効 | プロセスのCPU時間/使用率、メモリー使用量、FairMQチャネルのスループット、FairMQ状態の自動計装、およびユーザーカウンター/ヒストグラム/ゲージAPI |
+| トレース | 無効 | `Telemetry::startSpan()`とRAII `TelemetrySpan`でユーザーコードが明示的に作成するスパン。フレームワークによる自動生成はありません |
 
-> **注意:** NestDAQのOpenTelemetry metricsおよびtrace instrumentationはexperimentalです。
-> production codeでは使用しないでください。spdlog log sinkもexperimentalであり、
+> **注意:** NestDAQのOpenTelemetryメトリクスおよびトレース計装は実験的機能です。
+> 本番コードでは使用しないでください。spdlogログシンクも実験的機能であり、
 > 詳細は後述します。
 
-`libnestdaq_otel.so`は、CMake configure時に`opentelemetry-cpp`が見つかった場合にのみbuildおよびinstallされます。
+`libnestdaq_otel.so`は、CMake構成時に`opentelemetry-cpp`が見つかった場合にのみビルドおよびインストールされます。
 
 <a id="1-telemetry-plugin-loading-model"></a>
-## 1. テレメトリープラグインのloadモデル
+## 1. テレメトリープラグインの読み込みモデル
 
-NestDAQは、telemetry plugin内にprocess全体で共有するOpenTelemetry providerをinstallします。
-process全体で共有するcustom sinkがFairLogger logを取得します。
-NestDAQ spdlog sinkを明示的に接続したloggerだけがspdlog logをexportします。
-metricsとtracesは、OpenTelemetry C++ headerを直接公開しないNestDAQの薄いwrapper APIを通じて記録されます。
+NestDAQは、テレメトリープラグイン内にプロセス全体で共有するOpenTelemetryプロバイダーを導入します。
+プロセス全体で共有するカスタムシンクがFairLoggerログを取得します。
+NestDAQ spdlogシンクを明示的に接続したロガーだけがspdlogログをエクスポートします。
+メトリクスとトレースは、OpenTelemetry C++ヘッダーを直接公開しないNestDAQの薄いラッパーAPIを通じて記録されます。
 
-動的loadされるtelemetry pluginは、public C ABIを`OpenTelemetryInitializer.cxx`で定義します。
-内部実装はlogs、metrics、traces、共通telemetry helperというsignal領域別に構成されています。
-applicationは内部実装fileへ依存せず、`TelemetryLibrary`、`Telemetry`、`Counter`、`Histogram`、`Gauge`、`TelemetrySpan`、`GetTelemetry()`を使用してください。
+動的に読み込まれるテレメトリープラグインは、公開C ABIを`OpenTelemetryInitializer.cxx`で定義します。
+内部実装はログ、メトリクス、トレース、共通テレメトリーヘルパーというシグナル領域別に構成されています。
+アプリケーションは内部実装ファイルへ依存せず、`TelemetryLibrary`、`Telemetry`、`Counter`、`Histogram`、`Gauge`、`TelemetrySpan`、`GetTelemetry()`を使用してください。
 
-各signalはcomma区切りのprotocol listを受け取ります。
-対応protocolは`console`、`otlp-http`、`otlp-grpc`です。
+各シグナルはコンマ区切りのプロトコル一覧を受け取ります。
+対応プロトコルは`console`、`otlp-http`、`otlp-grpc`です。
 OTLPはOpenTelemetry Protocol、gRPCはGoogle remote procedure callの略です。
-pluginはaliasの`http`、`otlp_http`、`grpc`、`otlp_grpc`も受け付けます。
-空のprotocolはsignalを無効にします。
+プラグインは別名の`http`、`otlp_http`、`grpc`、`otlp_grpc`も受け付けます。
+空のプロトコルはシグナルを無効にします。
 
 <a id="2-resource-attributes"></a>
 ## 2. リソース属性
 
-logs、metrics、tracesは1つのOpenTelemetry resourceを共有します。
-NestDAQは値を利用できる場合に、以下のresource attributeを設定します。
-`service.*`と`host.*`はOpenTelemetry semantic convention attributeです。
+ログ、メトリクス、トレースは1つのOpenTelemetryリソースを共有します。
+NestDAQは値を利用できる場合に、以下のリソース属性を設定します。
+`service.*`と`host.*`はOpenTelemetryのセマンティック規約属性です。
 以下ではOpenTelemetryの一般的な略称として`OTel`を使用します。
-`nestdaq.*`と`fairmq.*`はNestDAQ固有のattributeです。
+`nestdaq.*`と`fairmq.*`はNestDAQ固有の属性です。
 
-| Attribute | 由来 | 値 |
+| 属性 | 由来 | 値 |
 | --- | --- | --- |
-| `service.name` | OTel semantic convention | 設定されたtelemetry service name。未設定時は`nestdaq`。 |
-| `service.version` | OTel semantic convention | `NESTDAQ_VERSION`。 |
-| `service.namespace` | OTel semantic convention | 設定されたtelemetry service namespace。 |
-| `service.instance.id` | OTel semantic convention | 設定されたtelemetry service instance id。 |
-| `host.name` | OTel semantic convention | telemetry option parse時に検出したhost name。 |
-| `nestdaq.instance.id` | NestDAQ custom | 判明後のFairMQ device id。 |
-| `nestdaq.instance.id.status` | NestDAQ custom | FairMQ device id判明前は`unresolved`、判明後は`resolved`。 |
-| `fairmq.id` | NestDAQ/FairMQ custom | FairMQ device id。 |
-| `fairmq.device` | NestDAQ/FairMQ custom | FairMQ device name。 |
-| `fairmq.session` | NestDAQ/FairMQ custom | FairMQ session。 |
-| `fairmq.transport` | NestDAQ/FairMQ custom | FairMQ transport。 |
+| `service.name` | OTelセマンティック規約 | 設定されたテレメトリーサービス名。未設定時は`nestdaq`。 |
+| `service.version` | OTelセマンティック規約 | `NESTDAQ_VERSION`。 |
+| `service.namespace` | OTelセマンティック規約 | 設定されたテレメトリーサービス名前空間。 |
+| `service.instance.id` | OTelセマンティック規約 | 設定されたテレメトリーサービスインスタンスID。 |
+| `host.name` | OTelセマンティック規約 | テレメトリーオプションの解析時に検出したホスト名。 |
+| `nestdaq.instance.id` | NestDAQカスタム | 判明後のFairMQデバイスID。 |
+| `nestdaq.instance.id.status` | NestDAQカスタム | FairMQデバイスID判明前は`unresolved`、判明後は`resolved`。 |
+| `fairmq.id` | NestDAQ/FairMQカスタム | FairMQデバイスID。 |
+| `fairmq.device` | NestDAQ/FairMQカスタム | FairMQデバイス名。 |
+| `fairmq.session` | NestDAQ/FairMQカスタム | FairMQセッション。 |
+| `fairmq.transport` | NestDAQ/FairMQカスタム | FairMQトランスポート。 |
 
-詳細なNestDAQおよびFairMQのbuildとGit metadataは、resource attributeではなく構造化したstartup log bodyとして出力されます。
-OpenTelemetry software development kit (SDK) は、独自のresource attributeを別途追加する場合があります。
-この表はNestDAQが明示的に設定するattributeだけを示します。
+詳細なNestDAQおよびFairMQのビルド情報とGitメタデータは、リソース属性ではなく構造化した起動ログ本文として出力されます。
+OpenTelemetryソフトウェア開発キット (SDK) は、独自のリソース属性を別途追加する場合があります。
+この表はNestDAQが明示的に設定する属性だけを示します。
 
 <a id="3-fairlogger-log-records"></a>
 ## 3. FairLoggerログレコード
 
-FairLogger custom sinkは、FairLogger severityが`--otel-log-severity`以上の場合、出力された各FairLogger messageをOpenTelemetry LogRecordへ変換します。
+FairLoggerカスタムシンクは、FairLoggerの重大度が`--otel-log-severity`以上の場合、出力された各FairLoggerメッセージをOpenTelemetry LogRecordへ変換します。
 
-| LogRecord fieldまたはattribute | 由来 | Source |
+| LogRecordのフィールドまたは属性 | 由来 | ソース |
 | --- | --- | --- |
-| Body | OTel LogRecord field | FairLogger message text。 |
-| Timestamp | OTel LogRecord field | FairLogger `metadata.timestamp + metadata.us`。 |
-| Observed timestamp | OTel LogRecord field | custom sinkがLogRecordを作成した時刻。 |
-| SeverityNumber | OTel LogRecord field | FairLogger severityから対応付けたOpenTelemetry severity。 |
-| SeverityText | OTel LogRecord field | 対応付けたseverityに対するOpenTelemetry定義のtext。 |
-| `code.file.path` | OTel semantic convention | FairLogger source file metadata。 |
-| `code.line.number` | OTel semantic convention | FairLogger source line metadata。 |
-| `code.function.name` | OTel semantic convention | FairLogger function metadata。 |
-| `thread.id` | OTel semantic convention | Linux native thread id。他platformではhash化したC++ thread id。 |
-| `fairlogger.severity.number` | NestDAQ/FairLogger custom | 元のFairLogger severity number。 |
-| `fairlogger.severity.text` | NestDAQ/FairLogger custom | 元のFairLogger severity name。 |
-| `nestdaq.instance.id` | NestDAQ custom | FairMQ device id判明後にtelemetry loader経由で設定するrecord単位のinstance id。 |
-| `nestdaq.instance.name` | NestDAQ custom | `-<number>`で終わるinstance idからparseしたprefix。 |
-| `nestdaq.instance.index` | NestDAQ custom | `-<number>`で終わるinstance idからparseした数値suffix。 |
-| `process.name` | NestDAQ/FairLogger custom | FairLogger process name metadata。OTelの`process.executable.name` resource attributeではありません。 |
+| Body | OTel LogRecordフィールド | FairLoggerメッセージの本文。 |
+| Timestamp | OTel LogRecordフィールド | FairLoggerの`metadata.timestamp + metadata.us`。 |
+| Observed timestamp | OTel LogRecordフィールド | カスタムシンクがLogRecordを作成した時刻。 |
+| SeverityNumber | OTel LogRecordフィールド | FairLoggerの重大度から対応付けたOpenTelemetryの重大度。 |
+| SeverityText | OTel LogRecordフィールド | 対応付けた重大度に対するOpenTelemetry定義の文字列。 |
+| `code.file.path` | OTelセマンティック規約 | FairLoggerのソースファイルメタデータ。 |
+| `code.line.number` | OTelセマンティック規約 | FairLoggerのソース行メタデータ。 |
+| `code.function.name` | OTelセマンティック規約 | FairLoggerの関数メタデータ。 |
+| `thread.id` | OTelセマンティック規約 | LinuxのネイティブスレッドID。他のプラットフォームではハッシュ化したC++スレッドID。 |
+| `fairlogger.severity.number` | NestDAQ/FairLoggerカスタム | 元のFairLogger重大度番号。 |
+| `fairlogger.severity.text` | NestDAQ/FairLoggerカスタム | 元のFairLogger重大度名。 |
+| `nestdaq.instance.id` | NestDAQカスタム | FairMQデバイスID判明後にテレメトリーローダー経由で設定するレコード単位のインスタンスID。 |
+| `nestdaq.instance.name` | NestDAQカスタム | `-<number>`で終わるインスタンスIDから解析した接頭辞。 |
+| `nestdaq.instance.index` | NestDAQカスタム | `-<number>`で終わるインスタンスIDから解析した数値接尾辞。 |
+| `process.name` | NestDAQ/FairLoggerカスタム | FairLoggerのプロセス名メタデータ。OTelの`process.executable.name`リソース属性ではありません。 |
 
-instrumentation scopeはloggerおよびlibrary nameに`FairLogger`を使用し、library versionに`FAIRLOGGER_VERSION`を使用します。
-`SeverityText`が標準OpenTelemetry LogRecord fieldであるため、NestDAQはcustom `log.severity.text` attributeを追加しません。
+計装スコープはロガー名およびライブラリ名に`FairLogger`を使用し、ライブラリのバージョンに`FAIRLOGGER_VERSION`を使用します。
+`SeverityText`が標準OpenTelemetry LogRecordフィールドであるため、NestDAQはカスタム属性`log.severity.text`を追加しません。
 
-FairMQ throughput log lineは、log severity filterを適用する前にframework metrics用にparseされます。
-そのため、元のlog messageがexport対象severity未満でも、throughput sampleがframework metricsを更新する場合があります。
-metricsとtracesはresourceへ`nestdaq.instance.id`を含めるため、FairMQ device id判明後にのみ初期化されます。
-logsはprocess起動時に`nestdaq.instance.id.status=unresolved`で初期化され、idを利用可能になると`nestdaq.instance.id.status=resolved`で再初期化されます。
+FairMQのスループットログ行は、ログ重大度フィルターを適用する前にフレームワークメトリクス用に解析されます。
+そのため、元のログメッセージがエクスポート対象の重大度未満でも、スループットサンプルがフレームワークメトリクスを更新する場合があります。
+メトリクスとトレースはリソースへ`nestdaq.instance.id`を含めるため、FairMQデバイスID判明後にのみ初期化されます。
+ログはプロセス起動時に`nestdaq.instance.id.status=unresolved`で初期化され、IDを利用可能になると`nestdaq.instance.id.status=resolved`で再初期化されます。
 
 <a id="4-spdlog-log-records"></a>
 ## 4. spdlogログレコード
 
-spdlog OpenTelemetry sinkはexperimentalであり、まだ十分に検証されていません。
+spdlog OpenTelemetryシンクは実験的機能であり、まだ十分に検証されていません。
 
-NestDAQのbuild時に`opentelemetry-cpp`とspdlogの両方を利用できる場合、`nestdaq/telemetry/SpdlogOpenTelemetrySink.h`がinstallされます。
-spdlog instrumentationはFairLogger instrumentationから独立しています。
-NestDAQはspdlogのdefault logger、registry、log levelを変更しません。
-applicationは、OpenTelemetry recordをexportする各spdlog loggerへ返されたsinkを接続します。
+NestDAQのビルド時に`opentelemetry-cpp`とspdlogの両方を利用できる場合、`nestdaq/telemetry/SpdlogOpenTelemetrySink.h`がインストールされます。
+spdlog計装はFairLogger計装から独立しています。
+NestDAQはspdlogの既定ロガー、レジストリー、ログレベルを変更しません。
+アプリケーションは、OpenTelemetryレコードをエクスポートする各spdlogロガーへ返されたシンクを接続します。
 
 ```cpp
 #include <nestdaq/telemetry/SpdlogOpenTelemetrySink.h>
@@ -121,54 +121,54 @@ auto logger = spdlog::logger{
 logger.info("event accepted");
 ```
 
-`logger.info(...)`や`logger.warn(...)`などの通常のspdlog member functionは、source location metadataを自動では付加しません。
-OpenTelemetry recordへfile path、line number、function nameを含める場合は、標準spdlog macroを使用します。
+`logger.info(...)`や`logger.warn(...)`などの通常のspdlogメンバー関数は、ソース位置メタデータを自動では付加しません。
+OpenTelemetryレコードへファイルパス、行番号、関数名を含める場合は、標準spdlogマクロを使用します。
 
 ```cpp
 SPDLOG_LOGGER_INFO(&logger, "accepted event {}", eventId);
 SPDLOG_LOGGER_WARN(&logger, "queue depth is {}", depth);
 ```
 
-default spdlog loggerでは、対応するdefault-logger macroを使用します。
+既定のspdlogロガーでは、対応する既定ロガーマクロを使用します。
 
 ```cpp
 SPDLOG_INFO("accepted event {}", eventId);
 SPDLOG_WARN("queue depth is {}", depth);
 ```
 
-spdlog sinkは以下のOpenTelemetry fieldとattributeを記録します。
+spdlogシンクは以下のOpenTelemetryフィールドと属性を記録します。
 
-| LogRecord fieldまたはattribute | 由来 | Source |
+| LogRecordのフィールドまたは属性 | 由来 | ソース |
 | --- | --- | --- |
-| Body | OTel LogRecord field | spdlog message payload。 |
-| Timestamp | OTel LogRecord field | spdlog message timestamp。 |
-| Observed timestamp | OTel LogRecord field | sinkがLogRecordを作成した時刻。 |
-| SeverityNumber | OTel LogRecord field | spdlog levelから対応付けたOpenTelemetry severity。 |
-| SeverityText | OTel LogRecord field | 対応付けたseverityに対するOpenTelemetry定義のtext。 |
-| `code.file.path` | OTel semantic convention | 存在する場合のspdlog source file metadata。 |
-| `code.line.number` | OTel semantic convention | 存在する場合のspdlog source line metadata。 |
-| `code.function.name` | OTel semantic convention | 存在する場合のspdlog function metadata。 |
-| `thread.id` | OTel semantic convention | spdlog thread id metadata。 |
-| `spdlog.logger.name` | NestDAQ/spdlog custom | spdlog logger name。 |
-| `spdlog.level` | NestDAQ/spdlog custom | 元のspdlog level text。 |
+| Body | OTel LogRecordフィールド | spdlogメッセージのペイロード。 |
+| Timestamp | OTel LogRecordフィールド | spdlogメッセージのタイムスタンプ。 |
+| Observed timestamp | OTel LogRecordフィールド | シンクがLogRecordを作成した時刻。 |
+| SeverityNumber | OTel LogRecordフィールド | spdlogレベルから対応付けたOpenTelemetryの重大度。 |
+| SeverityText | OTel LogRecordフィールド | 対応付けた重大度に対するOpenTelemetry定義の文字列。 |
+| `code.file.path` | OTelセマンティック規約 | 存在する場合のspdlogソースファイルメタデータ。 |
+| `code.line.number` | OTelセマンティック規約 | 存在する場合のspdlogソース行メタデータ。 |
+| `code.function.name` | OTelセマンティック規約 | 存在する場合のspdlog関数メタデータ。 |
+| `thread.id` | OTelセマンティック規約 | spdlogスレッドIDのメタデータ。 |
+| `spdlog.logger.name` | NestDAQ/spdlogカスタム | spdlogロガー名。 |
+| `spdlog.level` | NestDAQ/spdlogカスタム | 元のspdlogレベル文字列。 |
 
 <a id="5-log-severity-mapping"></a>
-## 5. Log severityの対応
+## 5. ログ重大度の対応
 
-OpenTelemetryは正規化したlog levelをLogRecordの`SeverityNumber`および`SeverityText` fieldへ保存します。
-元のlogging library levelは、FairLogger recordでは`fairlogger.severity.*`、spdlog recordでは`spdlog.level`として別に保持されます。
-logging libraryのenum整数はOpenTelemetry `SeverityNumber`値ではありません。
-正規化したseverityのqueryにはOpenTelemetry fieldを使用してください。
+OpenTelemetryは正規化したログレベルをLogRecordの`SeverityNumber`および`SeverityText`フィールドへ保存します。
+元のロギングライブラリレベルは、FairLoggerレコードでは`fairlogger.severity.*`、spdlogレコードでは`spdlog.level`として別に保持されます。
+ロギングライブラリの列挙型整数はOpenTelemetryの`SeverityNumber`値ではありません。
+正規化した重大度の問い合わせにはOpenTelemetryフィールドを使用してください。
 
-`--otel-log-severity`はFairLogger sink filterです。
-OpenTelemetry logsへexportするFairLoggerの最低severityを制御します。
-有効化したspdlog sinkから出力されるrecordはfilterしません。
-spdlogのfilteringは、引き続きspdlog loggerおよびsink levelで制御します。
+`--otel-log-severity`はFairLoggerシンクのフィルターです。
+OpenTelemetryログへエクスポートするFairLoggerの最低重大度を制御します。
+有効化したspdlogシンクから出力されるレコードはフィルター処理しません。
+spdlogのフィルター処理は、引き続きspdlogロガーおよびシンクレベルで制御します。
 
 <a id="51-fairlogger-severity-mapping"></a>
-### 5.1. FairLogger severityの対応
+### 5.1. FairLogger重大度の対応
 
-| FairLogger level | `fair::Severity` int | OTel SeverityNumber | OTel SeverityText | 元のlevel attribute |
+| FairLoggerレベル | `fair::Severity`整数 | OTel SeverityNumber | OTel SeverityText | 元のレベル属性 |
 | --- | --- | --- | --- | --- |
 | `nolog` | `0` | `0` | invalid / unspecified | `fairlogger.severity.*` |
 | `trace` | `1` | `1` | `TRACE` | `fairlogger.severity.*` |
@@ -187,13 +187,13 @@ spdlogのfilteringは、引き続きspdlog loggerおよびsink levelで制御し
 | `critical` | `14` | `18` | `ERROR2` | `fairlogger.severity.*` |
 | `fatal` | `15` | `21` | `FATAL` | `fairlogger.severity.*` |
 
-`warning`は`warn`の`--otel-log-severity` aliasとして使用できますが、FairLogger record自体はFairLogger level nameを使用します。
+`warning`は`warn`の`--otel-log-severity`別名として使用できますが、FairLoggerレコード自体はFairLoggerレベル名を使用します。
 このaliasの`fair::Severity`値は`warn`と同じ`10`です。
 
 <a id="52-spdlog-severity-mapping"></a>
-### 5.2. spdlog severityの対応
+### 5.2. spdlog重大度の対応
 
-| spdlog level | `spdlog::level::level_enum` int | OTel SeverityNumber | OTel SeverityText | 元のlevel attribute |
+| spdlogレベル | `spdlog::level::level_enum`整数 | OTel SeverityNumber | OTel SeverityText | 元のレベル属性 |
 | --- | --- | --- | --- | --- |
 | `trace` | `0` | `1` | `TRACE` | `spdlog.level` |
 | `debug` | `1` | `5` | `DEBUG` | `spdlog.level` |
@@ -207,57 +207,57 @@ spdlogのfilteringは、引き続きspdlog loggerおよびsink levelで制御し
 <a id="6-command-line-options"></a>
 ## 6. コマンドラインオプション
 
-| Option | 環境変数 | デフォルト | 意味 |
+| オプション | 環境変数 | デフォルト | 意味 |
 | --- | --- | --- | --- |
-| `--otel-library` | `NESTDAQ_OTEL_LIBRARY` | `libnestdaq_otel.so` | `dlopen()`で読み込むshared library pathまたはsoname。 |
-| `--otel-log-protocol` | `NESTDAQ_OTEL_LOG_PROTOCOL` | `console` | comma区切りのlog exporter。空ならlogsを無効化。 |
-| `--otel-metric-protocol` | `NESTDAQ_OTEL_METRIC_PROTOCOL` | 空 | comma区切りのmetric exporter。空ならmetricsを無効化。 |
-| `--otel-trace-protocol` | `NESTDAQ_OTEL_TRACE_PROTOCOL` | 空 | comma区切りのtrace exporter。空ならtracesを無効化。 |
-| `--otel-log-endpoint-http` | `NESTDAQ_OTEL_LOG_ENDPOINT_HTTP` | `http://localhost:4318/v1/logs` | OTLP HTTP logs endpoint。 |
-| `--otel-log-endpoint-grpc` | `NESTDAQ_OTEL_LOG_ENDPOINT_GRPC` | `localhost:4317` | OTLP gRPC logs endpoint。 |
-| `--otel-metric-endpoint-http` | `NESTDAQ_OTEL_METRIC_ENDPOINT_HTTP` | `http://localhost:4318/v1/metrics` | OTLP HTTP metrics endpoint。 |
-| `--otel-metric-endpoint-grpc` | `NESTDAQ_OTEL_METRIC_ENDPOINT_GRPC` | `localhost:4317` | OTLP gRPC metrics endpoint。 |
-| `--otel-trace-endpoint-http` | `NESTDAQ_OTEL_TRACE_ENDPOINT_HTTP` | `http://localhost:4318/v1/traces` | OTLP HTTP traces endpoint。 |
-| `--otel-trace-endpoint-grpc` | `NESTDAQ_OTEL_TRACE_ENDPOINT_GRPC` | `localhost:4317` | OTLP gRPC traces endpoint。 |
-| `--otel-log-headers` | `NESTDAQ_OTEL_LOG_HEADERS` | 空 | comma区切りの`key=value` log exporter header。 |
-| `--otel-metric-headers` | `NESTDAQ_OTEL_METRIC_HEADERS` | 空 | comma区切りの`key=value` metric exporter header。 |
-| `--otel-trace-headers` | `NESTDAQ_OTEL_TRACE_HEADERS` | 空 | comma区切りの`key=value` trace exporter header。 |
-| `--otel-log-severity` | `NESTDAQ_OTEL_LOG_SEVERITY` | `info` | exportするFairLoggerの最低severity。 |
-| `--otel-log-required` | `NESTDAQ_OTEL_LOG_REQUIRED` | `false` | telemetryをloadまたは初期化できない場合に起動失敗とする。 |
-| `--otel-timeout-ms` | なし | `5000` | force-flush、shutdown、exporter timeout (milliseconds)。 |
-| `--spdlog-console-pattern` | `NESTDAQ_SPDLOG_CONSOLE_PATTERN` | `[%Y-%m-%d %H:%M:%S.%e] [%n] [%l] %v` | spdlog native console sink pattern。 |
-| `--spdlog-native-console` | `NESTDAQ_SPDLOG_NATIVE_CONSOLE` | `true` | OTel spdlog sinkとは独立してspdlog native console outputを有効化。 |
-| `--spdlog-async` | `NESTDAQ_SPDLOG_ASYNC` | `false` | NestDAQ helper loggerに`spdlog::async_logger`を使用。 |
-| `--spdlog-async-queue-size` | `NESTDAQ_SPDLOG_ASYNC_QUEUE_SIZE` | `8192` | async spdlog helper loggerのqueue size。 |
-| `--spdlog-async-thread-count` | `NESTDAQ_SPDLOG_ASYNC_THREAD_COUNT` | `1` | async spdlog helper loggerのworker thread count。 |
-| `--spdlog-async-overflow-policy` | `NESTDAQ_SPDLOG_ASYNC_OVERFLOW_POLICY` | `block` | queue overflow policy：`block`、`overrun_oldest`、`discard_new`。 |
-| `--otel-metric-export-interval-ms` | なし | `1000` | 定期metric export interval (milliseconds)。 |
-| `--otel-log-http-json` | なし | `true` | OTLP HTTP logsでJavaScript Object Notation (JSON) content typeを使用。 |
-| `--otel-metric-http-json` | なし | `true` | OTLP HTTP metricsでJSON content typeを使用。 |
-| `--otel-trace-http-json` | なし | `true` | OTLP HTTP tracesでJSON content typeを使用。 |
-| `--otel-service-name` | なし | caller default | `service.name` resource attribute。FairMQ device wrapperは`--service-name`をdefaultとし、`--service-name`未設定時はexecutable basenameを使用します。collector pipelineがOpenSearch index nameにこの値を使用する場合があるため、NestDAQはASCII uppercase letterをlowercaseへ変換します。 |
-| `--otel-service-namespace` | なし | `nestdaq` | `service.namespace` resource attribute。 |
-| `--otel-service-instance-id` | なし | 生成したuniversally unique identifier (UUID) | `service.instance.id` resource attribute。FairMQ device wrapperは、このoption未設定時に`--uuid`を使用し、それ以外の場合はUUIDを生成します。 |
-| `--otel-fairmq-id` | なし | 空 | `fairmq.id` resource attribute。 |
-| `--otel-fairmq-device` | なし | 空 | `fairmq.device` resource attribute。 |
-| `--otel-fairmq-session` | なし | 空 | `fairmq.session` resource attribute。 |
-| `--otel-fairmq-transport` | なし | 空 | `fairmq.transport` resource attribute。 |
+| `--otel-library` | `NESTDAQ_OTEL_LIBRARY` | `libnestdaq_otel.so` | `dlopen()`で読み込む共有ライブラリのパスまたはsoname。 |
+| `--otel-log-protocol` | `NESTDAQ_OTEL_LOG_PROTOCOL` | `console` | コンマ区切りのログエクスポーター。空ならログを無効化。 |
+| `--otel-metric-protocol` | `NESTDAQ_OTEL_METRIC_PROTOCOL` | 空 | コンマ区切りのメトリクスエクスポーター。空ならメトリクスを無効化。 |
+| `--otel-trace-protocol` | `NESTDAQ_OTEL_TRACE_PROTOCOL` | 空 | コンマ区切りのトレースエクスポーター。空ならトレースを無効化。 |
+| `--otel-log-endpoint-http` | `NESTDAQ_OTEL_LOG_ENDPOINT_HTTP` | `http://localhost:4318/v1/logs` | OTLP HTTPログエンドポイント。 |
+| `--otel-log-endpoint-grpc` | `NESTDAQ_OTEL_LOG_ENDPOINT_GRPC` | `localhost:4317` | OTLP gRPCログエンドポイント。 |
+| `--otel-metric-endpoint-http` | `NESTDAQ_OTEL_METRIC_ENDPOINT_HTTP` | `http://localhost:4318/v1/metrics` | OTLP HTTPメトリクスエンドポイント。 |
+| `--otel-metric-endpoint-grpc` | `NESTDAQ_OTEL_METRIC_ENDPOINT_GRPC` | `localhost:4317` | OTLP gRPCメトリクスエンドポイント。 |
+| `--otel-trace-endpoint-http` | `NESTDAQ_OTEL_TRACE_ENDPOINT_HTTP` | `http://localhost:4318/v1/traces` | OTLP HTTPトレースエンドポイント。 |
+| `--otel-trace-endpoint-grpc` | `NESTDAQ_OTEL_TRACE_ENDPOINT_GRPC` | `localhost:4317` | OTLP gRPCトレースエンドポイント。 |
+| `--otel-log-headers` | `NESTDAQ_OTEL_LOG_HEADERS` | 空 | コンマ区切りの`key=value`ログエクスポーターヘッダー。 |
+| `--otel-metric-headers` | `NESTDAQ_OTEL_METRIC_HEADERS` | 空 | コンマ区切りの`key=value`メトリクスエクスポーターヘッダー。 |
+| `--otel-trace-headers` | `NESTDAQ_OTEL_TRACE_HEADERS` | 空 | コンマ区切りの`key=value`トレースエクスポーターヘッダー。 |
+| `--otel-log-severity` | `NESTDAQ_OTEL_LOG_SEVERITY` | `info` | エクスポートするFairLoggerの最低重大度。 |
+| `--otel-log-required` | `NESTDAQ_OTEL_LOG_REQUIRED` | `false` | テレメトリーを読み込めないか初期化できない場合に起動失敗とする。 |
+| `--otel-timeout-ms` | なし | `5000` | 強制フラッシュ、シャットダウン、エクスポーターのタイムアウト (ミリ秒)。 |
+| `--spdlog-console-pattern` | `NESTDAQ_SPDLOG_CONSOLE_PATTERN` | `[%Y-%m-%d %H:%M:%S.%e] [%n] [%l] %v` | spdlogネイティブコンソールシンクのパターン。 |
+| `--spdlog-native-console` | `NESTDAQ_SPDLOG_NATIVE_CONSOLE` | `true` | OTel spdlogシンクとは独立してspdlogネイティブコンソール出力を有効化。 |
+| `--spdlog-async` | `NESTDAQ_SPDLOG_ASYNC` | `false` | NestDAQヘルパーロガーに`spdlog::async_logger`を使用。 |
+| `--spdlog-async-queue-size` | `NESTDAQ_SPDLOG_ASYNC_QUEUE_SIZE` | `8192` | 非同期spdlogヘルパーロガーのキューサイズ。 |
+| `--spdlog-async-thread-count` | `NESTDAQ_SPDLOG_ASYNC_THREAD_COUNT` | `1` | 非同期spdlogヘルパーロガーのワーカースレッド数。 |
+| `--spdlog-async-overflow-policy` | `NESTDAQ_SPDLOG_ASYNC_OVERFLOW_POLICY` | `block` | キューのオーバーフローポリシー：`block`、`overrun_oldest`、`discard_new`。 |
+| `--otel-metric-export-interval-ms` | なし | `1000` | 定期的なメトリクスのエクスポート間隔 (ミリ秒)。 |
+| `--otel-log-http-json` | なし | `true` | OTLP HTTPログでJavaScript Object Notation (JSON) コンテントタイプを使用。 |
+| `--otel-metric-http-json` | なし | `true` | OTLP HTTPメトリクスでJSONコンテントタイプを使用。 |
+| `--otel-trace-http-json` | なし | `true` | OTLP HTTPトレースでJSONコンテントタイプを使用。 |
+| `--otel-service-name` | なし | 呼び出し側の既定値 | `service.name`リソース属性。FairMQデバイスラッパーは`--service-name`を既定値とし、`--service-name`未設定時は実行ファイルのベース名を使用します。コレクターパイプラインがOpenSearchのインデックス名にこの値を使用する場合があるため、NestDAQはASCII大文字を小文字へ変換します。 |
+| `--otel-service-namespace` | なし | `nestdaq` | `service.namespace`リソース属性。 |
+| `--otel-service-instance-id` | なし | 生成した汎用一意識別子 (UUID) | `service.instance.id`リソース属性。FairMQデバイスラッパーは、このオプション未設定時に`--uuid`を使用し、それ以外の場合はUUIDを生成します。 |
+| `--otel-fairmq-id` | なし | 空 | `fairmq.id`リソース属性。 |
+| `--otel-fairmq-device` | なし | 空 | `fairmq.device`リソース属性。 |
+| `--otel-fairmq-session` | なし | 空 | `fairmq.session`リソース属性。 |
+| `--otel-fairmq-transport` | なし | 空 | `fairmq.transport`リソース属性。 |
 
-severity nameは`nolog`、`trace`、`debug4`、`debug3`、`debug2`、`debug1`、`debug`、`detail`、`info`、`state`、`warn`、`warning`、`important`、`alarm`、`error`、`critical`、`fatal`です。
+重大度名は`nolog`、`trace`、`debug4`、`debug3`、`debug2`、`debug1`、`debug`、`detail`、`info`、`state`、`warn`、`warning`、`important`、`alarm`、`error`、`critical`、`fatal`です。
 
 <a id="7-examples"></a>
 ## 7. 使用例
 
-デフォルト動作ではlogsをconsole exporterへexportし、metricsとtracesは無効です。
+既定の動作ではログをコンソールエクスポーターへエクスポートし、メトリクスとトレースは無効です。
 
-shell command例の中で`#`から始まる行は読者向けのcommentであり、shellでは実行されません。
+シェルコマンド例の中で`#`から始まる行は読者向けのコメントであり、シェルでは実行されません。
 
 ```sh
 # defaultのtelemetry exporterを使用してdeviceを起動します。
 my-device
 ```
 
-logs、metrics、tracesをOTLP HTTP collectorへ送信します。
+ログ、メトリクス、トレースをOTLP HTTP Collectorへ送信します。
 
 ```sh
 # deviceのlogs、metrics、tracesをOTLP HTTPでcollectorへexportします。
@@ -270,15 +270,15 @@ my-device \
   --otel-trace-endpoint-http=http://collector:4318/v1/traces
 ```
 
-protocol optionを値なしで渡してlogsを明示的に無効化します。
+プロトコルオプションを値なしで渡してログを明示的に無効化します。
 
 ```sh
 # log exportを明示的に無効化してdeviceを起動します。
 my-device --otel-log-protocol
 ```
 
-spdlog patternを設定し、custom patternのspdlog native console sinkを使用します。
-native console sinkはデフォルトで有効で、OTel spdlog sinkと同時に動作できます。
+spdlogパターンを設定し、カスタムパターンのspdlogネイティブコンソールシンクを使用します。
+ネイティブコンソールシンクは既定で有効で、OTel spdlogシンクと同時に動作できます。
 
 ```sh
 # OTLP gRPCでlogをexportし、native console formatを変更します。
@@ -287,7 +287,7 @@ my-device \
   --spdlog-console-pattern '[%n] [%l] %v'
 ```
 
-OTel spdlog exportを有効に保ったまま、native spdlog console outputだけを無効化します。
+OTel spdlogエクスポートを有効に保ったまま、ネイティブspdlogコンソール出力だけを無効化します。
 
 ```sh
 # OTLP gRPC log exportを維持し、native console outputを無効化します。
@@ -296,8 +296,8 @@ my-device \
   --spdlog-native-console=false
 ```
 
-NestDAQ helper loggerはデフォルトで同期動作し、spdlogのmulti-thread-safe sinkを使用します。
-logging frequencyが高く、caller threadからbackground workerへrecordを渡したい場合はasync modeを有効にします。
+NestDAQヘルパーロガーは既定で同期動作し、spdlogのスレッドセーフなシンクを使用します。
+ロギング頻度が高く、呼び出し元スレッドからバックグラウンドワーカーへレコードを渡したい場合は非同期モードを有効にします。
 
 ```sh
 # helper loggerの処理を、上限付きqueueを使用する2つのbackground workerへ移します。
@@ -308,12 +308,12 @@ my-device \
   --spdlog-async-overflow-policy=block
 ```
 
-`block` overflow policyはlog recordの消失を防ぎますが、queue満杯時にcaller threadを待たせることがあります。
-`overrun_oldest`はqueue内の古いrecordを破棄し、`discard_new`はqueue満杯時に新しく送信されたrecordを破棄します。
-async queue sizeとworker countはasync helper logger作成時に適用されます。
-後から設定を変更しても、既存loggerは変更されません。
+`block`オーバーフローポリシーはログレコードの消失を防ぎますが、キュー満杯時に呼び出し元スレッドを待たせることがあります。
+`overrun_oldest`はキュー内の古いレコードを破棄し、`discard_new`はキュー満杯時に新しく送信されたレコードを破棄します。
+非同期キューサイズとワーカー数は非同期ヘルパーロガー作成時に適用されます。
+後から設定を変更しても、既存ロガーは変更されません。
 
-telemetryを明示的に管理するapplicationからC++ thin APIを使用します。
+テレメトリーを明示的に管理するアプリケーションからC++の薄いAPIを使用します。
 
 ```cpp
 auto library = nestdaq::telemetry::TelemetryLibrary{};
@@ -353,12 +353,12 @@ span.SetAttribute({
 });
 ```
 
-application向けに推奨する形式は、`events.Add(...)`、`queueDepth.Record(...)`、`StartSpan(..., { ... })`で使用する`Attribute` wrapperです。
-このwrapperは、NestDAQがattributeをC ABI形式へ変換する間、string storageを有効に保ちます。
-通常はexampleでもこの形式を使用してください。
+アプリケーション向けに推奨する形式は、`events.Add(...)`、`queueDepth.Record(...)`、`StartSpan(..., { ... })`で使用する`Attribute`ラッパーです。
+このラッパーは、NestDAQが属性をC ABI形式へ変換する間、文字列の記憶領域を有効に保ちます。
+通常はサンプルでもこの形式を使用してください。
 
-高度なcodeでは、あらかじめ構築したC ABI attributeを直接渡せます。
-temporary `Attribute` wrapper変換を避けられるため、hot pathや、すでに`nestdaq_otel_attribute` bufferを所有するcodeで有用です。
+高度なコードでは、あらかじめ構築したC ABI属性を直接渡せます。
+一時的な`Attribute`ラッパー変換を避けられるため、ホットパスや、すでに`nestdaq_otel_attribute`バッファーを所有するコードで有用です。
 
 ```cpp
 std::array<nestdaq_otel_attribute, 2> attributes{{
@@ -386,20 +386,20 @@ telemetry.AddCounter(
     "events.total", 1, "1", "Total processed events", attributes.data(), attributes.size());
 ```
 
-low-level attribute arrayとそのstring storageはcallerが所有します。
+低水準の属性配列とその文字列記憶領域は呼び出し元が所有します。
 NestDAQはtelemetry call中にのみarrayを読み取ります。
-C++20 buildでは、同等のoverloadが`std::span<const nestdaq_otel_attribute>`も受け取り、同じlow-level implementationへforwardします。
+C++20ビルドでは、同等のオーバーロードが`std::span<const nestdaq_otel_attribute>`も受け取り、同じ低水準実装へ転送します。
 
 <a id="8-collector-compose-setup"></a>
 ## 8. Collector Compose構成 (`docker compose`または`podman compose`)
 
-OpenTelemetry Collector、OpenSearch、OpenSearch Dashboardsを使用するlocal環境については、[OpenTelemetry Collector Compose setup](../../share/otel-collector-compose/README.ja.md)を参照してください。
+OpenTelemetry Collector、OpenSearch、OpenSearch Dashboardsを使用するローカル環境については、[OpenTelemetry Collector Composeの設定](../../share/otel-collector-compose/README.ja.md)を参照してください。
 
 <a id="9-troubleshooting"></a>
 ## 9. トラブルシューティング
 
-- `--otel-library`をloadできない場合は、`LD_LIBRARY_PATH`を確認するか、rpathを設定するか、absolute pathを指定してください。
-- libraryをloadできても初期化に失敗する場合は、`TelemetryLibrary::GetLastError()`を確認してください。
-- 未対応のprotocol name、不正なconfig size、不正なseverity value、空のmetric/span nameはpluginのlast-error stringを通じて報告されます。
-- metric signalが無効の場合、metric記録は成功するno-opになります。
-  trace signalが無効の場合、inactive spanを返します。
+- `--otel-library`を読み込めない場合は、`LD_LIBRARY_PATH`を確認するか、rpathを設定するか、絶対パスを指定してください。
+- ライブラリを読み込めても初期化に失敗する場合は、`TelemetryLibrary::GetLastError()`を確認してください。
+- 未対応のプロトコル名、不正な設定サイズ、不正な重大度値、空のメトリクス名/スパン名はプラグインの最終エラー文字列を通じて報告されます。
+- メトリクスシグナルが無効の場合、メトリクス記録は成功する何もしない処理になります。
+  トレースシグナルが無効の場合、非アクティブなスパンを返します。

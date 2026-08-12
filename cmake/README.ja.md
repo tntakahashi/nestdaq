@@ -2,42 +2,42 @@
 
 [English](README.md) | [日本語](README.ja.md)
 
-[トップ: NestDAQ](../README.ja.md) | [前へ: Package installer](../share/installers/README.ja.md) | [次へ: コントリビューションガイドライン](../CONTRIBUTING.ja.md)
+[トップ: NestDAQ](../README.ja.md) | [前へ: パッケージインストーラー](../share/installers/README.ja.md) | [次へ: コントリビューションガイドライン](../CONTRIBUTING.ja.md)
 
-このディレクトリには、NestDAQのビルド、インストール済みの`find_package(NestDAQ)` package、および独立した外部依存関係projectで使用するCMake fileがあります。
-ビルドコマンド、依存関係のバージョン、user向けoptionについては[`INSTALL.ja.md`](../INSTALL.ja.md)を参照してください。
+このディレクトリには、NestDAQのビルド、インストール済みの`find_package(NestDAQ)`パッケージ、および独立した外部依存関係プロジェクトで使用するCMakeファイルがあります。
+ビルドコマンド、依存関係のバージョン、ユーザー向けオプションについては[`INSTALL.ja.md`](../INSTALL.ja.md)を参照してください。
 
 <a id="1-top-level-build-helpers"></a>
 ## 1. トップレベルビルドヘルパー
 
 | ファイル | 用途 |
 | :-- | :-- |
-| `common.cmake` | main projectとdependency projectで共有する共通ビルド設定。C++ standard check、warning flag、install directory、`Threads`、および`ExternalProject_Add`用CMake互換引数を設定します。 |
-| `NestDAQBuildSettings.cmake` | 必要に応じて有効にできる`clang-tidy`連携とinstall RPATH設定のhelper function。 |
-| `GitHelper.cmake` | project versionの導出に使用するGit tag、commit、branch、dirty state、remote metadataを読み取ります。 |
-| `NestDAQExamplesStandalone.cmake` | `examples/`を独立したCMake projectとしてconfigureするときに使用する共通設定。 |
-| `PatchDoxygenAwesomeCssRefs.cmake` | 生成されたDoxygen HTMLを後処理し、pageがインストール済みの`doxygen-awesome-css` file pathを参照するようにします。 |
+| `common.cmake` | メインプロジェクトと依存関係プロジェクトで共有する共通ビルド設定。C++規格の確認、警告フラグ、インストール先ディレクトリ、`Threads`、および`ExternalProject_Add`用CMake互換引数を設定します。 |
+| `NestDAQBuildSettings.cmake` | 必要に応じて有効にできる`clang-tidy`連携とインストールRPATH設定のヘルパー関数。 |
+| `GitHelper.cmake` | プロジェクトのバージョン導出に使用するGitタグ、コミット、ブランチ、変更状態、リモートのメタデータを読み取ります。 |
+| `NestDAQExamplesStandalone.cmake` | `examples/`を独立したCMakeプロジェクトとして構成するときに使用する共通設定。 |
+| `PatchDoxygenAwesomeCssRefs.cmake` | 生成されたDoxygen HTMLを後処理し、ページがインストール済みの`doxygen-awesome-css`ファイルのパスを参照するようにします。 |
 
 <a id="2-installed-package-files"></a>
 ## 2. インストールされるパッケージファイル
 
-これらのfileはNestDAQとともにインストールされ、`find_package(NestDAQ REQUIRED CONFIG)`を呼び出すdownstream projectで使用されます。
+これらのファイルはNestDAQとともにインストールされ、`find_package(NestDAQ REQUIRED CONFIG)`を呼び出す下流プロジェクトで使用されます。
 
 | ファイル | 用途 |
 | :-- | :-- |
-| `NestDAQConfig.cmake` | `NestDAQConfig.cmake.in`から生成される、インストール済みpackage config。`CMAKE_PREFIX_PATH`を調整し、FairMQとその依存関係を検索して、version fileとtarget fileをincludeします。 |
-| `NestDAQConfigVersion.cmake` | `find_package(NestDAQ)`用にCMakeが生成するpackage version互換性確認file。 |
-| `NestDAQVersion.cmake` | `NestDAQVersion.cmake.in`から生成される、インストール済みNestDAQ versionおよびGit metadata variable。 |
-| `NestDAQTargets.cmake` | imported target `NestDAQ::NestDAQ`と、そのinclude directory、link directory、link libraryを定義します。 |
+| `NestDAQConfig.cmake` | `NestDAQConfig.cmake.in`から生成される、インストール済みパッケージ設定。`CMAKE_PREFIX_PATH`を調整し、FairMQとその依存関係を検索して、バージョンファイルとターゲットファイルを読み込みます。 |
+| `NestDAQConfigVersion.cmake` | `find_package(NestDAQ)`用にCMakeが生成するパッケージのバージョン互換性確認ファイル。 |
+| `NestDAQVersion.cmake` | `NestDAQVersion.cmake.in`から生成される、インストール済みNestDAQのバージョンおよびGitメタデータ変数。 |
+| `NestDAQTargets.cmake` | インポート済みターゲット`NestDAQ::NestDAQ`と、そのインクルードディレクトリ、リンクディレクトリ、リンクライブラリを定義します。 |
 
-`.cmake.in` fileはsource templateであり、インストールされません。
+`.cmake.in`ファイルはソーステンプレートであり、インストールされません。
 
 <a id="3-external-dependency-project"></a>
 ## 3. 外部依存関係プロジェクト
 
-`cmake/CMakeLists.txt`は、NestDAQが使用する外部依存関係をビルドおよびインストールする独立したprojectです。
-このprojectは`cmake/dependencies/`内のfileをincludeし、主にCMakeの`ExternalProject_Add`を使用します。
-[Redis Stack](../INSTALL.ja.md#redis-server-and-modules)のビルドでは、module source treeを展開するために`FetchContent`も使用します。
+`cmake/CMakeLists.txt`は、NestDAQが使用する外部依存関係をビルドおよびインストールする独立したプロジェクトです。
+このプロジェクトは`cmake/dependencies/`内のファイルを読み込み、主にCMakeの`ExternalProject_Add`を使用します。
+[Redis Stack](../INSTALL.ja.md#redis-server-and-modules)のビルドでは、モジュールのソースツリーを展開するために`FetchContent`も使用します。
 
 | ファイル | 用途 |
 | :-- | :-- |
@@ -45,19 +45,19 @@
 | `dependencies/ZeroMQ.cmake` | ZeroMQを検索またはビルドします。 |
 | `dependencies/FairLogger.cmake` | FairLoggerを検索またはビルドします。 |
 | `dependencies/FairMQ.cmake` | FairMQを検索またはビルドします。 |
-| `dependencies/Catch2.cmake` | test用Catch2を検索またはビルドします。 |
+| `dependencies/Catch2.cmake` | テスト用Catch2を検索またはビルドします。 |
 | `dependencies/nlohmann_json.cmake` | nlohmann/jsonを検索またはビルドします。 |
 | `dependencies/hiredis.cmake` | hiredisを検索またはビルドします。 |
 | `dependencies/redis_plus_plus.cmake` | redis-plus-plusを検索またはビルドします。 |
-| `dependencies/opentelemetry-cpp.cmake` | opentelemetry-cppと、選択した機能に応じたtransport dependencyをビルドします。 |
-| `dependencies/spdlog.cmake` | spdlogをビルドします。C++17 dependency buildでは、`dependencies/fmt.cmake`を通じて`fmt`も取得します。 |
-| `dependencies/fmt.cmake` | spdlogで必要な場合、またはdependency optionで明示的に選択した場合にfmtをビルドします。 |
-| `dependencies/redis-stack.cmake` | Redis 8以降向けRedis Stack component (Redis、RedisBloom、RediSearch、RedisJSON、RedisTimeSeries) をビルドします。defaultのRedis 8.2.7 module versionはRedis 8.2.7自身が選択しているrelease tagに従います。 |
-| `dependencies/redis-server-7.cmake` | standalone RedisTimeSeriesとともにRedis 7.x serverをビルドします。defaultでは、Redis 7.4はRedis 7.4.9とRedisTimeSeries 1.12.14を使用し、Redis 7.2はRedis 7.2.14とRedisTimeSeries 1.10.24を使用します。 |
-| `dependencies/doxygen-awesome-css.cmake` | 生成ドキュメントで使用するdoxygen-awesome-css fileをビルドまたはインストールします。 |
-| `dependencies/patch_redisearch.cmake` | Redis Stack dependency build中に、ローカルのRediSearch CMake互換patchを適用します。 |
-| `dependencies/patch_redisjson.cmake` | Redis Stack dependency build中に、ローカルのRedisJSON build互換patchを適用します。 |
-| `dependencies/build_redis-stack_with_temp_rust.sh` | 必要な場合に一時的なRust toolchain環境を提供する、Redis Stack build用wrapper。 |
-| `dependencies/build_redis-server-7_with_redistimeseries.sh` | Redis 7.x build pathで使用するwrapper。module sourceをRedis source treeにcopyせず、RedisTimeSeriesをstandalone moduleとしてビルドします。 |
+| `dependencies/opentelemetry-cpp.cmake` | opentelemetry-cppと、選択した機能に応じた転送用依存関係をビルドします。 |
+| `dependencies/spdlog.cmake` | spdlogをビルドします。C++17の依存関係ビルドでは、`dependencies/fmt.cmake`を通じて`fmt`も取得します。 |
+| `dependencies/fmt.cmake` | spdlogで必要な場合、または依存関係オプションで明示的に選択した場合にfmtをビルドします。 |
+| `dependencies/redis-stack.cmake` | Redis 8以降向けRedis Stackコンポーネント (Redis、RedisBloom、RediSearch、RedisJSON、RedisTimeSeries) をビルドします。デフォルトのRedis 8.2.7モジュールバージョンはRedis 8.2.7自身が選択しているリリースタグに従います。 |
+| `dependencies/redis-server-7.cmake` | スタンドアロンRedisTimeSeriesとともにRedis 7.xサーバーをビルドします。デフォルトでは、Redis 7.4はRedis 7.4.9とRedisTimeSeries 1.12.14を使用し、Redis 7.2はRedis 7.2.14とRedisTimeSeries 1.10.24を使用します。 |
+| `dependencies/doxygen-awesome-css.cmake` | 生成ドキュメントで使用するdoxygen-awesome-cssファイルをビルドまたはインストールします。 |
+| `dependencies/patch_redisearch.cmake` | Redis Stackの依存関係ビルド中に、ローカルのRediSearch CMake互換パッチを適用します。 |
+| `dependencies/patch_redisjson.cmake` | Redis Stackの依存関係ビルド中に、ローカルのRedisJSONビルド互換パッチを適用します。 |
+| `dependencies/build_redis-stack_with_temp_rust.sh` | 必要な場合に一時的なRustツールチェーン環境を提供する、Redis Stackビルド用ラッパー。 |
+| `dependencies/build_redis-server-7_with_redistimeseries.sh` | Redis 7.xのビルド経路で使用するラッパー。モジュールソースをRedisのソースツリーにコピーせず、RedisTimeSeriesをスタンドアロンモジュールとしてビルドします。 |
 
-defaultのdependency versionと、`WITH_REDIS_STACK`、`WITH_REDIS_SERVER_7`、`WITH_OTEL_CPP`、`WITH_SPDLOG`、`BUILD_PARALLEL_LEVEL`などのoptionについては[`INSTALL.ja.md`](../INSTALL.ja.md)に記載されています。
+依存関係のデフォルトバージョンと、`WITH_REDIS_STACK`、`WITH_REDIS_SERVER_7`、`WITH_OTEL_CPP`、`WITH_SPDLOG`、`BUILD_PARALLEL_LEVEL`などのオプションについては[`INSTALL.ja.md`](../INSTALL.ja.md)に記載されています。

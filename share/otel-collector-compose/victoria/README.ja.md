@@ -5,7 +5,7 @@
 [トップ: NestDAQ](../../../README.ja.md) | [前の保存先候補: OpenSearch](../opensearch/README.ja.md) | [次の保存先候補: ClickStack](../clickhouse/README.ja.md)
 
 このローカル検証用スタックは、OpenTelemetry CollectorでOpenTelemetryのログ、メトリクス、トレースを受信します。
-受信したデータをVictoria stackを構成する各serviceに保存し、Grafanaで表示します。
+受信したデータをVictoriaスタックを構成する各サービスに保存し、Grafanaで表示します。
 
 このバックエンドは実験的で、まだ十分に検証されていません。
 
@@ -13,7 +13,7 @@
 どちらかを使用してこのスタックを管理します。
 
 このディレクトリから起動します。
-以下のshellコマンド例では、`#`で始まる行は読者向けの説明コメントであり、shellでは実行されません。
+以下のシェルコマンド例では、`#`で始まる行は読者向けの説明コメントであり、シェルでは実行されません。
 
 ```bash
 # Docker ComposeでVictoriaの検証用スタックを起動します。
@@ -27,8 +27,8 @@ Podmanの場合:
 podman compose -f compose-victoria.yaml up
 ```
 
-`podman compose`を使用するには、`podman-compose`やDocker Compose pluginなどのCompose providerが必要です。
-Compose providerをインストールし、`PATH`から検出できるようにしてください。
+`podman compose`を使用するには、`podman-compose`やDocker ComposeプラグインなどのComposeプロバイダーが必要です。
+Composeプロバイダーをインストールし、`PATH`から検出できるようにしてください。
 
 <a id="1-components"></a>
 ## 1. コンポーネント
@@ -37,16 +37,16 @@ Compose providerをインストールし、`PATH`から検出できるように�
 - `victoriametrics`: メトリクスを保存します。
 - `victorialogs`: ログを保存します。
 - `victoriatraces`: トレースを保存します。
-- `grafana`: 各Victoria service用のExplore viewとdashboardを提供します。
+- `grafana`: 各Victoriaサービス用のExploreビューとダッシュボードを提供します。
 
-GrafanaにはVictoriaMetrics、VictoriaLogs、VictoriaTracesのdata sourceがprovisioningによって設定されています。
-VictoriaTracesはGrafana組み込みのJaeger data sourceを使用し、次のURLに接続します。
+GrafanaにはVictoriaMetrics、VictoriaLogs、VictoriaTracesのデータソースがプロビジョニングによって設定されています。
+VictoriaTracesはGrafana組み込みのJaegerデータソースを使用し、次のURLに接続します。
 
 ```text
 http://victoriatraces:10428/select/jaeger
 ```
 
-Collectorはログ、メトリクス、トレースを次のエンドポイントへexportします。
+コレクターはログ、メトリクス、トレースを次のエンドポイントへエクスポートします。
 
 ```text
 http://victorialogs:9428/insert/opentelemetry/v1/logs
@@ -61,18 +61,18 @@ http://victoriatraces:10428/insert/opentelemetry/v1/traces
 - VictoriaLogs: `http://localhost:9428`
 - VictoriaTraces: `http://localhost:10428`
 - Grafana: `http://localhost:3000`
-- OTLP Google remote procedure call (gRPC) receiver: `localhost:4317`
-- OTLP HTTP receiver: `http://localhost:4318`
+- OTLP Googleリモートプロシージャコール (gRPC) レシーバー: `localhost:4317`
+- OTLP HTTPレシーバー: `http://localhost:4318`
 
 ホストプロセスは上記の`localhost`エンドポイントを使用します。
-同じComposeネットワーク内のNestDAQ deviceコンテナーまたは`daq-webctl`コンテナーは、OTLP gRPCには`otel-collector:4317`を、OTLP HTTPには`http://otel-collector:4318`を使用してください。
+同じComposeネットワーク内のNestDAQデバイスコンテナーまたは`daq-webctl`コンテナーは、OTLP gRPCには`otel-collector:4317`を、OTLP HTTPには`http://otel-collector:4318`を使用してください。
 
 <a id="3-environment-variables"></a>
 ## 3. 環境変数
 
 | 変数 | デフォルト | 説明 |
 | :-- | :-- | :-- |
-| `OTEL_COLLECTOR_IMAGE` | `docker.io/otel/opentelemetry-collector-contrib:0.155.0` | Collectorイメージ。 |
+| `OTEL_COLLECTOR_IMAGE` | `docker.io/otel/opentelemetry-collector-contrib:0.155.0` | コレクターイメージ。 |
 | `VICTORIAMETRICS_IMAGE` | `docker.io/victoriametrics/victoria-metrics:v1.143.0` | VictoriaMetricsイメージ。 |
 | `VICTORIALOGS_IMAGE` | `docker.io/victoriametrics/victoria-logs:v1.50.0` | VictoriaLogsイメージ。 |
 | `VICTORIATRACES_IMAGE` | `docker.io/victoriametrics/victoria-traces:v0.8.2` | VictoriaTracesイメージ。 |
@@ -86,10 +86,10 @@ http://victoriatraces:10428/insert/opentelemetry/v1/traces
 | `VICTORIAMETRICS_DATA_DIR` | `./victoriametrics-data` | VictoriaMetricsデータ用のホストディレクトリ。 |
 | `VICTORIALOGS_DATA_DIR` | `./victorialogs-data` | VictoriaLogsデータ用のホストディレクトリ。 |
 | `VICTORIATRACES_DATA_DIR` | `./victoriatraces-data` | VictoriaTracesデータ用のホストディレクトリ。 |
-| `GRAFANA_DATA_DIR` | `./grafana-data` | `/var/lib/grafana/`にbind mountするホストディレクトリ。 |
+| `GRAFANA_DATA_DIR` | `./grafana-data` | `/var/lib/grafana/`にバインドマウントするホストディレクトリ。 |
 | `GRAFANA_ADMIN_PASSWORD` | `admin` | Grafana管理者パスワード。 |
-| `GRAFANA_PROVISIONING_DIR` | `./grafana/provisioning` | Grafana provisioningディレクトリ。 |
-| `OTEL_COLLECTOR_CONFIG_FILE` | `./otel-collector-config-victoria.yaml` | Collector設定ファイル。 |
+| `GRAFANA_PROVISIONING_DIR` | `./grafana/provisioning` | Grafanaプロビジョニングディレクトリ。 |
+| `OTEL_COLLECTOR_CONFIG_FILE` | `./otel-collector-config-victoria.yaml` | コレクター設定ファイル。 |
 
 <a id="4-stop"></a>
 ## 4. 停止
@@ -121,10 +121,10 @@ rm -rf ./victoriametrics-data \
        ./grafana-data
 ```
 
-rootless Podmanでは、ファイル所有権のためユーザー名前空間経由で削除する必要がある場合があります。
+ルートレスPodmanでは、ファイル所有権のためユーザー名前空間経由で削除する必要がある場合があります。
 
 ```bash
-# rootless Podmanのデータをユーザー名前空間経由で破棄します。
+# ルートレスPodmanのデータをユーザー名前空間経由で破棄します。
 podman unshare rm -rf ./victoriametrics-data \
                        ./victorialogs-data \
                        ./victoriatraces-data \

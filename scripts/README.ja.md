@@ -2,12 +2,12 @@
 
 [English](README.md) | [日本語](README.ja.md)
 
-[トップ: NestDAQ](../README.ja.md) | [前へ: サンプル](../examples/README.ja.md) | [次へ: Plugin](../plugins/README.ja.md)
+[トップ: NestDAQ](../README.ja.md) | [前へ: サンプル](../examples/README.ja.md) | [次へ: プラグイン](../plugins/README.ja.md)
 
-このディレクトリには、NestDAQ pluginの使用方法を示すscriptがあります。
-scriptは別の作業directoryへcopyできます。
-Redisへ設定を登録したり、Redisから設定を読み取ったりするscriptを実行する前に、
-Redis serverを起動してください。
+このディレクトリには、NestDAQプラグインの使用方法を示すスクリプトがあります。
+スクリプトは別の作業ディレクトリへコピーできます。
+Redisへ設定を登録したり、Redisから設定を読み取ったりするスクリプトを実行する前に、
+Redisサーバーを起動してください。
 
 <a id="1-helper-script-to-launch-a-data-acquisition-daq-process"></a>
 ## 1. データ収集 (DAQ) プロセス起動用ヘルパースクリプト
@@ -18,13 +18,13 @@ Redis serverを起動してください。
 <a id="111-basic-invocation"></a>
 #### 1.1.1. 基本的な起動方法
 
-このscriptはNestDAQ pluginを使用してFairMQ deviceを起動します。
+このスクリプトはNestDAQプラグインを使用してFairMQデバイスを起動します。
 CMakeは`scripts/start_device.sh.in`から`start_device.sh`を生成し、
 `<install-prefix>/scripts/`へインストールします。
-このrepositoryが提供するdevice、またはFairMQが提供する`fairmq-`を含むexecutableを指定してください。
-device name以降のargumentはdeviceおよびFairMQへ渡されるため、`--service-name`などのplugin optionと`--max-iterations`などのdevice固有optionを同じcommand lineで指定できます。
+このリポジトリが提供するデバイス、またはFairMQが提供する`fairmq-`を含む実行ファイルを指定してください。
+デバイス名以降の引数はデバイスおよびFairMQへ渡されるため、`--service-name`などのプラグインオプションと`--max-iterations`などのデバイス固有オプションを同じコマンドラインで指定できます。
 
-このREADMEのshell実行例では、`#`で始まる行はshellのcommentであり、実行されません。
+このREADMEのシェル実行例では、`#`で始まる行はシェルのコメントであり、実行されません。
 
 ```bash
   # install済みSamplerをdefault optionで起動する。
@@ -40,31 +40,31 @@ device name以降のargumentはdeviceおよびFairMQへ渡されるため、`--s
 <a id="112-startup-sequence"></a>
 #### 1.1.2. 起動シーケンス
 
-NestDAQ exampleをローカル環境で実行する場合は、`start_device.sh`でdeviceを
-起動する前に外部serviceを起動し、必要な設定を登録します。
+NestDAQのサンプルをローカル環境で実行する場合は、`start_device.sh`でデバイスを
+起動する前に外部サービスを起動し、必要な設定を登録します。
 
-- telemetry exportが必要な場合は、最初にOpenTelemetry Collector、OpenSearch、
+- テレメトリーのエクスポートが必要な場合は、最初にOpenTelemetry Collector、OpenSearch、
   OpenSearch Dashboardsを起動します。`share/otel-collector-compose/opensearch/`の
-  Compose setupを`docker compose`または`podman compose`で起動します。
-- Redis serverを起動します。
-- browser user interfaceからdeviceを制御する場合は`daq-webctl`を起動します。
-- `topology-*.sh` scriptでtopology設定をRedisへ登録します。
-- exampleが`parameter_config` pluginからparameterを読み取る場合は、`mq-param.sh`でparameter設定をRedisへ登録します。
+  Compose構成を`docker compose`または`podman compose`で起動します。
+- Redisサーバーを起動します。
+- ブラウザユーザーインターフェースからデバイスを制御する場合は`daq-webctl`を起動します。
+- `topology-*.sh`スクリプトでトポロジー設定をRedisへ登録します。
+- サンプルが`parameter_config`プラグインからパラメーターを読み取る場合は、`mq-param.sh`でパラメーター設定をRedisへ登録します。
 
-localでの完全な起動sequenceは[`examples/README.ja.md`](../examples/README.ja.md)を参照してください。
+ローカル環境での完全な起動手順は[`examples/README.ja.md`](../examples/README.ja.md)を参照してください。
 
 <a id="113-redis-server-and-plugin-configuration"></a>
-#### 1.1.3. Redis serverとpluginの設定
+#### 1.1.3. Redisサーバーとプラグインの設定
 
-`start_device.sh`が固定しない設定は、deviceまたはpluginのcommand-line optionで変更できます。
-scriptが生成するdefaultは、以下に示す対応済みの環境変数を使用するか、script自体を編集して変更します。
-scriptが生成するoptionはuser argumentの後へ追加されるため、同名のcommand-line optionでは上書きできません。
+`start_device.sh`が固定しない設定は、デバイスまたはプラグインのコマンドラインオプションで変更できます。
+スクリプトが生成する既定値は、以下に示す対応済みの環境変数を使用するか、スクリプト自体を編集して変更します。
+スクリプトが生成するオプションはユーザー引数の後へ追加されるため、同名のコマンドラインオプションでは上書きできません。
 
 `start_device.sh`は、すべてのNestDAQ Redis connectionに`NESTDAQ_REDIS_SERVER`を使用します。
-defaultは`127.0.0.1:6379`です。
-scriptはDAQ service registryをRedis database (DB) `0`、metricsをDB `1`、parameter configurationをDB `2`へ割り当てます。
+既定値は`127.0.0.1:6379`です。
+スクリプトはDAQサービスレジストリをRedisデータベース (DB) `0`、メトリクスをDB `1`、パラメーター設定をDB `2`へ割り当てます。
 
-scriptの該当部分は次のとおりです。
+スクリプトの該当部分は次のとおりです。
 
 ```bash
 NESTDAQ_REDIS_SERVER=${NESTDAQ_REDIS_SERVER:-127.0.0.1:6379}
@@ -74,11 +74,11 @@ METRICS_URI=" --metrics-uri tcp://${NESTDAQ_REDIS_SERVER}/1"
 CONFIG_URI=" --parameter-config-uri tcp://${NESTDAQ_REDIS_SERVER}/2"
 ```
 
-`daq_service`はservice registry、DAQ command、topology metadataにDB `0`を使用します。
-`metrics` pluginはDB `1`を使用します。
-`parameter_config` pluginはDB `2`からdevice option valueを読み取ります。
+`daq_service`はサービスレジストリ、DAQコマンド、トポロジーメタデータにDB `0`を使用します。
+`metrics`プラグインはDB `1`を使用します。
+`parameter_config`プラグインはDB `2`からデバイスオプションの値を読み取ります。
 
-scriptはplugin search pathとplugin load orderも設定します。
+スクリプトはプラグイン検索パスとプラグイン読み込み順も設定します。
 
 ```bash
 PLUGIN_SEARCH_PATH=" -S '<$PLUGIN_LIBDIR'"
@@ -92,24 +92,24 @@ var+=$METRICS_PLUGIN
 var+=$CONFIG_PLUGIN
 ```
 
-`-S`はFairMQ plugin search pathへdirectoryを追加します。
-このscriptの`-S '<$PLUGIN_LIBDIR'`は、install済みNestDAQ plugin directoryをsearch pathの先頭へ追加します。
-このoptionはplugin libraryを検索する場所だけを制御します。
+`-S`はFairMQプラグイン検索パスへディレクトリを追加します。
+このスクリプトの`-S '<$PLUGIN_LIBDIR'`は、インストール済みNestDAQプラグインディレクトリを検索パスの先頭へ追加します。
+このオプションはプラグインライブラリを検索する場所だけを制御します。
 
-`-P`はloadするpluginを選択します。
-FairMQは最終command line上の`-P` optionの順序に従ってpluginをloadします。
+`-P`は読み込むプラグインを選択します。
+FairMQは最終コマンドライン上の`-P`オプションの順序に従ってプラグインを読み込みます。
 `start_device.sh`は`daq_service`、`metrics`、`parameter_config`の順で渡します。
-`-S`でdirectoryを追加するとsearch priorityは変わりますが、loadするpluginやload orderは変わりません。
-loadするpluginとその順序は`-P` entryで制御されます。
+`-S`でディレクトリを追加すると検索優先度は変わりますが、読み込むプラグインや読み込み順は変わりません。
+読み込むプラグインとその順序は`-P`エントリーで制御されます。
 
 <a id="114-opentelemetry-options"></a>
-#### 1.1.4. OpenTelemetry option
+#### 1.1.4. OpenTelemetryオプション
 
-`start_device.sh`はOpenTelemetry (OTel) logをOpenTelemetry Protocol (OTLP) gRPCでlocal OpenTelemetry Collectorへ送信します。
-default endpointは`localhost:4317`です。
-別のendpointを使用するには`NESTDAQ_OTLP_GRPC_ENDPOINT`を設定します。
+`start_device.sh`はOpenTelemetry (OTel) ログをOpenTelemetry Protocol (OTLP) gRPCでローカルOpenTelemetry Collectorへ送信します。
+既定のエンドポイントは`localhost:4317`です。
+別のエンドポイントを使用するには`NESTDAQ_OTLP_GRPC_ENDPOINT`を設定します。
 
-scriptはOTel log optionを次のように構築します。
+スクリプトはOTelログオプションを次のように構築します。
 
 ```bash
 NESTDAQ_OTLP_GRPC_ENDPOINT=${NESTDAQ_OTLP_GRPC_ENDPOINT:-localhost:4317}
@@ -120,11 +120,11 @@ var+=" --otel-log-endpoint-grpc=${NESTDAQ_OTLP_GRPC_ENDPOINT}"
 var+=" --otel-log-severity=${NESTDAQ_START_DEVICE_OTEL_LOG_SEVERITY}"
 ```
 
-processの実行場所に応じてendpointを選択します。
+プロセスの実行場所に応じてエンドポイントを選択します。
 
-- host processからComposeが公開したcollector portへ接続：`localhost:4317`。
-- OpenSearch Compose network内のNestDAQ device container/`daq-webctl` container：`otel-collector:4317`。
-- Compose network外のcontainerからhost公開collector portへ接続：Dockerでは通常`host.docker.internal:4317`、Podmanでは通常`host.containers.internal:4317`。
+- ホストプロセスからComposeが公開したCollectorポートへ接続：`localhost:4317`。
+- OpenSearch Composeネットワーク内のNestDAQデバイスコンテナまたは`daq-webctl`コンテナ：`otel-collector:4317`。
+- Composeネットワーク外のコンテナからホストで公開したコレクターポートへ接続：Dockerでは通常`host.docker.internal:4317`、Podmanでは通常`host.containers.internal:4317`。
 
 ```bash
 # Podmanのhost alias経由でcollectorへ接続する。
@@ -133,19 +133,19 @@ NESTDAQ_OTLP_GRPC_ENDPOINT=host.containers.internal:4317 ./start_device.sh Sampl
 
 `--otel-log-protocol`、`--otel-metric-protocol`、`--otel-trace-protocol`では、
 `console`、`otlp-grpc`、`otlp-http`、空文字列 (`""`) の4種類を指定できます。
-空文字列を指定すると、対象signalのexportは無効になります。
-複数のexporterを有効にする場合は、protocolをcomma区切りで指定します。
-`start_device.sh`を使用する場合、defaultのlog protocolを変更するには、scriptが生成する
-`--otel-log-protocol` optionを編集します。
+空文字列を指定すると、対象シグナルのエクスポートは無効になります。
+複数のエクスポーターを有効にする場合は、プロトコルをコンマ区切りで指定します。
+`start_device.sh`を使用する場合、既定のログプロトコルを変更するには、スクリプトが生成する
+`--otel-log-protocol`オプションを編集します。
 
-OTel metricsとOTel tracesはdefaultで無効です。
-OTLP gRPCまたはOTLP HTTPでexportする場合、debug用console exporterへ出力する場合、
-または空文字列のままexportを無効にする場合は、`start_device.sh`内のmetric/trace exampleを
+OTelメトリクスとOTelトレースは既定で無効です。
+OTLP gRPCまたはOTLP HTTPでエクスポートする場合、デバッグ用コンソールエクスポーターへ出力する場合、
+または空文字列のままエクスポートを無効にする場合は、`start_device.sh`内のメトリクス/トレースの例を
 uncommentまたは編集します。
 
-FairLogger console outputは`--severity nolog`によってdefaultで無効です。
+FairLoggerのコンソール出力は`--severity nolog`によって既定で無効です。
 有効にするには`NESTDAQ_FAIRLOGGER_CONSOLE_SEVERITY`を変更します。
-OTel log exportは別の`NESTDAQ_START_DEVICE_OTEL_LOG_SEVERITY` thresholdを使用するため、FairLogger console outputが無効でもcollectorへlogを送信します。
+OTelログのエクスポートは別の`NESTDAQ_START_DEVICE_OTEL_LOG_SEVERITY`しきい値を使用するため、FairLoggerのコンソール出力が無効でもCollectorへログを送信します。
 
 ```bash
 NESTDAQ_FAIRLOGGER_CONSOLE_SEVERITY=${NESTDAQ_FAIRLOGGER_CONSOLE_SEVERITY:-nolog}
@@ -159,9 +159,9 @@ NESTDAQ_FAIRLOGGER_CONSOLE_SEVERITY=debug4 NESTDAQ_START_DEVICE_OTEL_LOG_SEVERIT
 ```
 
 <a id="115-starting-devices-with-a-service-name"></a>
-#### 1.1.5. service nameを指定した起動方法
+#### 1.1.5. サービス名を指定した起動方法
 
-次の例は、`Sampler`をservice name `A-Sampler`で起動し、`ConditionalRun()`の実行rateを1秒に1回へ制限します。
+次の例は、`Sampler`をサービス名`A-Sampler`で起動し、`ConditionalRun()`の実行頻度を1秒に1回へ制限します。
 
 ```bash
 # rateを制限したSamplerを固有のservice nameで起動する。
@@ -169,8 +169,8 @@ NESTDAQ_FAIRLOGGER_CONSOLE_SEVERITY=debug4 NESTDAQ_START_DEVICE_OTEL_LOG_SEVERIT
 ```
 
 `start_device.sh`自身は`--service-name`を設定しません。
-device name以降のoptionはFairMQおよびNestDAQ pluginへそのまま渡されます。
-`--service-name`または`--id`が空の場合に使用する`daq_service`のdefaultについては、[`plugins/README.ja.md#22-daq-service-identity-defaults`](../plugins/README.ja.md#22-daq-service-identity-defaults)を参照してください。
+デバイス名以降のオプションはFairMQおよびNestDAQプラグインへそのまま渡されます。
+`--service-name`または`--id`が空の場合に使用する`daq_service`の既定値については、[`plugins/README.ja.md#22-daq-service-identity-defaults`](../plugins/README.ja.md#22-daq-service-identity-defaults)を参照してください。
 
 ```bash
 # 2つのSampler processを別々のservice groupとして登録する。
@@ -178,7 +178,7 @@ device name以降のoptionはFairMQおよびNestDAQ pluginへそのまま渡さ�
 ./start_device.sh Sampler --service-name B-Sampler
 ```
 
-これにより、同じexecutableを別のservice groupとして表示できます。
+これにより、同じ実行ファイルを別のサービスグループとして表示できます。
 例えば同じ`Sampler` programを、Redis、`daq-webctl`、telemetry attribute上で`A-Sampler-*`と`B-Sampler-*`として表示できます。
 
 ```mermaid
@@ -203,11 +203,11 @@ flowchart TB
 <a id="2-topology-configuration"></a>
 ## 2. トポロジー設定
 
-次の表にendpoint parameterのdefault valueを示します。
+次の表にエンドポイントパラメーターの既定値を示します。
 
-| field | default value |
+| フィールド | 既定値 |
 | -- | -- |
-| name | |
+| 名前 | |
 | type | |
 | method | |
 | address | |
@@ -220,7 +220,7 @@ flowchart TB
 | portRangeMin | 22000 |
 | portRangeMax | 32000 |
 | autoBind | true |
-| numSockets | 0 (pluginが自動計算) |
+| numSockets | 0 (プラグインが自動計算) |
 | autoSubChannel | false |
 | bound | (userは設定しない) |
 | waitForPeerConnection | true |
@@ -228,12 +228,12 @@ flowchart TB
 最後の3 parameterはNestDAQ固有で、その他はFairMQで定義されています。
 
 `topology-1-1.sh`のような固定1:1 connectionには`autoSubChannel false`を使用します。
-`topology-n-n-m.sh`や`topology-2samplers-n-m.sh`のようなn:m fan-out/fan-in topologyでは`autoSubChannel true`を使用し、pluginがpeer subchannelを検出して`numSockets`を更新します。
-channelの表現、`--connect-config`のpeer記法、pluginの詳細な動作については、
+`topology-n-n-m.sh`や`topology-2samplers-n-m.sh`のようなn:mファンアウト/ファンイントポロジーでは`autoSubChannel true`を使用し、プラグインが相手側のサブチャネルを検出して`numSockets`を更新します。
+チャネルの表現、`--connect-config`の接続相手記法、プラグインの詳細な動作については、
 [`plugins/README.ja.md#251-autosubchannel`](../plugins/README.ja.md#251-autosubchannel)を参照してください。
 
-topology scriptはendpointとlink definitionをRedis DB `0`へ書き込みます。
-helper functionは次の形式です。
+トポロジースクリプトはエンドポイントとリンク定義をRedis DB `0`へ書き込みます。
+ヘルパー関数は次の形式です。
 
 ```bash
 server=redis://127.0.0.1:6379/0
@@ -247,31 +247,31 @@ function link () {
 }
 ```
 
-`endpoint SERVICE CHANNEL ...`はRedis hash key
-`daq_service:topology:endpoint:SERVICE:CHANNEL`へfieldを書き込みます。
-fieldには`type push`、`method bind`、`autoSubChannel false`などFairMQ socketの設定を記述します。
+`endpoint SERVICE CHANNEL ...`はRedisハッシュキー
+`daq_service:topology:endpoint:SERVICE:CHANNEL`へフィールドを書き込みます。
+フィールドには`type push`、`method bind`、`autoSubChannel false`などFairMQソケットの設定を記述します。
 
-Redis databaseをflushするとは、選択したdatabase内のすべてのkey/valueを削除し、内容を空にする操作です。
-database番号自体を削除する操作ではありません。
+Redisデータベースをフラッシュするとは、選択したデータベース内のすべてのキーと値を削除し、内容を空にする操作です。
+データベース番号自体を削除する操作ではありません。
 
-`endpoint()` helperはRedis `HSET`を使用するため、topology scriptを再実行しても、そのscriptが書き込むfieldだけを更新します。
-新しいscript contentで省略したfieldは削除されません。
-例えば`autoSubChannel true`をRedisへ書き込んだ後、scriptから`autoSubChannel`を削除して再実行しても、Redis fieldは`true`のままです。
-`false`へ戻すには、`autoSubChannel false`を明示してtopology scriptを再実行します。
-topologyを最初から再構築する場合は、新しいtopologyを登録する前に`daq_service` / `TopologyConfig`が使用するRedis databaseをflushします。
-同じ`HSET`規則は、`mq-param.sh`などのhelperが書き込むparameter hashにも適用されます。
-scriptでfieldを省略しても、既存のRedis hash fieldは削除されません。
+`endpoint()`ヘルパーはRedisの`HSET`を使用するため、トポロジースクリプトを再実行しても、そのスクリプトが書き込むフィールドだけを更新します。
+新しいスクリプトの内容で省略したフィールドは削除されません。
+例えば`autoSubChannel true`をRedisへ書き込んだ後、スクリプトから`autoSubChannel`を削除して再実行しても、Redisフィールドは`true`のままです。
+`false`へ戻すには、`autoSubChannel false`を明示してトポロジースクリプトを再実行します。
+トポロジーを最初から再構築する場合は、新しいトポロジーを登録する前に`daq_service` / `TopologyConfig`が使用するRedisデータベースをフラッシュします。
+同じ`HSET`規則は、`mq-param.sh`などのヘルパーが書き込むパラメーターハッシュにも適用されます。
+スクリプトでフィールドを省略しても、既存のRedisハッシュフィールドは削除されません。
 
-ユーザーが実装したdeviceのchannel接続設定を変更した場合や、そのdeviceが正常終了しなかった場合は、`daq_service`がRedisへ保存した古いtopology情報やchannel情報が残ることがあります。
-古い情報が残っていると、次にdeviceを起動したときに、意図しないsocket addressへ接続することがあります。
-ローカル環境で動作を確認するときは、新しいtopologyを登録する前に`daq_service` / `TopologyConfig`が使用するRedis databaseの内容を消去します。
+ユーザーが実装したデバイスのチャネル接続設定を変更した場合や、そのデバイスが正常終了しなかった場合は、`daq_service`がRedisへ保存した古いトポロジー情報やチャネル情報が残ることがあります。
+古い情報が残っていると、次にデバイスを起動したときに、意図しないソケットアドレスへ接続することがあります。
+ローカル環境で動作を確認するときは、新しいトポロジーを登録する前に`daq_service` / `TopologyConfig`が使用するRedisデータベースの内容を消去します。
 
 ```sh
 # ローカルRedis DB 0から古いtopology情報とservice情報を削除する。
 redis-cli -u redis://127.0.0.1:6379/0 FLUSHDB
 ```
 
-`FLUSHDB`は選択したRedis database内のすべてのkeyを削除します。
+`FLUSHDB`は選択したRedisデータベース内のすべてのキーを削除します。
 ローカルRedis instance全体の内容を消去する場合は`FLUSHALL`を使用します。
 
 ```sh
@@ -279,29 +279,29 @@ redis-cli -u redis://127.0.0.1:6379/0 FLUSHDB
 redis-cli -u redis://127.0.0.1:6379 FLUSHALL
 ```
 
-`FLUSHALL`はそのRedis instanceのすべてのdatabaseにある全keyを削除します。
-保存内容の削除を意図している場合を除き、本番環境または共有Redis serverで`FLUSHDB`や`FLUSHALL`を使用しないでください。
-例に示したRedis addressとdatabase番号はローカル環境のdefaultです。
-実際に操作するRedis instanceとdatabaseのaddressおよびdatabase番号へ置き換えてください。
+`FLUSHALL`はそのRedisインスタンスのすべてのデータベースにある全キーを削除します。
+保存内容の削除を意図している場合を除き、本番環境または共有Redisサーバーで`FLUSHDB`や`FLUSHALL`を使用しないでください。
+例に示したRedisアドレスとデータベース番号はローカル環境の既定値です。
+実際に操作するRedisインスタンスとデータベースのアドレスおよびデータベース番号へ置き換えてください。
 
 <a id="21-bind-and-connect-endpoints"></a>
 ### 2.1. bindエンドポイントとconnectエンドポイント
 
-topology endpoint設定の`method bind`と`method connect`は、local socketが設定されたendpointに対して実行する操作を示します。
-ここでaddressとは、FairMQの接続に必要なendpoint情報、つまりIP addressまたはhostnameとport numberです。
-bind側のsocketは設定されたendpointへbindし、接続を待ちます。
-connect側のsocketはそのendpointへの接続を開始するため、接続前にbind側のaddressを知る必要があります。
-そのaddressはRedis内のNestDAQ service discovery情報やtopology情報から解決するか、固定した構成ではparameterで直接設定できます。
+トポロジーのエンドポイント設定にある`method bind`と`method connect`は、ローカルソケットが設定されたエンドポイントに対して実行する操作を示します。
+ここでアドレスとは、FairMQの接続に必要なエンドポイント情報、つまりIPアドレスまたはホスト名とポート番号です。
+バインド側のソケットは設定されたエンドポイントへバインドし、接続を待ちます。
+接続側のソケットはそのエンドポイントへの接続を開始するため、接続前にバインド側のアドレスを知る必要があります。
+そのアドレスはRedis内のNestDAQサービス検出情報やトポロジー情報から解決するか、固定した構成ではパラメーターで直接設定できます。
 
-`link SERVICE CHANNEL PEER_SERVICE PEER_CHANNEL`は2つのendpoint definition間のlogical connectionを書き込みます。
-各device起動時にtopology pluginがdefinitionを読み、具体的なFairMQ channel propertyへ変換します。
+`link SERVICE CHANNEL PEER_SERVICE PEER_CHANNEL`は2つのエンドポイント定義間の論理接続を書き込みます。
+各デバイスの起動時にトポロジープラグインが定義を読み、具体的なFairMQチャネルプロパティーへ変換します。
 
 <a id="22-topology-1-1sh"></a>
 ### 2.2. topology-1-1.sh
 
-このscriptは、 **Sampler** と **Sink** を接続する単純な **PUSH-PULL** topologyを定義します。
-_N_ 個のSamplerと _N_ 個のSinkを起動すると、 _N_ 組のSampler/Sink pairを形成します。
-各Samplerは、同じinstance indexを持つ1つのSinkへdataを送信します。
+このスクリプトは、 **Sampler** と **Sink** を接続する単純な **PUSH-PULL** トポロジーを定義します。
+_N_ 個のSamplerと _N_ 個のSinkを起動すると、 _N_ 組のSampler/Sinkペアを形成します。
+各Samplerは、同じインスタンスインデックスを持つ1つのSinkへデータを送信します。
 
 ```bash
   # 1対1のSampler/Sink topologyをRedisへ登録する。
@@ -317,8 +317,8 @@ endpoint Sink    in   type pull method connect autoSubChannel false
 link Sampler data Sink in
 ```
 
-`Sampler:data`はPUSH socketをbindし、`Sink:in`はPULL socketへconnectします。
-linkは`Sampler-0`と`Sink-0`のようにinstance indexが一致するdeviceをpairにします。
+`Sampler:data`はPUSHソケットをバインドし、`Sink:in`はPULLソケットへ接続します。
+リンクは`Sampler-0`と`Sink-0`のようにインスタンスインデックスが一致するデバイスをペアにします。
 
 ```mermaid
 graph LR
@@ -330,17 +330,17 @@ graph LR
 <a id="23-topology-n-n-msh"></a>
 ### 2.3. topology-n-n-m.sh
 
-このscriptは、 _N_ 個のSampler、 _N_ 個のfairmq-splitter、 _M_ 個のSinkを接続する単純な **PUSH-PULL** topologyを定義します。
-各Samplerは同じinstance indexのfairmq-splitterへdataを送り、fairmq-splitterがSinkへdataを送ります。
-`autoSubChannel true` flagは、各sub-socketに異なる`address:port`を設定し、indexで区別できるようにします。
-fairmq-splitterは送信済みmessage数を用いたround-robinで送信先を決定します。
+このスクリプトは、 _N_ 個のSampler、 _N_ 個のfairmq-splitter、 _M_ 個のSinkを接続する単純な **PUSH-PULL** トポロジーを定義します。
+各Samplerは同じインスタンスインデックスのfairmq-splitterへデータを送り、fairmq-splitterがSinkへデータを送ります。
+`autoSubChannel true`フラグは、各サブソケットに異なる`address:port`を設定し、インデックスで区別できるようにします。
+fairmq-splitterは送信済みメッセージ数を用いたラウンドロビンで送信先を決定します。
 
 ```bash
   # sampler/splitter/sinkのfan-out topologyをRedisへ登録する。
   ./topology-n-n-m.sh
 ```
 
-splitter topologyは`fairmq-splitter`上で2 channelを使用します。
+スプリッタートポロジーは`fairmq-splitter`上で2つのチャネルを使用します。
 
 ```bash
 endpoint Sampler          data     type push method bind    autoSubChannel false
@@ -352,8 +352,8 @@ link Sampler         data     fairmq-splitter data-in
 link fairmq-splitter data-out Sink            in
 ```
 
-最初のlinkは各samplerを同じindexのsplitter instanceとpairにします。
-2番目のlinkは`autoSubChannel true`を使用し、splitter output subchannelから複数sink instanceへfan-outできるようにします。
+最初のリンクは各Samplerを同じインデックスのスプリッターインスタンスとペアにします。
+2番目のリンクは`autoSubChannel true`を使用し、スプリッターの出力サブチャネルから複数のSinkインスタンスへファンアウトできるようにします。
 
 ```mermaid
 graph LR
@@ -366,9 +366,9 @@ graph LR
 <a id="24-topology-2samplers-n-msh"></a>
 ### 2.4. topology-2samplers-n-m.sh
 
-2つのsampler serviceから1つのsink serviceへdataを送信します。
-このscriptは前述のservice-name groupingを示します。
-一部の`Sampler` processを`A-Sampler`、その他を`B-Sampler`として起動することを想定します。
+2つのSamplerサービスから1つのSinkサービスへデータを送信します。
+このスクリプトは前述のサービス名によるグループ化を示します。
+一部の`Sampler`プロセスを`A-Sampler`、その他を`B-Sampler`として起動することを想定します。
 
 ```bash
 endpoint A-Sampler data type push method bind autoSubChannel true
@@ -390,16 +390,16 @@ graph LR
 <a id="31-mq-paramsh"></a>
 ### 3.1. mq-param.sh
 
-Redisを通じてdevice parameterを設定する例です。
-device parameterは、NestDAQ device processが`parameter_config` pluginを通じて
+Redisを通じてデバイスパラメーターを設定する例です。
+デバイスパラメーターは、NestDAQデバイスプロセスが`parameter_config`プラグインを通じて
 取得し、使用するparameterです。
 
 ```bash
-  # example NestDAQ device processが使用するparameterをRedis DB 2へ登録する。
+  # NestDAQデバイスプロセスの例が使用するパラメーターをRedis DB 2へ登録する。
   ./mq-param.sh
 ```
 
-`mq-param.sh`は、`parameter_config` pluginが使用するRedis DB `2`へparameter hashを書き込みます。
+`mq-param.sh`は、`parameter_config`プラグインが使用するRedis DB `2`へパラメーターハッシュを書き込みます。
 
 ```bash
 server=redis://127.0.0.1:6379/2
@@ -409,8 +409,8 @@ function param () {
 }
 ```
 
-第1引数はparameter groupまたはinstance idです。
-残りはFairMQ/device optionになるfield/value pairです。
+第1引数はパラメーターグループまたはインスタンスIDです。
+残りはFairMQまたはデバイスのオプションとなるフィールドと値の組です。
 
 ```bash
 param Sampler rate 2 max-iterations 0
@@ -420,46 +420,46 @@ param Sampler-1 text world
 param Sink multipart true
 ```
 
-例えば`param Sampler rate 2 max-iterations 0`は`parameters:Sampler`というhashへ`Sampler-0`、`Sampler-1`などの共通defaultを書き込みます。
-`param Sampler-0 text Hello`はinstance固有hash `parameters:Sampler-0`を書き込みます。
+例えば`param Sampler rate 2 max-iterations 0`は`parameters:Sampler`というハッシュへ`Sampler-0`、`Sampler-1`などの共通既定値を書き込みます。
+`param Sampler-0 text Hello`はインスタンス固有のハッシュ`parameters:Sampler-0`を書き込みます。
 
-`parameter_config` pluginが`Sampler-0`用に起動すると、instance id末尾の数値`-N` suffixを削除してgroup keyを生成します。
-`parameters:Sampler`、`parameters:Sampler-0`の順に読み取るため、instance固有valueがgroup defaultをoverrideします。
-この例では`Sampler-0`は`rate=2`、`max-iterations=0`、`text=Hello`を受け取り、`Sampler-1`は同じ共通valueと`text=world`を受け取ります。
+`parameter_config`プラグインが`Sampler-0`用に起動すると、インスタンスID末尾の数値`-N`接尾辞を削除してグループキーを生成します。
+`parameters:Sampler`、`parameters:Sampler-0`の順に読み取るため、インスタンス固有値がグループの既定値を上書きします。
+この例では`Sampler-0`は`rate=2`、`max-iterations=0`、`text=Hello`を受け取り、`Sampler-1`は同じ共通値と`text=world`を受け取ります。
 
-structured group/instance parameter keyを含む全Redis key patternは、[`plugins/README.ja.md#42-redis-keys-read-or-subscribed`](../plugins/README.ja.md#42-redis-keys-read-or-subscribed)を参照してください。
+構造化されたグループおよびインスタンスのパラメーターキーを含む全Redisキーパターンは、[`plugins/README.ja.md#42-redis-keys-read-or-subscribed`](../plugins/README.ja.md#42-redis-keys-read-or-subscribed)を参照してください。
 
 <a id="4-device-skeleton-generation"></a>
 ## 4. デバイススケルトン生成
 
-`generate-device-skeleton.py`はscriptに組み込まれたtemplateから最小構成のNestDAQ FairMQ device projectを作成します。
-defaultではinput、output、Data Quality Monitoring (DQM; データ品質監視) channel
-codeを生成し、各channel nameに`in`、`out`、`dqm`を使用します。
+`generate-device-skeleton.py`はスクリプトに組み込まれたテンプレートから最小構成のNestDAQ FairMQデバイスプロジェクトを作成します。
+既定では入力、出力、Data Quality Monitoring (DQM、データ品質監視) チャネル
+コードを生成し、各チャネル名に`in`、`out`、`dqm`を使用します。
 
 ```bash
-# MyDevice projectを専用のoutput directoryへ生成する。
+# MyDeviceプロジェクトを専用の出力ディレクトリへ生成する。
 ./generate-device-skeleton.py MyDevice --output ./MyDevice
 ```
 
-optionでhelper fileを除外しない限り、生成projectには`MyDevice.hpp`、`MyDevice.cpp`、`CMakeLists.txt`、`README.md`が含まれます。
-`--force`未指定時は既存fileを上書きしません。
-fileを書き込まずoutput pathを確認するには`--dry-run`を使用します。
-既存build systemへdeviceを追加し`CMakeLists.txt`を生成しない場合は`--no-cmake`、生成device固有の`README.md`が不要な場合は`--no-readme`を使用します。
+オプションで補助ファイルを除外しない限り、生成プロジェクトには`MyDevice.hpp`、`MyDevice.cpp`、`CMakeLists.txt`、`README.md`が含まれます。
+`--force`未指定時は既存ファイルを上書きしません。
+ファイルを書き込まず出力パスを確認するには`--dry-run`を使用します。
+既存ビルドシステムへデバイスを追加し`CMakeLists.txt`を生成しない場合は`--no-cmake`、生成デバイス固有の`README.md`が不要な場合は`--no-readme`を使用します。
 
-generator optionには2つのcommand-line形式があります。
+ジェネレーターオプションには2つのコマンドライン形式があります。
 
-- `--output DIR`、`--processing-mode MODE`、`--no-poll LIST`のようにplaceholderを表示するoptionは、`--key value`形式でvalueが必要です。
-- `--force`、`--single-output`、`--no-dqm-channel`のようにplaceholderのないoptionはpresence-only flagです。
-  表の動作を適用するにはflagだけを指定し、defaultを維持するには省略します。
+- `--output DIR`、`--processing-mode MODE`、`--no-poll LIST`のようにプレースホルダーを表示するオプションは、`--key value`形式で値が必要です。
+- `--force`、`--single-output`、`--no-dqm-channel`のようにプレースホルダーのないオプションは、指定の有無だけを表すフラグです。
+  表の動作を適用するにはフラグだけを指定し、既定値を維持するには省略します。
 
-presence-only flagはBoolean valueを受け取りません。
-例えば`--no-dqm-channel true`ではなく`--no-dqm-channel`を使用し、`--no-dqm-channel false`と書く代わりにflagを省略します。
-flagを繰り返してもstateは再度toggleされません。
-表の`off`はflag未指定を意味します。
-`--no-*` flagが`off`の場合、対象機能はdefaultで有効です。
+指定の有無だけを表すフラグはブール値を受け取りません。
+例えば`--no-dqm-channel true`ではなく`--no-dqm-channel`を使用し、`--no-dqm-channel false`と書く代わりにフラグを省略します。
+フラグを繰り返しても状態は再度切り替わりません。
+表の`off`はフラグ未指定を意味します。
+`--no-*`フラグが`off`の場合、対象機能は既定で有効です。
 
 ```bash
-# DQM channelを持たずsingle-message outputを持つconditional-run deviceを生成する。
+# DQMチャネルを持たず単一メッセージ出力を持つconditional-runデバイスを生成する。
 ./generate-device-skeleton.py MyDevice \
   --output ./MyDevice \
   --processing-mode conditional-run \
@@ -467,65 +467,65 @@ flagを繰り返してもstateは再度toggleされません。
   --single-output
 ```
 
-generator option：
+ジェネレーターオプション：
 
-| Option | デフォルト | 説明 |
+| オプション | デフォルト | 説明 |
 | :-- | :-- | :-- |
-| `--output DIR`, `-o DIR` | `./CLASS_NAME/` | 生成fileを`DIR`配下へ書き込み。 |
-| `--force` | off | 既存の生成fileを上書き。 |
-| `--dry-run` | off | 書き込まず生成予定fileを表示。 |
-| `--interactive` | off | command lineですべて指定する代わりにgeneration choiceを対話入力。 |
-| `--no-cmake` | off | `CMakeLists.txt`を生成しない。既存build systemへ統合するときに使用。 |
-| `--no-readme` | off | `README.md`を生成しない。生成deviceを別の場所で文書化するときに使用。 |
-| `--no-namespace` | off | device classを`namespace nestdaq`ではなくglobal namespaceへ生成。 |
-| `--processing-mode MODE` | `conditional-run` | 生成processing entry pointを`conditional-run`、`run`、`on-data`から選択。 |
-| `--input-channel SPEC` | `in-chan-name:in` | 生成input channelをoverride。`SPEC`は`KEY:DEFAULT_NAME`、`:DEFAULT_NAME`、`DEFAULT_NAME`。 |
-| `--no-input-channel` | off | input-channel codeを生成しない。 |
-| `--output-channel SPEC` | `out-chan-name:out` | 生成output channelをoverride。`SPEC`は`--input-channel`と同形式。 |
-| `--no-output-channel` | off | output-channel codeを生成しない。 |
-| `--dqm-channel SPEC` | `dqm-chan-name:dqm` | 生成DQM channelをoverride。`SPEC`は`--input-channel`と同形式。 |
-| `--no-dqm-channel` | off | DQM-channel codeを生成しない。 |
-| `--multipart-input` | off | input channel用multipart receive/`OnData()` exampleを生成。`--no-input-channel`と同時指定不可。 |
-| `--single-output` | off | single-message output exampleを生成。default outputはmultipart。 |
-| `--single-dqm` | off | single-message DQM exampleを生成。default DQMはmultipart。 |
-| `--no-drain-input` | off | `PostRun()` input drain codeを生成しない。 |
-| `--no-poll LIST` | none | FairMQ pollingから除外するchannel kindのcomma区切りlist：`input`、`output`、`dqm`。 |
+| `--output DIR`, `-o DIR` | `./CLASS_NAME/` | 生成ファイルを`DIR`配下へ書き込み。 |
+| `--force` | off | 既存の生成ファイルを上書き。 |
+| `--dry-run` | off | 書き込まず生成予定ファイルを表示。 |
+| `--interactive` | オフ | コマンドラインですべて指定する代わりに生成内容を対話入力。 |
+| `--no-cmake` | off | `CMakeLists.txt`を生成しない。既存ビルドシステムへ統合するときに使用。 |
+| `--no-readme` | off | `README.md`を生成しない。生成デバイスを別の場所で文書化するときに使用。 |
+| `--no-namespace` | オフ | デバイスクラスを`namespace nestdaq`ではなくグローバル名前空間へ生成。 |
+| `--processing-mode MODE` | `conditional-run` | 生成する処理エントリーポイントを`conditional-run`、`run`、`on-data`から選択。 |
+| `--input-channel SPEC` | `in-chan-name:in` | 生成する入力チャネルを上書き。`SPEC`は`KEY:DEFAULT_NAME`、`:DEFAULT_NAME`、`DEFAULT_NAME`。 |
+| `--no-input-channel` | オフ | 入力チャネルのコードを生成しない。 |
+| `--output-channel SPEC` | `out-chan-name:out` | 生成する出力チャネルを上書き。`SPEC`は`--input-channel`と同形式。 |
+| `--no-output-channel` | オフ | 出力チャネルのコードを生成しない。 |
+| `--dqm-channel SPEC` | `dqm-chan-name:dqm` | 生成するDQMチャネルを上書き。`SPEC`は`--input-channel`と同形式。 |
+| `--no-dqm-channel` | オフ | DQMチャネルのコードを生成しない。 |
+| `--multipart-input` | オフ | 入力チャネル用のマルチパート受信/`OnData()`の例を生成。`--no-input-channel`と同時指定不可。 |
+| `--single-output` | オフ | 単一メッセージ出力の例を生成。既定の出力はマルチパート。 |
+| `--single-dqm` | オフ | 単一メッセージDQMの例を生成。既定のDQMはマルチパート。 |
+| `--no-drain-input` | オフ | `PostRun()`の入力排出コードを生成しない。 |
+| `--no-poll LIST` | なし | FairMQのポーリングから除外するチャネル種別のコンマ区切り一覧：`input`、`output`、`dqm`。 |
 
-processing mode：
+処理モード：
 
-| Mode | 生成される動作 |
+| モード | 生成される動作 |
 | :-- | :-- |
-| `conditional-run` | 単純なpoll/receive/send exampleを持つ`ConditionalRun()`を生成。 |
+| `conditional-run` | 単純なポーリング/受信/送信の例を持つ`ConditionalRun()`を生成。 |
 | `run` | 空の`Run()`を生成。 |
-| `on-data` | `InitTask()`へ`OnData()` callback登録を生成。input-channel codeが必要。 |
+| `on-data` | `InitTask()`へ`OnData()`コールバック登録を生成。入力チャネルのコードが必要。 |
 
 `OnData()`、`ConditionalRun()`、`Run()`の選び方は[`examples/README.ja.md#44-choosing-ondata-conditionalrun-or-run`](../examples/README.ja.md#44-choosing-ondata-conditionalrun-or-run)を参照してください。
 
-generatorへ渡すchannel optionは、生成deviceのcommand-line optionではありません。
-generatorはdefaultで3 channelすべてを作成し、これらのoptionに従って、対応するdevice command-line optionをC++へ生成します。
+ジェネレーターへ渡すチャネルオプションは、生成デバイスのコマンドラインオプションではありません。
+ジェネレーターは既定で3つのチャネルをすべて作成し、これらのオプションに従って、対応するデバイスのコマンドラインオプションをC++へ生成します。
 
 ```bash
-# input、output、DQM channel optionを明示したprocessorを生成する。
+# 入力、出力、DQMチャネルオプションを明示したプロセッサーを生成する。
 ./generate-device-skeleton.py MyProcessor \
   --input-channel in-chan-name:in \
   --output-channel out-chan-name:out \
   --dqm-channel dqm-chan-name:dqm
 ```
 
-例えば`--input-channel in-chan-name:in`を指定すると、生成C++はdefault valueが`in`の`in-chan-name` command-line optionを追加し、`InitTask()`でそのoptionを`fInputChannelName`へ読み取ります。
-short formの`--input-channel :in`と`--input-channel in`はいずれもdefault option key `in-chan-name`を使用します。
-outputとDQMも同様に`out-chan-name`と`dqm-chan-name`を使用します。
-default channel nameがなくなるため、`KEY:`と`:`は拒否されます。
+例えば`--input-channel in-chan-name:in`を指定すると、生成C++は既定値が`in`の`in-chan-name`コマンドラインオプションを追加し、`InitTask()`でそのオプションを`fInputChannelName`へ読み取ります。
+短縮形の`--input-channel :in`と`--input-channel in`はいずれも既定のオプションキー`in-chan-name`を使用します。
+出力とDQMも同様に`out-chan-name`と`dqm-chan-name`を使用します。
+既定のチャネル名がなくなるため、`KEY:`と`:`は拒否されます。
 
-channelが不要なdeviceでは`--no-input-channel`、`--no-output-channel`、`--no-dqm-channel`を使用します。
-生成後に対応option、member、initialization、polling、processing codeを削除しても同じ結果になりますが、生成時に除外する方がerrorを避けやすくなります。
+チャネルが不要なデバイスでは`--no-input-channel`、`--no-output-channel`、`--no-dqm-channel`を使用します。
+生成後に対応するオプション、メンバー、初期化、ポーリング、処理コードを削除しても同じ結果になりますが、生成時に除外する方がエラーを避けやすくなります。
 `--*-channel`と対応する`--no-*-channel`は相互排他です。
-interactive modeでは各channel promptのdefaultは`yes`で、除外するには`no`と回答します。
+対話モードでは各チャネルのプロンプトの既定値は`yes`で、除外するには`no`と回答します。
 
-生成device classはdefaultで`namespace nestdaq`に置かれます。
-global namespaceへ生成するには`--no-namespace`を使用します。
+生成したデバイスクラスは既定で`namespace nestdaq`に置かれます。
+グローバル名前空間へ生成するには`--no-namespace`を使用します。
 
-便利なvariant：
+便利な派生例：
 
 ```bash
 # output channelだけを持つsourceを生成する。
@@ -533,7 +533,7 @@ global namespaceへ生成するには`--no-namespace`を使用します。
   --no-input-channel \
   --no-dqm-channel
 
-# 短縮channel specificationとdefault option keyを使用する。
+# 短縮チャネル指定と既定のオプションキーを使用する。
 ./generate-device-skeleton.py MyShortFormProcessor \
   --input-channel :in \
   --output-channel data \
@@ -583,31 +583,31 @@ global namespaceへ生成するには`--no-namespace`を使用します。
 ./generate-device-skeleton.py --interactive
 ```
 
-input pollingを生成する場合、skeletonは`Receive()`前にFairMQ pollerを使用します。
-output/DQM pollingを生成する場合は`Send()`前に`fair::mq::Poller::CheckOutput()`を使用します。
-outputは送信可能になるかstate transitionがpendingになるまでpoll-timeout単位で待ちます。
-DQMは即時送信できない場合sampleを破棄します。
-output/DQM exampleはdefaultでmultipart messageとして生成されます。
-single-message exampleにはgenerator option `--single-output`または`--single-dqm`を使用します。
-`SendOutputMessage()`と`SendDQMMessage()`は、生成された`fair::mq::Parts&`または`fair::mq::MessagePtr&` payloadを受け取り、channel readiness、`Send()`、成功/失敗確認だけを処理します。
+入力のポーリングを生成する場合、スケルトンは`Receive()`前にFairMQポーラーを使用します。
+出力/DQMのポーリングを生成する場合は`Send()`前に`fair::mq::Poller::CheckOutput()`を使用します。
+出力は送信可能になるか状態遷移が保留になるまでポーリングタイムアウト単位で待ちます。
+DQMは即時送信できない場合にサンプルを破棄します。
+出力/DQMの例は既定でマルチパートメッセージとして生成されます。
+単一メッセージの例にはジェネレーターオプション`--single-output`または`--single-dqm`を使用します。
+`SendOutputMessage()`と`SendDQMMessage()`は、生成された`fair::mq::Parts&`または`fair::mq::MessagePtr&`ペイロードを受け取り、チャネルの準備状態、`Send()`、成功/失敗確認だけを処理します。
 
-上表のoptionはgeneratorを制御するものであり、生成deviceのcommand-line optionではありません。
-生成C++ codeはcustom optionをstringとして登録します。
-`InitTask()`はstringを変換してから数値memberへ代入します。
+上表のオプションはジェネレーターを制御するものであり、生成したデバイスのコマンドラインオプションではありません。
+生成C++コードはカスタムオプションを文字列として登録します。
+`InitTask()`は文字列を変換してから数値メンバーへ代入します。
 
-| 生成device command-line option | デフォルト | 説明 |
+| 生成されるデバイスのコマンドラインオプション | デフォルト | 説明 |
 | :-- | :-- | :-- |
-| `poll-timeout-ms` | `100` | FairMQ poll timeout (milliseconds)。 |
-| `drain-timeout-ms` | `100` | input drainで使用するreceive timeout。負値は`0`として扱う。 |
-| `drain-max-timeout-count` | `20` | 最後にdrainしたmessage以降、この回数だけ連続でreceive timeoutしたらinput drainを停止。正値必須。 |
+| `poll-timeout-ms` | `100` | FairMQのポーリングタイムアウト (ミリ秒)。 |
+| `drain-timeout-ms` | `100` | 入力排出で使用する受信タイムアウト。負値は`0`として扱う。 |
+| `drain-max-timeout-count` | `20` | 最後に排出したメッセージ以降、この回数だけ連続で受信タイムアウトになったら入力排出を停止。正値必須。 |
 
-input channelがある場合、defaultで`PostRun()`へinput drain codeを生成します。
+入力チャネルがある場合、既定で`PostRun()`へ入力排出コードを生成します。
 無効化には`--no-drain-input`を使用します。
 
-generatorは組み込みtemplateを読み、device固有placeholderを置換し、生成fileをoutput directoryへ書き込みます。
-主要な置換には`@CLASS_NAME@`、`@HEADER_FILE@`、`@SOURCE_FILE@`と、member、option、processing method、send helper、drain code用の生成C++ blockがあります。
+ジェネレーターは組み込みテンプレートを読み、デバイス固有のプレースホルダーを置換し、生成ファイルを出力ディレクトリへ書き込みます。
+主要な置換には`@CLASS_NAME@`、`@HEADER_FILE@`、`@SOURCE_FILE@`と、メンバー、オプション、処理メソッド、送信ヘルパー、排出コード用の生成C++ブロックがあります。
 
-| Template | `MyDevice`用生成file |
+| テンプレート | `MyDevice`用生成ファイル |
 | :-- | :-- |
 | `Device.hpp.in` | `MyDevice.hpp` |
 | `Device.cpp.in` | `MyDevice.cpp` |
@@ -616,13 +616,13 @@ generatorは組み込みtemplateを読み、device固有placeholderを置換し�
 
 `--no-cmake`指定時は`CMakeLists.txt`、`--no-readme`指定時は`README.md`を省略します。
 
-`CMakeLists.txt`を生成した場合、生成deviceをstandalone CMake projectとしてbuildします。
-`CMAKE_PREFIX_PATH`をNestDAQ install prefix、`CMAKE_INSTALL_PREFIX`を生成deviceのinstall prefixへ設定します。
-両prefixは同じdirectoryでも構いません。
-生成CMake projectはdefaultでC++17を使用し、C++17未満を拒否します。
+`CMakeLists.txt`を生成した場合、生成したデバイスを単独のCMakeプロジェクトとしてビルドします。
+`CMAKE_PREFIX_PATH`をNestDAQのインストールプレフィックス、`CMAKE_INSTALL_PREFIX`を生成デバイスのインストールプレフィックスへ設定します。
+両プレフィックスは同じディレクトリでも構いません。
+生成したCMakeプロジェクトは既定でC++17を使用し、C++17未満を拒否します。
 
 ```bash
-# NestDAQ installationを参照するout-of-source buildをconfigureする。
+# NestDAQのインストールを参照するソース外ビルドを構成する。
 cmake -S ./MyDevice -B ./build-MyDevice \
   -DCMAKE_PREFIX_PATH=<nestdaq-install-prefix> \
   -DCMAKE_INSTALL_PREFIX=<device-install-prefix>
@@ -632,7 +632,7 @@ cmake --build ./build-MyDevice --parallel
 cmake --install ./build-MyDevice
 ```
 
-install済みexecutableは`<device-install-prefix>/bin/MyDevice`へ配置されます。
+インストール済みの実行ファイルは`<device-install-prefix>/bin/MyDevice`へ配置されます。
 
-skeletonは意図的に最小限の構成にしています。
-data-channel処理とtelemetry instrumentationについては、`Sampler`と`Sink` exampleを参照してください。
+スケルトンは意図的に最小限の構成にしています。
+データチャネル処理とテレメトリー計装については、`Sampler`と`Sink`の例を参照してください。

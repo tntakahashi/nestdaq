@@ -2,40 +2,40 @@
 
 [English](README.md) | [日本語](README.ja.md)
 
-[トップ: NestDAQ](../README.ja.md) | [前へ: Plugin](../plugins/README.ja.md) | [次へ: `daq-webctl`のブラウザUI file](../share/controller/README.ja.md)
+[トップ: NestDAQ](../README.ja.md) | [前へ: プラグイン](../plugins/README.ja.md) | [次へ: `daq-webctl`のブラウザUIファイル](../share/controller/README.ja.md)
 
-このディレクトリには、NestDAQのweb controller processである`daq-webctl`の実装があります。
-`daq-webctl`は、ブラウザuser interface (UI) 用のHTTP server、対話的client用のWebSocket session、およびRedisをbackendとするDAQ device制御操作を提供します。
+このディレクトリには、NestDAQのウェブコントローラープロセスである`daq-webctl`の実装があります。
+`daq-webctl`は、ブラウザユーザーインターフェース (UI) 用のHTTPサーバー、対話型クライアント用のWebSocketセッション、およびRedisをバックエンドとするDAQデバイス制御操作を提供します。
 
-`daq-webctl`が配信するHTML、JavaScript、CSS fileについては、[`share/controller/README.ja.md`](../share/controller/README.ja.md)に記載されています。
+`daq-webctl`が配信するHTML、JavaScript、CSSファイルについては、[`share/controller/README.ja.md`](../share/controller/README.ja.md)に記載されています。
 
 <a id="1-controller-responsibilities"></a>
 ## 1. `daq-webctl`の役割
 
-`daq-webctl`はHTTP endpointをlistenし、設定されたdocument rootを配信して、WebSocket clientを受け付けます。
-ブラウザから受信したcommandをRedisをbackendとするDAQ制御操作へ変換し、接続中のWebSocket clientへstate updateを返します。
+`daq-webctl`はHTTPエンドポイントで接続を待ち受け、設定されたドキュメントルートを配信して、WebSocketクライアントを受け付けます。
+ブラウザから受信したコマンドをRedisをバックエンドとするDAQ制御操作へ変換し、接続中のWebSocketクライアントへ状態更新を返します。
 
-`daq-webctl`は起動時にFairLogger出力を設定し、必要に応じてNestDAQ OpenTelemetry pluginをloadできます。
+`daq-webctl`は起動時にFairLogger出力を設定し、必要に応じてNestDAQ OpenTelemetryプラグインを読み込めます。
 
 <a id="2-main-components"></a>
 ## 2. 主要コンポーネント
 
 | 構成要素 | 用途 |
 | :-- | :-- |
-| `run_daq-webctl.cxx` | executable entry point、command-line parsing、logging、telemetry、Redis設定、server起動。 |
-| `HttpWebSocketServer` | Boost.Asio I/O context、signal handling、listener、worker threadを所有します。 |
-| `Listener` | Transmission Control Protocol (TCP) connectionを受け付け、HTTP sessionを開始します。 |
-| `HttpSession` | HTTP requestを処理し、WebSocket requestをupgradeします。 |
-| `WebSocketSession` | 1つのWebSocket client connectionを管理します。 |
-| `WebSocketHandle` | WebSocket clientから受信したJavaScript Object Notation (JSON) messageをdispatchします。 |
-| `WebGui` | RedisをbackendとするDAQ制御、state polling、command publishを実装します。 |
-| `beast_tools` | 共通のBoost.Beast HTTP response helperを提供します。 |
-| `DaqWebControlDefaultDocRootPath.h.in` | `--doc-root`で使用する、インストール済み`daq-webctl` default document root pathを生成します。 |
+| `run_daq-webctl.cxx` | 実行ファイルのエントリーポイント、コマンドライン解析、ロギング、テレメトリー、Redis設定、サーバー起動。 |
+| `HttpWebSocketServer` | Boost.AsioのI/Oコンテキスト、シグナル処理、リスナー、ワーカースレッドを所有します。 |
+| `Listener` | Transmission Control Protocol (TCP) 接続を受け付け、HTTPセッションを開始します。 |
+| `HttpSession` | HTTPリクエストを処理し、WebSocketリクエストをアップグレードします。 |
+| `WebSocketSession` | 1つのWebSocketクライアント接続を管理します。 |
+| `WebSocketHandle` | WebSocketクライアントから受信したJavaScript Object Notation (JSON) メッセージを振り分けます。 |
+| `WebGui` | RedisをバックエンドとするDAQ制御、状態のポーリング、コマンドの発行を実装します。 |
+| `beast_tools` | 共通のBoost.Beast HTTPレスポンスヘルパーを提供します。 |
+| `DaqWebControlDefaultDocRootPath.h.in` | `--doc-root`で使用する、インストール済み`daq-webctl`の既定ドキュメントルートパスを生成します。 |
 
 <a id="3-typical-usage"></a>
 ## 3. 一般的な使用方法
 
-shell command例の中で`#`から始まる行は読者向けのcommentであり、shellでは実行されません。
+シェルコマンド例の中で`#`から始まる行は読者向けのコメントであり、シェルでは実行されません。
 
 ```sh
 # ローカルのHTTP endpointとRedis endpointを使用してdaq-webctlを起動します。
@@ -43,27 +43,27 @@ daq-webctl --http-uri=http://0.0.0.0:8080 --redis-uri=tcp://127.0.0.1:6379
 ```
 
 `daq-webctl`起動後に、`http://localhost:8080/`、`http://localhost:8080/index.html`、または`http://localhost:8080/daq-webctl.html`を開きます。
-インストールされる`index.html`は`daq-webctl.html`へのsymbolic linkであり、`/`へのrequestは`index.html`へ解決されます。
-Redis serverは`daq-webctl`より先に起動してください。
-OpenTelemetry Collectorへtelemetryをexportする場合は、Collectorとtelemetry dataの保存先も`daq-webctl`より先に起動してください。
+インストールされる`index.html`は`daq-webctl.html`へのシンボリックリンクであり、`/`へのリクエストは`index.html`へ解決されます。
+Redisサーバーは`daq-webctl`より先に起動してください。
+OpenTelemetry Collectorへテレメトリーデータをエクスポートする場合は、Collectorとその保存先も`daq-webctl`より先に起動してください。
 全体の起動順は、[ローカル実行シーケンス](../examples/README.ja.md#31-local-run-sequence)を参照してください。
-DAQ deviceがRunning stateへ遷移する前に、`daq-webctl`でrun numberを設定してください。
+DAQデバイスがRunning状態へ遷移する前に、`daq-webctl`で実行番号を設定してください。
 
-利用可能なHTTP、Redis、FairLogger、OpenTelemetry optionは`daq-webctl --help`で確認できます。
+利用可能なHTTP、Redis、FairLogger、OpenTelemetryオプションは`daq-webctl --help`で確認できます。
 
 <a id="4-communication-flow"></a>
 ## 4. 通信フロー
 
-ブラウザはRedisやuser device processへ直接接続しません。
-`daq-webctl`はブラウザ向けのHTTP/WebSocket serverであり、commandのpublish、keyへのaccess、Pub/Sub channelのsubscribe、およびstate pollingを行うRedis clientでもあります。
-user device processは`daq_service` pluginを通じてRedisと通信します。
+ブラウザはRedisやユーザーデバイスプロセスへ直接接続しません。
+`daq-webctl`はブラウザ向けのHTTP/WebSocketサーバーであり、コマンドの発行、キーへのアクセス、Pub/Subチャネルの購読、および状態のポーリングを行うRedisクライアントでもあります。
+ユーザーデバイスプロセスは`daq_service`プラグインを通じてRedisと通信します。
 
 ```mermaid
 sequenceDiagram
   participant Browser as Webブラウザ
-  participant WebCtl as daq-webctl<br/>HTTP/WebSocket server<br/>Redis client
+  participant WebCtl as daq-webctl<br/>HTTP/WebSocketサーバー<br/>Redisクライアント
   participant Redis as Redis
-  participant Device as User device process<br/>(daq_service plugin)
+  participant Device as ユーザーデバイスプロセス<br/>(daq_serviceプラグイン)
 
   Browser->>WebCtl: HTTP GET /、/index.html、または /daq-webctl.html
   WebCtl-->>Browser: HTML/JS/CSS
@@ -71,15 +71,15 @@ sequenceDiagram
   WebCtl->>Redis: CONFIG SET notify-keyspace-events AKE
   WebCtl->>Redis: expired key eventをSUBSCRIBE
   Device->>Redis: SUBSCRIBE daqctl
-  Device->>Redis: presence、health、fair-mq-stateをwrite/refresh
-  Browser->>WebCtl: WebSocket JSON command<br/>redis-get / redis-set / redis-incr / redis-publish
+  Device->>Redis: presence、health、fair-mq-stateを書き込み/更新
+  Browser->>WebCtl: WebSocket JSONコマンド<br/>redis-get / redis-set / redis-incr / redis-publish
   alt run numberまたはwait flag操作
     WebCtl->>Redis: run_info:* keyをGET / SET / INCR
     WebCtl-->>Browser: WebSocket JSON run_info update
-  else DAQ state command
+  else DAQ状態コマンド
     WebCtl->>Redis: PUBLISH daqctl change_state
-    Redis-->>Device: daqctl messageを配信
-    Device->>Device: FairMQ state transitionを適用
+    Redis-->>Device: daqctlメッセージを配信
+    Device->>Device: FairMQ状態遷移を適用
     Device->>Redis: fair-mq-state / updatedTimeを更新
     WebCtl->>Redis: summary用state keyをpoll/scan
     WebCtl-->>Browser: WebSocket JSON state-summary-table
@@ -88,60 +88,60 @@ sequenceDiagram
   WebCtl-->>Browser: WebSocket JSON state update
 ```
 
-この図は制御とstatusの経路を示します。
-user device process間のFairMQ data-channel trafficは別経路であり、`daq-webctl`を経由しません。
+この図は制御と状態の経路を示します。
+ユーザーデバイスプロセス間のFairMQデータチャネルトラフィックは別経路であり、`daq-webctl`を経由しません。
 
 <a id="5-command-line-options"></a>
 ## 5. コマンドラインオプション
 
-`daq-webctl`は以下のoptionを受け付けます。
-OpenTelemetry optionも利用できます。
-`--otel-service-instance-id`を指定しない場合、`daq-webctl`は生成したUUIDをOpenTelemetryの`service.instance.id` resource attributeへ記録します。
-OpenTelemetry optionの一覧は[`nestdaq/telemetry/README.ja.md`](../nestdaq/telemetry/README.ja.md)を参照してください。
+`daq-webctl`は以下のオプションを受け付けます。
+OpenTelemetryオプションも利用できます。
+`--otel-service-instance-id`を指定しない場合、`daq-webctl`は生成したUUIDをOpenTelemetryの`service.instance.id`リソース属性へ記録します。
+OpenTelemetryオプションの一覧は[`nestdaq/telemetry/README.ja.md`](../nestdaq/telemetry/README.ja.md)を参照してください。
 
-| Option | 既定値 | 説明 |
+| オプション | 既定値 | 説明 |
 | :-- | :-- | :-- |
-| `--help`, `-h` | none | command-line helpを表示して終了します。 |
-| `--http-uri` | `http://0.0.0.0:8080` | `daq-webctl`がHTTP connectionをlistenするendpoint。`scheme://address:port`形式で指定します。 |
-| `--threads` | `1` | HTTP server worker thread数。 |
-| `--doc-root` | installed `daq-webctl` document root | `daq-webctl`がHTML、JavaScript、CSS fileを配信するdirectory。 |
-| `--pre-run` | `echo "pre-run command"` | `RUN`をpublishする前に実行するscript pathまたはcommand line。 |
-| `--post-run` | `echo "post-run command"` | `RUN`をpublishした後に実行するscript pathまたはcommand line。 |
-| `--pre-stop` | `echo "pre-stop command"` | `STOP`をpublishする前に実行するscript pathまたはcommand line。 |
-| `--post-stop` | `echo "post-stop command"` | `STOP`をpublishした後に実行するscript pathまたはcommand line。 |
-| `--redis-uri` | `tcp://127.0.0.1:6379` | Redis server URI。URIの末尾に`/N`を追加するとdatabase `N`を選択し、省略するとdatabase `0`を使用します。 |
-| `--separator` | `:` | Redis key path構成時のseparator。 |
-| `--poll-interval` | `500` | millisecond単位のstate polling interval。 |
-| `--log-to-file` | 空文字列 (未指定) | FairLogger output file。空でないpathを指定するとfile loggingを有効にし、console loggingを無効にします。 |
-| `--file-severity` | `info` | FairLogger file severity。 |
-| `--severity` | `info` | FairLogger console severity。consoleへのlog出力を停止するには、`nolog`を指定します。 |
-| `--verbosity` | `medium` | FairLogger verbosity。 |
-| `--color` | `true` | FairLogger console colorを有効にします。 |
+| `--help`, `-h` | なし | コマンドラインヘルプを表示して終了します。 |
+| `--http-uri` | `http://0.0.0.0:8080` | `daq-webctl`がHTTP接続を待ち受けるエンドポイント。`scheme://address:port`形式で指定します。 |
+| `--threads` | `1` | HTTPサーバーのワーカースレッド数。 |
+| `--doc-root` | インストール済み`daq-webctl`のドキュメントルート | `daq-webctl`がHTML、JavaScript、CSSファイルを配信するディレクトリ。 |
+| `--pre-run` | `echo "pre-run command"` | `RUN`を発行する前に実行するスクリプトのパスまたはコマンドライン。 |
+| `--post-run` | `echo "post-run command"` | `RUN`を発行した後に実行するスクリプトのパスまたはコマンドライン。 |
+| `--pre-stop` | `echo "pre-stop command"` | `STOP`を発行する前に実行するスクリプトのパスまたはコマンドライン。 |
+| `--post-stop` | `echo "post-stop command"` | `STOP`を発行した後に実行するスクリプトのパスまたはコマンドライン。 |
+| `--redis-uri` | `tcp://127.0.0.1:6379` | RedisサーバーのURI。URIの末尾に`/N`を追加するとデータベース`N`を選択し、省略するとデータベース`0`を使用します。 |
+| `--separator` | `:` | Redisキーパス構成時の区切り文字。 |
+| `--poll-interval` | `500` | ミリ秒単位の状態ポーリング間隔。 |
+| `--log-to-file` | 空文字列 (未指定) | FairLoggerの出力ファイル。空でないパスを指定するとファイルへのロギングを有効にし、コンソールへのロギングを無効にします。 |
+| `--file-severity` | `info` | FairLoggerのファイル出力の重大度。 |
+| `--severity` | `info` | FairLoggerのコンソール出力の重大度。コンソールへのログ出力を停止するには、`nolog`を指定します。 |
+| `--verbosity` | `medium` | FairLoggerの詳細度。 |
+| `--color` | `true` | FairLoggerのコンソール出力の色表示を有効にします。 |
 
 <a id="51-opentelemetry-options"></a>
 ### 5.1. OpenTelemetryオプション
 
-`daq-webctl`のOpenTelemetry `service.name`のdefaultは`daq-webctl`です。
-`--otel-library`が空でなくlibraryが見つかる場合は、`daq-webctl`がprocess起動時にtelemetry libraryを動的loadします。
+`daq-webctl`のOpenTelemetry `service.name`の既定値は`daq-webctl`です。
+`--otel-library`が空でなくライブラリが見つかる場合は、`daq-webctl`がプロセス起動時にテレメトリーライブラリを動的に読み込みます。
 
-`daq-webctl`でよく使用するtelemetry optionは次のとおりです。
+`daq-webctl`でよく使用するテレメトリーオプションは次のとおりです。
 
-| Option | 既定値 | 説明 |
+| オプション | 既定値 | 説明 |
 | :-- | :-- | :-- |
-| `--otel-library` | `libnestdaq_otel.so` | process起動時に動的loadするtelemetry shared library pathまたはsoname。 |
-| `--otel-log-protocol` | `console` | comma-separated log exporter: `console`、`otlp-http`、`otlp-grpc`。空の場合はlog exportを無効にします。 |
-| `--otel-log-endpoint-grpc` | `localhost:4317` | OTLP gRPC log endpoint。 |
-| `--otel-log-endpoint-http` | `http://localhost:4318/v1/logs` | OTLP HTTP log endpoint。 |
-| `--otel-log-severity` | `info` | OpenTelemetry logへexportするFairLoggerのminimum severity。 |
-| `--otel-log-required` | `false` | telemetry libraryをloadまたはinitializeできない場合、failureで終了します。 |
-| `--otel-service-name` | `daq-webctl` | OpenTelemetry `service.name` resource attribute。 |
-| `--otel-service-namespace` | `nestdaq` | OpenTelemetry `service.namespace` resource attribute。 |
-| `--otel-service-instance-id` | generated UUID | OpenTelemetry `service.instance.id` resource attribute。 |
-| `--otel-timeout-ms` | `5000` | millisecond単位のforce-flush、shutdown、exporter timeout。 |
-| `--otel-metric-protocol` | empty | metric exporter。空の場合はmetricsを無効にします。`console` debugに利用できます。 |
-| `--otel-trace-protocol` | empty | trace exporter。空の場合はtracesを無効にします。`console` debugに利用できます。 |
+| `--otel-library` | `libnestdaq_otel.so` | プロセス起動時に動的に読み込むテレメトリー共有ライブラリのパスまたはsoname。 |
+| `--otel-log-protocol` | `console` | コンマ区切りのログエクスポーター：`console`、`otlp-http`、`otlp-grpc`。空の場合はログのエクスポートを無効にします。 |
+| `--otel-log-endpoint-grpc` | `localhost:4317` | OTLP gRPCログエンドポイント。 |
+| `--otel-log-endpoint-http` | `http://localhost:4318/v1/logs` | OTLP HTTPログエンドポイント。 |
+| `--otel-log-severity` | `info` | OpenTelemetryログへエクスポートするFairLoggerの最低重大度。 |
+| `--otel-log-required` | `false` | テレメトリーライブラリを読み込めないか初期化できない場合、失敗として終了します。 |
+| `--otel-service-name` | `daq-webctl` | OpenTelemetryの`service.name`リソース属性。 |
+| `--otel-service-namespace` | `nestdaq` | OpenTelemetryの`service.namespace`リソース属性。 |
+| `--otel-service-instance-id` | 生成したUUID | OpenTelemetryの`service.instance.id`リソース属性。 |
+| `--otel-timeout-ms` | `5000` | ミリ秒単位の強制フラッシュ、シャットダウン、エクスポーターのタイムアウト。 |
+| `--otel-metric-protocol` | 空 | メトリクスエクスポーター。空の場合はメトリクスを無効にします。`console`はデバッグに利用できます。 |
+| `--otel-trace-protocol` | 空 | トレースエクスポーター。空の場合はトレースを無効にします。`console`はデバッグに利用できます。 |
 
-次の例は、ローカルOpenTelemetry CollectorへOTLP gRPCで`daq-webctl` logを送信します。
+次の例は、ローカルOpenTelemetry CollectorへOTLP gRPCで`daq-webctl`のログを送信します。
 
 ```sh
 # daq-webctlを起動し、OTLP gRPCでローカルcollectorへlogをexportします。
@@ -154,86 +154,86 @@ daq-webctl \
   --otel-service-name=daq-webctl
 ```
 
-`daq-webctl`の実行場所に応じてOTLP endpointを選択します。
+`daq-webctl`の実行場所に応じてOTLPエンドポイントを選択します。
 
-ここでComposeとは、`docker compose`または`podman compose`で管理するcontainer構成を指します。
+ここでComposeとは、`docker compose`または`podman compose`で管理するコンテナ構成を指します。
 
-- host processからOpenSearch Composeでpublishされたcollector portへ接続:
+- ホストプロセスからOpenSearch Composeで公開されたCollectorポートへ接続：
   `localhost:4317`。
-- 同じOpenSearch Compose network内の`daq-webctl` container:
+- 同じOpenSearch Composeネットワーク内の`daq-webctl`コンテナ：
   `otel-collector:4317`。
 
-metricsとtracesはdefaultで無効です。
-collectorを使用しないローカルdebugでは、`--otel-metric-protocol=console`や`--otel-trace-protocol=console`などのconsole exporterを使用します。
-OpenTelemetry optionの一覧とresource attributeの詳細は[`nestdaq/telemetry/README.ja.md`](../nestdaq/telemetry/README.ja.md)を参照してください。
+メトリクスとトレースは既定で無効です。
+Collectorを使用しないローカルデバッグでは、`--otel-metric-protocol=console`や`--otel-trace-protocol=console`などのコンソールエクスポーターを使用します。
+OpenTelemetryオプションの一覧とリソース属性の詳細は[`nestdaq/telemetry/README.ja.md`](../nestdaq/telemetry/README.ja.md)を参照してください。
 
 <a id="6-redis-command-interface"></a>
 ## 6. Redisコマンドインターフェース
 
-`daq-webctl`は`daq_service` pluginが実装するRedis command interfaceを使用します。
-DAQ command key、`daqctl` Publish/Subscribe (Pub/Sub) channel、message形式、受け付けるcommand value、および`RUN`/`STOP` sequenceについては、[`plugins/README.ja.md`](../plugins/README.ja.md#24-daq-command-publishsubscribe-pubsub)に記載されています。
-`daq-webctl`以外のcustom controllerを開発する場合も、このsectionで説明するRedis keyとPub/Sub interfaceを利用できます。
+`daq-webctl`は`daq_service`プラグインが実装するRedisコマンドインターフェースを使用します。
+DAQコマンドキー、`daqctl` Publish/Subscribe (Pub/Sub) チャネル、メッセージ形式、受け付けるコマンド値、および`RUN`/`STOP`シーケンスについては、[`plugins/README.ja.md`](../plugins/README.ja.md#24-daq-command-publishsubscribe-pubsub)に記載されています。
+`daq-webctl`以外のカスタムコントローラーを開発する場合も、この節で説明するRedisキーとPub/Subインターフェースを利用できます。
 
-`daq-webctl`は起動時にRedis `notify-keyspace-events`を`AKE`に設定し、expired key eventを含むkey-event notificationを受信できるようにします。
-さらに、ブラウザのstate summaryを構築するため、`daq_service{sep}*{sep}*{sep}fair-mq-state`と`daq_service{sep}*{sep}*{sep}updatedTime`をpollします。
+`daq-webctl`は起動時にRedisの`notify-keyspace-events`を`AKE`に設定し、期限切れキーイベントを含むキーイベント通知を受信できるようにします。
+さらに、ブラウザの状態概要を構築するため、`daq_service{sep}*{sep}*{sep}fair-mq-state`と`daq_service{sep}*{sep}*{sep}updatedTime`をポーリングします。
 
-次の表は、`daq-webctl`が直接操作するRedis keyおよびchannelを示します。
+次の表は、`daq-webctl`が直接操作するRedisキーおよびチャネルを示します。
 
-| Key pattern | `daq-webctl`が行う操作 | 目的 |
+| キーパターン | `daq-webctl`が行う操作 | 目的 |
 | :-- | :-- | :-- |
-| `daq_service{sep}{service}{sep}{id}{sep}fair-mq-state` | read | 各device instanceの現在のFairMQ stateを取得。 |
-| `daq_service{sep}{service}{sep}{id}{sep}updatedTime` | read | 各device instanceが最後にstateを更新した時刻を取得。 |
-| `daq_service{sep}service-instance-index{sep}{service}` | 対応するpresence keyのexpire後にinstance index fieldをdelete | 数値instance indexを再利用できる状態に戻す。 |
-| `run_info{sep}run_number` | read、set、increment | 現在または次のrun numberを管理。 |
-| `run_info{sep}latest_run_number` | read/write | `RUN`要求時にcopyしたrun numberを保存。 |
-| `run_info{sep}wait-device-ready` | read/write | `1`または`true`の場合、選択した全deviceが`DeviceReady`、`Ready`、`Running`のいずれか1つの同じstateを報告するまで`CONNECT`後に待機。keyがない場合またはその他の値の場合は待機しません。 |
-| `run_info{sep}wait-ready` | read/write | `1`または`true`の場合、選択した全deviceが`Ready`または全deviceが`Running`を報告するまで`INIT TASK`後に待機。keyがない場合またはその他の値の場合は待機しません。 |
-| `daqctl` | publish | 選択したdevice instanceへDAQ state transition要求を送信。 |
+| `daq_service{sep}{service}{sep}{id}{sep}fair-mq-state` | 読み取り | 各デバイスインスタンスの現在のFairMQ状態を取得。 |
+| `daq_service{sep}{service}{sep}{id}{sep}updatedTime` | 読み取り | 各デバイスインスタンスが最後に状態を更新した時刻を取得。 |
+| `daq_service{sep}service-instance-index{sep}{service}` | 対応する存在キーの期限切れ後にインスタンスインデックスフィールドを削除 | 数値インスタンスインデックスを再利用できる状態に戻す。 |
+| `run_info{sep}run_number` | 読み取り、設定、インクリメント | 現在または次の実行番号を管理。 |
+| `run_info{sep}latest_run_number` | 読み取り/書き込み | `RUN`要求時に複製した実行番号を保存。 |
+| `run_info{sep}wait-device-ready` | 読み取り/書き込み | `1`または`true`の場合、選択した全デバイスが`DeviceReady`、`Ready`、`Running`のいずれか1つの同じ状態を報告するまで`CONNECT`後に待機。キーがない場合またはその他の値の場合は待機しません。 |
+| `run_info{sep}wait-ready` | 読み取り/書き込み | `1`または`true`の場合、選択した全デバイスが`Ready`または全デバイスが`Running`を報告するまで`INIT TASK`後に待機。キーがない場合またはその他の値の場合は待機しません。 |
+| `daqctl` | 発行 | 選択したデバイスインスタンスへDAQ状態遷移要求を送信。 |
 
-`daq-webctl`は`RUN`要求を処理するときに、`run_info{sep}run_number`を`run_info{sep}latest_run_number`へcopyします。
-`wait-device-ready`が有効な場合は`CONNECT`を、`wait-ready`が有効な場合は`INIT TASK`を`RUN`より先に送信し、選択したdeviceが所定のstateへ遷移するまで待ちます。
+`daq-webctl`は`RUN`要求を処理するときに、`run_info{sep}run_number`を`run_info{sep}latest_run_number`へ複製します。
+`wait-device-ready`が有効な場合は`CONNECT`を、`wait-ready`が有効な場合は`INIT TASK`を`RUN`より先に送信し、選択したデバイスが所定の状態へ遷移するまで待ちます。
 これらの要求には、`RUN`と同じ`services`および`instances`を指定します。
-`STOP`要求では、事前のstate transitionを行わずに`STOP`を送信します。
+`STOP`要求では、事前の状態遷移を行わずに`STOP`を送信します。
 `--pre-run`と`--post-run`は`RUN`送信の前後に、`--pre-stop`と`--post-stop`は`STOP`送信の前後に実行します。
 
 <a id="7-websocket-messages"></a>
 ## 7. WebSocketメッセージ
 
-web browserはWebSocket clientとして動作し、`daq-webctl`が提供するWebSocket server endpointへJSON commandを送信します。
-`daq-webctl`はRedis操作を実行するか、Redis Pub/Sub messageをpublishします。
-`redis-publish`のRedis Pub/Sub command message形式、受け付けるcommand value、および`services` / `instances` target選択規則については、[`plugins/README.ja.md`](../plugins/README.ja.md#24-daq-command-publishsubscribe-pubsub)に記載されています。
+ウェブブラウザはWebSocketクライアントとして動作し、`daq-webctl`が提供するWebSocketサーバーエンドポイントへJSONコマンドを送信します。
+`daq-webctl`はRedis操作を実行するか、Redis Pub/Subメッセージを発行します。
+`redis-publish`のRedis Pub/Subコマンドメッセージ形式、受け付けるコマンド値、および`services` / `instances`の対象選択規則については、[`plugins/README.ja.md`](../plugins/README.ja.md#24-daq-command-publishsubscribe-pubsub)に記載されています。
 
-| Client message | 動作 |
+| クライアントメッセージ | 動作 |
 | :-- | :-- |
 | `{"command":"redis-get","value":"run_number"}` | `run_info{sep}run_number`と`run_info{sep}latest_run_number`を読み取ります。 |
-| `{"command":"redis-incr","value":"run_number"}` | `run_info{sep}run_number`をincrementします。 |
-| `{"command":"redis-set","name":"wait-ready","value":"true"}` | 既知の`run_info` valueの1つを設定します。有効なnameは`run_number`、`wait-device-ready`、`wait-ready`です。 |
-| `{"command":"redis-publish","value":"RUN","services":["Sampler"],"instances":["Sampler:Sampler-0"]}` | 設定に応じたprerequisite command処理とともにDAQ commandを`daqctl`へpublishします。 |
+| `{"command":"redis-incr","value":"run_number"}` | `run_info{sep}run_number`をインクリメントします。 |
+| `{"command":"redis-set","name":"wait-ready","value":"true"}` | 既知の`run_info`値の1つを設定します。有効な名前は`run_number`、`wait-device-ready`、`wait-ready`です。 |
+| `{"command":"redis-publish","value":"RUN","services":["Sampler"],"instances":["Sampler:Sampler-0"]}` | 設定に応じた前提コマンド処理とともにDAQコマンドを`daqctl`へ発行します。 |
 
-`daq-webctl`はbrowser clientへJSON messageを返します。
+`daq-webctl`はブラウザクライアントへJSONメッセージを返します。
 
-| `daq-webctl` message | 意味 |
+| `daq-webctl`のメッセージ | 意味 |
 | :-- | :-- |
-| `{"type":"set run_number","value":"..."}` | 更新されたrun number。 |
-| `{"type":"set latest_run_number","value":"..."}` | 更新されたlatest run number。 |
-| `{"type":"error","value":"..."}` | Redis readまたはcommand handling error。 |
-| `{"type":"state-summary-table", ...}` | service/instance state summary全体。 |
+| `{"type":"set run_number","value":"..."}` | 更新された実行番号。 |
+| `{"type":"set latest_run_number","value":"..."}` | 更新された最新実行番号。 |
+| `{"type":"error","value":"..."}` | Redisの読み取りまたはコマンド処理のエラー。 |
+| `{"type":"state-summary-table", ...}` | サービス/インスタンス状態の概要全体。 |
 
-`state-summary-table` messageには次が含まれます。
+`state-summary-table`メッセージには次が含まれます。
 
-- `service_list_changed`: service集合が変化したときtrue。
-- `instance_list_changed`: instance集合が変化したときtrue。
-- `services`: service summaryのarray。
-- serviceごとの`counts`: FairMQ state counterのarray。
-- serviceごとの`instances`: `service`、`instance`、`state`、`date`を
-  持つarray。
+- `service_list_changed`：サービス集合が変化したとき`true`。
+- `instance_list_changed`：インスタンス集合が変化したとき`true`。
+- `services`：サービス概要の配列。
+- サービスごとの`counts`：FairMQ状態カウンターの配列。
+- サービスごとの`instances`：`service`、`instance`、`state`、`date`を
+  持つ配列。
 
 <a id="8-state-polling-and-expiration"></a>
-## 8. 状態pollingと期限切れ
+## 8. 状態のポーリングと期限切れ
 
-`daq-webctl`は`--poll-interval` millisecondごとに`daq_service{sep}*{sep}*{sep}fair-mq-state`と`daq_service{sep}*{sep}*{sep}updatedTime`をpollします。
-得られたsummaryは、接続中のすべてのWebSocket clientへbroadcastされます。
+`daq-webctl`は`--poll-interval`ミリ秒ごとに`daq_service{sep}*{sep}*{sep}fair-mq-state`と`daq_service{sep}*{sep}*{sep}updatedTime`をポーリングします。
+得られた概要は、接続中のすべてのWebSocketクライアントへブロードキャストされます。
 
-Redis expired key eventは別に処理されます。
-`presence` keyがexpireすると、`daq-webctl`はkey nameからserviceとinstanceを導出し、接続中のclientを更新します。
-この更新により、消失したinstanceがUIへ反映されます。
+Redisの期限切れキーイベントは別に処理されます。
+`presence`キーが期限切れになると、`daq-webctl`はキー名からサービスとインスタンスを導出し、接続中のクライアントを更新します。
+この更新により、消失したインスタンスがUIへ反映されます。

@@ -4,67 +4,67 @@
 
 [トップ: NestDAQ](../../README.ja.md) | [前へ: ClickStack設定](../otel-collector-compose/clickhouse/README.ja.md) | [次へ: CMake](../../cmake/README.ja.md)
 
-このディレクトリには、hostのpackage managerで外部serviceをインストールおよび更新するための補助scriptが含まれています。
-これらのscriptは、ローカルの**Compose**例に代わる方法を提供します。
+このディレクトリには、ホストのパッケージマネージャーで外部サービスをインストールおよび更新するための補助スクリプトが含まれています。
+これらのスクリプトは、ローカルの**Compose**例に代わる方法を提供します。
 この文書でComposeとは、`docker compose`または`podman compose`を指します。
 
-これらのscriptは、管理者が管理するhostでの利用を想定しています。
-rootとして実行しない場合は`sudo`を使用します。
-packageは`/usr/`、`/etc/`、package managerのrepository directory、systemd unit directoryなど、systemが管理する場所にインストールされるため、root権限が必要です。
+これらのスクリプトは、管理者が管理するホストでの利用を想定しています。
+rootユーザーとして実行しない場合は`sudo`を使用します。
+パッケージは`/usr/`、`/etc/`、パッケージマネージャーのリポジトリディレクトリ、systemdユニットディレクトリなど、システムが管理する場所にインストールされるため、root権限が必要です。
 
 DebianおよびUbuntuでは`apt-get`を使用します。
-AlmaLinux、Rocky Linux、RHEL、CentOS、FedoraなどのRHEL系systemでは`dnf`を優先し、`dnf`が利用できない場合は`yum`を使用します。
+AlmaLinux、Rocky Linux、RHEL、CentOS、FedoraなどのRHEL系システムでは`dnf`を優先し、`dnf`が利用できない場合は`yum`を使用します。
 
 <a id="1-scripts"></a>
 ## 1. スクリプト
 
 | スクリプト | インストールまたは更新するもの |
 | :-- | :-- |
-| `install-redis-stack.sh` | Redis package repositoryからRedis serverと[Redis Stack](../../INSTALL.ja.md#redis-server-and-modules) moduleをインストールします。 |
-| `install-otelcol-contrib.sh` | OpenTelemetry公式release packageからOpenTelemetry Collector Contribをインストールします。 |
-| `install-opensearch.sh` | OpenSearch 2.x package repositoryからOpenSearchをインストールします。 |
-| `install-opensearch-dashboards.sh` | OpenSearch 2.x package repositoryからOpenSearch Dashboardsをインストールします。 |
+| `install-redis-stack.sh` | RedisパッケージリポジトリからRedisサーバーと[Redis Stack](../../INSTALL.ja.md#redis-server-and-modules)モジュールをインストールします。 |
+| `install-otelcol-contrib.sh` | OpenTelemetry公式リリースパッケージからOpenTelemetry Collector Contribをインストールします。 |
+| `install-opensearch.sh` | OpenSearch 2.xパッケージリポジトリからOpenSearchをインストールします。 |
+| `install-opensearch-dashboards.sh` | OpenSearch 2.xパッケージリポジトリからOpenSearch Dashboardsをインストールします。 |
 
 <a id="2-usage"></a>
 ## 2. 使用方法
 
-次のいずれかのactionを指定してscriptを実行します。
-shell commandの例で`#`から始まる行は読者向けのコメントであり、shellでは実行されません。
+次のいずれかのアクションを指定してスクリプトを実行します。
+シェルコマンドの例で`#`から始まる行は読者向けのコメントであり、シェルでは実行されません。
 
 ```sh
-# 設定済みのpackage sourceを使用してpackageをインストールします。
+# 設定済みのパッケージソースを使用してパッケージをインストールします。
 ./install-redis-stack.sh install
-# 同じpackage sourceからpackageを更新します。
+# 同じパッケージソースからパッケージを更新します。
 ./install-redis-stack.sh upgrade
-# configurationとdataを残してpackageを削除します。
+# 設定とデータを残してパッケージを削除します。
 ./install-redis-stack.sh uninstall
-# scriptで使用できるoptionとactionを表示します。
+# スクリプトで使用できるオプションとアクションを表示します。
 ./install-redis-stack.sh --help
 ```
 
-デフォルトのactionは`install`です。
-`upgrade`は同じpackage sourceを使用し、package managerにインストール済みpackageの更新を要求します。
-`uninstall`はhostのpackage managerでpackageを削除します。
+デフォルトのアクションは`install`です。
+`upgrade`は同じパッケージソースを使用し、パッケージマネージャーにインストール済みパッケージの更新を要求します。
+`uninstall`はホストのパッケージマネージャーでパッケージを削除します。
 
-`uninstall` actionは、package repository file、service configuration、log、Redis persistence file、OpenSearch data pathを削除しません。
-これらのfileやdataを削除する前に、手動で内容を確認してください。
-`systemd`でserviceを管理している場合は、packageをuninstallする前にserviceを停止して無効化してください。
+`uninstall`アクションは、パッケージリポジトリファイル、サービス設定、ログ、Redis永続化ファイル、OpenSearchデータのパスを削除しません。
+これらのファイルやデータを削除する前に、手動で内容を確認してください。
+`systemd`でサービスを管理している場合は、パッケージをアンインストールする前にサービスを停止して無効化してください。
 <a href="#6-systemd-management">systemdによる管理</a>を参照してください。
 
-rootとして実行する場合、または独自のprivilege wrapperを指定する場合は`SUDO=`を設定します。
+rootユーザーとして実行する場合、または独自の権限昇格ラッパーを指定する場合は`SUDO=`を設定します。
 
 ```sh
-# sudoの代わりにdoasを使用してinstallerを実行します。
+# sudoの代わりにdoasを使用してインストーラーを実行します。
 SUDO=doas ./install-opensearch.sh install
 ```
 
 <a id="3-redis"></a>
 ## 3. Redis
 
-Redis scriptは`packages.redis.io`を登録し、デフォルトでRedis `8.2.7`をインストールします。
-Redis 8 packageでは、デフォルトのpackage nameは`redis`です。
-このpackageはRedis serverとRedis Stack moduleをインストールしますが、RedisInsightは含みません。
-Redis 8.2.7 packageには、次のmoduleが含まれます。
+Redisスクリプトは`packages.redis.io`を登録し、デフォルトでRedis `8.2.7`をインストールします。
+Redis 8パッケージでは、デフォルトのパッケージ名は`redis`です。
+このパッケージはRedisサーバーとRedis Stackモジュールをインストールしますが、RedisInsightは含みません。
+Redis 8.2.7パッケージには、次のモジュールが含まれます。
 
 ```text
 /usr/lib/redis/modules/redisbloom.so
@@ -73,59 +73,59 @@ Redis 8.2.7 packageには、次のmoduleが含まれます。
 /usr/lib/redis/modules/rejson.so
 ```
 
-package managerでRedis repositoryが現在公開している最新versionをインストールまたは更新する場合は、`REDIS_VERSION=latest`を使用します。
+パッケージマネージャーでRedisリポジトリが現在公開している最新バージョンをインストールまたは更新する場合は、`REDIS_VERSION=latest`を使用します。
 
 ```sh
-# repositoryで利用可能な最新のRedis versionをインストールします。
+# リポジトリで利用可能な最新のRedisバージョンをインストールします。
 REDIS_VERSION=latest ./install-redis-stack.sh install
 ```
 
-使用するdistributionのRedis repositoryがそのpackageを提供しており、RedisInsightを含むRedis Stack packageを使用する場合に限り、`REDIS_PACKAGE=redis-stack`を使用してください。
+使用するディストリビューションのRedisリポジトリがそのパッケージを提供しており、RedisInsightを含むRedis Stackパッケージを使用する場合に限り、`REDIS_PACKAGE=redis-stack`を使用してください。
 
 ```sh
-# repositoryが提供している場合にRedis Stack packageをインストールします。
+# リポジトリが提供している場合にRedis Stackパッケージをインストールします。
 REDIS_PACKAGE=redis-stack ./install-redis-stack.sh install
 ```
 
-デフォルトの`REDIS_PACKAGE=redis` packageでは、`REDIS_VERSION=8.2.7`によるversion固定を利用できます。
-DebianおよびUbuntuでversionを固定したinstallは、公式Redis APT package setに従い、`redis`、`redis-server`、`redis-sentinel`、`redis-tools`を同じpackage versionでインストールします。
-`redis-stack-server`や`redis-stack`などのlegacy package nameを使用する場合は、`REDIS_VERSION=latest`を設定してください。
+デフォルトの`REDIS_PACKAGE=redis`パッケージでは、`REDIS_VERSION=8.2.7`によるバージョン固定を利用できます。
+DebianおよびUbuntuでバージョンを固定したインストールは、公式Redis APTパッケージセットに従い、`redis`、`redis-server`、`redis-sentinel`、`redis-tools`を同じパッケージバージョンでインストールします。
+`redis-stack-server`や`redis-stack`などの旧パッケージ名を使用する場合は、`REDIS_VERSION=latest`を設定してください。
 
-デフォルトの`redis` packageはRedisInsightをインストールしません。
-RedisInsightが必要な場合は、個別のRedisInsight packageまたは[`../redis-stack-container/`](../redis-stack-container/README.ja.md)のRedis Stack container helperを使用してください。
+デフォルトの`redis`パッケージはRedisInsightをインストールしません。
+RedisInsightが必要な場合は、個別のRedisInsightパッケージまたは[`../redis-stack-container/`](../redis-stack-container/README.ja.md)のRedis Stackコンテナヘルパーを使用してください。
 
-Redisはdistribution codenameまたはRPM repositoryごとにpackageを公開しています。
-設定されたRedis repositoryが`REDIS_VERSION`を提供していない場合、installerは別のRedis versionをインストールせずに失敗します。
+RedisはディストリビューションのコードネームまたはRPMリポジトリごとにパッケージを公開しています。
+設定されたRedisリポジトリが`REDIS_VERSION`を提供していない場合、インストーラーは別のRedisバージョンをインストールせずに失敗します。
 
-DebianおよびUbuntuでは、Redis公式APT repositoryがdistribution codenameごとにpackageを公開しています。
-Debian 12 (`bookworm`)、Debian 13 (`trixie`)、Ubuntu 22.04 (`jammy`)、Ubuntu 24.04 (`noble`) では、固定されたpackage setを使用してRedis `7.2.14`、`7.4.9`、`8.2.7`をインストールできます。
-現在、Ubuntu 26.04 (`resolute`) では`8.8.0`などの新しいRedis packageだけが提供されています。
-そのため、`7.2.14`、`7.4.9`、`8.2.7`を固定したinstallはUbuntu 26.04で失敗します。
+DebianおよびUbuntuでは、Redis公式APTリポジトリがディストリビューションのコードネームごとにパッケージを公開しています。
+Debian 12 (`bookworm`)、Debian 13 (`trixie`)、Ubuntu 22.04 (`jammy`)、Ubuntu 24.04 (`noble`) では、固定されたパッケージセットを使用してRedis `7.2.14`、`7.4.9`、`8.2.7`をインストールできます。
+現在、Ubuntu 26.04 (`resolute`) では`8.8.0`などの新しいRedisパッケージだけが提供されています。
+そのため、`7.2.14`、`7.4.9`、`8.2.7`を固定したインストールはUbuntu 26.04で失敗します。
 
-AlmaLinux/RHEL系systemでは、対応するRocky Linux major version向けのRedis公式RPM repositoryを使用します。
-Redis公式Rocky Linux repositoryはRedis 7.x packageを提供していません。
-AlmaLinux 9のstandard AppStreamは`redis:7` moduleを通してRedis `7.2.14`を提供しますが、このinstallerはRedis公式repositoryを対象とするため、そのpackageを使用しません。
-AlmaLinux 8および9ではRedis公式RPM repositoryからRedis `8.2.7`をインストールできます。
-現在、AlmaLinux 10では`8.8.0`などの新しいRedis packageだけが提供されています。
-そのため、デフォルトの`REDIS_VERSION=8.2.7`によるinstallはAlmaLinux 10で失敗します。
+AlmaLinux/RHEL系システムでは、対応するRocky Linuxメジャーバージョン向けのRedis公式RPMリポジトリを使用します。
+Redis公式Rocky LinuxリポジトリはRedis 7.xパッケージを提供していません。
+AlmaLinux 9の標準AppStreamは`redis:7`モジュールを通してRedis `7.2.14`を提供しますが、このインストーラーはRedis公式リポジトリを対象とするため、そのパッケージを使用しません。
+AlmaLinux 8および9ではRedis公式RPMリポジトリからRedis `8.2.7`をインストールできます。
+現在、AlmaLinux 10では`8.8.0`などの新しいRedisパッケージだけが提供されています。
+そのため、デフォルトの`REDIS_VERSION=8.2.7`によるインストールはAlmaLinux 10で失敗します。
 
-このinstallerはAlmaLinux AppStream moduleからRedisをインストールしません。
-RHEL系systemでは常にRedis公式RPM repositoryを設定し、distributionのRedis moduleを無効にして、package解決に`packages.redis.io`が使用されるようにします。
+このインストーラーはAlmaLinux AppStreamモジュールからRedisをインストールしません。
+RHEL系システムでは常にRedis公式RPMリポジトリを設定し、ディストリビューションのRedisモジュールを無効にして、パッケージ解決に`packages.redis.io`が使用されるようにします。
 次のAppStreamの行は参考情報です。
 
-確認済みのRedis package提供状況:
+確認済みのRedisパッケージ提供状況:
 
-| Distribution | Repository key | Redis 7.2.14 | Redis 7.4.9 | Redis 8.2.7 |
+| ディストリビューション | リポジトリキー | Redis 7.2.14 | Redis 7.4.9 | Redis 8.2.7 |
 | --- | --- | --- | --- | --- |
-| AlmaLinux 8 | `rockylinux8` RPM repo | なし | なし | あり |
-| AlmaLinux 9 | `rockylinux9` RPM repo | なし | なし | あり |
-| AlmaLinux 9 | AppStream `redis:7` module (このinstallerでは不使用) | あり | なし | なし |
-| AlmaLinux 10 | `rockylinux10` RPM repo | なし | なし | なし (`8.8.0`を利用可能) |
-| Debian 12 | `bookworm` APT repo | あり | あり | あり |
-| Debian 13 | `trixie` APT repo | あり | あり | あり |
-| Ubuntu 22.04 | `jammy` APT repo | あり | あり | あり |
-| Ubuntu 24.04 | `noble` APT repo | あり | あり | あり |
-| Ubuntu 26.04 | `resolute` APT repo | なし | なし | なし (`8.8.0`を利用可能) |
+| AlmaLinux 8 | `rockylinux8` RPMリポジトリ | なし | なし | あり |
+| AlmaLinux 9 | `rockylinux9` RPMリポジトリ | なし | なし | あり |
+| AlmaLinux 9 | AppStream `redis:7`モジュール (このインストーラーでは不使用) | あり | なし | なし |
+| AlmaLinux 10 | `rockylinux10` RPMリポジトリ | なし | なし | なし (`8.8.0`を利用可能) |
+| Debian 12 | `bookworm` APTリポジトリ | あり | あり | あり |
+| Debian 13 | `trixie` APTリポジトリ | あり | あり | あり |
+| Ubuntu 22.04 | `jammy` APTリポジトリ | あり | あり | あり |
+| Ubuntu 24.04 | `noble` APTリポジトリ | あり | あり | あり |
+| Ubuntu 26.04 | `resolute` APTリポジトリ | なし | なし | なし (`8.8.0`を利用可能) |
 
 公式インストール手順:
 
@@ -135,21 +135,21 @@ RHEL系systemでは常にRedis公式RPM repositoryを設定し、distributionの
 <a id="4-opentelemetry-collector-contrib"></a>
 ## 4. OpenTelemetry Collector Contrib
 
-OpenTelemetry projectは、各GitHub releaseでLinux packageを公開しています。
-このhelperはaptまたはdnf repositoryを設定しません。
-選択したrelease packageをdownloadし、`apt`または`dnf`を通してインストールします。
+OpenTelemetryプロジェクトは、各GitHubリリースでLinuxパッケージを公開しています。
+このヘルパーはaptまたはdnfリポジトリを設定しません。
+選択したリリースパッケージをダウンロードし、`apt`または`dnf`を通してインストールします。
 
-versionの選択には`OTELCOL_CONTRIB_VERSION`を使用します。
-デフォルトはローカルCompose例で使用するversionに合わせています。
+バージョンの選択には`OTELCOL_CONTRIB_VERSION`を使用します。
+デフォルトはローカルCompose例で使用するバージョンに合わせています。
 
 ```sh
-# 指定したOpenTelemetry Collector Contrib releaseをインストールします。
+# 指定したOpenTelemetry Collector Contribリリースをインストールします。
 OTELCOL_CONTRIB_VERSION=0.155.0 ./install-otelcol-contrib.sh install
 ```
 
-インストール後、serviceを起動する前に、packageで設定された場所 (通常は`/etc/otelcol-contrib/config.yaml`) へCollector configurationを配置するか、既存の設定を編集してください。
+インストール後、サービスを起動する前に、パッケージで設定された場所 (通常は`/etc/otelcol-contrib/config.yaml`) へCollector設定を配置するか、既存の設定を編集してください。
 
-公式のインストールおよびrelease手順:
+公式のインストールおよびリリース手順:
 
 - https://opentelemetry.io/docs/collector/install/
 - https://github.com/open-telemetry/opentelemetry-collector-releases/releases
@@ -157,28 +157,28 @@ OTELCOL_CONTRIB_VERSION=0.155.0 ./install-otelcol-contrib.sh install
 <a id="5-opensearch"></a>
 ## 5. OpenSearch
 
-OpenSearch scriptはOpenSearch 2.x package repositoryを登録します。
+OpenSearchスクリプトはOpenSearch 2.xパッケージリポジトリを登録します。
 デフォルトではOpenSearch `2.19.5`とOpenSearch Dashboards `2.19.5`をインストールします。
-repositoryで現在公開されている最新versionをpackage managerでインストールまたは更新する場合は、`OPENSEARCH_VERSION=latest`または`OPENSEARCH_DASHBOARDS_VERSION=latest`を使用します。
+リポジトリで現在公開されている最新バージョンをパッケージマネージャーでインストールまたは更新する場合は、`OPENSEARCH_VERSION=latest`または`OPENSEARCH_DASHBOARDS_VERSION=latest`を使用します。
 
 デフォルトでは、`install-opensearch.sh`はインストール時に`DISABLE_INSTALL_DEMO_CONFIG=true`と`DISABLE_SECURITY_PLUGIN=true`を渡します。
-これらの設定により、demo admin passwordなしでpackageをインストールできます。
-package installerでdemo security configurationを設定する場合は、`OPENSEARCH_INSTALL_SECURITY=demo`を設定して`OPENSEARCH_INITIAL_ADMIN_PASSWORD`を指定してください。
+これらの設定により、デモ用管理者パスワードなしでパッケージをインストールできます。
+パッケージインストーラーでデモ用セキュリティー設定を行う場合は、`OPENSEARCH_INSTALL_SECURITY=demo`を設定して`OPENSEARCH_INITIAL_ADMIN_PASSWORD`を指定してください。
 
 ```sh
-# 指定したOpenSearch releaseをインストールします。
+# 指定したOpenSearchリリースをインストールします。
 OPENSEARCH_VERSION=2.19.5 ./install-opensearch.sh install
-# 対応するOpenSearch Dashboards releaseをインストールします。
+# 対応するOpenSearch Dashboardsリリースをインストールします。
 OPENSEARCH_DASHBOARDS_VERSION=2.19.5 ./install-opensearch-dashboards.sh install
 
-# demo securityと必須のadmin passwordを指定してOpenSearchをインストールします。
+# デモ用セキュリティー設定と必須の管理者パスワードを指定してOpenSearchをインストールします。
 OPENSEARCH_INSTALL_SECURITY=demo \
 OPENSEARCH_INITIAL_ADMIN_PASSWORD='change-this-strong-password' \
 ./install-opensearch.sh install
 ```
 
-これらのscriptはpackageのみをインストールします。
-serviceをnetworkに公開する前に、`/etc/opensearch/`および`/etc/opensearch-dashboards/`内のservice configurationを確認して編集してください。
+これらのスクリプトはパッケージのみをインストールします。
+サービスをネットワークに公開する前に、`/etc/opensearch/`および`/etc/opensearch-dashboards/`内のサービス設定を確認して編集してください。
 
 公式インストール手順:
 
@@ -190,29 +190,29 @@ serviceをnetworkに公開する前に、`/etc/opensearch/`および`/etc/opense
 <a id="6-systemd-management"></a>
 ## 6. systemdによる管理
 
-package scriptはsoftwareのインストールだけを行います。
-`systemd`でserviceを有効化または起動する前に、service configurationを確認してください。
+パッケージスクリプトはソフトウェアのインストールだけを行います。
+`systemd`でサービスを有効化または起動する前に、サービス設定を確認してください。
 
-一般的なservice command:
+一般的なサービスコマンド:
 
 ```sh
-# serviceの現在の状態を表示します。
+# サービスの現在の状態を表示します。
 sudo systemctl status <service>
-# serviceをboot時に有効化し、すぐに起動します。
+# サービスを起動時に有効化し、すぐに起動します。
 sudo systemctl enable --now <service>
-# configurationの変更後に実行中のserviceを再起動します。
+# 設定の変更後に実行中のサービスを再起動します。
 sudo systemctl restart <service>
-# boot時の設定を変更せずにserviceを停止します。
+# 起動時の設定を変更せずにサービスを停止します。
 sudo systemctl stop <service>
-# serviceがboot時に自動起動しないようにします。
+# サービスが起動時に自動起動しないようにします。
 sudo systemctl disable <service>
 ```
 
-想定されるservice name:
+想定されるサービス名:
 
-| Service | Unit name |
+| サービス | ユニット名 |
 | :-- | :-- |
-| Redis | 通常は`redis-server`。legacy Redis Stack packageでは`redis-stack-server`の場合があります。 |
+| Redis | 通常は`redis-server`。旧Redis Stackパッケージでは`redis-stack-server`の場合があります。 |
 | OpenTelemetry Collector Contrib | `otelcol-contrib`。 |
 | OpenSearch | `opensearch`。 |
 | OpenSearch Dashboards | `opensearch-dashboards`。 |
@@ -220,53 +220,53 @@ sudo systemctl disable <service>
 例:
 
 ```sh
-# OpenTelemetry Collector Contrib serviceを有効化して起動します。
+# OpenTelemetry Collector Contribサービスを有効化して起動します。
 sudo systemctl enable --now otelcol-contrib
-# OpenSearch serviceを有効化して起動します。
+# OpenSearchサービスを有効化して起動します。
 sudo systemctl enable --now opensearch
-# OpenSearch Dashboards serviceを有効化して起動します。
+# OpenSearch Dashboardsサービスを有効化して起動します。
 sudo systemctl enable --now opensearch-dashboards
 ```
 
-Redisでは、まずpackageによってインストールされたunit nameを確認してください。
+Redisでは、まずパッケージによってインストールされたユニット名を確認してください。
 
 ```sh
-# このhostにインストールされたRedis unit nameを確認します。
+# このホストにインストールされたRedisユニット名を確認します。
 systemctl list-unit-files 'redis*'
-# 一般的なunit nameのRedis serviceを有効化して起動します。
+# 一般的なユニット名のRedisサービスを有効化して起動します。
 sudo systemctl enable --now redis-server
 ```
 
-RedisInsightを含む`redis-stack` packageをインストールする場合は、serviceを有効化する前にインストールされたunit nameを確認してください。
-Redis Stack container helperの`run-redis-stack.sh`にもRedisInsightが含まれますが、host package installer scriptとは別のものです。
+RedisInsightを含む`redis-stack`パッケージをインストールする場合は、サービスを有効化する前にインストールされたユニット名を確認してください。
+Redis Stackコンテナヘルパーの`run-redis-stack.sh`にもRedisInsightが含まれますが、ホストパッケージ用インストーラースクリプトとは別のものです。
 
-`systemd`で管理されているpackageをuninstallする前に、serviceを明示的に停止して無効化してください。
-installer scriptの`uninstall` actionはhostのpackage managerでpackageを削除するだけで、`systemctl`は実行しません。
+`systemd`で管理されているパッケージをアンインストールする前に、サービスを明示的に停止して無効化してください。
+インストーラースクリプトの`uninstall`アクションはホストのパッケージマネージャーでパッケージを削除するだけで、`systemctl`は実行しません。
 
 ```sh
-# serviceを停止し、boot時に起動しないようにします。
+# サービスを停止し、起動時に起動しないようにします。
 sudo systemctl stop <service>
 sudo systemctl disable <service>
-# installer helperでpackageを削除します。
+# インストーラーヘルパーでパッケージを削除します。
 ./install-xxx.sh uninstall
-# packageによるunit fileの削除後にsystemdを再読み込みします。
+# パッケージによるユニットファイルの削除後にsystemdを再読み込みします。
 sudo systemctl daemon-reload
-# 一致するunit fileが残っているか確認します。
+# 一致するユニットファイルが残っているか確認します。
 systemctl list-unit-files '<service-pattern>'
 ```
 
-Redisではpackageやdistributionによってunit nameが異なる可能性があるため、最初にインストール済みのunit nameを確認してください。
+Redisではパッケージやディストリビューションによってユニット名が異なる可能性があるため、最初にインストール済みのユニット名を確認してください。
 
 ```sh
-# このhostにインストールされたRedis unit nameを確認します。
+# このホストにインストールされたRedisユニット名を確認します。
 systemctl list-unit-files 'redis*'
-# Redisを停止し、boot時に起動しないようにします。
+# Redisを停止し、起動時に起動しないようにします。
 sudo systemctl stop redis-server
 sudo systemctl disable redis-server
-# installer helperでRedis packageを削除します。
+# インストーラーヘルパーでRedisパッケージを削除します。
 ./install-redis-stack.sh uninstall
-# packageによるunit fileの削除後にsystemdを再読み込みします。
+# パッケージによるユニットファイルの削除後にsystemdを再読み込みします。
 sudo systemctl daemon-reload
-# Redis unit fileが残っているか確認します。
+# Redisユニットファイルが残っているか確認します。
 systemctl list-unit-files 'redis*'
 ```

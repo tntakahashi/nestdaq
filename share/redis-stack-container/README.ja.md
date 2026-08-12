@@ -2,45 +2,45 @@
 
 [English](README.md) | [日本語](README.ja.md)
 
-[トップ: NestDAQ](../../README.ja.md) | [前へ: Telemetry](../../nestdaq/telemetry/README.ja.md) | [次へ: OpenTelemetry Collector container設定](../otel-collector-compose/README.ja.md)
+[トップ: NestDAQ](../../README.ja.md) | [前へ: テレメトリー](../../nestdaq/telemetry/README.ja.md) | [次へ: OpenTelemetry Collectorコンテナー設定](../otel-collector-compose/README.ja.md)
 
-このディレクトリには、NestDAQのローカル検証用に[Redis Stack](../../INSTALL.ja.md#redis-server-and-modules) containerを起動するhelper scriptが含まれています。
-これらのcontainerはhost上にportを公開し、デフォルトではRedis authenticationを有効にしません。
+このディレクトリには、NestDAQのローカル検証用に[Redis Stack](../../INSTALL.ja.md#redis-server-and-modules)コンテナーを起動する補助スクリプトが含まれています。
+これらのコンテナーはホスト上にポートを公開し、デフォルトではRedis認証を有効にしません。
 公開ネットワークや共有ネットワークには公開しないでください。
-開発やローカルでの確認にはRedisInsightを含むRedis Stack imageを使用してください。
-production deploymentではRedis Stack Serverを推奨します。
+開発やローカルでの確認にはRedisInsightを含むRedis Stackイメージを使用してください。
+本番配備ではRedis Stack Serverを推奨します。
 
-scriptは`latest`ではなく固定されたimage tagを使用します。
+スクリプトは`latest`ではなく固定されたイメージタグを使用します。
 
 - 開発用Redis Stack (RedisInsightを含む): `docker.io/redis/redis-stack:7.4.0-v8`
-- production向けRedis Stack Serverのみ: `docker.io/redis/redis-stack-server:7.4.0-v8`
-- 公式Redis 8.2.7 image: `docker.io/library/redis:8.2.7`
+- 本番向けRedis Stack Serverのみ: `docker.io/redis/redis-stack-server:7.4.0-v8`
+- 公式Redis 8.2.7イメージ: `docker.io/library/redis:8.2.7`
 - RedisInsightを含むRedis Stack 7.2: `docker.io/redis/redis-stack:7.2.0-v20`
-- Redis Stack 7.2 Serverのみ: `docker.io/redis/redis-stack-server:7.2.0-v20`
+- Redis Stack Server 7.2のみ: `docker.io/redis/redis-stack-server:7.2.0-v20`
 
 <a id="1-choose-an-image"></a>
 ## 1. イメージの選択
 
-| スクリプト | image | RedisInsight | 備考 |
+| スクリプト | イメージ | RedisInsight | 備考 |
 | :-- | :-- | :-- | :-- |
-| `run-redis-8.2.7.sh` | `docker.io/library/redis:8.2.7` | なし | 公式Redis image。Redis 8 packageにはRedis Stack moduleが含まれる想定です。起動後に`MODULE LIST`で確認してください。 |
-| `run-redis-7.2-stack.sh` | `docker.io/redis/redis-stack:7.2.0-v20` | あり | 開発およびローカルでの確認用のRedis Stack 7.2 image系列。 |
-| `run-redis-7.2-stack-server.sh` | `docker.io/redis/redis-stack-server:7.2.0-v20` | なし | Redis Stack 7.2のserver-only image系列。 |
-| `run-redis-stack.sh` | `docker.io/redis/redis-stack:7.4.0-v8` | あり | デフォルトのRedis Stack開発用helper。 |
-| `run-redis-stack-server.sh` | `docker.io/redis/redis-stack-server:7.4.0-v8` | なし | デフォルトのRedis Stack server-only helper。 |
+| `run-redis-8.2.7.sh` | `docker.io/library/redis:8.2.7` | なし | 公式Redisイメージ。Redis 8パッケージにはRedis Stackモジュールが含まれる想定です。起動後に`MODULE LIST`で確認してください。 |
+| `run-redis-7.2-stack.sh` | `docker.io/redis/redis-stack:7.2.0-v20` | あり | 開発およびローカルでの確認用のRedis Stack 7.2イメージ系列。 |
+| `run-redis-7.2-stack-server.sh` | `docker.io/redis/redis-stack-server:7.2.0-v20` | なし | Redis Stack 7.2のサーバー専用イメージ系列。 |
+| `run-redis-stack.sh` | `docker.io/redis/redis-stack:7.4.0-v8` | あり | デフォルトのRedis Stack開発用補助スクリプト。 |
+| `run-redis-stack-server.sh` | `docker.io/redis/redis-stack-server:7.4.0-v8` | なし | デフォルトのRedis Stackサーバー専用補助スクリプト。 |
 
-実行中のRedis versionと読み込まれたmoduleは、次のコマンドで確認できます。
-shell commandの例で`#`から始まる行は読者向けのコメントであり、shellでは実行されません。
+実行中のRedisバージョンと読み込まれたモジュールは、次のコマンドで確認できます。
+シェルコマンドの例で`#`から始まる行は読者向けのコメントであり、シェルでは実行されません。
 
 ```sh
-# 実行中のRedis server versionを表示します。
+# 実行中のRedisサーバーのバージョンを表示します。
 redis-cli -p 6379 INFO server
-# Redis serverに読み込まれたmoduleを一覧表示します。
+# Redisサーバーに読み込まれたモジュールを一覧表示します。
 redis-cli -p 6379 MODULE LIST
 ```
 
-Redis Stack 7.2のimage tagはStack releaseを示しており、Redis serverの正確なpatch versionを示すtagではありません。
-Redis serverの正確なpatch versionが必要な場合は、起動後に上記のコマンドで確認してください。
+Redis Stack 7.2のイメージタグはRedis Stackのリリースを示しており、Redisサーバーの正確なパッチバージョンを示すタグではありません。
+Redisサーバーの正確なパッチバージョンが必要な場合は、起動後に上記のコマンドで確認してください。
 
 <a id="2-start-redis-827"></a>
 ## 2. Redis 8.2.7の起動
@@ -48,16 +48,16 @@ Redis serverの正確なpatch versionが必要な場合は、起動後に上記�
 実行:
 
 ```sh
-# 固定されたRedis 8.2.7 containerを起動します。
+# 固定されたRedis 8.2.7コンテナーを起動します。
 ./run-redis-8.2.7.sh
 ```
 
-デフォルトのendpoint:
+デフォルトのエンドポイント:
 
 - Redis: `localhost:6379`
 
-scriptは、scriptの隣にある`redis-8.2.7-data/`をcontainer内の`/data/`へbind mountします。
-このhelperは公式Redis imageを使用するため、`REDIS_ARGS`に指定した追加のRedis server argumentをcontainer commandのargumentとして渡します。
+スクリプトは、スクリプトの隣にある`redis-8.2.7-data/`をコンテナー内の`/data/`へバインドマウントします。
+この補助スクリプトは公式Redisイメージを使用するため、`REDIS_ARGS`に指定した追加のRedisサーバー引数をコンテナーコマンドの引数として渡します。
 
 <a id="3-start-redis-stack-72"></a>
 ## 3. Redis Stack 7.2の起動
@@ -72,11 +72,11 @@ RedisInsightを含むRedis Stackを実行します。
 Redis Stack Serverだけを実行します。
 
 ```sh
-# server-onlyのRedis Stack 7.2 containerを起動します。
+# Redis Stack 7.2のサーバー専用コンテナーを起動します。
 ./run-redis-7.2-stack-server.sh
 ```
 
-デフォルトのendpoint:
+デフォルトのエンドポイント:
 
 - Redis: `localhost:6379`
 - RedisInsight: `run-redis-7.2-stack.sh`を使用する場合は`http://localhost:8001`
@@ -87,18 +87,18 @@ Redis Stack Serverだけを実行します。
 実行:
 
 ```sh
-# RedisInsightを含むデフォルトのRedis Stack containerを起動します。
+# RedisInsightを含むデフォルトのRedis Stackコンテナーを起動します。
 ./run-redis-stack.sh
 ```
 
-デフォルトのendpoint:
+デフォルトのエンドポイント:
 
 - Redis: `localhost:6379`
 - RedisInsight: `http://localhost:8001`
 
-scriptは、scriptの隣にある`redis-stack-data/`をcontainer内の`/data/`へbind mountします。
-さらに、`redisinsight-data/`を`/redisinsight/`へbind mountします。
-RedisInsightは、mountされたdirectory内に内部subdirectoryを作成できます。
+スクリプトは、スクリプトの隣にある`redis-stack-data/`をコンテナー内の`/data/`へバインドマウントします。
+さらに、`redisinsight-data/`を`/redisinsight/`へバインドマウントします。
+RedisInsightは、マウントされたディレクトリ内に内部サブディレクトリを作成できます。
 
 <a id="5-start-redis-stack-server-only"></a>
 ## 5. Redis Stack Serverのみの起動
@@ -106,65 +106,65 @@ RedisInsightは、mountされたdirectory内に内部subdirectoryを作成でき
 実行:
 
 ```sh
-# server-onlyのデフォルトRedis Stack containerを起動します。
+# デフォルトのRedis Stackサーバー専用コンテナーを起動します。
 ./run-redis-stack-server.sh
 ```
 
-デフォルトのendpoint:
+デフォルトのエンドポイント:
 
 - Redis: `localhost:6379`
 
-scriptは、scriptの隣にある`redis-stack-server-data/`をcontainer内の`/data/`へbind mountします。
+スクリプトは、スクリプトの隣にある`redis-stack-server-data/`をコンテナー内の`/data/`へバインドマウントします。
 
 <a id="6-rerun-behavior"></a>
 ## 6. 再実行時の動作
 
-デフォルトでは、各scriptは新しいcontainerを起動する前に、設定されたcontainer nameと同じ名前の既存containerを削除します。
-そのため、以前の実行が中断された場合や同名のcontainerが残っている場合でも、scriptを再実行できます。
-永続化されたRedis dataは、設定されたbind mount用data directoryまたはnamed volumeに残ります。
+デフォルトでは、各スクリプトは新しいコンテナーを起動する前に、設定されたコンテナー名と同じ名前の既存コンテナーを削除します。
+そのため、以前の実行が中断された場合や同名のコンテナーが残っている場合でも、スクリプトを再実行できます。
+永続化されたRedisデータは、設定されたバインドマウント用データディレクトリまたは名前付きボリュームに残ります。
 
-同名のcontainerがすでに存在する場合にscriptを失敗させるには、`REDIS_CONTAINER_REPLACE=0`を設定します。
+同名のコンテナーがすでに存在する場合にスクリプトを失敗させるには、`REDIS_CONTAINER_REPLACE=0`を設定します。
 
 <a id="7-security-enhanced-linux-selinux"></a>
 ## 7. Security-Enhanced Linux (SELinux)
 
-SELinux label optionは`REDIS_VOLUME_MODE=bind`の場合に限り使用されます。
-SELinuxが有効なhostでcontainerがdata directoryへ書き込めるよう、bind mountではデフォルトで`:Z` label optionを使用します。
-同じdata directoryを複数のcontainerで共有する場合は、`REDIS_VOLUME_LABEL=z`を設定します。
-label optionを省略するには、`REDIS_VOLUME_LABEL=`を設定します。
-RedisInsightを含むhelperは、RedisとRedisInsightの両方のbind mountに同じlabel optionを適用します。
+SELinuxラベルオプションは`REDIS_VOLUME_MODE=bind`の場合に限り使用されます。
+SELinuxが有効なホストでコンテナーがデータディレクトリへ書き込めるよう、バインドマウントではデフォルトで`:Z`ラベルオプションを使用します。
+同じデータディレクトリを複数のコンテナーで共有する場合は、`REDIS_VOLUME_LABEL=z`を設定します。
+ラベルオプションを省略するには、`REDIS_VOLUME_LABEL=`を設定します。
+RedisInsightを含む補助スクリプトは、RedisとRedisInsightの両方のバインドマウントに同じラベルオプションを適用します。
 
 <a id="8-directory-permissions"></a>
 ## 8. ディレクトリ権限
 
-デフォルトでは、scriptを実行したhost userとしてbind mount用data directoryを作成し、directory permissionは変更しません。
-rootless Podmanでは通常、container rootがcontainerを実行するhost userに対応付けられます。
-そのため、作成されたdirectoryは追加のpermission変更なしで書き込み可能です。
+デフォルトでは、スクリプトを実行したホストユーザーとしてバインドマウント用データディレクトリを作成し、ディレクトリ権限は変更しません。
+ルートレスPodmanでは通常、コンテナーの`root`ユーザーがコンテナーを実行するホストユーザーに対応付けられます。
+そのため、作成されたディレクトリは追加の権限変更なしで書き込み可能です。
 
-SELinux labelingとUnix permissionは、それぞれ独立した制御です。
-`:Z` mount labelはSELinuxが有効なhostでcontainerからdirectoryへのaccessを許可しますが、user identifierまたはgroup identifier (uid/gid) のpermission不一致は解消しません。
-rootful containerは、bind mountしたdirectoryにhost root所有のfileを作成する場合があります。
-bind mountしたdirectoryに書き込めない場合は、このhelper scriptの外部でhost側のownershipまたはpermissionを明示的に調整してください。
+SELinuxラベル付けとUnix権限は、それぞれ独立した制御です。
+`:Z`マウントラベルはSELinuxが有効なホストでコンテナーからディレクトリへのアクセスを許可しますが、ユーザー識別子またはグループ識別子 (uid/gid) の権限不一致は解消しません。
+ルートフルコンテナーは、バインドマウントしたディレクトリにホストの`root`ユーザーが所有するファイルを作成する場合があります。
+バインドマウントしたディレクトリに書き込めない場合は、この補助スクリプトの外部でホスト側の所有権または権限を明示的に調整してください。
 
 <a id="9-named-volumes"></a>
 ## 9. 名前付きボリューム
 
-named volumeの使用は必須ではありません。
-helper scriptのdirectory外でDockerまたはPodmanにRedis dataを管理させる場合は、`REDIS_VOLUME_MODE=volume`を使用します。
+名前付きボリュームの使用は必須ではありません。
+補助スクリプトのディレクトリ外でDockerまたはPodmanにRedisデータを管理させる場合は、`REDIS_VOLUME_MODE=volume`を使用します。
 
-volumeを確認します。
+ボリュームを確認します。
 
 ```sh
-# Dockerが管理するvolumeを一覧表示します。
+# Dockerが管理するボリュームを一覧表示します。
 docker volume ls
-# Podmanが管理するvolumeを一覧表示します。
+# Podmanが管理するボリュームを一覧表示します。
 podman volume ls
 ```
 
-ローカルのRedis dataを破棄する場合はnamed volumeを削除します。
+ローカルのRedisデータを破棄する場合は名前付きボリュームを削除します。
 
 ```sh
-# このRedis helperが作成したDocker volumeをすべて削除します。
+# このRedis補助スクリプトが作成したDockerボリュームをすべて削除します。
 docker volume rm nestdaq-redis-stack-data nestdaq-redis-stack-redisinsight
 docker volume rm nestdaq-redis-stack-server-data
 docker volume rm nestdaq-redis-8.2.7-data
@@ -175,7 +175,7 @@ docker volume rm nestdaq-redis-7.2-stack-server-data
 または:
 
 ```sh
-# このRedis helperが作成したPodman volumeをすべて削除します。
+# このRedis補助スクリプトが作成したPodmanボリュームをすべて削除します。
 podman volume rm nestdaq-redis-stack-data nestdaq-redis-stack-redisinsight
 podman volume rm nestdaq-redis-stack-server-data
 podman volume rm nestdaq-redis-8.2.7-data
@@ -183,42 +183,42 @@ podman volume rm nestdaq-redis-7.2-stack-data nestdaq-redis-7.2-stack-redisinsig
 podman volume rm nestdaq-redis-7.2-stack-server-data
 ```
 
-helper scriptの隣にRedis data directoryを置かない場合は、named volumeを使用します。
+補助スクリプトの隣にRedisデータディレクトリを置かない場合は、名前付きボリュームを使用します。
 
 ```sh
-# Redis dataをruntimeが管理するnamed volumeに保存します。
+# Redisデータをランタイムが管理する名前付きボリュームに保存します。
 REDIS_VOLUME_MODE=volume ./run-redis-stack.sh
 ```
 
 <a id="10-environment-variables"></a>
 ## 10. 環境変数
 
-各scriptは、scriptが置かれているdirectoryを`THIS_SCRIPT_DIR`として使用します。
-bind mount用data directoryは`THIS_SCRIPT_DIR`からの相対pathです。
-そのため、インストール済みscriptをコピーした場合も、bind mountされたdataはコピー先のscriptの隣に保持されます。
+各スクリプトは、スクリプトが置かれているディレクトリを`THIS_SCRIPT_DIR`として使用します。
+バインドマウント用データディレクトリは`THIS_SCRIPT_DIR`からの相対パスです。
+そのため、インストール済みスクリプトをコピーした場合も、バインドマウントされたデータはコピー先のスクリプトの隣に保持されます。
 
 | 変数 | デフォルト | 説明 |
 | -------- | ------- | ----------- |
-| `CONTAINER_RUNTIME` | `docker` | container engineのcommand。Podmanを使用する場合は`podman`を設定します。 |
-| `REDIS_CONTAINER_NAME` | script固有の名前 | Container name。 |
-| `REDIS_CONTAINER_REPLACE` | `1` | 起動前に同名の既存containerを削除します。削除せずに失敗させる場合は`0`を設定します。 |
-| `REDIS_IMAGE` | script固有の固定image | Container image。 |
-| `REDIS_PORT` | `6379` | Redis port `6379`に割り当てるhost port。 |
-| `REDIS_INSIGHT_PORT` | `8001` | RedisInsight port `8001`に割り当てるhost port。RedisInsightを含むhelperだけで使用します。 |
-| `REDIS_CONTAINER_RUN_FLAGS` | `--rm -it` | `docker run`または`podman run`へ渡すflag。非対話的な検証には`-d --rm`を使用します。 |
-| `REDIS_VOLUME_MODE` | `bind` | storage mode。host bind mountには`bind`、named volumeには`volume`を使用します。 |
-| `REDIS_DATA_VOLUME` | container nameに基づくvolume | `/data/`にmountするnamed volume。`volume` modeだけで使用します。 |
-| `REDIS_INSIGHT_VOLUME` | container nameに基づくvolume | `/redisinsight/`にmountするnamed volume。RedisInsightを含むhelperの`volume` modeだけで使用します。 |
-| `REDIS_DATA_DIR` | scriptの隣のdata directory | `/data/`にbind mountするhost directory。`bind` modeだけで使用します。 |
-| `REDIS_INSIGHT_DATA_DIR` | script固有のRedisInsight data directory | `/redisinsight/`にbind mountするhost directory。RedisInsightを含むhelperの`bind` modeだけで使用します。 |
-| `REDIS_VOLUME_LABEL` | `Z` | SELinux bind mount label option。`bind` modeだけで使用します。共有labelingには`z`、無効にするには空の値を使用します。 |
-| `REDIS_ARGS` | 空 | 追加のRedis server argument。Redis Stack imageではimageの`REDIS_ARGS` environment variableを通して渡され、公式Redis 8.2.7 helperではcommand argumentとして渡されます。 |
-| `REDIS_ARGS_MODE` | `env`または`argv` | `run-redis-stack-server.sh`が使用するargumentの受け渡しmode。Redis Stack imageには`env`、公式Redis imageには`argv`を使用します。 |
+| `CONTAINER_RUNTIME` | `docker` | コンテナーエンジンのコマンド。Podmanを使用する場合は`podman`を設定します。 |
+| `REDIS_CONTAINER_NAME` | スクリプト固有の名前 | コンテナー名。 |
+| `REDIS_CONTAINER_REPLACE` | `1` | 起動前に同名の既存コンテナーを削除します。削除せずに失敗させる場合は`0`を設定します。 |
+| `REDIS_IMAGE` | スクリプト固有の固定イメージ | コンテナーイメージ。 |
+| `REDIS_PORT` | `6379` | Redisポート`6379`に割り当てるホストポート。 |
+| `REDIS_INSIGHT_PORT` | `8001` | RedisInsightポート`8001`に割り当てるホストポート。RedisInsightを含む補助スクリプトだけで使用します。 |
+| `REDIS_CONTAINER_RUN_FLAGS` | `--rm -it` | `docker run`または`podman run`へ渡すフラグ。非対話的な検証には`-d --rm`を使用します。 |
+| `REDIS_VOLUME_MODE` | `bind` | ストレージモード。ホストのバインドマウントには`bind`、名前付きボリュームには`volume`を使用します。 |
+| `REDIS_DATA_VOLUME` | コンテナー名に基づくボリューム | `/data/`にマウントする名前付きボリューム。`volume`モードだけで使用します。 |
+| `REDIS_INSIGHT_VOLUME` | コンテナー名に基づくボリューム | `/redisinsight/`にマウントする名前付きボリューム。RedisInsightを含む補助スクリプトの`volume`モードだけで使用します。 |
+| `REDIS_DATA_DIR` | スクリプトの隣のデータディレクトリ | `/data/`にバインドマウントするホストディレクトリ。`bind`モードだけで使用します。 |
+| `REDIS_INSIGHT_DATA_DIR` | スクリプト固有のRedisInsightデータディレクトリ | `/redisinsight/`にバインドマウントするホストディレクトリ。RedisInsightを含む補助スクリプトの`bind`モードだけで使用します。 |
+| `REDIS_VOLUME_LABEL` | `Z` | SELinuxバインドマウントラベルオプション。`bind`モードだけで使用します。共有ラベル付けには`z`、無効にするには空の値を使用します。 |
+| `REDIS_ARGS` | 空 | 追加のRedisサーバー引数。Redis Stackイメージではイメージの`REDIS_ARGS`環境変数を通して渡され、公式Redis 8.2.7補助スクリプトではコマンド引数として渡されます。 |
+| `REDIS_ARGS_MODE` | `env`または`argv` | `run-redis-stack-server.sh`が使用する引数の受け渡しモード。Redis Stackイメージには`env`、公式Redisイメージには`argv`を使用します。 |
 
 例:
 
 ```sh
-# custom portとpassword authenticationを指定してRedis Stackを起動します。
+# 任意のポートとパスワード認証を指定してRedis Stackを起動します。
 REDIS_PORT=16379 \
 REDIS_INSIGHT_PORT=18001 \
 REDIS_ARGS="--requirepass nestdaq" \
@@ -228,9 +228,9 @@ REDIS_ARGS="--requirepass nestdaq" \
 Podmanの場合:
 
 ```sh
-# Dockerの代わりにPodmanでserver-only helperを起動します。
+# Dockerの代わりにPodmanでサーバー専用の補助スクリプトを起動します。
 CONTAINER_RUNTIME=podman ./run-redis-stack-server.sh
 ```
 
-foreground containerはCtrl-Cで停止します。
-終了時にcontainerは削除されますが、bind mountしたdata directoryまたはnamed volumeは保持されます。
+フォアグラウンドコンテナーはCtrl-Cで停止します。
+終了時にコンテナーは削除されますが、バインドマウントしたデータディレクトリまたは名前付きボリュームは保持されます。

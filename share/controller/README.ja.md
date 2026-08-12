@@ -1,10 +1,10 @@
-# Web controller用ブラウザーfile
+# ウェブコントローラー用ブラウザーファイル
 
 [English](README.md) | [日本語](README.ja.md)
 
-[トップ: NestDAQ](../../README.ja.md) | [前へ: Web controller](../../controller/README.ja.md) | [次へ: Telemetry](../../nestdaq/telemetry/README.ja.md)
+[トップ: NestDAQ](../../README.ja.md) | [前へ: ウェブコントローラー](../../controller/README.ja.md) | [次へ: テレメトリー](../../nestdaq/telemetry/README.ja.md)
 
-このディレクトリには、NestDAQ Web controller `daq-webctl`用にインストールされるブラウザーfileが含まれています。
+このディレクトリには、NestDAQウェブコントローラー`daq-webctl`用にインストールされるブラウザーファイルが含まれています。
 
 <a id="1-daq-webctlhtml"></a>
 ## 1. `daq-webctl.html`
