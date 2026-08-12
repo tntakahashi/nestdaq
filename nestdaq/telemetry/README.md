@@ -4,17 +4,18 @@
 
 [Top: NestDAQ](../../README.md) | [Previous: Web controller browser files](../../share/controller/README.md) | [Next: Redis containers](../../share/redis-stack-container/README.md)
 
-NestDAQ telemetry provides optional OpenTelemetry integration for FairMQ-based devices and controller processes.
-The application executable does not link OpenTelemetry directly.
-Instead, NestDAQ loads the single telemetry plugin `libnestdaq_otel.so` dynamically with `dlopen()` and resolves a small C application binary interface (ABI).
+NestDAQ telemetry provides optional OpenTelemetry integration for FairMQ-based devices and for the `daq-webctl` controller process.
+Application executables do not link `opentelemetry-cpp` at build time.
+Instead, NestDAQ loads the telemetry plugin `libnestdaq_otel.so` dynamically with `dlopen()`.
 
-The plugin can export three OpenTelemetry signals:
+The plugin can export three OpenTelemetry signals.
+The Default column shows the exporter selection when neither the corresponding protocol option nor its environment variable overrides the setting.
 
-| Signal  | Default            | Source in NestDAQ                                      |
-| ------- | ------------------ | ----------------------------------------------------- |
-| Logs    | `console` exporter | FairLogger custom sink; optional spdlog sink          |
-| Metrics | disabled           | `nestdaq::telemetry::Telemetry` counter/histogram/gauge application programming interface (API) |
-| Traces  | disabled           | `nestdaq::telemetry::TelemetrySpan` resource acquisition is initialization (RAII) API |
+| Signal  | Default            | Source in NestDAQ |
+| ------- | ------------------ | ----------------- |
+| Logs    | `console` exporter | Process-wide FairLogger custom sink; NestDAQ spdlog sink explicitly attached to a logger |
+| Metrics | disabled           | Automatic process CPU time/utilization, process memory usage, FairMQ channel-throughput, and FairMQ state metrics; user counter/histogram/gauge APIs |
+| Traces  | disabled           | User spans created explicitly through `Telemetry::startSpan()` and RAII `TelemetrySpan`; no automatic framework spans |
 
 > **Warning:** NestDAQ's OpenTelemetry metrics and trace instrumentation is
 > experimental and should not be used in production code. The spdlog log sink

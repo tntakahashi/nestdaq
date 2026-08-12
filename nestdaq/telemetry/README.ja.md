@@ -4,17 +4,18 @@
 
 [トップ: NestDAQ](../../README.ja.md) | [前へ: Web controller用ブラウザーfile](../../share/controller/README.ja.md) | [次へ: Redis container](../../share/redis-stack-container/README.ja.md)
 
-NestDAQテレメトリーは、FairMQベースのdeviceおよびcontroller process向けに、必要に応じて有効にできるOpenTelemetry統合です。
-application executableはOpenTelemetryへ直接linkしません。
-代わりに、NestDAQは単一のtelemetry plugin `libnestdaq_otel.so`を`dlopen()`で動的にloadし、小さなC application binary interface (ABI) を解決します。
+NestDAQテレメトリーは、FairMQベースのdevice向け、およびcontroller processである`daq-webctl`向けに、必要に応じて有効にできるOpenTelemetry統合です。
+application executableはbuild時に`opentelemetry-cpp`へlinkしません。
+代わりに、NestDAQはtelemetry plugin `libnestdaq_otel.so`を`dlopen()`で動的にloadします。
 
 pluginは3種類のOpenTelemetry signalをexportできます。
+デフォルト列は、対応するprotocol optionまたは環境変数で設定を変更しなかった場合のexporter選択を示します。
 
 | Signal | デフォルト | NestDAQ内のsource |
 | --- | --- | --- |
-| Logs | `console` exporter | FairLogger custom sink、有効化した場合のspdlog sink |
-| Metrics | 無効 | `nestdaq::telemetry::Telemetry` counter/histogram/gauge application programming interface (API) |
-| Traces | 無効 | `nestdaq::telemetry::TelemetrySpan` resource acquisition is initialization (RAII) API |
+| Logs | `console` exporter | process全体のFairLogger custom sink、およびloggerへ明示的に接続したNestDAQ spdlog sink |
+| Metrics | 無効 | processのCPU time/utilization、memory usage、FairMQ channel throughput、FairMQ stateの自動計装、およびuser counter/histogram/gauge API |
+| Traces | 無効 | `Telemetry::startSpan()`とRAII `TelemetrySpan`でuser codeが明示的に作成するspan。frameworkによる自動生成はありません |
 
 > **注意:** NestDAQのOpenTelemetry metricsおよびtrace instrumentationはexperimentalです。
 > production codeでは使用しないでください。spdlog log sinkもexperimentalであり、
