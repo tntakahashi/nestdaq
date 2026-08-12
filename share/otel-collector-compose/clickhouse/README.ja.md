@@ -30,9 +30,6 @@ Podmanの場合:
 podman compose -f compose-clickhouse.yaml up
 ```
 
-`podman compose`を使用するには、`podman-compose`やDocker ComposeプラグインなどのComposeプロバイダーが必要です。
-Composeプロバイダーをインストールし、`PATH`から検出できるようにしてください。
-
 <a id="1-components"></a>
 ## 1. コンポーネント
 

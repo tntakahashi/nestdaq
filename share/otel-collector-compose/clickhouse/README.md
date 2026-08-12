@@ -31,9 +31,6 @@ For Podman:
 podman compose -f compose-clickhouse.yaml up
 ```
 
-`podman compose` requires a Compose provider such as `podman-compose` or the Docker Compose plugin.
-The provider must be installed and discoverable in `PATH`.
-
 ## 1. Components
 
 - `clickstack`: runs the ClickStack UI, OpenTelemetry Collector, and ClickHouse in one container.

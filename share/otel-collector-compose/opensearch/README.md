@@ -30,9 +30,6 @@ For Podman:
 podman compose -f compose-opensearch.yaml up
 ```
 
-`podman compose` requires a Compose provider such as `podman-compose` or the Docker Compose plugin.
-The provider must be installed and discoverable in `PATH`.
-
 ## 1. Components
 
 - `otel-collector`: receives OpenTelemetry Protocol (OTLP) logs and traces over Google remote procedure call (gRPC) and HTTP.
