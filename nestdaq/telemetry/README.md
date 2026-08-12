@@ -145,6 +145,22 @@ auto logger = spdlog::logger{
 logger.info("event accepted");
 ```
 
+The `logger` above is a different object from the spdlog default logger.
+To make a logger with the NestDAQ OpenTelemetry sink the default logger, create it with shared ownership and pass it to `spdlog::set_default_logger()`:
+
+```cpp
+#include <memory>
+
+auto default_logger = std::make_shared<spdlog::logger>(
+    "sampler",
+    spdlog::sinks_init_list{
+        nestdaq::telemetry::createSpdlogOpenTelemetrySink(),
+    });
+spdlog::set_default_logger(default_logger);
+
+spdlog::info("event accepted");
+```
+
 The usual spdlog member functions, such as `logger.info(...)` and `logger.warn(...)`, do not automatically attach source-location metadata.
 Use the standard spdlog macros when OpenTelemetry records should include the file path, line number, and function name:
 

@@ -149,6 +149,22 @@ auto logger = spdlog::logger{
 logger.info("event accepted");
 ```
 
+上の`logger`はspdlogの既定ロガーとは別のオブジェクトです。
+NestDAQ OpenTelemetryシンクを接続したロガーを既定ロガーにする場合は、ロガーを共有所有し、`spdlog::set_default_logger()`へ渡します。
+
+```cpp
+#include <memory>
+
+auto default_logger = std::make_shared<spdlog::logger>(
+    "sampler",
+    spdlog::sinks_init_list{
+        nestdaq::telemetry::createSpdlogOpenTelemetrySink(),
+    });
+spdlog::set_default_logger(default_logger);
+
+spdlog::info("event accepted");
+```
+
 `logger.info(...)`や`logger.warn(...)`などの通常のspdlogメンバー関数は、ソース位置メタデータを自動では付加しません。
 OpenTelemetryレコードへファイルパス、行番号、関数名を含める場合は、標準spdlogマクロを使用します。
 
