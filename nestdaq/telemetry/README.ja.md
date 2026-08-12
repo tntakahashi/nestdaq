@@ -430,7 +430,10 @@ my-device \
 
 ### 7.8. C++の属性ラッパーAPI
 
-テレメトリーを明示的に管理するアプリケーションからC++の薄いAPIを使用します。
+7.8節と7.9節は、C++コードからOpenTelemetryのメトリクスまたはトレースを記録する開発者向けです。
+ログだけをOpenTelemetryへエクスポートするアプリケーションでは、この2節を読み飛ばせます。
+
+アプリケーションがテレメトリーを初期化し、メトリクスまたはトレースを直接記録する場合は、NestDAQのC++ APIを使用します。
 
 ```cpp
 auto library = nestdaq::telemetry::TelemetryLibrary{};
@@ -441,6 +444,7 @@ if (!library.Load("libnestdaq_otel.so")) {
 auto options = nestdaq::telemetry::TelemetryOptions{};
 options.log_protocol = "console";
 options.metric_protocol = "otlp-http";
+options.trace_protocol = "otlp-http";
 
 const auto config = nestdaq::telemetry::MakeConfig(options);
 if (!library.InitializeWith(config)) {
@@ -470,13 +474,16 @@ span.SetAttribute({
 });
 ```
 
+この例の`std::cerr`は標準エラー出力へ直接書き込みます。
+NestDAQテレメトリーは、その出力を収集またはエクスポートしません。
+
 アプリケーション向けに推奨する形式は、`events.Add(...)`、`queueDepth.Record(...)`、`StartSpan(..., { ... })`で使用する`Attribute`ラッパーです。
 このラッパーは、NestDAQが属性をC ABI形式へ変換する間、文字列の記憶領域を有効に保ちます。
 通常はサンプルでもこの形式を使用してください。
 
 ### 7.9. 低水準のC ABI属性
 
-高度なコードでは、あらかじめ構築したC ABI属性を直接渡せます。
+あらかじめ構築したC ABI属性を直接渡すこともできます。
 一時的な`Attribute`ラッパー変換を避けられるため、ホットパスや、すでに`nestdaq_otel_attribute`バッファーを所有するコードで有用です。
 
 ```cpp

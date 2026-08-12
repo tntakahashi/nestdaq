@@ -421,7 +421,10 @@ Changing these settings later does not modify existing loggers.
 
 ### 7.8. C++ Attribute Wrapper API
 
-Use the C++ thin API from an application that manages telemetry explicitly:
+Sections 7.8 and 7.9 are for developers who record OpenTelemetry metrics or traces from C++ code.
+Applications that export only logs can skip both sections.
+
+Use the NestDAQ C++ API when an application initializes telemetry and records metrics or traces directly:
 
 ```cpp
 auto library = nestdaq::telemetry::TelemetryLibrary{};
@@ -432,6 +435,7 @@ if (!library.Load("libnestdaq_otel.so")) {
 auto options = nestdaq::telemetry::TelemetryOptions{};
 options.log_protocol = "console";
 options.metric_protocol = "otlp-http";
+options.trace_protocol = "otlp-http";
 
 const auto config = nestdaq::telemetry::MakeConfig(options);
 if (!library.InitializeWith(config)) {
@@ -461,12 +465,15 @@ span.SetAttribute({
 });
 ```
 
+The `std::cerr` statements in this example write directly to standard error.
+NestDAQ telemetry does not collect or export their output.
+
 The recommended application-facing form is the `Attribute` wrapper used by `events.Add(...)`, `queueDepth.Record(...)`, and `StartSpan(..., { ... })`.
 It keeps string storage alive while NestDAQ converts attributes to the C ABI form and is the form that examples should normally use.
 
 ### 7.9. Low-Level C ABI Attributes
 
-Advanced code can pass prebuilt C ABI attributes directly.
+Applications can also pass prebuilt C ABI attributes directly.
 This form avoids the temporary `Attribute` wrapper conversion and is useful for hot paths or code that already owns a `nestdaq_otel_attribute` buffer:
 
 ```cpp
