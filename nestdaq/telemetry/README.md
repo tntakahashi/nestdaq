@@ -71,7 +71,7 @@ The `nestdaq.*` and `fairmq.*` keys are NestDAQ-specific attributes.
 
 Detailed NestDAQ and FairMQ build and Git metadata is emitted in structured startup log bodies rather than as resource attributes.
 The OpenTelemetry software development kit (SDK) may add its own resource attributes independently.
-The table lists only attributes that NestDAQ sets explicitly.
+The resource-attribute table above lists only attributes that NestDAQ sets explicitly.
 
 ## 3. FairLogger Log Records
 
