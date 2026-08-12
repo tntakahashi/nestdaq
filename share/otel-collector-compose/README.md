@@ -13,13 +13,16 @@ These stacks are intended for local validation only.
 They publish service ports on the host and, where applicable, use simple local credentials.
 Do not expose them on a public or shared network.
 
-Choose one storage-stack directory:
+Each subdirectory provides example Compose and configuration files for one storage stack.
+Use the files in the subdirectory that corresponds to the storage stack you want to run:
 
 - [`opensearch/`](opensearch/README.md): Stores logs and traces in OpenSearch and displays them in OpenSearch Dashboards.
 - [`victoria/`](victoria/README.md): Stores logs, metrics, and traces in VictoriaLogs, VictoriaMetrics, and VictoriaTraces, and displays them in Grafana.
   This storage stack is experimental and not yet fully verified.
 - [`clickhouse/`](clickhouse/README.md): Stores logs, metrics, and traces in ClickStack and displays them in the ClickStack user interface (UI).
   This storage stack is experimental and not yet fully verified.
+
+See the linked README for startup instructions, environment variables, and stored-data directories.
 
 ## 1. Start
 
@@ -92,16 +95,10 @@ The same rule applies to NestDAQ device processes and `daq-webctl`.
 
 For OTLP HTTP, use the signal-specific paths required by the telemetry client, such as `/v1/logs`, `/v1/metrics`, and `/v1/traces`.
 
-## 4. Storage Stack Details
-
-See the README for each storage stack:
-
-- `opensearch/README.md`
-- `victoria/README.md`
-- `clickhouse/README.md`
+## 4. Common Compose-File Settings
 
 All stacks use pinned image defaults.
-You can override the images with environment variables documented in the corresponding README.
+You can override the images with environment variables documented in each storage stack's README.
 
 All Compose files already include the `:Z` label option on their bind mounts.
 On Security-Enhanced Linux (SELinux)-enabled systems, Docker or Podman relabels each path for private use by the container.

@@ -13,13 +13,16 @@
 ホスト上にサービスポートを公開し、構成によっては簡易なローカル認証情報を使用します。
 公開ネットワークや共有ネットワークには公開しないでください。
 
-使用する保存先構成のディレクトリを1つ選択してください。
+各サブディレクトリには、保存先構成を起動するComposeファイルと設定ファイルの例があります。
+使用する保存先構成に対応するサブディレクトリのファイルを使用してください。
 
 - [`opensearch/`](opensearch/README.ja.md): OpenSearchにログとトレースを保存し、OpenSearch Dashboardsで表示します。
 - [`victoria/`](victoria/README.ja.md): VictoriaLogs、VictoriaMetrics、VictoriaTracesにログ、メトリクス、トレースを保存し、Grafanaで表示します。
   この保存先構成は実験的で、まだ十分に検証されていません。
 - [`clickhouse/`](clickhouse/README.ja.md): ClickStackにログ、メトリクス、トレースを保存し、ClickStackユーザーインターフェース (UI) で表示します。
   この保存先構成は実験的で、まだ十分に検証されていません。
+
+起動方法、環境変数、保存データのディレクトリについては、上記リンク先のREADMEファイルを参照してください。
 
 <a id="1-start"></a>
 ## 1. 起動
@@ -96,16 +99,10 @@ NestDAQプロセスを実行する場所に応じて、テレメトリーエン�
 OTLP HTTPでは、`/v1/logs`、`/v1/metrics`、`/v1/traces`など、テレメトリークライアントが必要とするシグナル固有のパスを使用してください。
 
 <a id="4-backend-details"></a>
-## 4. 保存先構成の詳細
-
-各保存先構成のREADMEファイルを参照してください。
-
-- `opensearch/README.ja.md`
-- `victoria/README.ja.md`
-- `clickhouse/README.ja.md`
+## 4. Composeファイルの共通設定
 
 すべてのスタックは固定されたデフォルトのイメージを使用します。
-各READMEファイルに記載された環境変数でイメージを上書きできます。
+各保存先構成のREADMEファイルに記載された環境変数でイメージを上書きできます。
 
 すべてのComposeファイルは、バインドマウントの指定に`:Z`ラベルオプションをあらかじめ含んでいます。
 Security-Enhanced Linux (SELinux) が有効なシステムでは、DockerまたはPodmanが対象パスへコンテナー専用のSELinuxラベルを付け直します。
