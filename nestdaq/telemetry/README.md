@@ -168,7 +168,9 @@ The spdlog OpenTelemetry sink is experimental and not yet fully verified.
 
 When both `opentelemetry-cpp` and spdlog are available during the NestDAQ build, NestDAQ installs `nestdaq/telemetry/SpdlogOpenTelemetrySink.h`.
 The spdlog instrumentation is independent of the FairLogger instrumentation.
-NestDAQ does not change spdlog's default logger, registry, or log level.
+
+### 4.1. Explicitly Created Loggers
+
 Applications attach the returned sink to each spdlog logger that should export OpenTelemetry records.
 
 ```cpp
@@ -184,6 +186,17 @@ logger.info("event accepted");
 ```
 
 The `logger` above is a different object from the spdlog default logger.
+The usual spdlog member functions, such as `logger.info(...)` and `logger.warn(...)`, do not automatically attach source-location metadata.
+Use the standard spdlog macros when OpenTelemetry records should include the file path, line number, and function name:
+
+```cpp
+SPDLOG_LOGGER_INFO(&logger, "accepted event {}", event_id);
+SPDLOG_LOGGER_WARN(&logger, "queue depth is {}", depth);
+```
+
+### 4.2. Default Logger
+
+NestDAQ does not change spdlog's default logger, registry, or log level.
 To make a logger with the NestDAQ OpenTelemetry sink the default logger, create it with shared ownership and pass it to `spdlog::set_default_logger()`:
 
 ```cpp
@@ -199,20 +212,15 @@ spdlog::set_default_logger(default_logger);
 spdlog::info("event accepted");
 ```
 
-The usual spdlog member functions, such as `logger.info(...)` and `logger.warn(...)`, do not automatically attach source-location metadata.
-Use the standard spdlog macros when OpenTelemetry records should include the file path, line number, and function name:
+After this call, free functions such as `spdlog::info(...)` and the default-logger macros use this logger.
+Use the default-logger macros to attach source-location metadata:
 
 ```cpp
-SPDLOG_LOGGER_INFO(&logger, "accepted event {}", eventId);
-SPDLOG_LOGGER_WARN(&logger, "queue depth is {}", depth);
-```
-
-For the default spdlog logger, use the corresponding default-logger macros:
-
-```cpp
-SPDLOG_INFO("accepted event {}", eventId);
+SPDLOG_INFO("accepted event {}", event_id);
 SPDLOG_WARN("queue depth is {}", depth);
 ```
+
+### 4.3. Exported Fields and Attributes
 
 The spdlog sink records these OpenTelemetry fields and attributes:
 

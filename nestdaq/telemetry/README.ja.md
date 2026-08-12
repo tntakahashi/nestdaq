@@ -172,7 +172,9 @@ spdlog OpenTelemetryシンクは実験的機能であり、まだ十分に検証
 
 NestDAQのビルド時に`opentelemetry-cpp`とspdlogの両方を利用できる場合、`nestdaq/telemetry/SpdlogOpenTelemetrySink.h`がインストールされます。
 spdlog計装はFairLogger計装から独立しています。
-NestDAQはspdlogの既定ロガー、レジストリー、ログレベルを変更しません。
+
+### 4.1. 明示的に作成するロガー
+
 アプリケーションは、OpenTelemetryレコードをエクスポートする各spdlogロガーへ返されたシンクを接続します。
 
 ```cpp
@@ -188,6 +190,17 @@ logger.info("event accepted");
 ```
 
 上の`logger`はspdlogの既定ロガーとは別のオブジェクトです。
+`logger.info(...)`や`logger.warn(...)`などの通常のspdlogメンバー関数は、ソース位置メタデータを自動では付加しません。
+OpenTelemetryレコードへファイルパス、行番号、関数名を含める場合は、標準spdlogマクロを使用します。
+
+```cpp
+SPDLOG_LOGGER_INFO(&logger, "accepted event {}", event_id);
+SPDLOG_LOGGER_WARN(&logger, "queue depth is {}", depth);
+```
+
+### 4.2. 既定ロガー
+
+NestDAQはspdlogの既定ロガー、レジストリー、ログレベルを変更しません。
 NestDAQ OpenTelemetryシンクを接続したロガーを既定ロガーにする場合は、ロガーを共有所有し、`spdlog::set_default_logger()`へ渡します。
 
 ```cpp
@@ -203,20 +216,15 @@ spdlog::set_default_logger(default_logger);
 spdlog::info("event accepted");
 ```
 
-`logger.info(...)`や`logger.warn(...)`などの通常のspdlogメンバー関数は、ソース位置メタデータを自動では付加しません。
-OpenTelemetryレコードへファイルパス、行番号、関数名を含める場合は、標準spdlogマクロを使用します。
+設定後は、`spdlog::info(...)`などのフリー関数と既定ロガー用マクロがこのロガーを使用します。
+ソース位置メタデータを付加する場合は、既定ロガー用マクロを使用します。
 
 ```cpp
-SPDLOG_LOGGER_INFO(&logger, "accepted event {}", eventId);
-SPDLOG_LOGGER_WARN(&logger, "queue depth is {}", depth);
-```
-
-既定のspdlogロガーでは、対応する既定ロガーマクロを使用します。
-
-```cpp
-SPDLOG_INFO("accepted event {}", eventId);
+SPDLOG_INFO("accepted event {}", event_id);
 SPDLOG_WARN("queue depth is {}", depth);
 ```
+
+### 4.3. エクスポートするフィールドと属性
 
 spdlogシンクは以下のOpenTelemetryフィールドと属性を記録します。
 
