@@ -138,7 +138,7 @@ OpenTelemetryソフトウェア開発キット (SDK) は、独自のリソース
 <a id="3-fairlogger-log-records"></a>
 ## 3. FairLoggerログレコード
 
-FairLoggerカスタムシンクは、FairLoggerの重大度が`--otel-log-severity`以上の場合、出力された各FairLoggerメッセージをOpenTelemetry LogRecordへ変換します。
+FairLoggerカスタムシンクは、FairLoggerの重大度 (ログレベル) が`--otel-log-severity`以上の場合、出力された各FairLoggerメッセージをOpenTelemetry LogRecordへ変換します。
 
 | LogRecordのフィールドまたは属性 | 由来 | ソース |
 | --- | --- | --- |
@@ -235,7 +235,7 @@ spdlogシンクは以下のOpenTelemetryフィールドと属性を記録しま�
 | `spdlog.level` | NestDAQ/spdlogカスタム | 元のspdlogレベル文字列。 |
 
 <a id="5-log-severity-mapping"></a>
-## 5. ログ重大度の対応
+## 5. ログ重大度 (ログレベル) の対応
 
 OpenTelemetryは正規化したログレベルをLogRecordの`SeverityNumber`および`SeverityText`フィールドへ保存します。
 元のロギングライブラリレベルは、FairLoggerレコードでは`fairlogger.severity.*`、spdlogレコードでは`spdlog.level`として別に保持されます。
