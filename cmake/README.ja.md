@@ -39,6 +39,11 @@
 このプロジェクトは`cmake/dependencies/`内のファイルを読み込み、主にCMakeの`ExternalProject_Add`を使用します。
 [Redis Stack](../INSTALL.ja.md#redis-server-and-modules)のビルドでは、モジュールのソースツリーを展開するために`FetchContent`も使用します。
 
+`WITH_SPDLOG=ON`の場合、依存関係プロジェクトは最初にインストール済みのspdlogパッケージを検索します。
+spdlogが見つからず、かつ`CMAKE_CXX_STANDARD`が`20`未満の場合、このspdlogビルドでは`std::format`の代わりに外部fmtライブラリーを使用するため、fmtも検索します。
+適合するfmtパッケージが見つからない場合は、`dependencies/fmt.cmake`がspdlogより先にfmtをビルドしてインストールします。
+C++20以降ではspdlogの依存関係ビルドに`std::format`を使用するため、fmtを追加しません。
+
 | ファイル | 用途 |
 | :-- | :-- |
 | `dependencies/Boost.cmake` | Boostを検索またはビルドします。 |
@@ -50,8 +55,8 @@
 | `dependencies/hiredis.cmake` | hiredisを検索またはビルドします。 |
 | `dependencies/redis_plus_plus.cmake` | redis-plus-plusを検索またはビルドします。 |
 | `dependencies/opentelemetry-cpp.cmake` | opentelemetry-cppと、選択した機能に応じた転送用依存関係をビルドします。 |
-| `dependencies/spdlog.cmake` | spdlogをビルドします。C++17の依存関係ビルドでは、`dependencies/fmt.cmake`を通じて`fmt`も取得します。 |
-| `dependencies/fmt.cmake` | spdlogで必要な場合、または依存関係オプションで明示的に選択した場合にfmtをビルドします。 |
+| `dependencies/spdlog.cmake` | spdlogを検索またはビルドします。spdlogが見つからず、C++規格がC++20未満の場合は、`dependencies/fmt.cmake`を通じてfmtも検索またはビルドします。 |
+| `dependencies/fmt.cmake` | C++17のspdlog依存関係ビルドで外部フォーマットライブラリーが必要な場合に、fmtを検索するか、ビルドしてインストールします。 |
 | `dependencies/redis-stack.cmake` | Redis 8以降向けRedis Stackコンポーネント (Redis、RedisBloom、RediSearch、RedisJSON、RedisTimeSeries) をビルドします。デフォルトのRedis 8.2.7モジュールバージョンはRedis 8.2.7自身が選択しているリリースタグに従います。 |
 | `dependencies/redis-server-7.cmake` | スタンドアロンRedisTimeSeriesとともにRedis 7.xサーバーをビルドします。デフォルトでは、Redis 7.4はRedis 7.4.9とRedisTimeSeries 1.12.14を使用し、Redis 7.2はRedis 7.2.14とRedisTimeSeries 1.10.24を使用します。 |
 | `dependencies/doxygen-awesome-css.cmake` | 生成ドキュメントで使用するdoxygen-awesome-cssファイルをビルドまたはインストールします。 |

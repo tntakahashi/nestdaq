@@ -36,6 +36,11 @@ The `.cmake.in` files are source templates and are not installed.
 It includes files from `cmake/dependencies/` and primarily uses CMake `ExternalProject_Add`.
 The [Redis Stack](../INSTALL.md#external-runtime-components) build also uses `FetchContent` to materialize module source trees.
 
+When `WITH_SPDLOG=ON`, the dependency project first searches for an installed spdlog package.
+If spdlog is not found and `CMAKE_CXX_STANDARD` is lower than `20`, it also searches for fmt because this spdlog build uses the external fmt library instead of `std::format`.
+If a suitable fmt package is not found, `dependencies/fmt.cmake` builds and installs fmt before spdlog.
+For C++20 or later, the spdlog dependency build uses `std::format` and does not add fmt.
+
 | File | Purpose |
 | :-- | :-- |
 | `dependencies/Boost.cmake` | Finds or builds Boost. |
@@ -47,8 +52,8 @@ The [Redis Stack](../INSTALL.md#external-runtime-components) build also uses `Fe
 | `dependencies/hiredis.cmake` | Finds or builds hiredis. |
 | `dependencies/redis_plus_plus.cmake` | Finds or builds redis-plus-plus. |
 | `dependencies/opentelemetry-cpp.cmake` | Builds opentelemetry-cpp and its optional transport dependencies. |
-| `dependencies/spdlog.cmake` | Builds spdlog. For C++17 dependency builds it also pulls in `fmt` through `dependencies/fmt.cmake`. |
-| `dependencies/fmt.cmake` | Builds fmt when required by spdlog or selected explicitly by dependency options. |
+| `dependencies/spdlog.cmake` | Finds or builds spdlog. When building a missing spdlog package with a C++ standard lower than C++20, it also searches for or builds fmt through `dependencies/fmt.cmake`. |
+| `dependencies/fmt.cmake` | Finds fmt or builds and installs it when the C++17 spdlog dependency build requires an external formatting library. |
 | `dependencies/redis-stack.cmake` | Builds Redis Stack components for Redis 8 or later: Redis, RedisBloom, RediSearch, RedisJSON, and RedisTimeSeries. The default Redis 8.2.7 module versions follow the release tags selected by Redis 8.2.7 itself. |
 | `dependencies/redis-server-7.cmake` | Builds Redis 7.x server with standalone RedisTimeSeries. Redis 7.4 uses Redis 7.4.9 and RedisTimeSeries 1.12.14 by default; Redis 7.2 uses Redis 7.2.14 and RedisTimeSeries 1.10.24 by default. |
 | `dependencies/doxygen-awesome-css.cmake` | Builds or installs the doxygen-awesome-css files used by generated documentation. |
