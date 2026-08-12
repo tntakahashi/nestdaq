@@ -187,13 +187,27 @@ logger.info("event accepted");
 
 The `logger` above is a different object from the spdlog default logger.
 The usual spdlog member functions, such as `logger.info(...)` and `logger.warn(...)`, still record the body, timestamps, severity, logger name, log level, and thread ID.
-However, these member functions do not automatically attach source-location metadata.
-Use the standard spdlog macros when OpenTelemetry records should include the file path, line number, and function name:
+Source-location metadata identifies the file path, line number, and function that issued the log call.
+The OTel spdlog sink records these values as the `code.file.path`, `code.line.number`, and `code.function.name` attributes.
+The usual spdlog member functions do not attach this source-location metadata automatically.
+Use the standard spdlog macros to attach the source location:
 
 ```cpp
 SPDLOG_LOGGER_INFO(&logger, "accepted event {}", event_id);
 SPDLOG_LOGGER_WARN(&logger, "queue depth is {}", depth);
 ```
+
+Code can also pass a `spdlog::source_loc` explicitly to `logger.log(...)` without using a macro:
+
+```cpp
+logger.log(
+    spdlog::source_loc{__FILE__, __LINE__, SPDLOG_FUNCTION},
+    spdlog::level::info,
+    "accepted event {}",
+    event_id);
+```
+
+The standard spdlog macros construct an equivalent source location and pass it to `logger.log(...)`.
 
 ### 4.2. Default Logger
 
@@ -215,7 +229,7 @@ spdlog::info("event accepted");
 
 After this call, free functions such as `spdlog::info(...)` and the default-logger macros use this logger.
 Free functions such as `spdlog::info(...)` record the same metadata as the member functions in Section 4.1, but do not attach source-location metadata.
-Use the default-logger macros to attach source-location metadata:
+Use the default-logger macros, or pass a `spdlog::source_loc` explicitly to the default logger as described in Section 4.1, to attach source-location metadata:
 
 ```cpp
 SPDLOG_INFO("accepted event {}", event_id);

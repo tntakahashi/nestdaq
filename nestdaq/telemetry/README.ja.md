@@ -191,13 +191,27 @@ logger.info("event accepted");
 
 上の`logger`はspdlogの既定ロガーとは別のオブジェクトです。
 `logger.info(...)`や`logger.warn(...)`などの通常のspdlogメンバー関数でも、`Body`、タイムスタンプ、重大度、ロガー名、ログレベル、スレッドIDを記録します。
-ただし、これらのメンバー関数はソース位置メタデータを自動では付加しません。
-OpenTelemetryレコードへファイルパス、行番号、関数名を含める場合は、標準spdlogマクロを使用します。
+ここでいうソース位置メタデータは、ログを呼び出したファイルのパス、行番号、関数名です。
+OTel spdlogシンクは、これらを`code.file.path`、`code.line.number`、`code.function.name`属性として記録します。
+通常のspdlogメンバー関数は、このソース位置メタデータを自動では付加しません。
+ソース位置を付加する場合は、標準spdlogマクロを使用します。
 
 ```cpp
 SPDLOG_LOGGER_INFO(&logger, "accepted event {}", event_id);
 SPDLOG_LOGGER_WARN(&logger, "queue depth is {}", depth);
 ```
+
+マクロを使わず、`spdlog::source_loc`を`logger.log(...)`へ明示的に渡すこともできます。
+
+```cpp
+logger.log(
+    spdlog::source_loc{__FILE__, __LINE__, SPDLOG_FUNCTION},
+    spdlog::level::info,
+    "accepted event {}",
+    event_id);
+```
+
+標準spdlogマクロは、同様のソース位置を自動で構築して`logger.log(...)`へ渡します。
 
 ### 4.2. 既定ロガー
 
@@ -219,7 +233,7 @@ spdlog::info("event accepted");
 
 設定後は、`spdlog::info(...)`などのフリー関数と既定ロガー用マクロがこのロガーを使用します。
 `spdlog::info(...)`などのフリー関数でも、4.1節のメンバー関数と同じメタデータを記録しますが、ソース位置メタデータは付加しません。
-ソース位置メタデータを付加する場合は、既定ロガー用マクロを使用します。
+ソース位置メタデータを付加する場合は、既定ロガー用マクロを使用するか、4.1節と同様に既定ロガーへ`spdlog::source_loc`を明示して渡します。
 
 ```cpp
 SPDLOG_INFO("accepted event {}", event_id);
