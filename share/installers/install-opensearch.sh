@@ -6,7 +6,7 @@ OPENSEARCH_VERSION="${OPENSEARCH_VERSION:-2.19.5}"
 OPENSEARCH_INSTALL_SECURITY="${OPENSEARCH_INSTALL_SECURITY:-disabled}"
 OPENSEARCH_APT_GPGCHECK="${OPENSEARCH_APT_GPGCHECK:-enabled}"
 OPENSEARCH_RPM_GPGCHECK="${OPENSEARCH_RPM_GPGCHECK:-enabled}"
-SUDO="${SUDO-sudo}"
+SUDO="${SUDO:-sudo}"
 if [ "$(id -u)" -eq 0 ]; then
   SUDO=""
 fi
@@ -30,8 +30,7 @@ Environment:
   OPENSEARCH_APT_GPGCHECK            enabled or disabled. Default: ${OPENSEARCH_APT_GPGCHECK}
   OPENSEARCH_RPM_GPGCHECK            enabled or disabled. Default: ${OPENSEARCH_RPM_GPGCHECK}
   OPENSEARCH_INITIAL_ADMIN_PASSWORD  Required when OPENSEARCH_INSTALL_SECURITY=demo.
-  SUDO                               Privilege wrapper. Default: sudo. Empty disables the wrapper;
-                                     the wrapper is also disabled automatically when run as root.
+  SUDO                               Privilege wrapper. Default: sudo, or empty when run as root.
 
 Examples:
   $0 install

@@ -52,13 +52,10 @@ For normal use, the scripts use `sudo` as the default and recommended privilege 
 Setting `SUDO=sudo` is valid but redundant.
 When run as root, the scripts automatically omit the wrapper, so no `SUDO` assignment is needed.
 If `doas` is installed and configured, it can be selected as an optional alternative.
-Setting `SUDO=` explicitly disables the wrapper and should be used only when the commands already have the required privileges.
 
 ```sh
 # Use doas only when it is installed and configured for the required commands.
 SUDO=doas ./install-opensearch.sh install
-# Disable the wrapper only when the commands already have the required privileges.
-SUDO= ./install-opensearch.sh install
 ```
 
 ## 3. Redis

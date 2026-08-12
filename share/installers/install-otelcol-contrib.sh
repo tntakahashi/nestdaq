@@ -3,7 +3,7 @@ set -eu
 
 ACTION="${1:-install}"
 OTELCOL_CONTRIB_VERSION="${OTELCOL_CONTRIB_VERSION:-0.155.0}"
-SUDO="${SUDO-sudo}"
+SUDO="${SUDO:-sudo}"
 if [ "$(id -u)" -eq 0 ]; then
   SUDO=""
 fi
@@ -22,8 +22,7 @@ Actions:
 
 Environment:
   OTELCOL_CONTRIB_VERSION  Release version. Default: ${OTELCOL_CONTRIB_VERSION}
-  SUDO                     Privilege wrapper. Default: sudo. Empty disables the wrapper;
-                           the wrapper is also disabled automatically when run as root.
+  SUDO                     Privilege wrapper. Default: sudo, or empty when run as root.
 
 Examples:
   $0 install

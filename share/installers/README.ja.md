@@ -55,14 +55,10 @@ AlmaLinux、Rocky Linux、RHEL、CentOS、FedoraなどのRHEL系システムで�
 `SUDO=sudo`も有効ですが、デフォルトと同じため指定は不要です。
 rootユーザーとして実行すると、スクリプトはラッパーを自動的に省略するため、`SUDO`を設定する必要はありません。
 `doas`がインストール済みで適切に設定されている場合に限り、任意の代替として`SUDO=doas`を指定できます。
-`SUDO=`はラッパーを明示的に無効化します。
-実行するコマンドに必要な権限がすでにある場合に限り使用してください。
 
 ```sh
 # 必要なコマンド用にdoasをインストールして設定済みの場合に限り使用します。
 SUDO=doas ./install-opensearch.sh install
-# コマンドに必要な権限がすでにある場合に限り、ラッパーを無効化します。
-SUDO= ./install-opensearch.sh install
 ```
 
 <a id="3-redis"></a>
