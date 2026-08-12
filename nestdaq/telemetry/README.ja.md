@@ -39,7 +39,7 @@ NestDAQは、OpenTelemetry実装共有ライブラリ内にプロセス全体で
 
 動的に読み込まれるOpenTelemetry実装共有ライブラリは、公開C ABIを`OpenTelemetryInitializer.cxx`で定義します。
 内部実装はログ、メトリクス、トレース、共通テレメトリーヘルパーというシグナル領域別に構成されています。
-アプリケーションは内部実装ファイルへ依存せず、`TelemetryLibrary`、`Telemetry`、`Counter`、`Histogram`、`Gauge`、`TelemetrySpan`、`GetTelemetry()`を使用してください。
+アプリケーションは内部実装ファイルへ依存せず、`nestdaq::telemetry`名前空間の`TelemetryLibrary`、`Telemetry`、`Counter`、`Histogram`、`Gauge`、`TelemetrySpan`、`getTelemetry()`を使用してください。
 
 各シグナルはコンマ区切りのプロトコル一覧を受け取ります。
 対応プロトコルは`console`、`otlp-http`、`otlp-grpc`です。

@@ -38,7 +38,7 @@ The NestDAQ thin wrapper API records metrics and traces without exposing OpenTel
 
 The dynamically loaded OpenTelemetry implementation library defines the public C ABI in `OpenTelemetryInitializer.cxx`.
 Internally, it organizes the implementation into logs, metrics, traces, and shared telemetry helpers.
-Applications should use `TelemetryLibrary`, `Telemetry`, `Counter`, `Histogram`, `Gauge`, `TelemetrySpan`, and `GetTelemetry()` instead of depending on the internal implementation files.
+Applications should use `TelemetryLibrary`, `Telemetry`, `Counter`, `Histogram`, `Gauge`, `TelemetrySpan`, and `getTelemetry()` from the `nestdaq::telemetry` namespace instead of depending on the internal implementation files.
 
 Each signal accepts a comma-separated protocol list.
 The supported protocols are `console`, `otlp-http`, and `otlp-grpc`.
