@@ -62,10 +62,10 @@
 - `PascalCase`と`UpperCamelCase`は同じ命名形式を意味します。
 - `class`名および型名: `PascalCase` / `UpperCamelCase`。
 - `namespace`名: `snake_case`。
-- 関数およびメンバー関数にはlower camel case (`camelCase`) を優先します。
+- 関数およびメンバー関数には`lowerCamelCase`を優先します。
   既存スタイルとの一貫性を保つ場合は、`PascalCase` / `UpperCamelCase`も許容します。
 - 変数には`snake_case`を優先します。
-  既存スタイルとの一貫性を保つ場合は、lower camel case (`camelCase`) も許容します。
+  既存スタイルとの一貫性を保つ場合は、`lowerCamelCase`も許容します。
 - `using`による別名は命名規則の対象外です。
   局所的な可読性、外部ライブラリの規約、または一般的な短縮形に従って構いません。
 - `public struct`のデータフィールド: `snake_case`。

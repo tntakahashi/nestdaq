@@ -54,8 +54,8 @@ In this document, the **upstream repository** is [github.com/spadi-alliance/nest
 - `PascalCase` and `UpperCamelCase` mean the same naming style.
 - Class and type names: `PascalCase` / `UpperCamelCase`.
 - Namespaces: `snake_case`.
-- Functions and member functions: prefer lower camel case / `camelCase`; `PascalCase` / `UpperCamelCase` is allowed for consistency with existing code.
-- Variables: prefer `snake_case`; lower camel case / `camelCase` is allowed for consistency with existing code.
+- Functions and member functions: prefer `lowerCamelCase`; `PascalCase` / `UpperCamelCase` is allowed for consistency with existing code.
+- Variables: prefer `snake_case`; `lowerCamelCase` is allowed for consistency with existing code.
 - `using` alias names are outside the scope of these naming rules.
   They may follow local readability requirements, external library conventions, or common short forms.
 - Public `struct` data fields: `snake_case`.
