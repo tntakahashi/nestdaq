@@ -6,9 +6,11 @@
 
 NestDAQテレメトリーは、FairMQベースのデバイス向け、およびコントローラープロセスである`daq-webctl`向けに、必要に応じて有効にできるOpenTelemetry統合です。
 アプリケーションの実行ファイルはビルド時に`opentelemetry-cpp`へリンクしません。
-代わりに、NestDAQはテレメトリープラグイン`libnestdaq_otel.so`を`dlopen()`で動的に読み込みます。
+代わりに、NestDAQはOpenTelemetry実装共有ライブラリ`libnestdaq_otel.so`を`dlopen()`で動的に読み込みます。
+このライブラリはFairMQプラグインではありません。FairMQの`-P`で指定するプラグイン一覧には含めず、`-S`で指定するプラグイン検索パスも使用しません。
+NestDAQは、`--otel-library`で指定したパスまたはsonameを`dlopen()`へ直接渡します。
 
-プラグインは3種類のOpenTelemetryシグナルをエクスポートできます。
+この実装共有ライブラリは3種類のOpenTelemetryシグナルをエクスポートできます。
 既定値の列は、対応するプロトコルオプションまたは環境変数で設定を変更しなかった場合のエクスポーター選択を示します。
 
 | シグナル | 既定値 | NestDAQ内のソース |
@@ -24,21 +26,22 @@ NestDAQテレメトリーは、FairMQベースのデバイス向け、および�
 `libnestdaq_otel.so`は、CMake構成時に`opentelemetry-cpp`が見つかった場合にのみビルドおよびインストールされます。
 
 <a id="1-telemetry-plugin-loading-model"></a>
-## 1. テレメトリープラグインの読み込みモデル
+<a id="1-opentelemetry-shared-library-loading-model"></a>
+## 1. OpenTelemetry共有ライブラリの読み込みモデル
 
-NestDAQは、テレメトリープラグイン内にプロセス全体で共有するOpenTelemetryプロバイダーを導入します。
+NestDAQは、OpenTelemetry実装共有ライブラリ内にプロセス全体で共有するOpenTelemetryプロバイダーを導入します。
 プロセス全体で共有するカスタムシンクがFairLoggerログを取得します。
 NestDAQ spdlogシンクを明示的に接続したロガーだけがspdlogログをエクスポートします。
 メトリクスとトレースは、OpenTelemetry C++ヘッダーを直接公開しないNestDAQの薄いラッパーAPIを通じて記録されます。
 
-動的に読み込まれるテレメトリープラグインは、公開C ABIを`OpenTelemetryInitializer.cxx`で定義します。
+動的に読み込まれるOpenTelemetry実装共有ライブラリは、公開C ABIを`OpenTelemetryInitializer.cxx`で定義します。
 内部実装はログ、メトリクス、トレース、共通テレメトリーヘルパーというシグナル領域別に構成されています。
 アプリケーションは内部実装ファイルへ依存せず、`TelemetryLibrary`、`Telemetry`、`Counter`、`Histogram`、`Gauge`、`TelemetrySpan`、`GetTelemetry()`を使用してください。
 
 各シグナルはコンマ区切りのプロトコル一覧を受け取ります。
 対応プロトコルは`console`、`otlp-http`、`otlp-grpc`です。
 OTLPはOpenTelemetry Protocol、gRPCはGoogle remote procedure callの略です。
-プラグインは別名の`http`、`otlp_http`、`grpc`、`otlp_grpc`も受け付けます。
+この実装共有ライブラリは別名の`http`、`otlp_http`、`grpc`、`otlp_grpc`も受け付けます。
 空のプロトコルはシグナルを無効にします。
 
 <a id="2-resource-attributes"></a>
@@ -400,6 +403,6 @@ OpenTelemetry Collector、OpenSearch、OpenSearch Dashboardsを使用するロ�
 
 - `--otel-library`を読み込めない場合は、`LD_LIBRARY_PATH`を確認するか、rpathを設定するか、絶対パスを指定してください。
 - ライブラリを読み込めても初期化に失敗する場合は、`TelemetryLibrary::GetLastError()`を確認してください。
-- 未対応のプロトコル名、不正な設定サイズ、不正な重大度値、空のメトリクス名/スパン名はプラグインの最終エラー文字列を通じて報告されます。
+- 未対応のプロトコル名、不正な設定サイズ、不正な重大度値、空のメトリクス名/スパン名は実装共有ライブラリの最終エラー文字列を通じて報告されます。
 - メトリクスシグナルが無効の場合、メトリクス記録は成功する何もしない処理になります。
   トレースシグナルが無効の場合、非アクティブなスパンを返します。

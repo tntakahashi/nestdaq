@@ -15,7 +15,7 @@ The HTML, JavaScript, and CSS files served by `daq-webctl` are documented separa
 `daq-webctl` listens on an HTTP endpoint, serves the configured document root, and accepts WebSocket clients.
 It translates browser commands into Redis-backed DAQ control operations and sends state updates to connected WebSocket clients.
 
-At startup, `daq-webctl` configures FairLogger output and can load the optional NestDAQ OpenTelemetry plugin.
+At startup, `daq-webctl` configures FairLogger output and can load the optional NestDAQ OpenTelemetry implementation shared library.
 
 ## 2. Main Components
 

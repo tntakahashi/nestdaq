@@ -1,5 +1,5 @@
 /** @file
- *  @brief Internal OpenTelemetry plugin runtime state and helper declarations.
+ *  @brief Internal OpenTelemetry runtime state and helper declarations.
  *
  * This header is shared only by the `libnestdaq_otel.so` implementation files.
  * It may include OpenTelemetry C++ SDK headers because it is not used by
@@ -240,7 +240,7 @@ struct FrameworkMetricConfigStorage {
 };
 
 /**
- * @brief Process-wide plugin state protected by @ref RuntimeState::mutex.
+ * @brief Process-wide telemetry state protected by @ref RuntimeState::mutex.
  *
  * User metrics and framework metrics are intentionally separated: user metrics
  * are held by the normal meter provider, while framework metrics use pending
@@ -326,7 +326,7 @@ auto configureProcessMetrics(RuntimeState &state) -> void;
 auto configureFairMQStateMetrics(RuntimeState &state) -> void;
 /** @brief Recreate the framework metrics provider and its observable instruments. */
 auto configureFrameworkMetricsProvider(RuntimeState &state) -> void;
-/** @brief Return the plugin defaults used when no C ABI config is supplied. */
+/** @brief Return the implementation defaults used when no C ABI config is supplied. */
 auto defaultConfig() -> nestdaq_otel_config;
 /** @brief Export and clear pending framework metric samples only when dirty. */
 auto flushFrameworkMetricsIfDirty(uint64_t timeout_ms) -> int;
@@ -354,7 +354,7 @@ auto setLastError(std::string message) -> int;
 auto signalEnabled(const nestdaq_otel_signal_config &config) noexcept -> bool;
 /** @brief Start the background CPU/RSS sampler for framework metrics. */
 auto startProcessMetricsThread(uint32_t interval_ms) -> void;
-/** @brief Return the process-wide telemetry plugin state. */
+/** @brief Return the process-wide telemetry runtime state. */
 auto runtimeState() -> RuntimeState &;
 /** @brief Copy framework metric configuration and resource for future reconfiguration. */
 auto storeFrameworkMetricConfig(RuntimeState &state,

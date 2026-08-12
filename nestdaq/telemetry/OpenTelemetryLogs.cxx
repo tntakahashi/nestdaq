@@ -1,5 +1,5 @@
 /** @file
- *  @brief Builds log exporters and processors for the OpenTelemetry plugin.
+ *  @brief Builds log exporters and processors for the OpenTelemetry implementation library.
  */
 
 #include "nestdaq/telemetry/OpenTelemetryRuntime.h"

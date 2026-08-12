@@ -37,7 +37,7 @@ inline constexpr std::string_view kTelemetryConfigSubscriber{"nestdaq-telemetry"
 inline constexpr std::string_view kDefaultServiceNamespace{"nestdaq"};
 
 /**
- * @brief Runtime options used to configure the telemetry plugin.
+ * @brief Runtime options used to configure the OpenTelemetry implementation library.
  *
  * Values are initialized from defaults, optionally overridden by environment
  * variables and command-line/FairMQ options. `makeConfig()` returns borrowed
@@ -93,7 +93,7 @@ struct SeverityParseResult {
 };
 
 /**
- * @brief Add command-line options that configure the optional telemetry plugin.
+ * @brief Add command-line options that configure the optional OpenTelemetry implementation library.
  */
 auto addTelemetryOptions(boost::program_options::options_description& options,
                          std::string_view default_service_name = "nestdaq") -> void;
@@ -171,11 +171,11 @@ auto setGeneratedUuidProperty(fair::mq::ProgOptions& config,
                               std::string_view key = "uuid") -> void;
 
 /**
- * @brief Runtime loader for the optional OpenTelemetry plugin.
+ * @brief Runtime loader for the optional OpenTelemetry implementation shared library.
  *
  * `TelemetryLibrary` owns the `dlopen()` handle and resolves the required
  * `nestdaq_otel_*` C ABI symbols. It is intentionally non-copyable and
- * non-movable because the plugin state is process-wide. Destruction shuts down
+ * non-movable because the telemetry state is process-wide. Destruction shuts down
  * telemetry once and then closes the shared library.
  */
 class TelemetryLibrary {
@@ -187,41 +187,41 @@ public:
     auto operator=(TelemetryLibrary&&) -> TelemetryLibrary& = delete;
     ~TelemetryLibrary();
 
-    /** @brief Return the last loader or plugin error message. */
+    /** @brief Return the last loader or implementation-library error message. */
     auto getLastError() const -> const std::string&;
     /**
-     * @brief Initialize the loaded plugin with a C ABI config.
+     * @brief Initialize the loaded implementation library with a C ABI config.
      *
-     * @p config may contain borrowed pointers because the plugin copies the
+     * @p config may contain borrowed pointers because the implementation copies the
      * values it needs during initialization.
      */
     auto initializeWith(const nestdaq_otel_config& config) -> bool;
     /** @brief Force-flush initialized telemetry providers. */
     auto forceFlush(uint64_t timeout_ms) -> bool;
     /**
-     * @brief Create the optional spdlog OpenTelemetry sink from the loaded plugin.
+     * @brief Create the optional spdlog OpenTelemetry sink from the loaded implementation library.
      *
-     * Returns null when the plugin does not provide spdlog instrumentation or
+     * Returns null when the library does not provide spdlog instrumentation or
      * when OTel log export is disabled.
      */
     auto createSpdlogSink() const -> std::shared_ptr<spdlog::sinks::sink>;
     /** @brief Record a FairMQ state transition as a framework metric sample. */
     auto recordFrameworkFairMQState(int64_t state_id, std::string_view state_name) -> void;
-    /** @brief Add to a user double counter through the plugin C ABI. */
+    /** @brief Add to a user double counter through the implementation library C ABI. */
     auto metricAddDoubleCounter(std::string_view name,
                                 double value,
                                 std::string_view unit = "",
                                 std::string_view description = "",
                                 const nestdaq_otel_attribute* attributes = nullptr,
                                 uint64_t attribute_count = 0) -> bool;
-    /** @brief Record a user double histogram value through the plugin C ABI. */
+    /** @brief Record a user double histogram value through the implementation library C ABI. */
     auto metricRecordDoubleHistogram(std::string_view name,
                                      double value,
                                      std::string_view unit = "",
                                      std::string_view description = "",
                                      const nestdaq_otel_attribute* attributes = nullptr,
                                      uint64_t attribute_count = 0) -> bool;
-    /** @brief Record a user double gauge value through the plugin C ABI. */
+    /** @brief Record a user double gauge value through the implementation library C ABI. */
     auto metricRecordDoubleGauge(std::string_view name,
                                  double value,
                                  std::string_view unit = "",
@@ -229,7 +229,7 @@ public:
                                  const nestdaq_otel_attribute* attributes = nullptr,
                                  uint64_t attribute_count = 0) -> bool;
     /**
-     * @brief Load a telemetry plugin shared library and resolve its C ABI.
+     * @brief Load the OpenTelemetry implementation shared library and resolve its C ABI.
      *
      * The library is optional in normal NestDAQ startup; callers decide whether
      * a failed load is fatal based on their runtime options.
@@ -241,7 +241,7 @@ public:
     auto spanSetAttribute(uint64_t span_handle, const nestdaq_otel_attribute& attribute) -> bool;
     /** @brief Update the NestDAQ instance id attached to exported log records. */
     auto setNestdaqInstanceId(std::string_view instance_id) -> bool;
-    /** @brief Start a span and return its opaque plugin-owned handle. */
+    /** @brief Start a span and return its opaque implementation-owned handle. */
     auto spanStart(std::string_view name,
                    const nestdaq_otel_attribute* attributes = nullptr,
                    uint64_t attribute_count = 0) -> uint64_t;
@@ -249,7 +249,7 @@ public:
     auto setMinSeverity(std::string_view severity) -> bool;
     /** @brief Update the FairLogger severity threshold by numeric value. */
     auto setMinSeverity(int32_t severity) -> bool;
-    /** @brief Shut down the plugin once; subsequent calls are no-ops. */
+    /** @brief Shut down the implementation library once; subsequent calls are no-ops. */
     auto shutdownTelemetry(uint64_t timeout_ms) const -> void;
 
 private:

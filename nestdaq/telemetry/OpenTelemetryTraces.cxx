@@ -1,5 +1,5 @@
 /** @file
- *  @brief Builds trace exporters/processors and manages plugin-owned span handles.
+ *  @brief Builds trace exporters/processors and manages implementation-owned span handles.
  */
 
 #include "nestdaq/telemetry/OpenTelemetryRuntime.h"

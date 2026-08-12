@@ -1,5 +1,5 @@
 /** @file
- *  @brief Implements telemetry option parsing and the runtime OpenTelemetry plugin loader.
+ *  @brief Implements telemetry option parsing and the OpenTelemetry shared-library loader.
  */
 
 #include "nestdaq/telemetry/FairLoggerTelemetryLoader.h"
@@ -24,7 +24,7 @@ namespace {
 constexpr auto kHostNameBufferSize = std::size_t{256};
 
 /**
- * @brief Resolve one symbol from the loaded telemetry plugin.
+ * @brief Resolve one symbol from the loaded OpenTelemetry implementation library.
  *
  * The result is wrapped in `std::function` so callers can store optional C ABI
  * entries uniformly and test whether a symbol was present before calling it.
@@ -623,7 +623,7 @@ auto TelemetryLibrary::metricRecordDoubleGauge(std::string_view name,
 auto TelemetryLibrary::load(const std::string& library) -> bool {
     auto flags = RTLD_NOW | RTLD_LOCAL;
 #ifdef RTLD_NODELETE
-    // OpenTelemetry providers are process-wide; avoid unmapping plugin code
+    // OpenTelemetry providers are process-wide; avoid unmapping implementation-library code
     // while SDK state or background shutdown paths may still reference it.
     flags |= RTLD_NODELETE;
 #endif

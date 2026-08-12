@@ -314,7 +314,7 @@ namespace {
 /**
  * @brief Process-wide backend pointer used by user-facing convenience APIs.
  *
- * Ownership remains with the caller that loaded the telemetry plugin. Atomic
+ * Ownership remains with the caller that loaded the OpenTelemetry implementation library. Atomic
  * access lets FairMQ callbacks and user code read the active backend without
  * taking locks.
  */

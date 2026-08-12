@@ -15,7 +15,7 @@
 `daq-webctl`はHTTPエンドポイントで接続を待ち受け、設定されたドキュメントルートを配信して、WebSocketクライアントを受け付けます。
 ブラウザから受信したコマンドをRedisをバックエンドとするDAQ制御操作へ変換し、接続中のWebSocketクライアントへ状態更新を返します。
 
-`daq-webctl`は起動時にFairLogger出力を設定し、必要に応じてNestDAQ OpenTelemetryプラグインを読み込めます。
+`daq-webctl`は起動時にFairLogger出力を設定し、必要に応じてNestDAQ OpenTelemetry実装共有ライブラリを読み込めます。
 
 <a id="2-main-components"></a>
 ## 2. 主要コンポーネント

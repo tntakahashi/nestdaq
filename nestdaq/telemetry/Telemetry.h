@@ -157,7 +157,7 @@ auto setSpdlogAsyncOptions(const SpdlogAsyncOptions& options) -> void;
 auto getSpdlogAsyncOptions() -> SpdlogAsyncOptions;
 
 /**
- * @brief Movable RAII wrapper for a span handle owned by the telemetry plugin.
+ * @brief Movable RAII wrapper for a span handle owned by the OpenTelemetry implementation library.
  *
  * A default-constructed or disabled span is inactive. Destroying an active span
  * calls `end()` exactly once. This wrapper intentionally exposes no
@@ -191,7 +191,7 @@ private:
  *
  * A default-constructed counter or a counter created without an active backend
  * is a successful no-op. This lets example and user code keep metric calls even
- * when the OpenTelemetry plugin is not loaded.
+ * when the OpenTelemetry implementation library is not loaded.
  */
 class Counter {
 public:
@@ -244,7 +244,7 @@ private:
  * @brief User-facing handle for a double observable gauge instrument.
  *
  * Gauge samples are last-value observations in the user metrics pipeline. The
- * OpenTelemetry plugin owns the observable instrument and exports the latest
+ * OpenTelemetry implementation library owns the observable instrument and exports the latest
  * value for each attribute set when its reader collects.
  */
 class Gauge {
@@ -274,7 +274,7 @@ private:
  *
  * The wrapper forwards calls through the runtime-loaded C ABI. Metrics and
  * traces disabled in the active configuration are treated as no-op operations by
- * the plugin where possible.
+ * the implementation library where possible.
  */
 class Telemetry {
 public:
@@ -473,10 +473,10 @@ private:
  */
 auto setActiveTelemetryLibrary(TelemetryLibrary* library) noexcept -> void;
 /**
- * @brief Create an OTel spdlog sink from the active runtime plugin.
+ * @brief Create an OTel spdlog sink from the active runtime library.
  *
- * Returns null when OTel logging is disabled, the telemetry plugin is not
- * active, or the plugin was built without spdlog support.
+ * Returns null when OTel logging is disabled, the OpenTelemetry implementation library is not
+ * active, or the library was built without spdlog support.
  */
 auto createActiveSpdlogSink() -> std::shared_ptr<spdlog::sinks::sink>;
 /**

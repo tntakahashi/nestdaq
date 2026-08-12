@@ -6,9 +6,11 @@
 
 NestDAQ telemetry provides optional OpenTelemetry integration for FairMQ-based devices and for the `daq-webctl` controller process.
 Application executables do not link `opentelemetry-cpp` at build time.
-Instead, NestDAQ loads the telemetry plugin `libnestdaq_otel.so` dynamically with `dlopen()`.
+Instead, NestDAQ loads the OpenTelemetry implementation shared library `libnestdaq_otel.so` dynamically with `dlopen()`.
+This library is not a FairMQ plugin: FairMQ's `-P` plugin list does not select it, and the `-S` plugin search path does not locate it.
+NestDAQ instead passes the path or soname from `--otel-library` directly to `dlopen()`.
 
-The plugin can export three OpenTelemetry signals.
+The implementation library can export three OpenTelemetry signals.
 The Default column shows the exporter selection when neither the corresponding protocol option nor its environment variable overrides the setting.
 
 | Signal  | Default            | Source in NestDAQ |
@@ -24,21 +26,21 @@ The Default column shows the exporter selection when neither the corresponding p
 `libnestdaq_otel.so` is built and installed only when CMake finds `opentelemetry-cpp` during configuration.
 
 <a id="1-runtime-model"></a>
-## 1. Telemetry Plugin Loading Model
+## 1. OpenTelemetry Shared-Library Loading Model
 
-NestDAQ installs process-wide OpenTelemetry providers inside the telemetry plugin.
+NestDAQ installs process-wide OpenTelemetry providers inside the implementation library.
 A process-wide custom sink captures FairLogger logs.
 Only loggers that explicitly attach the NestDAQ spdlog sink export spdlog logs.
 The NestDAQ thin wrapper API records metrics and traces without exposing OpenTelemetry C++ headers.
 
-The dynamically loaded telemetry plugin defines the public C ABI in `OpenTelemetryInitializer.cxx`.
+The dynamically loaded OpenTelemetry implementation library defines the public C ABI in `OpenTelemetryInitializer.cxx`.
 Internally, it organizes the implementation into logs, metrics, traces, and shared telemetry helpers.
 Applications should use `TelemetryLibrary`, `Telemetry`, `Counter`, `Histogram`, `Gauge`, `TelemetrySpan`, and `GetTelemetry()` instead of depending on the internal implementation files.
 
 Each signal accepts a comma-separated protocol list.
 The supported protocols are `console`, `otlp-http`, and `otlp-grpc`.
 OTLP means OpenTelemetry Protocol, and gRPC means Google remote procedure call.
-The plugin also accepts the aliases `http`, `otlp_http`, `grpc`, and `otlp_grpc`.
+The implementation library also accepts the aliases `http`, `otlp_http`, `grpc`, and `otlp_grpc`.
 An empty protocol disables the signal.
 
 ## 2. Resource Attributes
@@ -389,6 +391,6 @@ For a local environment with OpenTelemetry Collector, OpenSearch, and OpenSearch
 
 - If `--otel-library` cannot be loaded, check `LD_LIBRARY_PATH`, install rpath, or pass an absolute path.
 - If the library loads but initialization fails, inspect `TelemetryLibrary::GetLastError()`.
-- Unsupported protocol names, invalid config size, invalid severity values, and empty metric or span names are reported through the plugin last-error string.
+- Unsupported protocol names, invalid config size, invalid severity values, and empty metric or span names are reported through the implementation library's last-error string.
 - A disabled metric signal makes metric recording a successful no-op.
   A disabled trace signal returns an inactive span.

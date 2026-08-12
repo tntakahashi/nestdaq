@@ -1,5 +1,5 @@
 /** @file
- *  @brief C ABI and plugin-side C++ entry points for NestDAQ OpenTelemetry support.
+ *  @brief C ABI and implementation-side C++ entry points for NestDAQ OpenTelemetry support.
  */
 
 #pragma once
@@ -139,9 +139,9 @@ NESTDAQ_OTEL_EXPORT void nestdaq_otel_framework_record_fairmq_state(int64_t stat
  */
 NESTDAQ_OTEL_EXPORT int nestdaq_otel_init(const nestdaq_otel_config *config);
 /**
- * @brief Return the last error message from the telemetry plugin.
+ * @brief Return the last error message from the OpenTelemetry implementation library.
  *
- * The returned pointer is owned by the plugin and remains valid until the next
+ * The returned pointer is owned by the implementation library and remains valid until the next
  * telemetry API call that changes the last-error storage.
  */
 NESTDAQ_OTEL_EXPORT const char *nestdaq_otel_last_error(void);
@@ -227,7 +227,7 @@ struct FairMQThroughputSample;
  *
  * NestDAQ executables normally use `nestdaq::telemetry::TelemetryLibrary`
  * instead of this class so they can remain OpenTelemetry-unlinked. This class is
- * compiled into the telemetry plugin itself.
+ * compiled into the OpenTelemetry implementation library itself.
  */
 class OpenTelemetryInitializer {
 public:
@@ -237,7 +237,7 @@ public:
     static auto forceFlush(uint64_t timeout_ms) -> int;
     /** @brief Configure process-wide OpenTelemetry providers from the C ABI config. */
     static auto initialize(const nestdaq_otel_config *config) -> int;
-    /** @brief Return the plugin-owned last-error string. */
+    /** @brief Return the implementation-owned last-error string. */
     static auto lastError() noexcept -> const char *;
     /** @brief Add to a user double counter instrument. */
     static auto metricAddDoubleCounter(const char *name,
@@ -279,11 +279,11 @@ public:
     static auto setMinSeverity(int32_t severity) -> int;
     /** @brief Stop background collection and shut down all active providers. */
     static auto shutdown(uint64_t timeout_ms) -> int;
-    /** @brief End and erase a plugin-owned span handle. */
+    /** @brief End and erase an implementation-owned span handle. */
     static auto spanEnd(uint64_t span_handle) -> int;
-    /** @brief Set an attribute on a plugin-owned span handle. */
+    /** @brief Set an attribute on an implementation-owned span handle. */
     static auto spanSetAttribute(uint64_t span_handle, const nestdaq_otel_attribute *attribute) -> int;
-    /** @brief Start a plugin-owned span and return its opaque handle. */
+    /** @brief Start an implementation-owned span and return its opaque handle. */
     static auto spanStart(const char *name,
                           const nestdaq_otel_attribute *attributes,
                           uint64_t attribute_count) -> uint64_t;

@@ -1,5 +1,5 @@
 /** @file
- *  @brief Implements shared OpenTelemetry plugin runtime helpers.
+ *  @brief Implements shared OpenTelemetry runtime helpers.
  */
 
 #include "nestdaq/telemetry/OpenTelemetryRuntime.h"
