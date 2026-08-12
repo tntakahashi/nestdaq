@@ -26,7 +26,10 @@ See the linked README for startup instructions, environment variables, and store
 
 ## 1. Start
 
-After installation, copy the installed setup to a working directory.
+Do not start a Compose stack directly from the installation directory.
+After installation, copy the installed setup to a writable working directory where its configuration files and data locations can be changed.
+The working copy lets you adjust bind-mounted data paths, ownership, and permissions for the host without modifying installed files.
+The `:Z` options already present in the Compose files apply SELinux labels.
 If `./otel-collector-compose/` already exists, remove it first or choose a different destination.
 In the shell command examples below, lines beginning with `#` are explanatory comments for the reader and are not executed by the shell.
 
@@ -36,7 +39,7 @@ cp -a <install-prefix>/share/otel-collector-compose ./otel-collector-compose
 cd ./otel-collector-compose
 ```
 
-Start one Compose stack from its storage-stack directory:
+Enter a storage-stack directory in the working copy and start one Compose stack:
 
 ```bash
 # Enter the OpenSearch directory and start its stack.
@@ -63,11 +66,11 @@ OTLP means OpenTelemetry Protocol.
 By default, port `4317` carries OTLP over gRPC, and port `4318` carries OTLP over HTTP.
 
 Each storage-stack directory is self-contained.
-You can copy only the selected directory and run the stack from that copy.
+You can also copy only the selected storage-stack directory from the installation directory to a working directory.
 
 ## 2. Stop
 
-Stop the selected Compose stack from its storage-stack directory:
+Stop the selected Compose stack from the directory in the working copy that was used to start it:
 
 ```bash
 # Stop and remove the OpenSearch validation containers and network.

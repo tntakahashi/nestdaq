@@ -12,7 +12,11 @@ This backend is experimental and not yet fully verified.
 In this document, **Compose** means either Docker Compose (`docker compose`) or Podman Compose (`podman compose`).
 Use either implementation to manage this stack.
 
-Start from this directory:
+Do not start the stack directly from the installation directory.
+Follow the [parent README startup procedure](../README.md#1-start) to copy the setup to a writable working directory.
+Run the following commands from `victoria/` in that working copy.
+When changing a data location, create the target directory before startup and give the container suitable ownership and permissions.
+The `:Z` options already present in the Compose file apply the SELinux labels.
 In the shell command examples below, lines beginning with `#` are explanatory comments for the reader and are not executed by the shell.
 
 ```bash

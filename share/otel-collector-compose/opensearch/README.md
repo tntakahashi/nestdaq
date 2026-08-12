@@ -10,7 +10,12 @@ It stores the data in OpenSearch and displays it in OpenSearch Dashboards.
 In this document, **Compose** means either Docker Compose (`docker compose`) or Podman Compose (`podman compose`).
 Use either implementation to manage this stack.
 
-Start from this directory:
+Do not start the stack directly from the installation directory.
+Follow the [parent README startup procedure](../README.md#1-start) to copy the setup to a writable working directory.
+Run the following commands from `opensearch/` in that working copy.
+When changing the data location with `OPENSEARCH_DATA_DIR`, create the directory before startup and give the container suitable ownership and permissions.
+The `:Z` option already present in the Compose file applies the SELinux label.
+See Section 4 for ownership and permission examples for rootless Podman.
 In the shell command examples below, lines beginning with `#` are explanatory comments for the reader and are not executed by the shell.
 
 ```bash
