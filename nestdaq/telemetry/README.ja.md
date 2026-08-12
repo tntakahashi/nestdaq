@@ -19,7 +19,7 @@ NestDAQは、`--otel-library`で指定したパスまたはsonameを`dlopen()`�
 | メトリクス | 無効 | プロセスのCPU時間/使用率、メモリー使用量、FairMQチャネルのスループット、FairMQ状態の自動計装、およびユーザーカウンター/ヒストグラム/ゲージAPI |
 | トレース | 無効 | `Telemetry::startSpan()`とRAII `TelemetrySpan`でユーザーコードが明示的に作成するスパン。フレームワークによる自動生成はありません |
 
-> **注意:** NestDAQのOpenTelemetryメトリクスおよびトレース計装は実験的機能です。
+> **注意:** **NestDAQのOpenTelemetryメトリクスおよびトレース計装は実験的機能です。**
 > 本番コードでは使用しないでください。spdlogログシンクも実験的機能であり、
 > 詳細は後述します。
 

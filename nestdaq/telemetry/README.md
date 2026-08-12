@@ -19,8 +19,8 @@ The Default column shows the exporter selection when neither the corresponding p
 | Metrics | disabled           | Automatic process CPU time/utilization, process memory usage, FairMQ channel-throughput, and FairMQ state metrics; user counter/histogram/gauge APIs |
 | Traces  | disabled           | User spans created explicitly through `Telemetry::startSpan()` and RAII `TelemetrySpan`; no automatic framework spans |
 
-> **Warning:** NestDAQ's OpenTelemetry metrics and trace instrumentation is
-> experimental and should not be used in production code. The spdlog log sink
+> **Warning:** **NestDAQ's OpenTelemetry metrics and trace instrumentation is experimental.**
+> It should not be used in production code. The spdlog log sink
 > is also experimental, as noted separately below.
 
 `libnestdaq_otel.so` is built and installed only when CMake finds `opentelemetry-cpp` during configuration.
