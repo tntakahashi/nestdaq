@@ -99,7 +99,6 @@ FairLoggerカスタムシンクは、FairLoggerの重大度が`--otel-log-severi
 | `process.name` | NestDAQ/FairLoggerカスタム | FairLoggerのプロセス名メタデータ。OTelの`process.executable.name`リソース属性ではありません。 |
 
 計装スコープはロガー名およびライブラリ名に`FairLogger`を使用し、ライブラリのバージョンに`FAIRLOGGER_VERSION`を使用します。
-`SeverityText`が標準OpenTelemetry LogRecordフィールドであるため、NestDAQはカスタム属性`log.severity.text`を追加しません。
 
 FairMQのスループットログ行は、ログ重大度フィルターを適用する前にフレームワークメトリクス用に解析されます。
 そのため、元のログメッセージがエクスポート対象の重大度未満でも、スループットサンプルがフレームワークメトリクスを更新する場合があります。

@@ -96,7 +96,6 @@ The FairLogger custom sink converts each emitted FairLogger message into an Open
 | `process.name` | NestDAQ/FairLogger custom | FairLogger process name metadata. This is not the OTel `process.executable.name` resource attribute. |
 
 The instrumentation scope uses `FairLogger` as the logger and library name and `FAIRLOGGER_VERSION` as the library version.
-NestDAQ does not add a custom `log.severity.text` attribute because `SeverityText` is the standard OpenTelemetry LogRecord field.
 
 FairMQ throughput log lines are parsed for framework metrics before the log severity filter is applied.
 Therefore, a throughput sample can update framework metrics even when the original log message is below the exported log severity.
