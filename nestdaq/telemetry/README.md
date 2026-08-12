@@ -40,7 +40,8 @@ The dynamically loaded OpenTelemetry implementation library defines the public C
 Internally, it organizes the implementation into logs, metrics, traces, and shared telemetry helpers.
 Applications should use `TelemetryLibrary`, `Telemetry`, `Counter`, `Histogram`, `Gauge`, `TelemetrySpan`, and `getTelemetry()` from the `nestdaq::telemetry` namespace instead of depending on the internal implementation files.
 
-Each signal accepts a comma-separated protocol list.
+For each signal, specify a comma-separated protocol list through the corresponding command-line option or environment variable.
+See Section 6, "Command-Line Options," for the option and environment variable names.
 The supported protocols are `console`, `otlp-http`, and `otlp-grpc`.
 OTLP means OpenTelemetry Protocol, and gRPC means Google remote procedure call.
 The implementation library also accepts the aliases `http`, `otlp_http`, `grpc`, and `otlp_grpc`.

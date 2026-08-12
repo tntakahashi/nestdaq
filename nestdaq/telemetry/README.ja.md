@@ -41,7 +41,8 @@ NestDAQは、OpenTelemetry実装共有ライブラリ内にプロセス全体で
 内部実装はログ、メトリクス、トレース、共通テレメトリーヘルパーというシグナル領域別に構成されています。
 アプリケーションは内部実装ファイルへ依存せず、`nestdaq::telemetry`名前空間の`TelemetryLibrary`、`Telemetry`、`Counter`、`Histogram`、`Gauge`、`TelemetrySpan`、`getTelemetry()`を使用してください。
 
-各シグナルはコンマ区切りのプロトコル一覧を受け取ります。
+ログ、メトリクス、トレースの各シグナルでは、対応するコマンドラインオプションまたは環境変数にプロトコル一覧をコンマ区切りで指定します。
+オプション名と環境変数名は、第6節「コマンドラインオプション」を参照してください。
 対応プロトコルは`console`、`otlp-http`、`otlp-grpc`です。
 OTLPはOpenTelemetry Protocol、gRPCはGoogle remote procedure callの略です。
 この実装共有ライブラリは別名の`http`、`otlp_http`、`grpc`、`otlp_grpc`も受け付けます。
