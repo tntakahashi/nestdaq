@@ -6,9 +6,15 @@
 
 このディレクトリには、NestDAQのローカル検証用に[Redis Stack](../../INSTALL.ja.md#redis-server-and-modules)コンテナーを起動する補助スクリプトが含まれています。
 これらのコンテナーはホスト上にポートを公開し、デフォルトではRedis認証を有効にしません。
-公開ネットワークや共有ネットワークには公開しないでください。
-開発やローカルでの確認にはRedisInsightを含むRedis Stackイメージを使用してください。
-本番配備ではRedis Stack Serverを推奨します。
+そのまま公開ネットワークや共有ネットワークへ接続すると、Redisポートへ到達できる第三者にデータの読み取り、変更、削除を許すおそれがあります。
+RedisInsightを含むイメージでは、そのWeb UI用ポートも公開されます。
+これらの補助スクリプトは、信頼できるローカル環境だけで使用してください。
+
+開発やローカルでの確認には、データの表示と操作に使用できるRedisInsightを含むRedis Stackイメージが便利です。
+本番配備では、RedisInsightを含まないRedis Stack Serverイメージを推奨します。
+サーバー専用イメージを使用すると、本番のRedisと同じコンテナーで実行する必要がないWeb UI、その公開ポート、プロセス、永続データを減らせます。
+この選択だけで本番環境が安全になるわけではありません。本番配備では、認証、Transport Layer Security (TLS)、ネットワークアクセス制御、永続化、バックアップを別途設定してください。
+イメージの用途については、Redis公式ドキュメントの[DockerでRedis Stackを実行する方法](https://redis.io/docs/latest/operate/oss_and_stack/install/archive/install-stack/docker/)も参照してください。
 
 スクリプトは`latest`ではなく固定されたイメージタグを使用します。
 

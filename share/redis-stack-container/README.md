@@ -6,9 +6,15 @@
 
 This directory contains helper scripts for starting [Redis Stack](../../INSTALL.md#external-runtime-components) containers for local NestDAQ validation.
 The containers publish ports on the host and do not enable Redis authentication by default.
-Do not expose them on a public or shared network.
-Use the RedisInsight-enabled Redis Stack image for development and local inspection.
-Prefer Redis Stack Server for production deployments.
+If connected to a public or shared network as-is, anyone who can reach the Redis port might read, modify, or delete its data.
+RedisInsight-enabled images also publish the port for its web UI.
+Use these helpers only in a trusted local environment.
+
+For development and local inspection, the Redis Stack image includes RedisInsight for viewing and operating on data.
+For production deployments, prefer the Redis Stack Server image without RedisInsight.
+The server-only image avoids running an unnecessary web UI, published port, process, and persistent state in the same container as the production Redis server.
+This image choice alone does not secure a production deployment; configure authentication, Transport Layer Security (TLS), network access controls, persistence, and backups separately.
+See the official Redis documentation on [running Redis Stack with Docker](https://redis.io/docs/latest/operate/oss_and_stack/install/archive/install-stack/docker/) for the intended use of each image.
 
 The scripts use pinned image tags instead of `latest`:
 
