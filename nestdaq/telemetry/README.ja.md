@@ -48,6 +48,28 @@ OTLPはOpenTelemetry Protocol、gRPCはGoogle remote procedure callの略です�
 この実装共有ライブラリは別名の`http`、`otlp_http`、`grpc`、`otlp_grpc`も受け付けます。
 空のプロトコルはシグナルを無効にします。
 
+### 1.1. ログの出力先と切り替え方法
+
+FairLoggerとspdlogのネイティブ出力、およびOpenTelemetryログエクスポーターでは、出力先ごとに異なるオプションを使用します。
+
+| ログ経路 | 対象 | 出力先 | 切り替え方法 | 既定 |
+| --- | --- | --- | --- | --- |
+| FairLoggerネイティブコンソール | FairLoggerログ | 標準出力 | `--severity=<重大度>`。`nolog`は`fatal`以外を抑止 | `info`相当で有効 |
+| FairLoggerネイティブファイル | FairLoggerログ | `PREFIX_YYYY-MM-DD_HH_MM_SS.log` | `--log-to-file=PREFIX`で有効化し、`--file-severity`で最低重大度を指定 | 無効 |
+| spdlogネイティブコンソール | `createSpdlogLogger()`で作成したロガー | 標準出力 | `--spdlog-native-console=true`または`false`。書式は`--spdlog-console-pattern`で指定 | 有効 |
+| spdlogネイティブファイル | ファイルシンクを接続したspdlogロガー | アプリケーションが指定したファイル | spdlogのファイルシンクをC++コードで接続。NestDAQのコマンドラインオプションはありません | 未接続 |
+| OpenTelemetry `console`エクスポーター | FairLoggerカスタムシンクと、NestDAQ spdlogシンクを接続したロガー | 構造化したログを標準出力へ出力 | `--otel-log-protocol=console` | 既定で選択。実装共有ライブラリの初期化成功後に有効 |
+| OpenTelemetry OTLP HTTPエクスポーター | 同上 | `--otel-log-endpoint-http`で指定したCollector | `--otel-log-protocol=otlp-http` | 未選択 |
+| OpenTelemetry OTLP gRPCエクスポーター | 同上 | `--otel-log-endpoint-grpc`で指定したCollector | `--otel-log-protocol=otlp-grpc` | 未選択 |
+| OpenTelemetryログエクスポートなし | 同上 | 出力なし | `--otel-log-protocol=` | 未選択 |
+
+`--otel-log-protocol`には`console,otlp-grpc`のように複数の出力先を指定できます。
+FairLoggerで`--log-to-file`を起動時に指定すると、FairLoggerのネイティブコンソール出力は`fatal`を除いて抑止されます。
+`--severity=nolog`もFairLoggerのネイティブコンソール出力を`fatal`以外について抑止しますが、FairLoggerカスタムシンクからOpenTelemetryへのエクスポートは停止しません。
+同様に、`--spdlog-native-console`はspdlogのネイティブコンソール出力だけを切り替えます。
+ネイティブコンソールとOpenTelemetryの`console`エクスポーターを同時に有効にすると、同じログが異なる書式で標準出力へ2回出力される場合があります。
+NestDAQテレメトリーとspdlogのオプション、および対応する環境変数は、第6節「コマンドラインオプション」を参照してください。
+
 <a id="2-resource-attributes"></a>
 ## 2. リソース属性
 
@@ -122,7 +144,7 @@ NestDAQはspdlogの既定ロガー、レジストリー、ログレベルを変�
 
 auto logger = spdlog::logger{
     "sampler",
-    {nestdaq::telemetry::CreateSpdlogOpenTelemetrySink()},
+    {nestdaq::telemetry::createSpdlogOpenTelemetrySink()},
 };
 logger.info("event accepted");
 ```

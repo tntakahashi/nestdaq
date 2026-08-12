@@ -47,6 +47,28 @@ OTLP means OpenTelemetry Protocol, and gRPC means Google remote procedure call.
 The implementation library also accepts the aliases `http`, `otlp_http`, `grpc`, and `otlp_grpc`.
 An empty protocol disables the signal.
 
+### 1.1. Log Output Destinations and Controls
+
+FairLogger and spdlog native outputs and the OpenTelemetry log exporters use separate controls for each destination.
+
+| Log path | Applies to | Destination | How to select it | Default |
+| --- | --- | --- | --- | --- |
+| FairLogger native console | FairLogger logs | Standard output | `--severity=<level>`; `nolog` suppresses records other than `fatal` | Enabled at an effective `info` level |
+| FairLogger native file | FairLogger logs | `PREFIX_YYYY-MM-DD_HH_MM_SS.log` | Set `--log-to-file=PREFIX`; set the minimum severity with `--file-severity` | Disabled |
+| spdlog native console | Loggers created by `createSpdlogLogger()` | Standard output | `--spdlog-native-console=true` or `false`; set the format with `--spdlog-console-pattern` | Enabled |
+| spdlog native file | spdlog loggers with an attached file sink | File selected by the application | Attach a spdlog file sink in C++; NestDAQ provides no command-line option | Not attached |
+| OpenTelemetry `console` exporter | FairLogger custom sink and loggers with the NestDAQ spdlog sink | Structured logs on standard output | `--otel-log-protocol=console` | Selected by default; active after successful implementation-library initialization |
+| OpenTelemetry OTLP HTTP exporter | Same as above | Collector selected by `--otel-log-endpoint-http` | `--otel-log-protocol=otlp-http` | Not selected |
+| OpenTelemetry OTLP gRPC exporter | Same as above | Collector selected by `--otel-log-endpoint-grpc` | `--otel-log-protocol=otlp-grpc` | Not selected |
+| No OpenTelemetry log export | Same as above | No output | `--otel-log-protocol=` | Not selected |
+
+`--otel-log-protocol` accepts multiple destinations, such as `console,otlp-grpc`.
+Supplying `--log-to-file` at startup suppresses FairLogger native console records other than `fatal`.
+`--severity=nolog` also suppresses non-`fatal` FairLogger native console records, but it does not stop the FairLogger custom sink from exporting to OpenTelemetry.
+Similarly, `--spdlog-native-console` controls only the spdlog native console output.
+Enabling both a native console and the OpenTelemetry `console` exporter can write the same log to standard output twice with different formats.
+See Section 6, "Command-Line Options," for the NestDAQ telemetry and spdlog options and their corresponding environment variables.
+
 ## 2. Resource Attributes
 
 Logs, metrics, and traces share one OpenTelemetry resource.
@@ -118,7 +140,7 @@ Applications attach the returned sink to each spdlog logger that should export O
 
 auto logger = spdlog::logger{
     "sampler",
-    {nestdaq::telemetry::CreateSpdlogOpenTelemetrySink()},
+    {nestdaq::telemetry::createSpdlogOpenTelemetrySink()},
 };
 logger.info("event accepted");
 ```
