@@ -7,7 +7,7 @@
 このローカル検証用スタックは、OpenTelemetry CollectorでOpenTelemetryのログ、メトリクス、トレースを受信します。
 受信したデータをVictoriaスタックを構成する各サービスに保存し、Grafanaで表示します。
 
-このバックエンドは実験的で、まだ十分に検証されていません。
+<u><strong>このバックエンドは実験的で、まだ十分に検証されていません。</strong></u>
 
 この文書で**Compose**とは、Docker Compose (`docker compose`) またはPodman Compose (`podman compose`) を指します。
 どちらかを使用してこのスタックを管理します。

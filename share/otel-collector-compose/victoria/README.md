@@ -7,7 +7,7 @@
 This local validation stack uses OpenTelemetry Collector to receive OpenTelemetry logs, metrics, and traces.
 It stores the data in Victoria stack services and displays it in Grafana.
 
-This backend is experimental and not yet fully verified.
+<u><strong>This backend is experimental and not yet fully verified.</strong></u>
 
 In this document, **Compose** means either Docker Compose (`docker compose`) or Podman Compose (`podman compose`).
 Use either implementation to manage this stack.

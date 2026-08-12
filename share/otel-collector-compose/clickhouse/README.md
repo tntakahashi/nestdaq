@@ -7,7 +7,7 @@
 This local validation stack uses the ClickStack OpenTelemetry Collector to receive OpenTelemetry logs, metrics, and traces.
 It stores the data in ClickHouse and displays it in the ClickStack user interface (UI).
 
-This backend is experimental and not yet fully verified.
+<u><strong>This backend is experimental and not yet fully verified.</strong></u>
 
 In this document, **Compose** means either Docker Compose (`docker compose`) or Podman Compose (`podman compose`).
 Use either implementation to manage this stack.

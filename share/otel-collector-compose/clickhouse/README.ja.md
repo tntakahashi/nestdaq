@@ -7,7 +7,7 @@
 このローカル検証用スタックは、ClickStack OpenTelemetry CollectorでOpenTelemetryのログ、メトリクス、トレースを受信します。
 受信したデータをClickHouseに保存し、ClickStackユーザーインターフェース (UI) で表示します。
 
-このバックエンドは実験的で、まだ十分に検証されていません。
+<u><strong>このバックエンドは実験的で、まだ十分に検証されていません。</strong></u>
 
 この文書で**Compose**とは、Docker Compose (`docker compose`) またはPodman Compose (`podman compose`) を指します。
 どちらかを使用してこのスタックを管理します。
