@@ -4,7 +4,7 @@
 
 [Next: Installation](INSTALL.md)
 
-NestDAQ is a framework for building streaming data acquisition (DAQ) applications for particle-beam measurements.
+NestDAQ is a framework for building streaming data acquisition (DAQ) applications for particle measurements.
 Building and installing this repository provides common components and tools, but does not by itself create a DAQ application that works with real detector electronics.
 DAQ application code for specific detectors and hardware is outside the scope of this repository.
 
