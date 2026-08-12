@@ -352,19 +352,19 @@ spdlogのフィルター処理は、引き続きspdlogロガーおよびシン�
 my-device
 ```
 
-### 7.3. OTLP HTTPによるエクスポート
+### 7.3. OTLP gRPCによるエクスポート
 
-ログ、メトリクス、トレースをOTLP HTTP Collectorへ送信します。
+ログ、メトリクス、トレースをOTLP gRPCでCollectorへ送信します。
 
 ```sh
-# deviceのlogs、metrics、tracesをOTLP HTTPでcollectorへexportします。
+# deviceのlogs、metrics、tracesをOTLP gRPCでcollectorへexportします。
 my-device \
-  --otel-log-protocol=otlp-http \
-  --otel-metric-protocol=otlp-http \
-  --otel-trace-protocol=otlp-http \
-  --otel-log-endpoint-http=http://collector:4318/v1/logs \
-  --otel-metric-endpoint-http=http://collector:4318/v1/metrics \
-  --otel-trace-endpoint-http=http://collector:4318/v1/traces
+  --otel-log-protocol=otlp-grpc \
+  --otel-metric-protocol=otlp-grpc \
+  --otel-trace-protocol=otlp-grpc \
+  --otel-log-endpoint-grpc=collector:4317 \
+  --otel-metric-endpoint-grpc=collector:4317 \
+  --otel-trace-endpoint-grpc=collector:4317
 ```
 
 ### 7.4. ログエクスポートの無効化

@@ -343,19 +343,19 @@ By default, NestDAQ exports logs to the console exporter and leaves metrics and 
 my-device
 ```
 
-### 7.3. Export over OTLP HTTP
+### 7.3. Export over OTLP gRPC
 
-Send logs, metrics, and traces to an OTLP HTTP collector:
+Send logs, metrics, and traces to a Collector over OTLP gRPC:
 
 ```sh
-# Export the device's logs, metrics, and traces to the collector over OTLP HTTP.
+# Export the device's logs, metrics, and traces to the collector over OTLP gRPC.
 my-device \
-  --otel-log-protocol=otlp-http \
-  --otel-metric-protocol=otlp-http \
-  --otel-trace-protocol=otlp-http \
-  --otel-log-endpoint-http=http://collector:4318/v1/logs \
-  --otel-metric-endpoint-http=http://collector:4318/v1/metrics \
-  --otel-trace-endpoint-http=http://collector:4318/v1/traces
+  --otel-log-protocol=otlp-grpc \
+  --otel-metric-protocol=otlp-grpc \
+  --otel-trace-protocol=otlp-grpc \
+  --otel-log-endpoint-grpc=collector:4317 \
+  --otel-metric-endpoint-grpc=collector:4317 \
+  --otel-trace-endpoint-grpc=collector:4317
 ```
 
 ### 7.4. Disable Log Export
