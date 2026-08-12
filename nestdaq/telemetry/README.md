@@ -332,6 +332,7 @@ Severity names are `nolog`, `trace`, `debug4`, `debug3`, `debug2`, `debug1`, `de
 By default, NestDAQ exports logs to the console exporter and leaves metrics and traces disabled:
 
 Lines beginning with `#` inside shell command examples are comments for the reader and are not executed by the shell.
+To focus on telemetry configuration, the following command examples omit the options required to load and configure the NestDAQ FairMQ plugins.
 
 ```sh
 # Start the device with the default telemetry exporters.
