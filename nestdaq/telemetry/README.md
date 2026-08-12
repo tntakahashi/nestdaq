@@ -51,6 +51,44 @@ An empty protocol disables the signal.
 
 FairLogger and spdlog native outputs and the OpenTelemetry log exporters use separate controls for each destination.
 
+The arrows in the following diagram show the direction of log-data flow.
+
+```mermaid
+flowchart LR
+    FL["FairLogger logs"]
+    SP["spdlog logs"]
+
+    FLC["FairLogger<br/>native console"]
+    FLF["FairLogger<br/>native file"]
+    FLO["FairLogger<br/>OpenTelemetry custom sink"]
+    SPC["spdlog<br/>native console sink"]
+    SPF["spdlog<br/>file sink"]
+    SPO["NestDAQ<br/>spdlog OpenTelemetry sink"]
+    OTE["OpenTelemetry<br/>log exporters"]
+
+    OUT["Standard output"]
+    FILE["Log file"]
+    COL["OpenTelemetry Collector"]
+
+    FL -->|"--severity"| FLC
+    FL -->|"--log-to-file"| FLF
+    FL --> FLO
+    SP -->|"--spdlog-native-console"| SPC
+    SP -->|"Attach in C++"| SPF
+    SP -->|"Attach in C++"| SPO
+
+    FLC --> OUT
+    FLF --> FILE
+    SPF --> FILE
+    FLO --> OTE
+    SPO --> OTE
+    SPC --> OUT
+
+    OTE -->|"--otel-log-protocol=console"| OUT
+    OTE -->|"--otel-log-protocol=otlp-http"| COL
+    OTE -->|"--otel-log-protocol=otlp-grpc"| COL
+```
+
 | Log path | Applies to | Destination | How to select it | Default |
 | --- | --- | --- | --- | --- |
 | FairLogger native console | FairLogger logs | Standard output | `--severity=<level>`; `nolog` suppresses records other than `fatal` | Enabled at an effective `info` level |

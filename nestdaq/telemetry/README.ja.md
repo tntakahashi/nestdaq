@@ -52,6 +52,44 @@ OTLPはOpenTelemetry Protocol、gRPCはGoogle remote procedure callの略です�
 
 FairLoggerとspdlogのネイティブ出力、およびOpenTelemetryログエクスポーターでは、出力先ごとに異なるオプションを使用します。
 
+次の図の矢印は、ログデータが流れる方向を示します。
+
+```mermaid
+flowchart LR
+    FL["FairLoggerログ"]
+    SP["spdlogログ"]
+
+    FLC["FairLogger<br/>ネイティブコンソール"]
+    FLF["FairLogger<br/>ネイティブファイル"]
+    FLO["FairLogger<br/>OpenTelemetryカスタムシンク"]
+    SPC["spdlog<br/>ネイティブコンソールシンク"]
+    SPF["spdlog<br/>ファイルシンク"]
+    SPO["NestDAQ<br/>spdlog OpenTelemetryシンク"]
+    OTE["OpenTelemetry<br/>ログエクスポーター"]
+
+    OUT["標準出力"]
+    FILE["ログファイル"]
+    COL["OpenTelemetry Collector"]
+
+    FL -->|"--severity"| FLC
+    FL -->|"--log-to-file"| FLF
+    FL --> FLO
+    SP -->|"--spdlog-native-console"| SPC
+    SP -->|"C++コードで接続"| SPF
+    SP -->|"C++コードで接続"| SPO
+
+    FLC --> OUT
+    FLF --> FILE
+    SPF --> FILE
+    FLO --> OTE
+    SPO --> OTE
+    SPC --> OUT
+
+    OTE -->|"--otel-log-protocol=console"| OUT
+    OTE -->|"--otel-log-protocol=otlp-http"| COL
+    OTE -->|"--otel-log-protocol=otlp-grpc"| COL
+```
+
 | ログ経路 | 対象 | 出力先 | 切り替え方法 | 既定 |
 | --- | --- | --- | --- | --- |
 | FairLoggerネイティブコンソール | FairLoggerログ | 標準出力 | `--severity=<重大度>`。`nolog`は`fatal`以外を抑止 | `info`相当で有効 |
