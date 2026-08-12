@@ -18,9 +18,9 @@ Use the files in the subdirectory that corresponds to the storage stack you want
 
 - [`opensearch/`](opensearch/README.md): Stores logs and traces in OpenSearch and displays them in OpenSearch Dashboards.
 - [`victoria/`](victoria/README.md): Stores logs, metrics, and traces in VictoriaLogs, VictoriaMetrics, and VictoriaTraces, and displays them in Grafana.
-  This storage stack is experimental and not yet fully verified.
+  <u><strong>This storage stack is experimental and not yet fully verified.</strong></u>
 - [`clickhouse/`](clickhouse/README.md): Stores logs, metrics, and traces in ClickStack and displays them in the ClickStack user interface (UI).
-  This storage stack is experimental and not yet fully verified.
+  <u><strong>This storage stack is experimental and not yet fully verified.</strong></u>
 
 See the linked README for startup instructions, environment variables, and stored-data directories.
 

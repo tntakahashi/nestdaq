@@ -18,9 +18,9 @@
 
 - [`opensearch/`](opensearch/README.ja.md): OpenSearchにログとトレースを保存し、OpenSearch Dashboardsで表示します。
 - [`victoria/`](victoria/README.ja.md): VictoriaLogs、VictoriaMetrics、VictoriaTracesにログ、メトリクス、トレースを保存し、Grafanaで表示します。
-  この保存先構成は実験的で、まだ十分に検証されていません。
+  <u><strong>この保存先構成は実験的で、まだ十分に検証されていません。</strong></u>
 - [`clickhouse/`](clickhouse/README.ja.md): ClickStackにログ、メトリクス、トレースを保存し、ClickStackユーザーインターフェース (UI) で表示します。
-  この保存先構成は実験的で、まだ十分に検証されていません。
+  <u><strong>この保存先構成は実験的で、まだ十分に検証されていません。</strong></u>
 
 起動方法、環境変数、保存データのディレクトリについては、上記リンク先のREADMEファイルを参照してください。
 
