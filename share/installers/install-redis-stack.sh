@@ -4,7 +4,7 @@ set -eu
 ACTION="${1:-install}"
 REDIS_PACKAGE="${REDIS_PACKAGE:-redis}"
 REDIS_VERSION="${REDIS_VERSION:-8.2.7}"
-SUDO="${SUDO:-sudo}"
+SUDO="${SUDO-sudo}"
 if [ "$(id -u)" -eq 0 ]; then
   SUDO=""
 fi
@@ -33,7 +33,8 @@ Environment:
                  your repository provides it and you want RedisInsight included.
   REDIS_VERSION  Redis version to install. Default: ${REDIS_VERSION}
                  Set to latest to install or upgrade to the repository default.
-  SUDO           Privilege wrapper. Default: sudo, or empty when run as root.
+  SUDO           Privilege wrapper. Default: sudo. Empty disables the wrapper;
+                 the wrapper is also disabled automatically when run as root.
 
 Examples:
   $0 install

@@ -48,11 +48,17 @@ Review these files manually before deleting them.
 If `systemd` manages a service, stop and disable the service before uninstalling its package.
 See <a href="#6-systemd-management">systemd Management</a>.
 
-Set `SUDO=` when running as root or when providing a custom privilege wrapper:
+For normal use, the scripts use `sudo` as the default and recommended privilege wrapper.
+Setting `SUDO=sudo` is valid but redundant.
+When run as root, the scripts automatically omit the wrapper, so no `SUDO` assignment is needed.
+If `doas` is installed and configured, it can be selected as an optional alternative.
+Setting `SUDO=` explicitly disables the wrapper and should be used only when the commands already have the required privileges.
 
 ```sh
-# Run the installer through doas instead of sudo.
+# Use doas only when it is installed and configured for the required commands.
 SUDO=doas ./install-opensearch.sh install
+# Disable the wrapper only when the commands already have the required privileges.
+SUDO= ./install-opensearch.sh install
 ```
 
 ## 3. Redis

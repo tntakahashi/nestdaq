@@ -6,7 +6,7 @@ OPENSEARCH_DASHBOARDS_VERSION="${OPENSEARCH_DASHBOARDS_VERSION:-2.19.5}"
 OPENSEARCH_DASHBOARDS_INSTALL_SECURITY="${OPENSEARCH_DASHBOARDS_INSTALL_SECURITY:-disabled}"
 OPENSEARCH_DASHBOARDS_APT_GPGCHECK="${OPENSEARCH_DASHBOARDS_APT_GPGCHECK:-enabled}"
 OPENSEARCH_DASHBOARDS_RPM_GPGCHECK="${OPENSEARCH_DASHBOARDS_RPM_GPGCHECK:-enabled}"
-SUDO="${SUDO:-sudo}"
+SUDO="${SUDO-sudo}"
 if [ "$(id -u)" -eq 0 ]; then
   SUDO=""
 fi
@@ -30,7 +30,8 @@ Environment:
   OPENSEARCH_DASHBOARDS_INSTALL_SECURITY  disabled or enabled. Default: ${OPENSEARCH_DASHBOARDS_INSTALL_SECURITY}
   OPENSEARCH_DASHBOARDS_APT_GPGCHECK      enabled or disabled. Default: ${OPENSEARCH_DASHBOARDS_APT_GPGCHECK}
   OPENSEARCH_DASHBOARDS_RPM_GPGCHECK      enabled or disabled. Default: ${OPENSEARCH_DASHBOARDS_RPM_GPGCHECK}
-  SUDO                                    Privilege wrapper. Default: sudo, or empty when run as root.
+  SUDO                                    Privilege wrapper. Default: sudo. Empty disables the wrapper;
+                                          the wrapper is also disabled automatically when run as root.
 
 Examples:
   $0 install
