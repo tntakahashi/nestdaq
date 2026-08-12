@@ -380,6 +380,8 @@ my-device --otel-log-protocol
 
 spdlogパターンを設定し、カスタムパターンのspdlogネイティブコンソールシンクを使用します。
 ネイティブコンソールシンクは既定で有効で、OTel spdlogシンクと同時に動作できます。
+使用できるパターンフラグの一覧は、spdlog公式Wikiの[Custom formatting](https://github.com/gabime/spdlog/wiki/3.-Custom-formatting)を参照してください。
+以下の例では、`%n`がロガー名、`%l`がログレベル、`%v`がログメッセージ本文を表します。
 
 ```sh
 # OTLP gRPCでlogをexportし、native console formatを変更します。

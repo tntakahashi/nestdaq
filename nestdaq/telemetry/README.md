@@ -371,6 +371,8 @@ my-device --otel-log-protocol
 
 Set the spdlog pattern to use its native console sink with a custom pattern.
 The native console sink is enabled by default and can run alongside the OTel spdlog sink:
+See the official spdlog Wiki page [Custom formatting](https://github.com/gabime/spdlog/wiki/3.-Custom-formatting) for the complete list of pattern flags.
+In the following example, `%n` is the logger name, `%l` is the log level, and `%v` is the log message payload.
 
 ```sh
 # Export logs over OTLP gRPC and customize the native console format.
