@@ -90,13 +90,25 @@ Podmanでは、同じComposeファイルを`podman compose`で使用してくだ
 NestDAQプロセスを実行する場所に応じて、テレメトリーエンドポイントを選択してください。
 同じ規則がNestDAQデバイスプロセスと`daq-webctl`の両方に適用されます。
 
-| 送信元の場所 | OpenSearch/Victoriaエンドポイント | ClickStackエンドポイント |
-| :-- | :-- | :-- |
-| 公開ポートを使用するホストプロセス | gRPC: `localhost:4317`、HTTP: `http://localhost:4318` | gRPC: `localhost:4317`、HTTP: `http://localhost:4318` |
-| 同じComposeネットワーク内のコンテナー | gRPC: `otel-collector:4317`、HTTP: `http://otel-collector:4318` | gRPC: `clickstack:4317`、HTTP: `http://clickstack:4318` |
-| Composeネットワーク外からホストの公開ポートを使用するコンテナー | DockerではgRPC: `host.docker.internal:4317`、HTTP: `http://host.docker.internal:4318`。PodmanではgRPC: `host.containers.internal:4317`、HTTP: `http://host.containers.internal:4318` | DockerではgRPC: `host.docker.internal:4317`、HTTP: `http://host.docker.internal:4318`。PodmanではgRPC: `host.containers.internal:4317`、HTTP: `http://host.containers.internal:4318` |
+最初に、送信元と保存先構成に応じて接続先ホストを選択します。
 
-OTLP HTTPでは、`/v1/logs`、`/v1/metrics`、`/v1/traces`など、テレメトリークライアントが必要とするシグナル固有のパスを使用してください。
+| 送信元の場所 | OpenSearch/Victoriaの接続先ホスト | ClickStackの接続先ホスト |
+| :-- | :-- | :-- |
+| 公開ポートを使用するホストプロセス | `localhost` | `localhost` |
+| 同じComposeネットワーク内のコンテナー | `otel-collector` | `clickstack` |
+| Composeネットワーク外のDockerコンテナー | `host.docker.internal` | `host.docker.internal` |
+| Composeネットワーク外のPodmanコンテナー | `host.containers.internal` | `host.containers.internal` |
+
+次に、使用するプロトコルに対応するポートと形式でエンドポイントを組み立てます。
+
+| プロトコル | デフォルトのポート | エンドポイントの形式 |
+| :-- | :-- | :-- |
+| OTLP gRPC | `4317` | `<host>:4317` |
+| OTLP HTTP | `4318` | `http://<host>:4318/v1/<signal>` |
+
+OTLP HTTPの`<signal>`には、送信するデータに応じて`logs`、`metrics`、`traces`を指定します。
+例えば、ホストプロセスからOpenSearch構成のOpenTelemetry Collectorへ送信する場合、OTLP gRPCエンドポイントは`localhost:4317`です。
+OTLP HTTPエンドポイントは、ログでは`http://localhost:4318/v1/logs`、トレースでは`http://localhost:4318/v1/traces`です。
 
 <a id="4-backend-details"></a>
 ## 4. Composeファイルの共通設定

@@ -87,13 +87,25 @@ See the storage-stack README for the exact directory names.
 Choose the telemetry endpoint according to where the NestDAQ process runs.
 The same rule applies to NestDAQ device processes and `daq-webctl`.
 
-| Sender location | OpenSearch/Victoria endpoint | ClickStack endpoint |
-| :-- | :-- | :-- |
-| Host process using published ports | gRPC: `localhost:4317`; HTTP: `http://localhost:4318` | gRPC: `localhost:4317`; HTTP: `http://localhost:4318` |
-| Container in the same Compose network | gRPC: `otel-collector:4317`; HTTP: `http://otel-collector:4318` | gRPC: `clickstack:4317`; HTTP: `http://clickstack:4318` |
-| Container outside the Compose network using host-published ports | Docker, gRPC: `host.docker.internal:4317`; Docker, HTTP: `http://host.docker.internal:4318`; Podman, gRPC: `host.containers.internal:4317`; Podman, HTTP: `http://host.containers.internal:4318` | Docker, gRPC: `host.docker.internal:4317`; Docker, HTTP: `http://host.docker.internal:4318`; Podman, gRPC: `host.containers.internal:4317`; Podman, HTTP: `http://host.containers.internal:4318` |
+First, select the destination host according to the sender location and storage stack.
 
-For OTLP HTTP, use the signal-specific paths required by the telemetry client, such as `/v1/logs`, `/v1/metrics`, and `/v1/traces`.
+| Sender location | OpenSearch/Victoria destination host | ClickStack destination host |
+| :-- | :-- | :-- |
+| Host process using published ports | `localhost` | `localhost` |
+| Container in the same Compose network | `otel-collector` | `clickstack` |
+| Docker container outside the Compose network | `host.docker.internal` | `host.docker.internal` |
+| Podman container outside the Compose network | `host.containers.internal` | `host.containers.internal` |
+
+Then construct the endpoint with the port and format for the selected protocol.
+
+| Protocol | Default port | Endpoint format |
+| :-- | :-- | :-- |
+| OTLP gRPC | `4317` | `<host>:4317` |
+| OTLP HTTP | `4318` | `http://<host>:4318/v1/<signal>` |
+
+For OTLP HTTP, replace `<signal>` with `logs`, `metrics`, or `traces` according to the data being sent.
+For example, when a host process sends data to the OpenTelemetry Collector in the OpenSearch stack, the OTLP gRPC endpoint is `localhost:4317`.
+The OTLP HTTP endpoint is `http://localhost:4318/v1/logs` for logs or `http://localhost:4318/v1/traces` for traces.
 
 ## 4. Common Compose-File Settings
 
