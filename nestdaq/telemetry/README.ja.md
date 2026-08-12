@@ -30,8 +30,11 @@ NestDAQは、`--otel-library`で指定したパスまたはsonameを`dlopen()`�
 ## 1. OpenTelemetry共有ライブラリの読み込みモデル
 
 NestDAQは、OpenTelemetry実装共有ライブラリ内にプロセス全体で共有するOpenTelemetryプロバイダーを導入します。
-プロセス全体で共有するカスタムシンクがFairLoggerログを取得します。
-NestDAQ spdlogシンクを明示的に接続したロガーだけがspdlogログをエクスポートします。
+ログの取得方法は、ロギングライブラリーによって異なります。
+
+- FairLogger：プロセス全体で共有するカスタムシンクがログを取得します。
+- spdlog：NestDAQ spdlogシンクを明示的に接続したロガーだけがログをエクスポートします。
+
 メトリクスとトレースは、OpenTelemetry C++ヘッダーを直接公開しないNestDAQの薄いラッパーAPIを通じて記録されます。
 
 動的に読み込まれるOpenTelemetry実装共有ライブラリは、公開C ABIを`OpenTelemetryInitializer.cxx`で定義します。

@@ -29,8 +29,11 @@ The Default column shows the exporter selection when neither the corresponding p
 ## 1. OpenTelemetry Shared-Library Loading Model
 
 NestDAQ installs process-wide OpenTelemetry providers inside the implementation library.
-A process-wide custom sink captures FairLogger logs.
-Only loggers that explicitly attach the NestDAQ spdlog sink export spdlog logs.
+Log capture differs by logging library:
+
+- FairLogger: A process-wide custom sink captures logs.
+- spdlog: Only loggers that explicitly attach the NestDAQ spdlog sink export logs.
+
 The NestDAQ thin wrapper API records metrics and traces without exposing OpenTelemetry C++ headers.
 
 The dynamically loaded OpenTelemetry implementation library defines the public C ABI in `OpenTelemetryInitializer.cxx`.
