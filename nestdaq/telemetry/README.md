@@ -329,15 +329,21 @@ Severity names are `nolog`, `trace`, `debug4`, `debug3`, `debug2`, `debug1`, `de
 
 ## 7. Examples
 
-By default, NestDAQ exports logs to the console exporter and leaves metrics and traces disabled:
+### 7.1. Notes Common to the Command Examples
 
 Lines beginning with `#` inside shell command examples are comments for the reader and are not executed by the shell.
 To focus on telemetry configuration, the following command examples omit the options required to load and configure the NestDAQ FairMQ plugins.
+
+### 7.2. Default Exporters
+
+By default, NestDAQ exports logs to the console exporter and leaves metrics and traces disabled:
 
 ```sh
 # Start the device with the default telemetry exporters.
 my-device
 ```
+
+### 7.3. Export over OTLP HTTP
 
 Send logs, metrics, and traces to an OTLP HTTP collector:
 
@@ -352,12 +358,16 @@ my-device \
   --otel-trace-endpoint-http=http://collector:4318/v1/traces
 ```
 
+### 7.4. Disable Log Export
+
 Disable logs explicitly by passing the protocol option without a value:
 
 ```sh
 # Start the device with log export explicitly disabled.
 my-device --otel-log-protocol
 ```
+
+### 7.5. spdlog Native Console Format
 
 Set the spdlog pattern to use its native console sink with a custom pattern.
 The native console sink is enabled by default and can run alongside the OTel spdlog sink:
@@ -369,6 +379,8 @@ my-device \
   --spdlog-console-pattern '[%n] [%l] %v'
 ```
 
+### 7.6. Disable the spdlog Native Console
+
 Disable only the native spdlog console output while keeping OTel spdlog export enabled:
 
 ```sh
@@ -377,6 +389,8 @@ my-device \
   --otel-log-protocol=otlp-grpc \
   --spdlog-native-console=false
 ```
+
+### 7.7. Asynchronous spdlog Helper Logger
 
 NestDAQ helper loggers are synchronous by default and use spdlog multi-thread-safe sinks.
 Enable async mode when the logging frequency is high enough that caller threads should hand records to a background worker:
@@ -394,6 +408,8 @@ The `block` overflow policy avoids losing log records but can make caller thread
 `overrun_oldest` drops old queued records, and `discard_new` drops newly submitted records when the queue is full.
 The async queue size and worker count are applied when an async helper logger is created.
 Changing these settings later does not modify existing loggers.
+
+### 7.8. C++ Attribute Wrapper API
 
 Use the C++ thin API from an application that manages telemetry explicitly:
 
@@ -437,6 +453,8 @@ span.SetAttribute({
 
 The recommended application-facing form is the `Attribute` wrapper used by `events.Add(...)`, `queueDepth.Record(...)`, and `StartSpan(..., { ... })`.
 It keeps string storage alive while NestDAQ converts attributes to the C ABI form and is the form that examples should normally use.
+
+### 7.9. Low-Level C ABI Attributes
 
 Advanced code can pass prebuilt C ABI attributes directly.
 This form avoids the temporary `Attribute` wrapper conversion and is useful for hot paths or code that already owns a `nestdaq_otel_attribute` buffer:
