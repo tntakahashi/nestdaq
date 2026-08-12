@@ -12,25 +12,7 @@ This backend is experimental and not yet fully verified.
 In this document, **Compose** means either Docker Compose (`docker compose`) or Podman Compose (`podman compose`).
 Use either implementation to manage this stack.
 
-Do not start the stack directly from the installation directory.
-Follow the [parent README startup procedure](../README.md#1-start) to copy the setup to a writable working directory.
-Run the following commands from `victoria/` in that working copy.
-When changing a data location, create the target directory before startup and give the container suitable ownership and permissions.
-The `:Z` options already present in the Compose file apply the SELinux labels.
-In the shell command examples below, lines beginning with `#` are explanatory comments for the reader and are not executed by the shell.
-
-```bash
-# Start the Victoria validation stack with Docker Compose.
-docker compose -f compose-victoria.yaml up
-```
-
-For Podman:
-
-```bash
-# Start the Victoria validation stack with Podman Compose.
-podman compose -f compose-victoria.yaml up
-```
-
+<a id="1-components"></a>
 ## 1. Components
 
 - `otel-collector`: receives OpenTelemetry Protocol (OTLP) logs, metrics, and traces.
@@ -39,35 +21,18 @@ podman compose -f compose-victoria.yaml up
 - `victoriatraces`: stores traces.
 - `grafana`: provides Explore views and dashboards for the Victoria services.
 
-Grafana is provisioned with VictoriaMetrics, VictoriaLogs, and VictoriaTraces data sources.
-VictoriaTraces uses Grafana's built-in Jaeger data source with the following URL:
+<a id="2-before-startup"></a>
+## 2. Before startup
 
-```text
-http://victoriatraces:10428/select/jaeger
-```
+Do not start the stack directly from the installation directory.
+Follow the [parent README startup procedure](../README.md#1-start) to copy the setup to a writable working directory.
+Run the following commands from `victoria/` in that working copy.
 
-The collector exports logs, metrics, and traces to the following endpoints:
+When changing a data location, create the target directory before startup and give the container suitable ownership and permissions.
+The `:Z` options already present in the Compose file apply the SELinux labels.
 
-```text
-http://victorialogs:9428/insert/opentelemetry/v1/logs
-http://victoriametrics:8428/opentelemetry/v1/metrics
-http://victoriatraces:10428/insert/opentelemetry/v1/traces
-```
-
-## 2. Ports
-
-- VictoriaMetrics: `http://localhost:8428`
-- VictoriaLogs: `http://localhost:9428`
-- VictoriaTraces: `http://localhost:10428`
-- Grafana: `http://localhost:3000`
-- OTLP Google remote procedure call (gRPC) receiver: `localhost:4317`
-- OTLP HTTP receiver: `http://localhost:4318`
-
-Host processes use the `localhost` endpoints above.
-A NestDAQ device container or `daq-webctl` container in the same Compose network should use `otel-collector:4317` for OTLP gRPC or `http://otel-collector:4318` for OTLP HTTP.
-
-<a id="3-runtime-options"></a>
-## 3. Environment Variables
+<a id="2-1-environment-variables"></a>
+### 2.1. Environment variables
 
 | Variable | Default | Description |
 | :-- | :-- | :-- |
@@ -90,21 +55,88 @@ A NestDAQ device container or `daq-webctl` container in the same Compose network
 | `GRAFANA_PROVISIONING_DIR` | `./grafana/provisioning` | Grafana provisioning directory. |
 | `OTEL_COLLECTOR_CONFIG_FILE` | `./otel-collector-config-victoria.yaml` | Collector config file. |
 
-## 4. Stop
+<a id="3-start"></a>
+## 3. Start
+
+In the shell command examples below, lines beginning with `#` are explanatory comments for the reader and are not executed by the shell.
+
+<a id="3-1-docker-compose"></a>
+### 3.1. Docker Compose
+
+```bash
+# Start the Victoria validation stack with Docker Compose.
+docker compose -f compose-victoria.yaml up
+```
+
+<a id="3-2-podman-compose"></a>
+### 3.2. Podman Compose
+
+```bash
+# Start the Victoria validation stack with Podman Compose.
+podman compose -f compose-victoria.yaml up
+```
+
+<a id="4-verification-and-use"></a>
+## 4. Verification and use
+
+<a id="4-1-grafana"></a>
+### 4.1. Grafana
+
+After the stack starts, open `http://localhost:3000`.
+Grafana is provisioned with VictoriaMetrics, VictoriaLogs, and VictoriaTraces data sources.
+VictoriaTraces uses Grafana's built-in Jaeger data source with the following URL:
+
+```text
+http://victoriatraces:10428/select/jaeger
+```
+
+<a id="4-2-ports"></a>
+### 4.2. Ports
+
+- VictoriaMetrics: `http://localhost:8428`
+- VictoriaLogs: `http://localhost:9428`
+- VictoriaTraces: `http://localhost:10428`
+- Grafana: `http://localhost:3000`
+- OTLP Google remote procedure call (gRPC) receiver: `localhost:4317`
+- OTLP HTTP receiver: `http://localhost:4318`
+
+Host processes use the `localhost` endpoints above.
+A NestDAQ device container or `daq-webctl` container in the same Compose network should use `otel-collector:4317` for OTLP gRPC or `http://otel-collector:4318` for OTLP HTTP.
+
+<a id="4-3-collector-export-endpoints"></a>
+### 4.3. Collector export endpoints
+
+The collector exports logs, metrics, and traces to the following endpoints:
+
+```text
+http://victorialogs:9428/insert/opentelemetry/v1/logs
+http://victoriametrics:8428/opentelemetry/v1/metrics
+http://victoriatraces:10428/insert/opentelemetry/v1/traces
+```
+
+<a id="5-stop"></a>
+## 5. Stop
 
 Stop and remove the local validation containers and network:
+
+<a id="5-1-docker-compose"></a>
+### 5.1. Docker Compose
 
 ```bash
 # Stop and remove the Docker validation containers and network.
 docker compose -f compose-victoria.yaml down
 ```
 
-For Podman:
+<a id="5-2-podman-compose"></a>
+### 5.2. Podman Compose
 
 ```bash
 # Stop and remove the Podman validation containers and network.
 podman compose -f compose-victoria.yaml down
 ```
+
+<a id="6-delete-stored-victoria-and-grafana-data"></a>
+## 6. Delete stored Victoria and Grafana data
 
 The `down` command does not delete the Victoria and Grafana data directories.
 If you start this Compose setup again with the same data directories, the previous logs, metrics, traces, and Grafana state are reused.

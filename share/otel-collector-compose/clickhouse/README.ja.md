@@ -12,60 +12,25 @@
 この文書で**Compose**とは、Docker Compose (`docker compose`) またはPodman Compose (`podman compose`) を指します。
 どちらかを使用してこのスタックを管理します。
 
-インストール先から直接起動せず、[親READMEの起動手順](../README.ja.md#1-start)に従って構成を書き込み可能な作業ディレクトリへコピーしてください。
-以下のコマンドは、作業用コピー内の`clickhouse/`で実行します。
-データ保存先を変更する場合は、起動前に対象ディレクトリを作成し、コンテナーから書き込める所有権と権限を設定してください。
-Composeファイルに設定済みの`:Z`オプションが、SELinuxラベルを適用します。
-以下のシェルコマンド例では、`#`で始まる行は読者向けの説明コメントであり、シェルでは実行されません。
-
-```bash
-# Docker ComposeでClickHouseの検証用スタックを起動します。
-docker compose -f compose-clickhouse.yaml up
-```
-
-Podmanの場合:
-
-```bash
-# Podman ComposeでClickHouseの検証用スタックを起動します。
-podman compose -f compose-clickhouse.yaml up
-```
-
 <a id="1-components"></a>
 ## 1. コンポーネント
 
 - `clickstack`: ClickStack UI、OpenTelemetry Collector、ClickHouseを1つのコンテナーで実行します。
 
-ClickStack UIを`http://localhost:8080`で開いてください。
-初回利用時にUIユーザーを作成します。
-ClickStackはローカルのClickHouseインスタンスに接続し、ログ、メトリクス、トレース用のデータソースを準備します。
-
 このスタックはローカル検証用です。
 本番環境では、明示的な認証情報、保持ポリシー、バックアップポリシー、およびこのサンプルComposeファイルの外部で管理する配備トポロジーを使用してください。
 
-<a id="2-ports"></a>
-## 2. ポート
+<a id="2-before-startup"></a>
+## 2. 起動前の設定
 
-- ClickStack UI: `http://localhost:8080`
-- ClickHouse HTTP: `http://localhost:8123`
-- OpenTelemetry Protocol (OTLP) Googleリモートプロシージャコール (gRPC) レシーバー: `localhost:4317`
-- OTLP HTTPレシーバー: `http://localhost:4318`
+インストール先から直接起動せず、[親READMEの起動手順](../README.ja.md#1-start)に従って構成を書き込み可能な作業ディレクトリへコピーしてください。
+以下のコマンドは、作業用コピー内の`clickhouse/`で実行します。
 
-<a id="3-nestdaq-telemetry-endpoint-examples"></a>
-## 3. NestDAQテレメトリーエンドポイントの例
+データ保存先を変更する場合は、起動前に対象ディレクトリを作成し、コンテナーから書き込める所有権と権限を設定してください。
+Composeファイルに設定済みの`:Z`オプションが、SELinuxラベルを適用します。
 
-ホストプロセスはOTLP/gRPCに`localhost:4317`、OTLP/HTTPに`http://localhost:4318`を使用します。
-同じComposeネットワーク内のNestDAQデバイスコンテナーまたは`daq-webctl`コンテナーは、OTLP gRPCに`clickstack:4317`、OTLP HTTPに`http://clickstack:4318`を使用してください。
-
-例えば、HTTPエンドポイントでは次のパスを使用します。
-
-```text
-http://localhost:4318/v1/logs
-http://localhost:4318/v1/metrics
-http://localhost:4318/v1/traces
-```
-
-<a id="4-environment-variables"></a>
-## 4. 環境変数
+<a id="2-1-environment-variables"></a>
+### 2.1. 環境変数
 
 | 変数 | デフォルト | 説明 |
 | :-- | :-- | :-- |
@@ -78,22 +43,82 @@ http://localhost:4318/v1/traces
 | `CLICKSTACK_CLICKHOUSE_DATA_DIR` | `./clickstack-clickhouse-data` | `/var/lib/clickhouse/`にバインドマウントするホストディレクトリ。 |
 | `CLICKSTACK_CLICKHOUSE_LOG_DIR` | `./clickstack-clickhouse-logs` | `/var/log/clickhouse-server/`にバインドマウントするホストディレクトリ。 |
 
+<a id="3-start"></a>
+## 3. 起動
+
+以下のシェルコマンド例では、`#`で始まる行は読者向けの説明コメントであり、シェルでは実行されません。
+
+<a id="3-1-docker-compose"></a>
+### 3.1. Docker Compose
+
+```bash
+# Docker ComposeでClickStackの検証用スタックを起動します。
+docker compose -f compose-clickhouse.yaml up
+```
+
+<a id="3-2-podman-compose"></a>
+### 3.2. Podman Compose
+
+```bash
+# Podman ComposeでClickStackの検証用スタックを起動します。
+podman compose -f compose-clickhouse.yaml up
+```
+
+<a id="4-verification-and-use"></a>
+## 4. 動作確認と利用
+
+<a id="4-1-clickstack-ui"></a>
+### 4.1. ClickStack UI
+
+スタックの起動後に`http://localhost:8080`でClickStack UIを開いてください。
+初回利用時にUIユーザーを作成します。
+ClickStackはローカルのClickHouseインスタンスに接続し、ログ、メトリクス、トレース用のデータソースを準備します。
+
+<a id="4-2-ports"></a>
+### 4.2. ポート
+
+- ClickStack UI: `http://localhost:8080`
+- ClickHouse HTTP: `http://localhost:8123`
+- OpenTelemetry Protocol (OTLP) Googleリモートプロシージャコール (gRPC) レシーバー: `localhost:4317`
+- OTLP HTTPレシーバー: `http://localhost:4318`
+
+<a id="4-3-nestdaq-telemetry-endpoints"></a>
+### 4.3. NestDAQテレメトリーエンドポイント
+
+ホストプロセスはOTLP/gRPCに`localhost:4317`、OTLP/HTTPに`http://localhost:4318`を使用します。
+同じComposeネットワーク内のNestDAQデバイスコンテナーまたは`daq-webctl`コンテナーは、OTLP gRPCに`clickstack:4317`、OTLP HTTPに`http://clickstack:4318`を使用してください。
+
+例えば、HTTPエンドポイントでは次のパスを使用します。
+
+```text
+http://localhost:4318/v1/logs
+http://localhost:4318/v1/metrics
+http://localhost:4318/v1/traces
+```
+
 <a id="5-stop"></a>
 ## 5. 停止
 
 ローカル検証用コンテナーとネットワークを停止して削除します。
+
+<a id="5-1-docker-compose"></a>
+### 5.1. Docker Compose
 
 ```bash
 # Dockerの検証用コンテナーとネットワークを停止して削除します。
 docker compose -f compose-clickhouse.yaml down
 ```
 
-Podmanの場合:
+<a id="5-2-podman-compose"></a>
+### 5.2. Podman Compose
 
 ```bash
 # Podmanの検証用コンテナーとネットワークを停止して削除します。
 podman compose -f compose-clickhouse.yaml down
 ```
+
+<a id="6-delete-stored-data"></a>
+## 6. 保存済みClickStackおよびClickHouseデータの削除
 
 `down`ではClickStackとClickHouseのデータディレクトリおよびログディレクトリを削除しません。
 同じディレクトリでこのCompose構成を再び起動すると、以前のバックエンドデータが再利用されます。

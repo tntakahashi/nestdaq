@@ -12,24 +12,6 @@
 この文書で**Compose**とは、Docker Compose (`docker compose`) またはPodman Compose (`podman compose`) を指します。
 どちらかを使用してこのスタックを管理します。
 
-インストール先から直接起動せず、[親READMEの起動手順](../README.ja.md#1-start)に従って構成を書き込み可能な作業ディレクトリへコピーしてください。
-以下のコマンドは、作業用コピー内の`victoria/`で実行します。
-データ保存先を変更する場合は、起動前に対象ディレクトリを作成し、コンテナーから書き込める所有権と権限を設定してください。
-Composeファイルに設定済みの`:Z`オプションが、SELinuxラベルを適用します。
-以下のシェルコマンド例では、`#`で始まる行は読者向けの説明コメントであり、シェルでは実行されません。
-
-```bash
-# Docker ComposeでVictoriaの検証用スタックを起動します。
-docker compose -f compose-victoria.yaml up
-```
-
-Podmanの場合:
-
-```bash
-# Podman ComposeでVictoriaの検証用スタックを起動します。
-podman compose -f compose-victoria.yaml up
-```
-
 <a id="1-components"></a>
 ## 1. コンポーネント
 
@@ -39,36 +21,17 @@ podman compose -f compose-victoria.yaml up
 - `victoriatraces`: トレースを保存します。
 - `grafana`: 各Victoriaサービス用のExploreビューとダッシュボードを提供します。
 
-GrafanaにはVictoriaMetrics、VictoriaLogs、VictoriaTracesのデータソースがプロビジョニングによって設定されています。
-VictoriaTracesはGrafana組み込みのJaegerデータソースを使用し、次のURLに接続します。
+<a id="2-before-startup"></a>
+## 2. 起動前の設定
 
-```text
-http://victoriatraces:10428/select/jaeger
-```
+インストール先から直接起動せず、[親READMEの起動手順](../README.ja.md#1-start)に従って構成を書き込み可能な作業ディレクトリへコピーしてください。
+以下のコマンドは、作業用コピー内の`victoria/`で実行します。
 
-コレクターはログ、メトリクス、トレースを次のエンドポイントへエクスポートします。
+データ保存先を変更する場合は、起動前に対象ディレクトリを作成し、コンテナーから書き込める所有権と権限を設定してください。
+Composeファイルに設定済みの`:Z`オプションが、SELinuxラベルを適用します。
 
-```text
-http://victorialogs:9428/insert/opentelemetry/v1/logs
-http://victoriametrics:8428/opentelemetry/v1/metrics
-http://victoriatraces:10428/insert/opentelemetry/v1/traces
-```
-
-<a id="2-ports"></a>
-## 2. ポート
-
-- VictoriaMetrics: `http://localhost:8428`
-- VictoriaLogs: `http://localhost:9428`
-- VictoriaTraces: `http://localhost:10428`
-- Grafana: `http://localhost:3000`
-- OTLP Googleリモートプロシージャコール (gRPC) レシーバー: `localhost:4317`
-- OTLP HTTPレシーバー: `http://localhost:4318`
-
-ホストプロセスは上記の`localhost`エンドポイントを使用します。
-同じComposeネットワーク内のNestDAQデバイスコンテナーまたは`daq-webctl`コンテナーは、OTLP gRPCには`otel-collector:4317`を、OTLP HTTPには`http://otel-collector:4318`を使用してください。
-
-<a id="3-environment-variables"></a>
-## 3. 環境変数
+<a id="2-1-environment-variables"></a>
+### 2.1. 環境変数
 
 | 変数 | デフォルト | 説明 |
 | :-- | :-- | :-- |
@@ -91,22 +54,88 @@ http://victoriatraces:10428/insert/opentelemetry/v1/traces
 | `GRAFANA_PROVISIONING_DIR` | `./grafana/provisioning` | Grafanaプロビジョニングディレクトリ。 |
 | `OTEL_COLLECTOR_CONFIG_FILE` | `./otel-collector-config-victoria.yaml` | コレクター設定ファイル。 |
 
-<a id="4-stop"></a>
-## 4. 停止
+<a id="3-start"></a>
+## 3. 起動
+
+以下のシェルコマンド例では、`#`で始まる行は読者向けの説明コメントであり、シェルでは実行されません。
+
+<a id="3-1-docker-compose"></a>
+### 3.1. Docker Compose
+
+```bash
+# Docker ComposeでVictoriaの検証用スタックを起動します。
+docker compose -f compose-victoria.yaml up
+```
+
+<a id="3-2-podman-compose"></a>
+### 3.2. Podman Compose
+
+```bash
+# Podman ComposeでVictoriaの検証用スタックを起動します。
+podman compose -f compose-victoria.yaml up
+```
+
+<a id="4-verification-and-use"></a>
+## 4. 動作確認と利用
+
+<a id="4-1-grafana"></a>
+### 4.1. Grafana
+
+スタックの起動後に`http://localhost:3000`を開いてください。
+GrafanaにはVictoriaMetrics、VictoriaLogs、VictoriaTracesのデータソースがプロビジョニングによって設定されています。
+VictoriaTracesはGrafana組み込みのJaegerデータソースを使用し、次のURLに接続します。
+
+```text
+http://victoriatraces:10428/select/jaeger
+```
+
+<a id="4-2-ports"></a>
+### 4.2. ポート
+
+- VictoriaMetrics: `http://localhost:8428`
+- VictoriaLogs: `http://localhost:9428`
+- VictoriaTraces: `http://localhost:10428`
+- Grafana: `http://localhost:3000`
+- OTLP Googleリモートプロシージャコール (gRPC) レシーバー: `localhost:4317`
+- OTLP HTTPレシーバー: `http://localhost:4318`
+
+ホストプロセスは上記の`localhost`エンドポイントを使用します。
+同じComposeネットワーク内のNestDAQデバイスコンテナーまたは`daq-webctl`コンテナーは、OTLP gRPCには`otel-collector:4317`を、OTLP HTTPには`http://otel-collector:4318`を使用してください。
+
+<a id="4-3-collector-export-endpoints"></a>
+### 4.3. コレクターのエクスポート先エンドポイント
+
+コレクターはログ、メトリクス、トレースを次のエンドポイントへエクスポートします。
+
+```text
+http://victorialogs:9428/insert/opentelemetry/v1/logs
+http://victoriametrics:8428/opentelemetry/v1/metrics
+http://victoriatraces:10428/insert/opentelemetry/v1/traces
+```
+
+<a id="5-stop"></a>
+## 5. 停止
 
 ローカル検証用コンテナーとネットワークを停止して削除します。
+
+<a id="5-1-docker-compose"></a>
+### 5.1. Docker Compose
 
 ```bash
 # Dockerの検証用コンテナーとネットワークを停止して削除します。
 docker compose -f compose-victoria.yaml down
 ```
 
-Podmanの場合:
+<a id="5-2-podman-compose"></a>
+### 5.2. Podman Compose
 
 ```bash
 # Podmanの検証用コンテナーとネットワークを停止して削除します。
 podman compose -f compose-victoria.yaml down
 ```
+
+<a id="6-delete-stored-victoria-and-grafana-data"></a>
+## 6. 保存済みVictoriaおよびGrafanaデータの削除
 
 `down`ではVictoriaとGrafanaのデータディレクトリを削除しません。
 同じデータディレクトリでこのCompose構成を再び起動すると、以前のログ、メトリクス、トレース、およびGrafanaの状態が再利用されます。
