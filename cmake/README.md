@@ -16,6 +16,8 @@ For build commands, dependency versions, and user-facing options, see [`INSTALL.
 | `GitHelper.cmake` | Reads Git tag, commit, branch, dirty-state, and remote metadata used to derive the project version. |
 | `NestDAQExamplesStandalone.cmake` | Shared setup used when `examples/` is configured as its own standalone CMake project. |
 | `PatchDoxygenAwesomeCssRefs.cmake` | Post-processes generated Doxygen HTML so pages refer to the installed `doxygen-awesome-css` file path. |
+| `DoxygenMermaidFilter.py.in` | Generates a filter that converts Mermaid fenced blocks into HTML preserved by Doxygen releases that predate native Mermaid support. |
+| `InjectDoxygenMermaidScript.cmake` | Adds the Mermaid runtime and initialization to Doxygen pages that contain diagrams. |
 
 ## 2. Installed Package Files
 

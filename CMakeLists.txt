@@ -152,8 +152,9 @@ endif()
 
 if(NestDAQ_BUILD_DOCS)
   find_package(Doxygen QUIET)
+  find_package(Python3 QUIET COMPONENTS Interpreter)
 endif()
-if(NestDAQ_BUILD_DOCS AND Doxygen_FOUND)
+if(NestDAQ_BUILD_DOCS AND Doxygen_FOUND AND Python3_Interpreter_FOUND)
   set(NESTDAQ_DOXYGEN_AWESOME_DEFAULT_DIR "")
   foreach(prefix IN LISTS CMAKE_PREFIX_PATH)
     set(candidate "${prefix}/${CMAKE_INSTALL_DATADIR}/doxygen-awesome-css")
@@ -185,6 +186,24 @@ if(NestDAQ_BUILD_DOCS AND Doxygen_FOUND)
   set(NESTDAQ_DOXYGEN_AWESOME_BUILD_DIR
     "${CMAKE_CURRENT_BINARY_DIR}/docs/doxygen-awesome-css")
   file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/docs/html")
+
+  set(NESTDAQ_DOXYGEN_MERMAID_JS_URL
+    "https://cdn.jsdelivr.net/npm/mermaid@11.16.1/dist/mermaid.min.js"
+    CACHE STRING "Mermaid JavaScript URL used by generated Doxygen HTML")
+  set(NESTDAQ_DOXYGEN_MERMAID_FILTER
+    "${CMAKE_CURRENT_BINARY_DIR}/docs/doxygen-mermaid-filter.py")
+  configure_file(
+    "${CMAKE_CURRENT_SOURCE_DIR}/cmake/DoxygenMermaidFilter.py.in"
+    "${NESTDAQ_DOXYGEN_MERMAID_FILTER}"
+    @ONLY
+  )
+  file(CHMOD "${NESTDAQ_DOXYGEN_MERMAID_FILTER}"
+    PERMISSIONS
+      OWNER_READ OWNER_WRITE OWNER_EXECUTE
+      GROUP_READ GROUP_EXECUTE
+      WORLD_READ WORLD_EXECUTE
+  )
+
   set(NESTDAQ_DOXYGEN_AWESOME_COPY_COMMAND)
   if(EXISTS "${NESTDAQ_DOXYGEN_AWESOME_DIR}")
     list(APPEND NESTDAQ_DOXYGEN_AWESOME_COPY_COMMAND
@@ -248,7 +267,15 @@ if(NestDAQ_BUILD_DOCS AND Doxygen_FOUND)
       ${CMAKE_COMMAND}
         "-DNESTDAQ_DOXYGEN_HTML_DIR=${CMAKE_CURRENT_BINARY_DIR}/docs/html"
         -P "${CMAKE_CURRENT_SOURCE_DIR}/cmake/PatchDoxygenAwesomeCssRefs.cmake"
+    COMMAND
+      ${CMAKE_COMMAND}
+        "-DNESTDAQ_DOXYGEN_HTML_DIR=${CMAKE_CURRENT_BINARY_DIR}/docs/html"
+        "-DNESTDAQ_DOXYGEN_MERMAID_JS_URL=${NESTDAQ_DOXYGEN_MERMAID_JS_URL}"
+        -P "${CMAKE_CURRENT_SOURCE_DIR}/cmake/InjectDoxygenMermaidScript.cmake"
     DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/Doxyfile"
+            "${CMAKE_CURRENT_SOURCE_DIR}/cmake/DoxygenMermaidFilter.py.in"
+            "${NESTDAQ_DOXYGEN_MERMAID_FILTER}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/cmake/InjectDoxygenMermaidScript.cmake"
             ${NESTDAQ_DOXYGEN_INPUTS}
     WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/docs/html"
     COMMENT "Generating NestDAQ API documentation"
@@ -270,8 +297,10 @@ if(NestDAQ_BUILD_DOCS AND Doxygen_FOUND)
       DESTINATION "${CMAKE_INSTALL_DATADIR}/doc/nestdaq/doxygen-awesome-css"
     )
   endif()
-elseif(NestDAQ_BUILD_DOCS)
+elseif(NestDAQ_BUILD_DOCS AND NOT Doxygen_FOUND)
   message(STATUS "Doxygen not found: skipping NestDAQ documentation")
+elseif(NestDAQ_BUILD_DOCS)
+  message(STATUS "Python 3 interpreter not found: skipping NestDAQ documentation")
 else()
   message(STATUS "NestDAQ_BUILD_DOCS is OFF: skipping NestDAQ documentation")
 endif()

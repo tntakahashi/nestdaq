@@ -10,6 +10,7 @@ FILE_PATTERNS          = *.h *.hh *.hpp *.hxx *.c *.cc *.cpp *.cxx *.md
 RECURSIVE              = YES
 EXCLUDE_PATTERNS       = */.git/* */build/* */install/*
 MARKDOWN_SUPPORT       = YES
+FILTER_PATTERNS        = *.md=@NESTDAQ_DOXYGEN_MERMAID_FILTER@
 IMPLICIT_DIR_DOCS      = NO
 USE_MDFILE_AS_MAINPAGE = "@CMAKE_CURRENT_SOURCE_DIR@/README.md"
 EXTRACT_ALL            = YES

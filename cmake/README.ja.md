@@ -17,6 +17,8 @@
 | `GitHelper.cmake` | プロジェクトのバージョン導出に使用するGitタグ、コミット、ブランチ、変更状態、リモートのメタデータを読み取ります。 |
 | `NestDAQExamplesStandalone.cmake` | `examples/`を独立したCMakeプロジェクトとして構成するときに使用する共通設定。 |
 | `PatchDoxygenAwesomeCssRefs.cmake` | 生成されたDoxygen HTMLを後処理し、ページがインストール済みの`doxygen-awesome-css`ファイルのパスを参照するようにします。 |
+| `DoxygenMermaidFilter.py.in` | Mermaidのネイティブ対応前のDoxygenでも処理できるように、Mermaid fenced blockをHTMLへ変換するfilterを生成します。 |
+| `InjectDoxygenMermaidScript.cmake` | Mermaid図を含むDoxygenページへ、Mermaid runtimeと初期化処理を追加します。 |
 
 <a id="2-installed-package-files"></a>
 ## 2. インストールされるパッケージファイル

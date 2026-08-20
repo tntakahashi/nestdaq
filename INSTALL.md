@@ -424,9 +424,10 @@ VERBOSE=1 cmake --build ./build
 | Option | Default | Description |
 | :-- | :-- | :-- |
 | `NESTDAQ_ENABLE_CLANG_TIDY` | `OFF` | Run `clang-tidy` during the NestDAQ build. This requires the `clang-tidy` command, provided by `clang-tools-extra` on AlmaLinux. |
-| `NestDAQ_BUILD_DOCS` | `OFF` | Build and install Doxygen documentation. This requires `doxygen`; if Doxygen is not found, documentation generation is skipped. If `dot` from Graphviz is available, Doxygen can use it to generate diagrams. |
+| `NestDAQ_BUILD_DOCS` | `OFF` | Build and install Doxygen documentation. This requires `doxygen` and Python 3; if either is not found, documentation generation is skipped. If `dot` from Graphviz is available, Doxygen can use it to generate diagrams. |
 | `NestDAQ_BUILD_EXAMPLES` | `ON` | Build and install `Sampler`, `Sink`, and `NullDevice` with the main NestDAQ build. Set this to `OFF` to skip them. |
 | `NESTDAQ_DOXYGEN_AWESOME_DIR` | discovered from `CMAKE_PREFIX_PATH` or install prefix | Directory containing the `doxygen-awesome-css` files used by generated documentation. |
+| `NESTDAQ_DOXYGEN_MERMAID_JS_URL` | Mermaid 11.16.1 on jsDelivr | Mermaid JavaScript URL loaded by generated Doxygen HTML. Set this to an accessible alternative when the documentation browser cannot access jsDelivr. |
 | `BUILD_TESTING` | `ON` | Build NestDAQ tests when enabled. |
 
 ## Run local OpenTelemetry Collector and backend containers
