@@ -259,7 +259,7 @@ cmake --build ./build-external
 | `BUILD_PARALLEL_LEVEL` | unset | Parallel level passed to inner `ExternalProject` builds. Set this at configure time; `cmake --build --parallel` does not control those inner builds. |
 | `WITH_REDIS_STACK` | `ON` | Build and install the Redis Stack server and modules. Set to `OFF` when Redis Stack is provided separately, for example by a container. |
 | `WITH_REDIS_SERVER_7` | `OFF` | Build and install Redis 7.x server with standalone RedisTimeSeries. This option is mutually exclusive with `WITH_REDIS_STACK`. |
-| `REDIS_SERVER_7_SERIES` | `7.4` | Redis 7.x series used when `WITH_REDIS_SERVER_7=ON`: `7.4` selects Redis 7.4.9 and RedisTimeSeries 1.12.14; `7.2` selects Redis 7.2.14 and RedisTimeSeries 1.10.24. |
+| `REDIS_SERVER_7_SERIES` | `7.4` | Redis 7.x series used when `WITH_REDIS_SERVER_7=ON`: `7.4` selects Redis 7.4.11 and RedisTimeSeries 1.12.14; `7.2` selects Redis 7.2.16 and RedisTimeSeries 1.10.24. |
 | `REDIS_BUILD_REDISBLOOM` | `ON` | Build and install the RedisBloom module when `WITH_REDIS_STACK` is `ON`. |
 | `REDIS_BUILD_REDISEARCH` | `ON` | Build and install the RediSearch module when `WITH_REDIS_STACK` is `ON`. Disable this when the compiler cannot build RediSearch. |
 | `REDIS_BUILD_REDISJSON` | `ON` | Build and install the RedisJSON module when `WITH_REDIS_STACK` is `ON`. |
@@ -313,7 +313,7 @@ The following matrix shows which components each supported provisioning method p
 
 | Installed component | Capability | CMake: Redis 8 (default) | CMake: Redis 7 | Container: Redis Stack | Container: Stack Server | Container: Redis 8 | Host package (default) |
 | :-- | :-- | :--: | :--: | :--: | :--: | :--: | :--: |
-| Redis server | In-memory data store | Yes (8.2.7) | Yes (7.4.9 or 7.2.14) | Yes (7.4 or 7.2 image) | Yes (7.4 or 7.2 image) | Yes (8.2.7) | Yes (8.2.7) |
+| Redis server | In-memory data store | Yes (8.2.7) | Yes (7.4.11 or 7.2.16) | Yes (7.4 or 7.2 image) | Yes (7.4 or 7.2 image) | Yes (8.2.7) | Yes (8.2.7) |
 | RedisBloom | Probabilistic data structures | Yes | No | Yes | Yes | Yes | Yes |
 | RediSearch | Search and Query | Yes | No | Yes | Yes | Yes | Yes |
 | RedisJSON | JSON data | Yes | No | Yes | Yes | Yes | Yes |
@@ -373,7 +373,7 @@ The default Redis module versions follow the module release tags selected by the
 | [RediSearch](https://github.com/RediSearch/RediSearch)                   | 8.2.13            | `RediSearch_VERSION`, `REDIS_BUILD_REDISEARCH` |
 | [RedisJSON](https://github.com/RedisJSON/RedisJSON)                      | 8.2.9             | `RedisJSON_VERSION`, `REDIS_BUILD_REDISJSON` |
 | [RedisTimeSeries](https://github.com/RedisTimeSeries/RedisTimeSeries)    | 8.2.10            | `RedisTimeSeries_VERSION`, `REDIS_BUILD_REDISTIMESERIES` |
-| [Redis 7.x](https://github.com/redis/redis)                              | 7.4.9 for `REDIS_SERVER_7_SERIES=7.4`; 7.2.14 for `7.2` | `Redis7_VERSION`, `REDIS_SERVER_7_SERIES` |
+| [Redis 7.x](https://github.com/redis/redis)                              | 7.4.11 for `REDIS_SERVER_7_SERIES=7.4`; 7.2.16 for `7.2` | `Redis7_VERSION`, `REDIS_SERVER_7_SERIES` |
 | [RedisTimeSeries standalone](https://github.com/RedisTimeSeries/RedisTimeSeries) | 1.12.14 for Redis 7.4; 1.10.24 for Redis 7.2 | `RedisTimeSeries7_VERSION`, `REDIS_SERVER_7_SERIES` |
 
 

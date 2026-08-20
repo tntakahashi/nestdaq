@@ -55,7 +55,7 @@ For C++20 or later, the spdlog dependency build uses `std::format` and does not 
 | `dependencies/spdlog.cmake` | Finds or builds spdlog. When building a missing spdlog package with a C++ standard lower than C++20, it also searches for or builds fmt through `dependencies/fmt.cmake`. |
 | `dependencies/fmt.cmake` | Finds fmt or builds and installs it when the C++17 spdlog dependency build requires an external formatting library. |
 | `dependencies/redis-stack.cmake` | Builds Redis Stack components for Redis 8 or later: Redis, RedisBloom, RediSearch, RedisJSON, and RedisTimeSeries. The default Redis 8.2.7 module versions follow the release tags selected by Redis 8.2.7 itself. |
-| `dependencies/redis-server-7.cmake` | Builds Redis 7.x server with standalone RedisTimeSeries. Redis 7.4 uses Redis 7.4.9 and RedisTimeSeries 1.12.14 by default; Redis 7.2 uses Redis 7.2.14 and RedisTimeSeries 1.10.24 by default. |
+| `dependencies/redis-server-7.cmake` | Builds Redis 7.x server with standalone RedisTimeSeries. Redis 7.4 uses Redis 7.4.11 and RedisTimeSeries 1.12.14 by default; Redis 7.2 uses Redis 7.2.16 and RedisTimeSeries 1.10.24 by default. |
 | `dependencies/doxygen-awesome-css.cmake` | Builds or installs the doxygen-awesome-css files used by generated documentation. |
 | `dependencies/patch_redisearch.cmake` | Applies local RediSearch CMake compatibility patches during the Redis Stack dependency build. |
 | `dependencies/patch_redisjson.cmake` | Applies local RedisJSON build compatibility patches during the Redis Stack dependency build. |

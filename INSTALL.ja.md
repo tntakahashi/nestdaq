@@ -272,7 +272,7 @@ cmake --build ./build-external
 | `BUILD_PARALLEL_LEVEL` | 未設定 | 内部の`ExternalProject`ビルドへ渡す並列数です。構成時に設定してください。`cmake --build --parallel`では内部ビルドを制御できません。 |
 | `WITH_REDIS_STACK` | `ON` | Redis Stackサーバーとモジュールをビルドしてインストールします。コンテナなどでRedis Stackを別途用意する場合は`OFF`に設定します。 |
 | `WITH_REDIS_SERVER_7` | `OFF` | Redis 7.xサーバーとスタンドアロンRedisTimeSeriesをビルドしてインストールします。このオプションは`WITH_REDIS_STACK`と同時に有効にできません。 |
-| `REDIS_SERVER_7_SERIES` | `7.4` | `WITH_REDIS_SERVER_7=ON`の場合に使用するRedis 7.x系列です。`7.4`はRedis 7.4.9とRedisTimeSeries 1.12.14、`7.2`はRedis 7.2.14とRedisTimeSeries 1.10.24を選択します。 |
+| `REDIS_SERVER_7_SERIES` | `7.4` | `WITH_REDIS_SERVER_7=ON`の場合に使用するRedis 7.x系列です。`7.4`はRedis 7.4.11とRedisTimeSeries 1.12.14、`7.2`はRedis 7.2.16とRedisTimeSeries 1.10.24を選択します。 |
 | `REDIS_BUILD_REDISBLOOM` | `ON` | `WITH_REDIS_STACK`が`ON`の場合にRedisBloomモジュールをビルドしてインストールします。 |
 | `REDIS_BUILD_REDISEARCH` | `ON` | `WITH_REDIS_STACK`が`ON`の場合にRediSearchモジュールをビルドしてインストールします。コンパイラーがRediSearchをビルドできない場合は無効にしてください。 |
 | `REDIS_BUILD_REDISJSON` | `ON` | `WITH_REDIS_STACK`が`ON`の場合にRedisJSONモジュールをビルドしてインストールします。 |
@@ -328,7 +328,7 @@ RedisInsightは、Redisへ接続してデータの確認やコマンドの実行
 
 | インストールされるもの | 機能 | CMake: Redis 8 (デフォルト) | CMake: Redis 7 | コンテナ: Redis Stack | コンテナ: Stack Server | コンテナ: Redis 8 | ホストパッケージ (デフォルト) |
 | :-- | :-- | :--: | :--: | :--: | :--: | :--: | :--: |
-| Redisサーバー | インメモリーデータストア | あり (8.2.7) | あり (7.4.9または7.2.14) | あり (7.4または7.2イメージ) | あり (7.4または7.2イメージ) | あり (8.2.7) | あり (8.2.7) |
+| Redisサーバー | インメモリーデータストア | あり (8.2.7) | あり (7.4.11または7.2.16) | あり (7.4または7.2イメージ) | あり (7.4または7.2イメージ) | あり (8.2.7) | あり (8.2.7) |
 | RedisBloom | 確率的データ構造 | あり | なし | あり | あり | あり | あり |
 | RediSearch | 検索とクエリー | あり | なし | あり | あり | あり | あり |
 | RedisJSON | JSONデータ | あり | なし | あり | あり | あり | あり |
@@ -389,7 +389,7 @@ AlmaLinux 8でGCC 8.5を使用して依存関係をビルドする場合は、�
 | [RediSearch](https://github.com/RediSearch/RediSearch)                   | 8.2.13                   | `RediSearch_VERSION`, `REDIS_BUILD_REDISEARCH` |
 | [RedisJSON](https://github.com/RedisJSON/RedisJSON)                      | 8.2.9                    | `RedisJSON_VERSION`, `REDIS_BUILD_REDISJSON` |
 | [RedisTimeSeries](https://github.com/RedisTimeSeries/RedisTimeSeries)    | 8.2.10                   | `RedisTimeSeries_VERSION`, `REDIS_BUILD_REDISTIMESERIES` |
-| [Redis 7.x](https://github.com/redis/redis)                              | `REDIS_SERVER_7_SERIES=7.4`では7.4.9、`7.2`では7.2.14 | `Redis7_VERSION`, `REDIS_SERVER_7_SERIES` |
+| [Redis 7.x](https://github.com/redis/redis)                              | `REDIS_SERVER_7_SERIES=7.4`では7.4.11、`7.2`では7.2.16 | `Redis7_VERSION`, `REDIS_SERVER_7_SERIES` |
 | [RedisTimeSeriesスタンドアロン版](https://github.com/RedisTimeSeries/RedisTimeSeries) | Redis 7.4では1.12.14、Redis 7.2では1.10.24 | `RedisTimeSeries7_VERSION`, `REDIS_SERVER_7_SERIES` |
 
 <a id="3-build-and-install-nestdaq-library"></a>
