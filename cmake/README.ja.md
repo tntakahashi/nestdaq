@@ -57,7 +57,7 @@ C++20以降ではspdlogの依存関係ビルドに`std::format`を使用する�
 | `dependencies/opentelemetry-cpp.cmake` | opentelemetry-cppと、選択した機能に応じた転送用依存関係をビルドします。 |
 | `dependencies/spdlog.cmake` | spdlogを検索またはビルドします。spdlogが見つからず、C++規格がC++20未満の場合は、`dependencies/fmt.cmake`を通じてfmtも検索またはビルドします。 |
 | `dependencies/fmt.cmake` | C++17のspdlog依存関係ビルドで外部フォーマットライブラリーが必要な場合に、fmtを検索するか、ビルドしてインストールします。 |
-| `dependencies/redis-stack.cmake` | Redis 8以降向けRedis Stackコンポーネント (Redis、RedisBloom、RediSearch、RedisJSON、RedisTimeSeries) をビルドします。デフォルトのRedis 8.2.7モジュールバージョンはRedis 8.2.7自身が選択しているリリースタグに従います。 |
+| `dependencies/redis-stack.cmake` | Redis 8以降向けRedis Stackコンポーネント (Redis、RedisBloom、RediSearch、RedisJSON、RedisTimeSeries) をビルドします。デフォルトのRedis 8.2.9モジュールバージョンはRedis 8.2.9自身が選択しているリリースタグに従います。 |
 | `dependencies/redis-server-7.cmake` | スタンドアロンRedisTimeSeriesとともにRedis 7.xサーバーをビルドします。デフォルトでは、Redis 7.4はRedis 7.4.11とRedisTimeSeries 1.12.14を使用し、Redis 7.2はRedis 7.2.16とRedisTimeSeries 1.10.24を使用します。 |
 | `dependencies/doxygen-awesome-css.cmake` | 生成ドキュメントで使用するdoxygen-awesome-cssファイルをビルドまたはインストールします。 |
 | `dependencies/patch_redisearch.cmake` | Redis Stackの依存関係ビルド中に、ローカルのRediSearch CMake互換パッチを適用します。 |

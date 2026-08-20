@@ -313,7 +313,7 @@ The following matrix shows which components each supported provisioning method p
 
 | Installed component | Capability | CMake: Redis 8 (default) | CMake: Redis 7 | Container: Redis Stack | Container: Stack Server | Container: Redis 8 | Host package (default) |
 | :-- | :-- | :--: | :--: | :--: | :--: | :--: | :--: |
-| Redis server | In-memory data store | Yes (8.2.7) | Yes (7.4.11 or 7.2.16) | Yes (7.4 or 7.2 image) | Yes (7.4 or 7.2 image) | Yes (8.2.7) | Yes (8.2.7) |
+| Redis server | In-memory data store | Yes (8.2.9) | Yes (7.4.11 or 7.2.16) | Yes (7.4 or 7.2 image) | Yes (7.4 or 7.2 image) | Yes (8.2.7) | Yes (8.2.7) |
 | RedisBloom | Probabilistic data structures | Yes | No | Yes | Yes | Yes | Yes |
 | RediSearch | Search and Query | Yes | No | Yes | Yes | Yes | Yes |
 | RedisJSON | JSON data | Yes | No | Yes | Yes | Yes | Yes |
@@ -364,12 +364,12 @@ When RedisInsight is required and the repository provides the package, use the R
 RediSearch requires a compiler with C++20 support.
 On AlmaLinux 8 with GCC 8.5, builds with `REDIS_BUILD_REDISEARCH=ON` fail because RediSearch uses C++20 features such as `<ranges>`.
 For an AlmaLinux 8 dependency build with GCC 8.5, pass `-DREDIS_BUILD_REDISEARCH=OFF` unless a newer compiler toolchain provides the required C++20 support.
-The default Redis module versions follow the module release tags selected by the Redis 8.2.7 source tree.
+The default Redis module versions follow the module release tags selected by the Redis 8.2.9 source tree.
 
 | Package                                                                  | Version (default) | CMake options |
 | :--                                                                      | :--               | :--            |
-| [Redis](https://github.com/redis/redis)                                  | 8.2.7             | `Redis_VERSION` |
-| [RedisBloom](https://github.com/RedisBloom/RedisBloom)                   | 8.2.12            | `RedisBloom_VERSION`, `REDIS_BUILD_REDISBLOOM` |
+| [Redis](https://github.com/redis/redis)                                  | 8.2.9             | `Redis_VERSION` |
+| [RedisBloom](https://github.com/RedisBloom/RedisBloom)                   | 8.2.16            | `RedisBloom_VERSION`, `REDIS_BUILD_REDISBLOOM` |
 | [RediSearch](https://github.com/RediSearch/RediSearch)                   | 8.2.13            | `RediSearch_VERSION`, `REDIS_BUILD_REDISEARCH` |
 | [RedisJSON](https://github.com/RedisJSON/RedisJSON)                      | 8.2.9             | `RedisJSON_VERSION`, `REDIS_BUILD_REDISJSON` |
 | [RedisTimeSeries](https://github.com/RedisTimeSeries/RedisTimeSeries)    | 8.2.10            | `RedisTimeSeries_VERSION`, `REDIS_BUILD_REDISTIMESERIES` |

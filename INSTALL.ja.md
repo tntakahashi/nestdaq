@@ -328,7 +328,7 @@ RedisInsightは、Redisへ接続してデータの確認やコマンドの実行
 
 | インストールされるもの | 機能 | CMake: Redis 8 (デフォルト) | CMake: Redis 7 | コンテナ: Redis Stack | コンテナ: Stack Server | コンテナ: Redis 8 | ホストパッケージ (デフォルト) |
 | :-- | :-- | :--: | :--: | :--: | :--: | :--: | :--: |
-| Redisサーバー | インメモリーデータストア | あり (8.2.7) | あり (7.4.11または7.2.16) | あり (7.4または7.2イメージ) | あり (7.4または7.2イメージ) | あり (8.2.7) | あり (8.2.7) |
+| Redisサーバー | インメモリーデータストア | あり (8.2.9) | あり (7.4.11または7.2.16) | あり (7.4または7.2イメージ) | あり (7.4または7.2イメージ) | あり (8.2.7) | あり (8.2.7) |
 | RedisBloom | 確率的データ構造 | あり | なし | あり | あり | あり | あり |
 | RediSearch | 検索とクエリー | あり | なし | あり | あり | あり | あり |
 | RedisJSON | JSONデータ | あり | なし | あり | あり | あり | あり |
@@ -380,12 +380,12 @@ RedisInsightが必要でリポジトリに該当パッケージがある場合�
 RediSearchにはC++20をサポートするコンパイラーが必要です。
 AlmaLinux 8のGCC 8.5では、RediSearchが`<ranges>`などのC++20機能を使用するため、`REDIS_BUILD_REDISEARCH=ON`のビルドは失敗します。
 AlmaLinux 8でGCC 8.5を使用して依存関係をビルドする場合は、必要なC++20機能をサポートする新しいコンパイラーツールチェーンを使用しない限り、`-DREDIS_BUILD_REDISEARCH=OFF`を渡してください。
-デフォルトのRedisモジュールバージョンは、Redis 8.2.7のソースツリーが選択するモジュールのリリースタグに従います。
+デフォルトのRedisモジュールバージョンは、Redis 8.2.9のソースツリーが選択するモジュールのリリースタグに従います。
 
 | パッケージ                                                               | バージョン (デフォルト) | CMakeオプション |
 | :--                                                                      | :--                      | :--             |
-| [Redis](https://github.com/redis/redis)                                  | 8.2.7                    | `Redis_VERSION` |
-| [RedisBloom](https://github.com/RedisBloom/RedisBloom)                   | 8.2.12                   | `RedisBloom_VERSION`, `REDIS_BUILD_REDISBLOOM` |
+| [Redis](https://github.com/redis/redis)                                  | 8.2.9                    | `Redis_VERSION` |
+| [RedisBloom](https://github.com/RedisBloom/RedisBloom)                   | 8.2.16                   | `RedisBloom_VERSION`, `REDIS_BUILD_REDISBLOOM` |
 | [RediSearch](https://github.com/RediSearch/RediSearch)                   | 8.2.13                   | `RediSearch_VERSION`, `REDIS_BUILD_REDISEARCH` |
 | [RedisJSON](https://github.com/RedisJSON/RedisJSON)                      | 8.2.9                    | `RedisJSON_VERSION`, `REDIS_BUILD_REDISJSON` |
 | [RedisTimeSeries](https://github.com/RedisTimeSeries/RedisTimeSeries)    | 8.2.10                   | `RedisTimeSeries_VERSION`, `REDIS_BUILD_REDISTIMESERIES` |
