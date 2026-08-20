@@ -157,6 +157,8 @@ apt install -y \
 
 `pkg-config` is included in the common Debian and Ubuntu list because the dependency build requires it on Ubuntu 22.04.
 
+In this guide, the **upstream repository** is [github.com/spadi-alliance/nestdaq](https://github.com/spadi-alliance/nestdaq).
+
 ### Code-quality tools for contributors
 
 People who contribute changes to the upstream repository must install `astyle` and `clang-tidy` in addition to the build prerequisites.
@@ -181,8 +183,6 @@ apt install -y astyle clang-tidy
 The following procedure installs ZeroMQ, Boost, FairLogger, FairMQ, Catch2, nlohmann/json, hiredis, redis++, and [Redis Stack](#external-runtime-components).
 
 ### 2.1 Clone or check out the source
-
-In this guide, the **upstream repository** is [github.com/spadi-alliance/nestdaq](https://github.com/spadi-alliance/nestdaq).
 
 #### 2.1.1 Users who do not contribute to the upstream repository
 

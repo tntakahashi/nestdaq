@@ -163,6 +163,8 @@ apt install -y \
 
 Ubuntu 22.04で依存関係をビルドする際に必要となるため、`pkg-config`をDebianおよびUbuntu共通の一覧に含めています。
 
+このガイドで**上流リポジトリ**とは、[github.com/spadi-alliance/nestdaq](https://github.com/spadi-alliance/nestdaq)を指します。
+
 <a id="code-quality-tools-for-contributors"></a>
 ### 上流リポジトリの開発に貢献する人向けのコード品質ツール
 
@@ -190,8 +192,6 @@ apt install -y astyle clang-tidy
 
 <a id="21-clone-or-check-out-the-source"></a>
 ### 2.1 ソースコードのクローンとチェックアウト方法
-
-このガイドで**上流リポジトリ**とは、[github.com/spadi-alliance/nestdaq](https://github.com/spadi-alliance/nestdaq)を指します。
 
 <a id="211-users-who-do-not-contribute-to-the-upstream-repository"></a>
 #### 2.1.1 上流リポジトリの開発に貢献しない利用者
