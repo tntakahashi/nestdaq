@@ -63,12 +63,10 @@ dnf -y install \
 
 # Optional tools:
 # - jq: format and inspect JSON output from command-line tools.
-# - clang-tools-extra: provide clang-tidy, clang-format, and related Clang tools.
 # - doxygen: generate API documentation.
 # - graphviz: provide the dot command for Doxygen diagrams.
-# - astyle: format C/C++ source when needed.
 # - tmux: keep long-running local validation sessions attached.
-# dnf -y install jq clang-tools-extra doxygen graphviz astyle tmux
+# dnf -y install jq doxygen graphviz tmux
 
 # Install the GCC 14 toolset when the system compiler is insufficient on AlmaLinux 9
 # dnf -y install gcc-toolset-14
@@ -150,16 +148,33 @@ apt install -y \
 
 # Optional tools:
 # - jq: format and inspect JSON output from command-line tools.
-# - clang-tools: provide clang-tidy and related LLVM/Clang tools.
 # - clang-format: provide clang-format, packaged separately from clang-tools on Debian and Ubuntu.
 # - doxygen: generate API documentation.
 # - graphviz: provide the dot command for Doxygen diagrams.
-# - astyle: format C/C++ source when needed.
 # - tmux: keep long-running local validation sessions attached.
-# apt install -y jq clang-tools clang-format doxygen graphviz astyle tmux
+# apt install -y jq clang-format doxygen graphviz tmux
 ```
 
 `pkg-config` is included in the common Debian and Ubuntu list because the dependency build requires it on Ubuntu 22.04.
+
+### Code-quality tools for contributors
+
+People who contribute changes to the upstream repository must install `astyle` and `clang-tidy` in addition to the build prerequisites.
+The repository uses `astyle` to format C/C++ source and `clang-tidy` for static analysis, as described in [`CONTRIBUTING.md`](CONTRIBUTING.md).
+
+On AlmaLinux, `clang-tools-extra` provides the `clang-tidy` command.
+
+```bash
+# Install the formatter and static-analysis tool required for NestDAQ development
+dnf install -y astyle clang-tools-extra
+```
+
+On Debian and Ubuntu, install the `clang-tidy` package directly.
+
+```bash
+# Install the formatter and static-analysis tool required for NestDAQ development
+apt install -y astyle clang-tidy
+```
 
 ## 2. Build and install external dependencies
 

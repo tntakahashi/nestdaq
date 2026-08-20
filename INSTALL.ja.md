@@ -67,12 +67,10 @@ dnf -y install \
 
 # 必要に応じてインストールするツール:
 # - jq: コマンドラインツールのJSON出力を整形して確認します。
-# - clang-tools-extra: clang-tidy、clang-format、および関連するClangツールを提供します。
 # - doxygen: APIドキュメントを生成します。
 # - graphviz: Doxygenの図に使用するdotコマンドを提供します。
-# - astyle: 必要に応じてC/C++ソースを整形します。
 # - tmux: 長時間実行するローカル検証セッションを維持します。
-# dnf -y install jq clang-tools-extra doxygen graphviz astyle tmux
+# dnf -y install jq doxygen graphviz tmux
 
 # AlmaLinux 9のシステムコンパイラーでは不足する場合にGCC 14ツールセットをインストール
 # dnf -y install gcc-toolset-14
@@ -156,16 +154,34 @@ apt install -y \
 
 # 必要に応じてインストールするツール:
 # - jq: コマンドラインツールのJSON出力を整形して確認します。
-# - clang-tools: clang-tidyおよび関連するLLVM/Clangツールを提供します。
 # - clang-format: DebianおよびUbuntuではclang-toolsとは別パッケージとしてclang-formatを提供します。
 # - doxygen: APIドキュメントを生成します。
 # - graphviz: Doxygenの図に使用するdotコマンドを提供します。
-# - astyle: 必要に応じてC/C++ソースを整形します。
 # - tmux: 長時間実行するローカル検証セッションを維持します。
-# apt install -y jq clang-tools clang-format doxygen graphviz astyle tmux
+# apt install -y jq clang-format doxygen graphviz tmux
 ```
 
 Ubuntu 22.04で依存関係をビルドする際に必要となるため、`pkg-config`をDebianおよびUbuntu共通の一覧に含めています。
+
+<a id="code-quality-tools-for-contributors"></a>
+### 上流リポジトリの開発に貢献する人向けのコード品質ツール
+
+上流リポジトリの開発に貢献する人は、ビルドの前提パッケージに加えて`astyle`と`clang-tidy`をインストールしてください。
+このリポジトリでは、[`CONTRIBUTING.ja.md`](CONTRIBUTING.ja.md)に記載しているとおり、C/C++ソースのフォーマットに`astyle`、静的解析に`clang-tidy`を使用します。
+
+AlmaLinuxでは、`clang-tools-extra`パッケージが`clang-tidy`コマンドを提供します。
+
+```bash
+# NestDAQの開発に必要なフォーマッターと静的解析ツールをインストール
+dnf install -y astyle clang-tools-extra
+```
+
+DebianおよびUbuntuでは、`clang-tidy`パッケージを直接インストールします。
+
+```bash
+# NestDAQの開発に必要なフォーマッターと静的解析ツールをインストール
+apt install -y astyle clang-tidy
+```
 
 <a id="2-build-and-install-external-dependencies"></a>
 ## 2. 外部依存関係のビルドとインストール
