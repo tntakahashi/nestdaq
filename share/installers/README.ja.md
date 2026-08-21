@@ -18,6 +18,11 @@ AlmaLinux、Rocky Linux、RHEL、CentOS、FedoraなどのRHEL系システムで�
 <a id="1-scripts"></a>
 ## 1. スクリプト
 
+利用できるインストーラースクリプトを[表1](#tbl-installer-scripts-ja)に示します。
+
+<a id="tbl-installer-scripts-ja"></a>
+**表1：パッケージインストーラースクリプト。**
+
 | スクリプト | インストールまたは更新するもの |
 | :-- | :-- |
 | `install-redis-stack.sh` | RedisパッケージリポジトリからRedisサーバーと[Redis Stack](../../INSTALL.ja.md#redis-server-and-modules)モジュールをインストールします。 |
@@ -116,7 +121,10 @@ AlmaLinux 8および9ではRedis公式RPMリポジトリからRedis `8.2.7`を�
 RHEL系システムでは常にRedis公式RPMリポジトリを設定し、ディストリビューションのRedisモジュールを無効にして、パッケージ解決に`packages.redis.io`が使用されるようにします。
 次のAppStreamの行は参考情報です。
 
-確認済みのRedisパッケージ提供状況:
+確認済みのRedisパッケージ提供状況を[表2](#tbl-redis-package-availability-ja)に示します。
+
+<a id="tbl-redis-package-availability-ja"></a>
+**表2：ディストリビューション別のRedisパッケージ提供状況。**
 
 | ディストリビューション | リポジトリキー | Redis 7.2.14 | Redis 7.4.9 | Redis 8.2.7 |
 | --- | --- | --- | --- | --- |
@@ -211,7 +219,10 @@ sudo systemctl stop <service>
 sudo systemctl disable <service>
 ```
 
-想定されるサービス名:
+想定されるサービス名を[表3](#tbl-systemd-service-unit-names-ja)に示します。
+
+<a id="tbl-systemd-service-unit-names-ja"></a>
+**表3：想定されるsystemdサービスユニット名。**
 
 | サービス | ユニット名 |
 | :-- | :-- |

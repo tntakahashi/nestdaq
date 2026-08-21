@@ -34,6 +34,11 @@ The `:Z` options already present in the Compose file apply the SELinux labels.
 <a id="2-1-environment-variables"></a>
 ### 2.1. Environment variables
 
+The Compose settings available through environment variables are listed in [Table 1](#tbl-victoria-environment-variables-en).
+
+<a id="tbl-victoria-environment-variables-en"></a>
+**Table 1: Victoria Compose environment variables.**
+
 | Variable | Default | Description |
 | :-- | :-- | :-- |
 | `OTEL_COLLECTOR_IMAGE` | `docker.io/otel/opentelemetry-collector-contrib:0.155.0` | Collector image. |

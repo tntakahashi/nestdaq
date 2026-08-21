@@ -90,7 +90,10 @@ See the storage-stack README for the exact directory names.
 Choose the telemetry endpoint according to where the NestDAQ process runs.
 The same rule applies to NestDAQ device processes and `daq-webctl`.
 
-First, select the destination host according to the sender location and storage stack.
+First, select the destination host according to the sender location and storage stack in [Table 1](#tbl-destination-hosts-en).
+
+<a id="tbl-destination-hosts-en"></a>
+**Table 1: Destination host by sender location and storage stack.**
 
 | Sender location | OpenSearch/Victoria destination host | ClickStack destination host |
 | :-- | :-- | :-- |
@@ -99,7 +102,10 @@ First, select the destination host according to the sender location and storage 
 | Docker container outside the Compose network | `host.docker.internal` | `host.docker.internal` |
 | Podman container outside the Compose network | `host.containers.internal` | `host.containers.internal` |
 
-Then construct the endpoint with the port and format for the selected protocol.
+Then construct the endpoint with the protocol port and format in [Table 2](#tbl-otlp-endpoints-en).
+
+<a id="tbl-otlp-endpoints-en"></a>
+**Table 2: Default ports and endpoint formats by OTLP protocol.**
 
 | Protocol | Default port | Endpoint format |
 | :-- | :-- | :-- |

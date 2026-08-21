@@ -20,6 +20,9 @@
 <a id="2-main-components"></a>
 ## 2. 主要コンポーネント
 
+<a id="main-components-table-ja"></a>
+**表1：`daq-webctl`の主要コンポーネントとその役割。**
+
 | 構成要素 | 用途 |
 | :-- | :-- |
 | `run_daq-webctl.cxx` | 実行ファイルのエントリーポイント、コマンドライン解析、ロギング、テレメトリー、Redis設定、サーバー起動。 |
@@ -58,6 +61,7 @@ DAQデバイスがRunning状態へ遷移する前に、`daq-webctl`で実行番�
 `daq-webctl`はブラウザ向けのHTTP/WebSocketサーバーであり、コマンドの発行、キーへのアクセス、Pub/Subチャネルの購読、および状態のポーリングを行うRedisクライアントでもあります。
 ユーザーデバイスプロセスは`daq_service`プラグインを通じてRedisと通信します。
 
+<a id="communication-flow-figure-ja"></a>
 ```mermaid
 sequenceDiagram
   participant Browser as Webブラウザ
@@ -88,7 +92,9 @@ sequenceDiagram
   WebCtl-->>Browser: WebSocket JSON state update
 ```
 
-この図は制御と状態の経路を示します。
+**図1：ブラウザ、`daq-webctl`、Redis、ユーザーデバイス間の制御と状態の経路。**
+
+[図1](#communication-flow-figure-ja)は制御と状態の経路を示します。
 ユーザーデバイスプロセス間のFairMQデータチャネルトラフィックは別経路であり、`daq-webctl`を経由しません。
 
 <a id="5-command-line-options"></a>
@@ -98,6 +104,9 @@ sequenceDiagram
 OpenTelemetryオプションも利用できます。
 `--otel-service-instance-id`を指定しない場合、`daq-webctl`は生成したUUIDをOpenTelemetryの`service.instance.id`リソース属性へ記録します。
 OpenTelemetryオプションの一覧は[`nestdaq/telemetry/README.ja.md`](../nestdaq/telemetry/README.ja.md)を参照してください。
+
+<a id="command-line-options-table-ja"></a>
+**表2：`daq-webctl`の一般的なコマンドラインオプション。**
 
 | オプション | 既定値 | 説明 |
 | :-- | :-- | :-- |
@@ -125,6 +134,9 @@ OpenTelemetryオプションの一覧は[`nestdaq/telemetry/README.ja.md`](../ne
 `--otel-library`が空でなくライブラリが見つかる場合は、`daq-webctl`がプロセス起動時にテレメトリーライブラリを動的に読み込みます。
 
 `daq-webctl`でよく使用するテレメトリーオプションは次のとおりです。
+
+<a id="telemetry-options-table-ja"></a>
+**表3：`daq-webctl`でよく使用するテレメトリーオプション。**
 
 | オプション | 既定値 | 説明 |
 | :-- | :-- | :-- |
@@ -177,7 +189,10 @@ DAQコマンドキー、`daqctl` Publish/Subscribe (Pub/Sub) チャネル、メ�
 `daq-webctl`は起動時にRedisの`notify-keyspace-events`を`AKE`に設定し、期限切れキーイベントを含むキーイベント通知を受信できるようにします。
 さらに、ブラウザの状態概要を構築するため、`daq_service{sep}*{sep}*{sep}fair-mq-state`と`daq_service{sep}*{sep}*{sep}updatedTime`をポーリングします。
 
-次の表は、`daq-webctl`が直接操作するRedisキーおよびチャネルを示します。
+[表4](#redis-keys-channel-table-ja)は、`daq-webctl`が直接操作するRedisキーおよびチャネルを示します。
+
+<a id="redis-keys-channel-table-ja"></a>
+**表4：`daq-webctl`が直接操作するRedisキーおよびチャネル。**
 
 | キーパターン | `daq-webctl`が行う操作 | 目的 |
 | :-- | :-- | :-- |
@@ -203,6 +218,9 @@ DAQコマンドキー、`daqctl` Publish/Subscribe (Pub/Sub) チャネル、メ�
 `daq-webctl`はRedis操作を実行するか、Redis Pub/Subメッセージを発行します。
 `redis-publish`のRedis Pub/Subコマンドメッセージ形式、受け付けるコマンド値、および`services` / `instances`の対象選択規則については、[`plugins/README.ja.md`](../plugins/README.ja.md#24-daq-command-publishsubscribe-pubsub)に記載されています。
 
+<a id="client-messages-table-ja"></a>
+**表5：`daq-webctl`が受け付けるWebSocketクライアントメッセージ。**
+
 | クライアントメッセージ | 動作 |
 | :-- | :-- |
 | `{"command":"redis-get","value":"run_number"}` | `run_info{sep}run_number`と`run_info{sep}latest_run_number`を読み取ります。 |
@@ -211,6 +229,9 @@ DAQコマンドキー、`daqctl` Publish/Subscribe (Pub/Sub) チャネル、メ�
 | `{"command":"redis-publish","value":"RUN","services":["Sampler"],"instances":["Sampler:Sampler-0"]}` | 設定に応じた前提コマンド処理とともにDAQコマンドを`daqctl`へ発行します。 |
 
 `daq-webctl`はブラウザクライアントへJSONメッセージを返します。
+
+<a id="server-messages-table-ja"></a>
+**表6：`daq-webctl`がブラウザクライアントへ返すJSONメッセージ。**
 
 | `daq-webctl`のメッセージ | 意味 |
 | :-- | :-- |

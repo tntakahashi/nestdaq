@@ -178,7 +178,7 @@ NESTDAQ_FAIRLOGGER_CONSOLE_SEVERITY=debug4 NESTDAQ_START_DEVICE_OTEL_LOG_SEVERIT
 ./start_device.sh Sampler --service-name B-Sampler
 ```
 
-これにより、同じ実行ファイルを別のサービスグループとして表示できます。
+このグループ化を[図1](#figure-service-name-groups-ja)に示します。
 例えば同じ`Sampler` programを、Redis、`daq-webctl`、telemetry attribute上で`A-Sampler-*`と`B-Sampler-*`として表示できます。
 
 ```mermaid
@@ -200,10 +200,16 @@ flowchart TB
   end
 ```
 
+<a id="figure-service-name-groups-ja"></a>
+**図1：同じ実行ファイルのインスタンスを分けるサービス名グループ。**
+
 <a id="2-topology-configuration"></a>
 ## 2. トポロジー設定
 
-次の表にエンドポイントパラメーターの既定値を示します。
+[表1](#table-default-endpoint-parameters-ja)にエンドポイントパラメーターの既定値を示します。
+
+<a id="table-default-endpoint-parameters-ja"></a>
+**表1：エンドポイントパラメーターの既定値。**
 
 | フィールド | 既定値 |
 | -- | -- |
@@ -318,7 +324,7 @@ link Sampler data Sink in
 ```
 
 `Sampler:data`はPUSHソケットをバインドし、`Sink:in`はPULLソケットへ接続します。
-リンクは`Sampler-0`と`Sink-0`のようにインスタンスインデックスが一致するデバイスをペアにします。
+リンクは[図2](#figure-one-to-one-topology-ja)に示すように、`Sampler-0`と`Sink-0`のようなインスタンスインデックスが一致するデバイスをペアにします。
 
 ```mermaid
 graph LR
@@ -326,6 +332,9 @@ graph LR
   Sampler-1 --> Sink-1
   Sampler-2 --> Sink-2
 ```
+
+<a id="figure-one-to-one-topology-ja"></a>
+**図2：SamplerからSinkへの1対1トポロジー。**
 
 <a id="23-topology-n-n-msh"></a>
 ### 2.3. topology-n-n-m.sh
@@ -353,7 +362,7 @@ link fairmq-splitter data-out Sink            in
 ```
 
 最初のリンクは各Samplerを同じインデックスのスプリッターインスタンスとペアにします。
-2番目のリンクは`autoSubChannel true`を使用し、スプリッターの出力サブチャネルから複数のSinkインスタンスへファンアウトできるようにします。
+2番目のリンクは`autoSubChannel true`を使用し、[図3](#figure-splitter-fan-out-topology-ja)に示すようにスプリッターの出力サブチャネルから複数のSinkインスタンスへファンアウトできるようにします。
 
 ```mermaid
 graph LR
@@ -363,11 +372,14 @@ graph LR
   fairmq-splitter-0 & fairmq-splitter-1 & fairmq-splitter-2  --> Sink-0 & Sink-1
 ```
 
+<a id="figure-splitter-fan-out-topology-ja"></a>
+**図3：Samplerからスプリッターを経由してSinkインスタンスへファンアウトするトポロジー。**
+
 <a id="24-topology-2samplers-n-msh"></a>
 ### 2.4. topology-2samplers-n-m.sh
 
 2つのSamplerサービスから1つのSinkサービスへデータを送信します。
-このスクリプトは前述のサービス名によるグループ化を示します。
+このスクリプトは[図4](#figure-two-sampler-group-topology-ja)に示すサービス名によるグループ化を使用します。
 一部の`Sampler`プロセスを`A-Sampler`、その他を`B-Sampler`として起動することを想定します。
 
 ```bash
@@ -383,6 +395,9 @@ link B-Sampler data Sink in
 graph LR
   A-Sampler-0 & A-Sampler-1 & B-Sampler-0 & B-Sampler-1 & B-Sampler-2 --> Sink-0 & Sink-1
 ```
+
+<a id="figure-two-sampler-group-topology-ja"></a>
+**図4：2つのSamplerサービスグループからSinkインスタンスへのファンアウト。**
 
 <a id="3-parameter-configuration"></a>
 ## 3. パラメーター設定
@@ -450,12 +465,12 @@ param Sink multipart true
 
 - `--output DIR`、`--processing-mode MODE`、`--no-poll LIST`のようにプレースホルダーを表示するオプションは、`--key value`形式で値が必要です。
 - `--force`、`--single-output`、`--no-dqm-channel`のようにプレースホルダーのないオプションは、指定の有無だけを表すフラグです。
-  表の動作を適用するにはフラグだけを指定し、既定値を維持するには省略します。
+  [表2](#table-generator-options-ja)の動作を適用するにはフラグだけを指定し、既定値を維持するには省略します。
 
 指定の有無だけを表すフラグはブール値を受け取りません。
 例えば`--no-dqm-channel true`ではなく`--no-dqm-channel`を使用し、`--no-dqm-channel false`と書く代わりにフラグを省略します。
 フラグを繰り返しても状態は再度切り替わりません。
-表の`off`はフラグ未指定を意味します。
+[表2](#table-generator-options-ja)の`off`はフラグ未指定を意味します。
 `--no-*`フラグが`off`の場合、対象機能は既定で有効です。
 
 ```bash
@@ -467,7 +482,10 @@ param Sink multipart true
   --single-output
 ```
 
-ジェネレーターオプション：
+ジェネレーターオプションを[表2](#table-generator-options-ja)に示します。
+
+<a id="table-generator-options-ja"></a>
+**表2：デバイススケルトンジェネレーターのオプション。**
 
 | オプション | デフォルト | 説明 |
 | :-- | :-- | :-- |
@@ -491,7 +509,10 @@ param Sink multipart true
 | `--no-drain-input` | オフ | `PostRun()`の入力排出コードを生成しない。 |
 | `--no-poll LIST` | なし | FairMQのポーリングから除外するチャネル種別のコンマ区切り一覧：`input`、`output`、`dqm`。 |
 
-処理モード：
+処理モードを[表3](#table-processing-modes-ja)に示します。
+
+<a id="table-processing-modes-ja"></a>
+**表3：デバイススケルトンジェネレーターが生成する処理モード。**
 
 | モード | 生成される動作 |
 | :-- | :-- |
@@ -591,9 +612,14 @@ DQMは即時送信できない場合にサンプルを破棄します。
 単一メッセージの例にはジェネレーターオプション`--single-output`または`--single-dqm`を使用します。
 `SendOutputMessage()`と`SendDQMMessage()`は、生成された`fair::mq::Parts&`または`fair::mq::MessagePtr&`ペイロードを受け取り、チャネルの準備状態、`Send()`、成功/失敗確認だけを処理します。
 
-上表のオプションはジェネレーターを制御するものであり、生成したデバイスのコマンドラインオプションではありません。
+[表2](#table-generator-options-ja)のオプションはジェネレーターを制御するものであり、生成したデバイスのコマンドラインオプションではありません。
 生成C++コードはカスタムオプションを文字列として登録します。
 `InitTask()`は文字列を変換してから数値メンバーへ代入します。
+
+生成デバイスのオプションを[表4](#table-generated-device-options-ja)に示します。
+
+<a id="table-generated-device-options-ja"></a>
+**表4：生成デバイスが登録するコマンドラインオプション。**
 
 | 生成されるデバイスのコマンドラインオプション | デフォルト | 説明 |
 | :-- | :-- | :-- |
@@ -604,8 +630,11 @@ DQMは即時送信できない場合にサンプルを破棄します。
 入力チャネルがある場合、既定で`PostRun()`へ入力排出コードを生成します。
 無効化には`--no-drain-input`を使用します。
 
-ジェネレーターは組み込みテンプレートを読み、デバイス固有のプレースホルダーを置換し、生成ファイルを出力ディレクトリへ書き込みます。
+ジェネレーターは[表5](#table-device-skeleton-templates-ja)の組み込みテンプレートを読み、デバイス固有のプレースホルダーを置換し、生成ファイルを出力ディレクトリへ書き込みます。
 主要な置換には`@CLASS_NAME@`、`@HEADER_FILE@`、`@SOURCE_FILE@`と、メンバー、オプション、処理メソッド、送信ヘルパー、排出コード用の生成C++ブロックがあります。
+
+<a id="table-device-skeleton-templates-ja"></a>
+**表5：組み込みテンプレートと生成ファイル。**
 
 | テンプレート | `MyDevice`用生成ファイル |
 | :-- | :-- |

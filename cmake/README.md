@@ -9,6 +9,11 @@ For build commands, dependency versions, and user-facing options, see [`INSTALL.
 
 ## 1. Top-Level Build Helpers
 
+The top-level build helpers and their purposes are listed in [Table 1](#tbl-top-level-build-helpers-en).
+
+<a id="tbl-top-level-build-helpers-en"></a>
+**Table 1: Top-level build helper files.**
+
 | File | Purpose |
 | :-- | :-- |
 | `common.cmake` | Common build settings shared by the main project and dependency project: C++ standard checks, warning flags, install directories, `Threads`, and CMake compatibility arguments for `ExternalProject_Add`. |
@@ -21,7 +26,10 @@ For build commands, dependency versions, and user-facing options, see [`INSTALL.
 
 ## 2. Installed Package Files
 
-These files are installed with NestDAQ for use by downstream projects that call `find_package(NestDAQ REQUIRED CONFIG)`.
+The files in [Table 2](#tbl-installed-package-files-en) are installed with NestDAQ for use by downstream projects that call `find_package(NestDAQ REQUIRED CONFIG)`.
+
+<a id="tbl-installed-package-files-en"></a>
+**Table 2: Installed CMake package files.**
 
 | File | Purpose |
 | :-- | :-- |
@@ -42,6 +50,11 @@ When `WITH_SPDLOG=ON`, the dependency project first searches for an installed sp
 If spdlog is not found and `CMAKE_CXX_STANDARD` is lower than `20`, it also searches for fmt because this spdlog build uses the external fmt library instead of `std::format`.
 If a suitable fmt package is not found, `dependencies/fmt.cmake` builds and installs fmt before spdlog.
 For C++20 or later, the spdlog dependency build uses `std::format` and does not add fmt.
+
+The dependency files and their purposes are listed in [Table 3](#tbl-external-dependency-files-en).
+
+<a id="tbl-external-dependency-files-en"></a>
+**Table 3: External dependency files.**
 
 | File | Purpose |
 | :-- | :-- |

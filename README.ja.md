@@ -14,6 +14,9 @@ NestDAQは、粒子計測向けのストリーミングデータ収集 (DAQ) ア
 <a id="11-user-and-operator-guides"></a>
 ### 1.1. 利用者および運用者向けガイド
 
+<a id="user-operator-guides-table-ja"></a>
+**表1：NestDAQの利用者および運用者向けドキュメント。**
+
 | パス / ドキュメント | 用途 |
 | :-- | :-- |
 | [INSTALL.ja.md](INSTALL.ja.md) | 前提条件、依存関係のバージョンとビルドオプション、NestDAQのビルドオプション、外部サービス、サンプル、ドキュメント生成。 |
@@ -30,6 +33,9 @@ NestDAQは、粒子計測向けのストリーミングデータ収集 (DAQ) ア
 <a id="12-repository-reference"></a>
 ### 1.2. リポジトリ構成
 
+<a id="repository-reference-table-ja"></a>
+**表2：ソースディレクトリとその役割。**
+
 | パス / ドキュメント | 用途 |
 | :-- | :-- |
 | `nestdaq/` | バージョンヘッダーのテンプレート、FairMQデバイスアプリケーションのエントリーポイントと`main()`を提供する`runDevice.h`、テレメトリーコードなど、NestDAQのコアヘッダーとソースコード。 |
@@ -39,6 +45,9 @@ NestDAQは、粒子計測向けのストリーミングデータ収集 (DAQ) ア
 <a id="13-developer-guides"></a>
 ### 1.3. 開発者向けガイド
 
+<a id="developer-guides-table-ja"></a>
+**表3：NestDAQ開発者向けドキュメント。**
+
 | パス / ドキュメント | 用途 |
 | :-- | :-- |
 | [cmake/](cmake/README.ja.md) | CMakeヘルパー、インストールされるパッケージファイル、外部依存関係をビルドするプロジェクト。 |
@@ -46,6 +55,10 @@ NestDAQは、粒子計測向けのストリーミングデータ収集 (DAQ) ア
 
 <a id="2-tested-systems"></a>
 ## 2. 検証済みシステム
+
+<a id="tested-systems-table-ja"></a>
+**表4：NestDAQで検証済みのOSおよびツールチェーンのバージョン。**
+
 | ディストリビューション | バージョン | コンパイラー | CMake  | FairMQ |
 | ---       | ---     | ---         | ---    | ---    |
 | AlmaLinux | 8.10    | GCC 8.5.0   | 3.26.5 | 1.9.2  |

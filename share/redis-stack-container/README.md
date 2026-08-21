@@ -26,6 +26,11 @@ The scripts use pinned image tags instead of `latest`:
 
 ## 1. Choose an Image
 
+The available helper scripts and their images are listed in [Table 1](#tbl-helper-script-images-en).
+
+<a id="tbl-helper-script-images-en"></a>
+**Table 1: Redis container helper scripts and images.**
+
 | Script | Image | RedisInsight | Notes |
 | :-- | :-- | :-- | :-- |
 | `run-redis-8.2.7.sh` | `docker.io/library/redis:8.2.7` | no | Official Redis image. The Redis 8 package is expected to include Redis Stack modules; verify with `MODULE LIST` after startup. |
@@ -191,6 +196,11 @@ REDIS_VOLUME_MODE=volume ./run-redis-stack.sh
 
 Each script uses its containing directory as `THIS_SCRIPT_DIR`.
 Bind-mounted data directories are relative to `THIS_SCRIPT_DIR`, so a copied installed script stores its data next to the copied script.
+
+Runtime environment variables are described in [Table 2](#tbl-runtime-environment-variables-en).
+
+<a id="tbl-runtime-environment-variables-en"></a>
+**Table 2: Redis container runtime environment variables.**
 
 | Variable | Default | Description |
 | -------- | ------- | ----------- |

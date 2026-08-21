@@ -6,6 +6,7 @@
 
 ## Installation flow
 
+<a id="installation-flow-figure-en"></a>
 ```mermaid
 flowchart TD
   Prerequisites[1. Install prerequisites]
@@ -14,6 +15,8 @@ flowchart TD
 
   Prerequisites --> Dependencies --> NestDAQ
 ```
+
+**Figure 1: NestDAQ installation flow from prerequisites through optional documentation generation.**
 
 The main NestDAQ build builds and installs the examples by default when `NestDAQ_BUILD_EXAMPLES=ON`.
 See Section 4 for information about the examples provided by NestDAQ and FairMQ.
@@ -269,6 +272,9 @@ cmake --build ./build-external
 
 ### 2.3 External dependency build options
 
+<a id="external-dependency-build-options-table-en"></a>
+**Table 1: Options for configuring external dependency builds.**
+
 | Option | Default | Description |
 | :-- | :-- | :-- |
 | `BUILD_PARALLEL_LEVEL` | unset | Parallel level passed to inner `ExternalProject` builds. Set this at configure time; `cmake --build --parallel` does not control those inner builds. |
@@ -295,6 +301,9 @@ These variables are intended for dependency build maintenance; inspect the CMake
 For Redis 7.x maintenance settings, inspect `cmake/dependencies/redis-server-7.cmake`.
 
 ### 2.4 Versions of installed external dependencies
+
+<a id="external-dependency-versions-table-en"></a>
+**Table 2: Default versions and version-selection options for external dependencies.**
 
 | Package                                                                  | Version (default) | CMake options to modify versions |
 | :--                                                                      | :--               | :--                              |
@@ -324,7 +333,10 @@ RedisInsight is a separate web-based graphical user interface (GUI) for connecti
 
 ##### 2.4.1.1 Installed component matrix
 
-The following matrix shows which components each supported provisioning method provides.
+[Table 3](#redis-provisioning-methods-table-en) shows which components each supported provisioning method provides.
+
+<a id="redis-provisioning-methods-table-en"></a>
+**Table 3: Redis components provided by each supported provisioning method.**
 
 | Installed component | Capability | CMake: Redis 8 (default) | CMake: Redis 7 | Container: Redis Stack | Container: Stack Server | Container: Redis 8 | Host package (default) |
 | :-- | :-- | :--: | :--: | :--: | :--: | :--: | :--: |
@@ -381,6 +393,9 @@ On AlmaLinux 8 with GCC 8.5, builds with `REDIS_BUILD_REDISEARCH=ON` fail becaus
 For an AlmaLinux 8 dependency build with GCC 8.5, pass `-DREDIS_BUILD_REDISEARCH=OFF` unless a newer compiler toolchain provides the required C++20 support.
 The default Redis module versions follow the module release tags selected by the Redis 8.2.9 source tree.
 
+<a id="redis-dependency-versions-table-en"></a>
+**Table 4: Default Redis and Redis module versions and their CMake options.**
+
 | Package                                                                  | Version (default) | CMake options |
 | :--                                                                      | :--               | :--            |
 | [Redis](https://github.com/redis/redis)                                  | 8.2.9             | `Redis_VERSION` |
@@ -436,6 +451,9 @@ VERBOSE=1 cmake --build ./build
 
 ### NestDAQ build options
 
+<a id="nestdaq-build-options-table-en"></a>
+**Table 5: Options for configuring the NestDAQ build.**
+
 | Option | Default | Description |
 | :-- | :-- | :-- |
 | `NESTDAQ_ENABLE_CLANG_TIDY` | `OFF` | Run `clang-tidy` during the NestDAQ build. This requires the `clang-tidy` command, provided by `clang-tools-extra` on AlmaLinux. |
@@ -458,6 +476,9 @@ These services and tools are not required to build NestDAQ.
 The supplied Compose configurations are intended for local validation and may use relaxed security settings, so review and harden passwords, authentication, network exposure, and Transport Layer Security (TLS) before using them in production.
 
 Containers or host packages can provide the external services required while NestDAQ applications run.
+
+<a id="external-service-provisioning-table-en"></a>
+**Table 6: Provisioning methods for external runtime services.**
 
 | External service | Source build | Container helper | Host package installer |
 | :-- | :-- | :-- | :-- |

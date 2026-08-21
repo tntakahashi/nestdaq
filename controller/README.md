@@ -19,6 +19,9 @@ At startup, `daq-webctl` configures FairLogger output and can load the optional 
 
 ## 2. Main Components
 
+<a id="main-components-table-en"></a>
+**Table 1: Main `daq-webctl` components and their responsibilities.**
+
 | Component | Purpose |
 | :-- | :-- |
 | `run_daq-webctl.cxx` | Executable entry point, command-line parsing, logging, telemetry, Redis setup, and server startup. |
@@ -55,6 +58,7 @@ The browser never connects directly to Redis or user device processes.
 `daq-webctl` is the browser-facing HTTP/WebSocket server and the Redis client that publishes commands, accesses keys, subscribes to Pub/Sub channels, and polls state.
 User device processes communicate with Redis through the `daq_service` plugin.
 
+<a id="communication-flow-figure-en"></a>
 ```mermaid
 sequenceDiagram
   participant Browser as Web browser
@@ -85,7 +89,9 @@ sequenceDiagram
   WebCtl-->>Browser: WebSocket JSON state update
 ```
 
-The diagram shows the control and status path.
+**Figure 1: Control and status path among the browser, `daq-webctl`, Redis, and user devices.**
+
+[Figure 1](#communication-flow-figure-en) shows the control and status path.
 FairMQ data-channel traffic between user device processes follows a separate path and is not routed through `daq-webctl`.
 
 ## 5. Command-Line Options
@@ -94,6 +100,9 @@ FairMQ data-channel traffic between user device processes follows a separate pat
 OpenTelemetry options are also available.
 When `--otel-service-instance-id` is not specified, `daq-webctl` records a generated UUID in the OpenTelemetry `service.instance.id` resource attribute.
 See [`nestdaq/telemetry/README.md`](../nestdaq/telemetry/README.md) for the complete OpenTelemetry option list.
+
+<a id="command-line-options-table-en"></a>
+**Table 2: General `daq-webctl` command-line options.**
 
 | Option | Default | Description |
 | :-- | :-- | :-- |
@@ -120,6 +129,9 @@ The default OpenTelemetry `service.name` for `daq-webctl` is `daq-webctl`.
 If `--otel-library` is non-empty and the library can be found, `daq-webctl` loads the telemetry library dynamically when the process starts.
 
 Common `daq-webctl` telemetry options are:
+
+<a id="telemetry-options-table-en"></a>
+**Table 3: Common `daq-webctl` telemetry options.**
 
 | Option | Default | Description |
 | :-- | :-- | :-- |
@@ -169,7 +181,10 @@ A custom controller can use the same Redis keys and Pub/Sub interface; this sect
 At startup, `daq-webctl` sets Redis `notify-keyspace-events` to `AKE` so that it can receive key-event notifications, including expired key events.
 It also polls `daq_service{sep}*{sep}*{sep}fair-mq-state` and `daq_service{sep}*{sep}*{sep}updatedTime` to build browser state summaries.
 
-The following table lists the Redis keys and channel that `daq-webctl` accesses directly.
+[Table 4](#redis-keys-channel-table-en) lists the Redis keys and channel that `daq-webctl` accesses directly.
+
+<a id="redis-keys-channel-table-en"></a>
+**Table 4: Redis keys and channel accessed directly by `daq-webctl`.**
 
 | Key pattern | Operation performed by `daq-webctl` | Purpose |
 | :-- | :-- | :-- |
@@ -194,6 +209,9 @@ Browser clients send JSON commands to the WebSocket endpoint.
 `daq-webctl` executes Redis operations or publishes Redis Pub/Sub messages.
 For `redis-publish`, [`plugins/README.md`](../plugins/README.md#24-daq-command-publishsubscribe-pubsub) documents the Redis Pub/Sub command message shape, accepted command values, and `services` / `instances` target selection rules.
 
+<a id="client-messages-table-en"></a>
+**Table 5: WebSocket client messages accepted by `daq-webctl`.**
+
 | Client message | Effect |
 | :-- | :-- |
 | `{"command":"redis-get","value":"run_number"}` | Reads `run_info{sep}run_number` and `run_info{sep}latest_run_number`. |
@@ -202,6 +220,9 @@ For `redis-publish`, [`plugins/README.md`](../plugins/README.md#24-daq-command-p
 | `{"command":"redis-publish","value":"RUN","services":["Sampler"],"instances":["Sampler:Sampler-0"]}` | Publishes a DAQ command to `daqctl`, with optional prerequisite command handling. |
 
 `daq-webctl` sends JSON messages back to browser clients.
+
+<a id="server-messages-table-en"></a>
+**Table 6: JSON messages sent by `daq-webctl` to browser clients.**
 
 | `daq-webctl` message | Meaning |
 | :-- | :-- |

@@ -10,8 +10,11 @@ NestDAQテレメトリーは、FairMQベースのデバイス向け、および�
 このライブラリはFairMQプラグインではありません。FairMQの`-P`で指定するプラグイン一覧には含めず、`-S`で指定するプラグイン検索パスも使用しません。
 NestDAQは、`--otel-library`で指定したパスまたはsonameを`dlopen()`へ直接渡します。
 
-この実装共有ライブラリは3種類のOpenTelemetryシグナルをエクスポートできます。
-既定値の列は、対応するプロトコルオプションまたは環境変数で設定を変更しなかった場合のエクスポーター選択を示します。
+この実装共有ライブラリは[表1](#table-1-telemetry-signals-ja)に示す3種類のOpenTelemetryシグナルをエクスポートできます。
+[表1](#table-1-telemetry-signals-ja)の既定値の列は、対応するプロトコルオプションまたは環境変数で設定を変更しなかった場合のエクスポーター選択を示します。
+
+<a id="table-1-telemetry-signals-ja"></a>
+**表1：OpenTelemetryシグナルと既定値。**
 
 | シグナル | 既定値 | NestDAQ内のソース |
 | --- | --- | --- |
@@ -52,7 +55,7 @@ OTLPはOpenTelemetry Protocol、gRPCはGoogle remote procedure callの略です�
 
 FairLoggerとspdlogのネイティブ出力、およびOpenTelemetryログエクスポーターでは、出力先ごとに異なるオプションを使用します。
 
-次の図の矢印は、ログデータが流れる方向を示します。
+[図1](#figure-1-log-data-flow-ja)の矢印は、ログデータが流れる方向を示します。
 
 ```mermaid
 flowchart LR
@@ -90,6 +93,14 @@ flowchart LR
     OTE -->|"--otel-log-protocol=otlp-grpc"| COL
 ```
 
+<a id="figure-1-log-data-flow-ja"></a>
+**図1：ネイティブ出力とOpenTelemetry出力を通るログデータの流れ。**
+
+[表2](#table-2-log-output-paths-ja)は、[図1](#figure-1-log-data-flow-ja)の各経路に対する制御方法と出力先を示します。
+
+<a id="table-2-log-output-paths-ja"></a>
+**表2：ログ出力経路と制御。**
+
 | ログ経路 | 対象 | 出力先 | 切り替え方法 | 既定 |
 | --- | --- | --- | --- | --- |
 | FairLoggerネイティブコンソール | FairLoggerログ | 標準出力 | `--severity=<重大度>`。`nolog`は`fatal`以外を抑止 | `info`相当で有効 |
@@ -112,10 +123,13 @@ NestDAQテレメトリーとspdlogのオプション、および対応する環�
 ## 2. リソース属性
 
 ログ、メトリクス、トレースは1つのOpenTelemetryリソースを共有します。
-NestDAQは値を利用できる場合に、以下のリソース属性を設定します。
+NestDAQは値を利用できる場合に、[表3](#table-3-resource-attributes-ja)のリソース属性を設定します。
 `service.*`と`host.*`はOpenTelemetryのセマンティック規約属性です。
 以下ではOpenTelemetryの一般的な略称として`OTel`を使用します。
 `nestdaq.*`と`fairmq.*`はNestDAQ固有の属性です。
+
+<a id="table-3-resource-attributes-ja"></a>
+**表3：NestDAQリソース属性。**
 
 | 属性 | 由来 | 値 |
 | --- | --- | --- |
@@ -133,12 +147,16 @@ NestDAQは値を利用できる場合に、以下のリソース属性を設定�
 
 詳細なNestDAQおよびFairMQのビルド情報とGitメタデータは、リソース属性ではなく構造化した起動ログ本文として出力されます。
 OpenTelemetryソフトウェア開発キット (SDK) は、独自のリソース属性を別途追加する場合があります。
-上のリソース属性表は、NestDAQが明示的に設定する属性だけを示します。
+[表3](#table-3-resource-attributes-ja)は、NestDAQが明示的に設定する属性だけを示します。
 
 <a id="3-fairlogger-log-records"></a>
 ## 3. FairLoggerログレコード
 
 FairLoggerカスタムシンクは、FairLoggerの重大度 (ログレベル) が`--otel-log-severity`以上の場合、出力された各FairLoggerメッセージをOpenTelemetry LogRecordへ変換します。
+[表4](#table-4-fairlogger-logrecord-fields-ja)は、この変換で生成するフィールドと属性を示します。
+
+<a id="table-4-fairlogger-logrecord-fields-ja"></a>
+**表4：FairLogger OpenTelemetry LogRecordのフィールドと属性。**
 
 | LogRecordのフィールドまたは属性 | 由来 | ソース |
 | --- | --- | --- |
@@ -242,7 +260,10 @@ SPDLOG_WARN("queue depth is {}", depth);
 
 ### 4.3. エクスポートするフィールドと属性
 
-spdlogシンクは以下のOpenTelemetryフィールドと属性を記録します。
+spdlogシンクは[表5](#table-5-spdlog-logrecord-fields-ja)のOpenTelemetryフィールドと属性を記録します。
+
+<a id="table-5-spdlog-logrecord-fields-ja"></a>
+**表5：spdlog OpenTelemetry LogRecordのフィールドと属性。**
 
 | LogRecordのフィールドまたは属性 | 由来 | ソース |
 | --- | --- | --- |
@@ -274,6 +295,11 @@ spdlogのフィルター処理は、引き続きspdlogロガーおよびシン�
 <a id="51-fairlogger-severity-mapping"></a>
 ### 5.1. FairLogger重大度の対応
 
+[表6](#table-6-fairlogger-severity-mapping-ja)は、FairLoggerレベルとOpenTelemetry重大度値の対応を示します。
+
+<a id="table-6-fairlogger-severity-mapping-ja"></a>
+**表6：FairLogger重大度の対応。**
+
 | FairLoggerレベル | `fair::Severity`整数 | OTel SeverityNumber | OTel SeverityText | 元のレベル属性 |
 | --- | --- | --- | --- | --- |
 | `nolog` | `0` | `0` | invalid / unspecified | `fairlogger.severity.*` |
@@ -299,6 +325,11 @@ spdlogのフィルター処理は、引き続きspdlogロガーおよびシン�
 <a id="52-spdlog-severity-mapping"></a>
 ### 5.2. spdlog重大度の対応
 
+[表7](#table-7-spdlog-severity-mapping-ja)は、spdlogレベルとOpenTelemetry重大度値の対応を示します。
+
+<a id="table-7-spdlog-severity-mapping-ja"></a>
+**表7：spdlog重大度の対応。**
+
 | spdlogレベル | `spdlog::level::level_enum`整数 | OTel SeverityNumber | OTel SeverityText | 元のレベル属性 |
 | --- | --- | --- | --- | --- |
 | `trace` | `0` | `1` | `TRACE` | `spdlog.level` |
@@ -312,6 +343,11 @@ spdlogのフィルター処理は、引き続きspdlogロガーおよびシン�
 
 <a id="6-command-line-options"></a>
 ## 6. コマンドラインオプション
+
+[表8](#table-8-command-line-options-ja)は、コマンドラインオプションと対応する環境変数を示します。
+
+<a id="table-8-command-line-options-ja"></a>
+**表8：テレメトリーのコマンドラインオプション。**
 
 | オプション | 環境変数 | デフォルト | 意味 |
 | --- | --- | --- | --- |

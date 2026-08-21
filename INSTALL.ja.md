@@ -7,6 +7,7 @@
 <a id="installation-flow"></a>
 ## インストールの流れ
 
+<a id="installation-flow-figure-ja"></a>
 ```mermaid
 flowchart TD
   Prerequisites[1. 前提パッケージをインストール]
@@ -15,6 +16,8 @@ flowchart TD
 
   Prerequisites --> Dependencies --> NestDAQ
 ```
+
+**図1：前提パッケージから任意のドキュメント生成までのNestDAQインストールの流れ。**
 
 NestDAQのメインビルドでは、`NestDAQ_BUILD_EXAMPLES=ON`の場合、デフォルトでサンプルもビルドしてインストールします。
 第4節では、NestDAQとFairMQが提供するサンプルを説明します。
@@ -283,6 +286,9 @@ cmake --build ./build-external
 <a id="external-dependency-build-options"></a>
 ### 2.3 外部依存関係のビルドオプション
 
+<a id="external-dependency-build-options-table-ja"></a>
+**表1：外部依存関係のビルドを構成するオプション。**
+
 | オプション | デフォルト | 説明 |
 | :-- | :-- | :-- |
 | `BUILD_PARALLEL_LEVEL` | 未設定 | 内部の`ExternalProject`ビルドへ渡す並列数です。構成時に設定してください。`cmake --build --parallel`では内部ビルドを制御できません。 |
@@ -312,6 +318,9 @@ Redis 7.xの保守用設定については`cmake/dependencies/redis-server-7.cma
 <a id="versions-of-installed-external-dependencies"></a>
 ### 2.4 インストールされる外部依存関係のバージョン
 
+<a id="external-dependency-versions-table-ja"></a>
+**表2：外部依存関係のデフォルトバージョンとバージョン選択オプション。**
+
 | パッケージ                                                               | バージョン (デフォルト) | バージョン変更用CMakeオプション |
 | :--                                                                      | :--                      | :--                              |
 | [ZeroMQ (libzmq)](https://github.com/zeromq/libzmq)                      | 4.3.5                    | `ZeroMQ_VERSION`                 |
@@ -340,7 +349,10 @@ RedisInsightは、Redisへ接続してデータの確認やコマンドの実行
 
 ##### 2.4.1.1 インストールされるコンポーネントの対応表
 
-このリポジトリがサポートする各導入方法で何が用意されるかを次の表に示します。
+このリポジトリがサポートする各導入方法で何が用意されるかを[表3](#redis-provisioning-methods-table-ja)に示します。
+
+<a id="redis-provisioning-methods-table-ja"></a>
+**表3：サポートされる各導入方法が提供するRedis構成要素。**
 
 | インストールされるもの | 機能 | CMake: Redis 8 (デフォルト) | CMake: Redis 7 | コンテナ: Redis Stack | コンテナ: Stack Server | コンテナ: Redis 8 | ホストパッケージ (デフォルト) |
 | :-- | :-- | :--: | :--: | :--: | :--: | :--: | :--: |
@@ -397,6 +409,9 @@ RediSearchにはC++20をサポートするコンパイラーが必要です。
 AlmaLinux 8のGCC 8.5では、RediSearchが`<ranges>`などのC++20機能を使用するため、`REDIS_BUILD_REDISEARCH=ON`のビルドは失敗します。
 AlmaLinux 8でGCC 8.5を使用して依存関係をビルドする場合は、必要なC++20機能をサポートする新しいコンパイラーツールチェーンを使用しない限り、`-DREDIS_BUILD_REDISEARCH=OFF`を渡してください。
 デフォルトのRedisモジュールバージョンは、Redis 8.2.9のソースツリーが選択するモジュールのリリースタグに従います。
+
+<a id="redis-dependency-versions-table-ja"></a>
+**表4：RedisおよびRedisモジュールのデフォルトバージョンとCMakeオプション。**
 
 | パッケージ                                                               | バージョン (デフォルト) | CMakeオプション |
 | :--                                                                      | :--                      | :--             |
@@ -455,6 +470,9 @@ VERBOSE=1 cmake --build ./build
 <a id="nestdaq-build-options"></a>
 ### NestDAQのビルドオプション
 
+<a id="nestdaq-build-options-table-ja"></a>
+**表5：NestDAQのビルドを構成するオプション。**
+
 | オプション | デフォルト | 説明 |
 | :-- | :-- | :-- |
 | `NESTDAQ_ENABLE_CLANG_TIDY` | `OFF` | NestDAQのビルド中に`clang-tidy`を実行します。AlmaLinuxでは`clang-tools-extra`が提供する`clang-tidy`コマンドが必要です。 |
@@ -477,6 +495,9 @@ NestDAQのOpenTelemetryメトリクスおよびトレース計装は実験的で
 提供するCompose構成はローカル検証向けであり、セキュリティー設定が簡略化されている場合があるため、本番環境で使用する前にパスワード、認証、ネットワーク公開範囲、Transport Layer Security (TLS) について検討し、必要に応じて強化してください。
 
 NestDAQアプリケーションの稼働中に必要となる外部サービスは、コンテナまたはホストパッケージで用意できます。
+
+<a id="external-service-provisioning-table-ja"></a>
+**表6：実行時に必要な外部サービスの導入方法。**
 
 | 外部サービス | ソースビルド | コンテナヘルパー | ホストパッケージインストーラー |
 | :-- | :-- | :-- | :-- |

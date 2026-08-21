@@ -31,6 +31,11 @@ The `:Z` options already present in the Compose file apply the SELinux labels.
 
 ### 2.1. Environment variables
 
+The Compose settings available through environment variables are listed in [Table 1](#tbl-clickstack-environment-variables-en).
+
+<a id="tbl-clickstack-environment-variables-en"></a>
+**Table 1: ClickStack Compose environment variables.**
+
 | Variable | Default | Description |
 | :-- | :-- | :-- |
 | `CLICKSTACK_IMAGE` | `docker.io/clickhouse/clickstack-all-in-one:2` | ClickStack all-in-one image. |

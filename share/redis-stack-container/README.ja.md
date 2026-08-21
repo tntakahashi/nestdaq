@@ -27,6 +27,11 @@ RedisInsightを含むイメージでは、そのWeb UI用ポートも公開さ�
 <a id="1-choose-an-image"></a>
 ## 1. イメージの選択
 
+利用できる補助スクリプトとイメージを[表1](#tbl-helper-script-images-ja)に示します。
+
+<a id="tbl-helper-script-images-ja"></a>
+**表1：Redisコンテナー補助スクリプトとイメージ。**
+
 | スクリプト | イメージ | RedisInsight | 備考 |
 | :-- | :-- | :-- | :-- |
 | `run-redis-8.2.7.sh` | `docker.io/library/redis:8.2.7` | なし | 公式Redisイメージ。Redis 8パッケージにはRedis Stackモジュールが含まれる想定です。起動後に`MODULE LIST`で確認してください。 |
@@ -202,6 +207,11 @@ REDIS_VOLUME_MODE=volume ./run-redis-stack.sh
 各スクリプトは、スクリプトが置かれているディレクトリを`THIS_SCRIPT_DIR`として使用します。
 バインドマウント用データディレクトリは`THIS_SCRIPT_DIR`からの相対パスです。
 そのため、インストール済みスクリプトをコピーした場合も、バインドマウントされたデータはコピー先のスクリプトの隣に保持されます。
+
+実行時に使用する環境変数を[表2](#tbl-runtime-environment-variables-ja)に示します。
+
+<a id="tbl-runtime-environment-variables-ja"></a>
+**表2：Redisコンテナーの実行時環境変数。**
 
 | 変数 | デフォルト | 説明 |
 | -------- | ------- | ----------- |

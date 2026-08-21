@@ -10,6 +10,11 @@
 <a id="1-top-level-build-helpers"></a>
 ## 1. トップレベルビルドヘルパー
 
+トップレベルのビルドヘルパーと用途を[表1](#tbl-top-level-build-helpers-ja)に示します。
+
+<a id="tbl-top-level-build-helpers-ja"></a>
+**表1：トップレベルのビルドヘルパーファイル。**
+
 | ファイル | 用途 |
 | :-- | :-- |
 | `common.cmake` | メインプロジェクトと依存関係プロジェクトで共有する共通ビルド設定。C++規格の確認、警告フラグ、インストール先ディレクトリ、`Threads`、および`ExternalProject_Add`用CMake互換引数を設定します。 |
@@ -23,7 +28,10 @@
 <a id="2-installed-package-files"></a>
 ## 2. インストールされるパッケージファイル
 
-これらのファイルはNestDAQとともにインストールされ、`find_package(NestDAQ REQUIRED CONFIG)`を呼び出す下流プロジェクトで使用されます。
+[表2](#tbl-installed-package-files-ja)のファイルはNestDAQとともにインストールされ、`find_package(NestDAQ REQUIRED CONFIG)`を呼び出す下流プロジェクトで使用されます。
+
+<a id="tbl-installed-package-files-ja"></a>
+**表2：インストールされるCMakeパッケージファイル。**
 
 | ファイル | 用途 |
 | :-- | :-- |
@@ -45,6 +53,11 @@
 spdlogが見つからず、かつ`CMAKE_CXX_STANDARD`が`20`未満の場合、このspdlogビルドでは`std::format`の代わりに外部fmtライブラリーを使用するため、fmtも検索します。
 適合するfmtパッケージが見つからない場合は、`dependencies/fmt.cmake`がspdlogより先にfmtをビルドしてインストールします。
 C++20以降ではspdlogの依存関係ビルドに`std::format`を使用するため、fmtを追加しません。
+
+依存関係ファイルとその用途を[表3](#tbl-external-dependency-files-ja)に示します。
+
+<a id="tbl-external-dependency-files-ja"></a>
+**表3：外部依存関係ファイル。**
 
 | ファイル | 用途 |
 | :-- | :-- |

@@ -9,6 +9,9 @@ The CMake option `NestDAQ_BUILD_EXAMPLES` controls whether the main NestDAQ buil
 
 ## 1. Example Devices
 
+<a id="example-devices-table-en"></a>
+**Table 1: Example device executables and their purposes.**
+
 | Executable | Purpose |
 | :-- | :-- |
 | `NullDevice` | Minimal FairMQ device that exercises the NestDAQ `runDevice.h` entry point and lifecycle hooks without data channels. |
@@ -63,6 +66,7 @@ The example CMake project sets an install RPATH relative to the example install 
 
 The commands below assume that NestDAQ was installed under `<install-prefix>`.
 
+<a id="local-run-sequence-figure-en"></a>
 ```mermaid
 flowchart TD
   Otel[A. Start OTel Collector and<br/>telemetry storage if needed]
@@ -78,7 +82,9 @@ flowchart TD
   RunNumber --> StartRun
 ```
 
-The diagram shows a typical local run sequence, not a strict dependency graph.
+**Figure 1: Typical startup sequence for a local NestDAQ run.**
+
+[Figure 1](#local-run-sequence-figure-en) shows a typical local run sequence, not a strict dependency graph.
 In this section, telemetry storage means a service such as OpenSearch that
 stores telemetry data forwarded by the Collector.
 Start the OpenTelemetry Collector and required telemetry storage first when
@@ -355,7 +361,7 @@ uses `localhost:4317`.
 
 #### 3.1.9. Component Connection Groups
 
-The following diagram separates the local example into three groups.
+[Figure 2](#component-connection-groups-figure-en) separates the local example into three groups.
 Solid lines show the normal data and control paths.
 Dashed lines show optional telemetry, inspection, and external-tool paths.
 Directed arrows point from a client to a server.
@@ -365,8 +371,9 @@ After a connection is established, the data direction depends on the protocol
 and socket type.
 The FairMQ PUSH/PULL connection has no arrow because its client and server
 roles depend on the bind/connect configuration.
-The letters correspond to steps A through H in the startup sequence above.
+The letters in [Figure 2](#component-connection-groups-figure-en) correspond to steps A through H in the startup sequence above.
 
+<a id="component-connection-groups-figure-en"></a>
 ```mermaid
 flowchart TB
   Browser["Web browser"]
@@ -418,6 +425,8 @@ flowchart TB
   Browser -.->|"HTTP"| Dashboards
 ```
 
+**Figure 2: Connection groups and data, control, telemetry, and inspection paths in the local example.**
+
 The browser reaches device processes through `daq-webctl`; it does not connect
 directly to a device or Redis.
 The FairMQ data channel connects `Sampler` directly to `Sink` and does not pass
@@ -431,6 +440,7 @@ SlowDash and Grafana connect to Redis when configured with a Redis data source.
 Use the `daq-webctl` Web UI to end the user device processes before stopping the
 `daq-webctl` process and shared services.
 
+<a id="shutdown-order-figure-en"></a>
 ```mermaid
 flowchart TD
   End[S-A. Web UI: END PROCESS for user devices]
@@ -442,7 +452,9 @@ flowchart TD
   End --> DeviceFallback --> WebCtl --> Redis --> Otel
 ```
 
-The diagram shows the recommended shutdown order. If the user devices have
+**Figure 3: Recommended shutdown order for user devices and local services.**
+
+[Figure 3](#shutdown-order-figure-en) shows the recommended shutdown order. If the user devices have
 already exited after `END PROCESS`, skip the terminal fallback step.
 
 S-A. Select the target user devices in the `daq-webctl` Web UI and click
@@ -522,6 +534,9 @@ S-E. Stop the OpenTelemetry Collector and telemetry storage. Use the stop
 
 The examples also accept FairMQ options, NestDAQ plugin options, and NestDAQ
 telemetry options. Use `--help` on each executable for the complete option set.
+
+<a id="example-options-table-en"></a>
+**Table 2: Command-line options specific to the example devices.**
 
 | Executable | Option | Default | Description |
 | :-- | :-- | :-- | :-- |
@@ -687,6 +702,9 @@ private:
 Override the appropriate lifecycle function for each kind of work.
 `OnData()` is a callback-registration API rather than a lifecycle override and
 is normally called from `InitTask()`.
+
+<a id="lifecycle-functions-table-en"></a>
+**Table 3: FairMQ lifecycle functions and APIs used by example devices.**
 
 | Function or API | When to use it |
 | :-- | :-- |

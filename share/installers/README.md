@@ -16,6 +16,11 @@ On RHEL-family systems such as AlmaLinux, Rocky Linux, RHEL, CentOS, and Fedora,
 
 ## 1. Scripts
 
+The available installer scripts are listed in [Table 1](#tbl-installer-scripts-en).
+
+<a id="tbl-installer-scripts-en"></a>
+**Table 1: Package installer scripts.**
+
 | Script | Installs or updates |
 | :-- | :-- |
 | `install-redis-stack.sh` | Redis server and [Redis Stack](../../INSTALL.md#external-runtime-components) modules from the Redis package repository. |
@@ -112,7 +117,10 @@ This installer does not install Redis from AlmaLinux AppStream modules.
 On RHEL-family systems, it always configures the official Redis RPM repository and disables the distribution Redis module so that package resolution uses `packages.redis.io`.
 The AppStream row below is for reference only.
 
-Verified Redis package availability:
+Verified Redis package availability is shown in [Table 2](#tbl-redis-package-availability-en).
+
+<a id="tbl-redis-package-availability-en"></a>
+**Table 2: Verified Redis package availability by distribution.**
 
 | Distribution | Repository key | Redis 7.2.14 | Redis 7.4.9 | Redis 8.2.7 |
 | --- | --- | --- | --- | --- |
@@ -205,7 +213,10 @@ sudo systemctl stop <service>
 sudo systemctl disable <service>
 ```
 
-Likely service names:
+Likely service names are listed in [Table 3](#tbl-systemd-service-unit-names-en).
+
+<a id="tbl-systemd-service-unit-names-en"></a>
+**Table 3: Likely systemd service unit names.**
 
 | Service | Unit name |
 | :-- | :-- |

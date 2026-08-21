@@ -33,6 +33,11 @@ See Section 2.2 for ownership and permission examples for rootless Podman.
 
 ### 2.1. Environment variables
 
+The Compose settings available through environment variables are listed in [Table 1](#tbl-opensearch-environment-variables-en).
+
+<a id="tbl-opensearch-environment-variables-en"></a>
+**Table 1: OpenSearch Compose environment variables.**
+
 | Variable | Default | Description |
 | :-- | :-- | :-- |
 | `OTEL_COLLECTOR_IMAGE` | `docker.io/otel/opentelemetry-collector-contrib:0.155.0` | Collector image. |

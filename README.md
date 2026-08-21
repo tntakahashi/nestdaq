@@ -12,6 +12,9 @@ DAQ application code for specific detectors and hardware is outside the scope of
 
 ### 1.1. User and operator guides
 
+<a id="user-operator-guides-table-en"></a>
+**Table 1: Documentation for NestDAQ users and operators.**
+
 | Path / document | Purpose |
 | :-- | :-- |
 | [INSTALL.md](INSTALL.md) | Prerequisites, dependency versions and build options, NestDAQ build options, external services, examples, and documentation generation. |
@@ -27,6 +30,9 @@ DAQ application code for specific detectors and hardware is outside the scope of
 
 ### 1.2. Repository reference
 
+<a id="repository-reference-table-en"></a>
+**Table 2: Source directories and their responsibilities.**
+
 | Path / document | Purpose |
 | :-- | :-- |
 | `nestdaq/` | Core headers and telemetry code, including the version header template and `runDevice.h`, which provides the FairMQ device application entry point and `main()`. |
@@ -35,12 +41,19 @@ DAQ application code for specific detectors and hardware is outside the scope of
 
 ### 1.3. Developer guides
 
+<a id="developer-guides-table-en"></a>
+**Table 3: Documentation for NestDAQ developers.**
+
 | Path / document | Purpose |
 | :-- | :-- |
 | [cmake/](cmake/README.md) | CMake helpers, installed package files, and the external dependency build project. |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | Branch policy, contribution workflow, formatting, static analysis, and naming rules. |
 
 ## 2. Tested systems
+
+<a id="tested-systems-table-en"></a>
+**Table 4: Operating systems and toolchain versions tested with NestDAQ.**
+
 | Distro    | Version | Compiler    | CMake  | FairMQ |
 | ---       | ---     | ---         | ---    | ---    |
 | AlmaLinux | 8.10    | GCC 8.5.0   | 3.26.5 | 1.9.2  |

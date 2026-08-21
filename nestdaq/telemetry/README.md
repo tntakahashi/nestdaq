@@ -10,8 +10,11 @@ Instead, NestDAQ loads the OpenTelemetry implementation shared library `libnestd
 This library is not a FairMQ plugin: FairMQ's `-P` plugin list does not select it, and the `-S` plugin search path does not locate it.
 NestDAQ instead passes the path or soname from `--otel-library` directly to `dlopen()`.
 
-The implementation library can export three OpenTelemetry signals.
-The Default column shows the exporter selection when neither the corresponding protocol option nor its environment variable overrides the setting.
+The implementation library can export the three OpenTelemetry signals listed in [Table 1](#table-1-telemetry-signals-en).
+The Default column in [Table 1](#table-1-telemetry-signals-en) shows the exporter selection when neither the corresponding protocol option nor its environment variable overrides the setting.
+
+<a id="table-1-telemetry-signals-en"></a>
+**Table 1: OpenTelemetry signals and defaults.**
 
 | Signal  | Default            | Source in NestDAQ |
 | ------- | ------------------ | ----------------- |
@@ -51,7 +54,7 @@ An empty protocol disables the signal.
 
 FairLogger and spdlog native outputs and the OpenTelemetry log exporters use separate controls for each destination.
 
-The arrows in the following diagram show the direction of log-data flow.
+The arrows in [Figure 1](#figure-1-log-data-flow-en) show the direction of log-data flow.
 
 ```mermaid
 flowchart LR
@@ -89,6 +92,14 @@ flowchart LR
     OTE -->|"--otel-log-protocol=otlp-grpc"| COL
 ```
 
+<a id="figure-1-log-data-flow-en"></a>
+**Figure 1: Log-data flow through native and OpenTelemetry outputs.**
+
+[Table 2](#table-2-log-output-paths-en) identifies the controls and destinations for each path in [Figure 1](#figure-1-log-data-flow-en).
+
+<a id="table-2-log-output-paths-en"></a>
+**Table 2: Log output paths and controls.**
+
 | Log path | Applies to | Destination | How to select it | Default |
 | --- | --- | --- | --- | --- |
 | FairLogger native console | FairLogger logs | Standard output | `--severity=<level>`; `nolog` suppresses records other than `fatal` | Enabled at an effective `info` level |
@@ -110,10 +121,13 @@ See Section 6, "Command-Line Options," for the NestDAQ telemetry and spdlog opti
 ## 2. Resource Attributes
 
 Logs, metrics, and traces share one OpenTelemetry resource.
-NestDAQ sets the following resource attributes when their values are available.
+NestDAQ sets the resource attributes in [Table 3](#table-3-resource-attributes-en) when their values are available.
 The `service.*` and `host.*` keys are OpenTelemetry semantic convention attributes.
 This document uses `OTel` as the common abbreviation for OpenTelemetry.
 The `nestdaq.*` and `fairmq.*` keys are NestDAQ-specific attributes.
+
+<a id="table-3-resource-attributes-en"></a>
+**Table 3: NestDAQ resource attributes.**
 
 | Attribute | Origin | Value |
 | --------- | ------ | ----- |
@@ -131,11 +145,15 @@ The `nestdaq.*` and `fairmq.*` keys are NestDAQ-specific attributes.
 
 Detailed NestDAQ and FairMQ build and Git metadata is emitted in structured startup log bodies rather than as resource attributes.
 The OpenTelemetry software development kit (SDK) may add its own resource attributes independently.
-The resource-attribute table above lists only attributes that NestDAQ sets explicitly.
+[Table 3](#table-3-resource-attributes-en) lists only attributes that NestDAQ sets explicitly.
 
 ## 3. FairLogger Log Records
 
 The FairLogger custom sink converts each emitted FairLogger message into an OpenTelemetry LogRecord when its severity is at or above `--otel-log-severity`.
+[Table 4](#table-4-fairlogger-logrecord-fields-en) lists the fields and attributes produced by this conversion.
+
+<a id="table-4-fairlogger-logrecord-fields-en"></a>
+**Table 4: FairLogger OpenTelemetry LogRecord fields and attributes.**
 
 | LogRecord field or attribute | Origin | Source |
 | ---------------------------- | ------ | ------ |
@@ -238,7 +256,10 @@ SPDLOG_WARN("queue depth is {}", depth);
 
 ### 4.3. Exported Fields and Attributes
 
-The spdlog sink records these OpenTelemetry fields and attributes:
+The spdlog sink records the OpenTelemetry fields and attributes in [Table 5](#table-5-spdlog-logrecord-fields-en).
+
+<a id="table-5-spdlog-logrecord-fields-en"></a>
+**Table 5: spdlog OpenTelemetry LogRecord fields and attributes.**
 
 | LogRecord field or attribute | Origin | Source |
 | ---------------------------- | ------ | ------ |
@@ -268,6 +289,11 @@ The spdlog logger and sink levels continue to control spdlog filtering.
 
 ### 5.1. FairLogger Severity Mapping
 
+[Table 6](#table-6-fairlogger-severity-mapping-en) maps FairLogger levels to OpenTelemetry severity values.
+
+<a id="table-6-fairlogger-severity-mapping-en"></a>
+**Table 6: FairLogger severity mapping.**
+
 | FairLogger level | `fair::Severity` int | OTel SeverityNumber | OTel SeverityText | Original level attributes |
 | ---------------- | -------------------- | ------------------- | ----------------- | ------------------------- |
 | `nolog` | `0` | `0` | invalid / unspecified | `fairlogger.severity.*` |
@@ -292,6 +318,11 @@ The alias has the same `fair::Severity` value as `warn`, `10`.
 
 ### 5.2. spdlog Severity Mapping
 
+[Table 7](#table-7-spdlog-severity-mapping-en) maps spdlog levels to OpenTelemetry severity values.
+
+<a id="table-7-spdlog-severity-mapping-en"></a>
+**Table 7: spdlog severity mapping.**
+
 | spdlog level | `spdlog::level::level_enum` int | OTel SeverityNumber | OTel SeverityText | Original level attribute |
 | ------------ | -------------------------------- | ------------------- | ----------------- | ------------------------ |
 | `trace` | `0` | `1` | `TRACE` | `spdlog.level` |
@@ -304,6 +335,11 @@ The alias has the same `fair::Severity` value as `warn`, `10`.
 | `n_levels` | `7` | `0` | invalid / unspecified | `spdlog.level` |
 
 ## 6. Command-Line Options
+
+[Table 8](#table-8-command-line-options-en) lists the command-line options and their corresponding environment variables.
+
+<a id="table-8-command-line-options-en"></a>
+**Table 8: Telemetry command-line options.**
 
 | Option | Env var | Default | Meaning |
 | ------ | ------- | ------- | ------- |

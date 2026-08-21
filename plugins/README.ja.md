@@ -6,6 +6,9 @@
 
 NestDAQは3つのFairMQプラグインを共有ライブラリとしてインストールします。
 
+<a id="table-available-plugins-ja"></a>
+**表1：利用可能なプラグインとライブラリ。**
+
 | プラグイン名 | ライブラリ | 目的 |
 | --- | --- | --- |
 | `daq_service` | `libFairMQPlugin_daq_service.so` | FairMQデバイスをRedisへ登録し、ヘルス情報/状態およびトポロジー/チャネルデータを書き込み、データ収集 (DAQ) コマンドを処理します。 |
@@ -46,7 +49,10 @@ TTLの扱いはプラグインごとに異なります。
 ### 2.1. コマンドラインオプション
 
 この文書で説明するコマンドラインオプションは、すべて省略できます。
-省略した場合、プラグインは各表に示す既定値を使用します。
+省略した場合、プラグインは[表2](#table-daq-service-options-ja)に示す既定値を使用します。
+
+<a id="table-daq-service-options-ja"></a>
+**表2：`daq_service`のコマンドラインオプション。**
 
 | オプション | デフォルト | 説明 |
 | --- | --- | --- |
@@ -88,6 +94,9 @@ FairMQの`--id`オプションが設定されている場合、その値をNestD
 timezone offsetは含みません。
 `uptime`は`daq_service`プラグインの生成後に経過したミリ秒です。
 `start_time_ns`と`stop_time_ns`は同じ起点からの経過ナノ秒であり、Unixエポックのタイムスタンプではありません。
+
+<a id="table-daq-service-redis-keys-ja"></a>
+**表3：`daq_service`が使用するRedisキー。**
 
 | キーパターン | Redis型 | フィールド/値 | 書き込み元/読み取り元 | 目的 |
 | --- | --- | --- | --- | --- |
@@ -215,6 +224,9 @@ Redisエンドポイント、チャネル名、および設定済み区切り文
 各`daq_service`プラグインの`TopologyConfig`オブジェクトはトポロジー定義を読み取り、そのデバイスのチャネルおよびソケットメタデータをRedisへ書き込みます。
 バインド側が最初にアドレスを書き込み、接続側がそのアドレスを読み取って自身のFairMQソケットを設定します。
 
+<a id="table-topology-channel-redis-keys-ja"></a>
+**表4：トポロジーおよびチャネル設定用のRedisキー。**
+
 | キーパターン | Redis型 | フィールド/値 | 書き込み元/読み取り元 | 目的 |
 | --- | --- | --- | --- | --- |
 | `daq_service{sep}{service}{sep}{id}{sep}channel{sep}{channel}` | ハッシュ | `name`, `type`, `method`, `address`, `transport`、バッファー/カーネルサイズ、`linger`, `rateLogging`、ポート範囲、`autoBind`, `num_sockets`, `autoSubChannel`, `bound`, `waitForPeerConnection` | `{service}`と`{id}`が示すデバイスインスタンスの`TopologyConfig`がバインドチャネルと接続チャネルの両方を書き込み。トポロジーリンクからアドレスを解決する場合、接続側がピアのバインドチャネルメタデータと`bound`フィールドを読み取り | 保存されたチャネルエンドポイントのメタデータ。 |
@@ -244,8 +256,8 @@ FairMQでは、同じ名前のチャネルを`std::vector<fair::mq::Channel>`と
 - `autoSubChannel=true`は、バインドエンドポイントと接続エンドポイントの両方で、検出したピアデバイスインスタンスから`num_sockets`を増やします。
   プロセス動作中に接続相手またはソケット数を検出するn:mトポロジーに適します。
 
-次の図は、プロセス数が異なる2つのサービスをトポロジーが接続するとき、各側の`autoSubChannel`設定によってアドレスを持つチャネルソケット数がどう変わるかを示します。
-この図はソケットおよびサブチャネル数の例であり、固定ポート番号の割り当てやメッセージ方向を示すものではありません。
+[図1](#figure-auto-subchannel-sockets-ja)は、プロセス数が異なる2つのサービスをトポロジーが接続するとき、各側の`autoSubChannel`設定によってアドレスを持つチャネルソケット数がどう変わるかを示します。
+[図1](#figure-auto-subchannel-sockets-ja)はソケットおよびサブチャネル数の例であり、固定ポート番号の割り当てやメッセージ方向を示すものではありません。
 非表示の配置用リンクは`Sampler`を左、`Sink`を右に保つためのものであり、データ経路ではありません。
 
 ```mermaid
@@ -314,6 +326,9 @@ flowchart LR
     Topology --- CaseTT
 ```
 
+<a id="figure-auto-subchannel-sockets-ja"></a>
+**図1：`autoSubChannel`設定がチャネルソケット数に与える影響。**
+
 プラグインは通常、トポロジーから`num_sockets`を計算します。
 `autoSubChannel=true`のチャネルでは、検出したピアデバイスインスタンスに応じて`num_sockets`が増え、各FairMQサブソケットへ異なる`address:port`とサブチャネルインデックスを設定できます。
 
@@ -339,7 +354,7 @@ flowchart LR
 デフォルトの区切り文字`:`を使用する場合、完全修飾ピア参照は`{service}:{instance-id}:{channel}[{subindex}]`形式です。
 `[0]` suffixは接続相手のsubchannel `0`を選択します。
 これは`TopologyConfig`が解釈するJSONデータであり、C++の構文やトポロジー用シェルスクリプトの`link`コマンドに記述する構文ではありません。
-Redis key表の`{subindex}`はplaceholderですが、`[0]`はpeer参照に記述する実際のsuffixです。
+[表4](#table-topology-channel-redis-keys-ja)の`{subindex}`はプレースホルダーですが、`[0]`はピア参照に記述する実際の接尾辞です。
 `peer`には1つの文字列または文字列配列を指定できます。
 
 `[0]`のようにsuffixを明示した場合は、`autoSubChannel`に関係なく、そのsubchannelだけを選択します。
@@ -351,7 +366,7 @@ suffixを省略して`autoSubChannel=false`を設定した場合、`TopologyConf
 #### 2.5.3. bind/connectシーケンス
 
 `TopologyConfig`はFairMQ状態遷移中にRedisを通じてバインドエンドポイントと接続エンドポイントを同期します。
-次の図にある`Device`、`TopologyConfig`、`FairMQプロパティ`は、同じNestDAQデバイスプロセスに属します。
+[図2](#figure-bind-connect-sequence-ja)の`Device`、`TopologyConfig`、`FairMQプロパティ`は、同じNestDAQデバイスプロセスに属します。
 Redisサーバーおよび各接続相手デバイスは、それぞれ別のプロセスで動作します。
 
 ```mermaid
@@ -445,6 +460,9 @@ sequenceDiagram
     DaqService->>Redis: fair-mq-state = "DEVICE READY"
 ```
 
+<a id="figure-bind-connect-sequence-ja"></a>
+**図2：FairMQ状態遷移中のバインドおよび接続シーケンス。**
+
 各バインドチャネルについて、`Channel::BindEndpoint()`は最初に設定済みアドレスでバインドを試します。
 bindに失敗した場合、protocolがTCPかつ`autoBind=true`であれば、FairMQは`portRangeMin`から`portRangeMax`までの範囲からport番号をランダムに選び、bindを再試行します。
 範囲には両端の値を含みます。
@@ -467,7 +485,7 @@ resetまたはcancellationはwait stepを中断します。
 既定値は`5`秒です。
 `--ttl-update-interval`はプラグインがTTLを更新する頻度を制御し、既定の更新間隔は`3`秒です。
 
-プラグインは2つの方法でRedisキーを更新します。
+[図3](#figure-daq-service-ttl-refresh-ja)は、プラグインがRedisキーを更新する2つの方法をまとめています。
 
 - `presence`、`fair-mq-state`、`updatedTime`は`SETEX`で更新し、値とTTLの両方を更新します。
 - `health`、`option`、トポロジーチャネルキー、トポロジーソケットキー、ピアリストキーは`EXPIRE`で有効期限を更新します。
@@ -498,6 +516,9 @@ sequenceDiagram
   end
 ```
 
+<a id="figure-daq-service-ttl-refresh-ja"></a>
+**図3：`daq_service`のTTL更新および期限切れシーケンス。**
+
 正常なシャットダウンでは、プラグインが登録済みキーを削除します。
 プロセスがクラッシュするかRedis接続を失うと、更新停止後にTTL期限切れが一時レジストリーキーを削除します。
 
@@ -517,6 +538,9 @@ memory usageはmebibytes (MiB) 単位のcurrent resident set size (RSS) です�
 <a id="31-command-line-options"></a>
 ### 3.1. コマンドラインオプション
 
+<a id="table-metrics-options-ja"></a>
+**表5：`metrics`のコマンドラインオプション。**
+
 | オプション | デフォルト | 説明 |
 | --- | --- | --- |
 | `--proc-stat-update-interval` | `1000` | プロセスのCPU/メモリーメトリクスの更新間隔 (ミリ秒)。 |
@@ -528,10 +552,13 @@ memory usageはmebibytes (MiB) 単位のcurrent resident set size (RSS) です�
 <a id="32-redis-keys-written-or-read"></a>
 ### 3.2. 書き込みまたは読み取りを行うRedisキー
 
-この表の`metrics`は、各NestDAQデバイスプロセスへ読み込まれたプラグインインスタンスを指します。
+[表6](#table-metrics-redis-keys-ja)の`metrics`は、各NestDAQデバイスプロセスへ読み込まれたプラグインインスタンスを指します。
 書き込み元/読み取り元の列には、メトリクス処理のために各キーへ直接アクセスする、このリポジトリ内の構成要素を記載します。
 Redisへ接続するように設定したGrafanaやSlowDashなどの外部可視化ツールは、これらのメトリクスを読み取り、ダッシュボードやグラフの表示に利用できます。
 現在の`daq-webctl`実装は、これらのメトリクスキーを読み取りません。
+
+<a id="table-metrics-redis-keys-ja"></a>
+**表6：`metrics`が使用するRedisキー。**
 
 | キーパターン | Redis型 | フィールド/値 | 書き込み元/読み取り元 | 目的 |
 | --- | --- | --- | --- | --- |
@@ -558,6 +585,9 @@ Redisへ接続するように設定したGrafanaやSlowDashなどの外部可視
 
 `metrics`プラグインは、RedisTimeSeriesキーを明示的に作成するときにラベルを追加します。
 可視化ツールは、これらのラベルを使って時系列の絞り込みやグループ化を行えます。
+
+<a id="table-redistimeseries-labels-ja"></a>
+**表7：RedisTimeSeriesキーに付与するラベル。**
 
 | ラベル | 対象時系列 | 値 |
 | --- | --- | --- |
@@ -607,7 +637,7 @@ FairMQチャネルは片方向にデータを転送する場合が多いため�
 <a id="33-ttl-and-retention-details-metrics"></a>
 ### 3.3. TTLと保持期間の詳細 (metrics)
 
-この節で共有metric hashと呼ぶものは、3.2の表にある`metrics{sep}...`形式のRedis hashです。
+この節で共有メトリクスハッシュと呼ぶものは、[表6](#table-metrics-redis-keys-ja)にある`metrics{sep}...`形式のRedisハッシュです。
 これはRedis data typeの名称ではなく、この文書で構造を説明するために使用する表現です。
 1つのハッシュキーが複数のデバイスインスタンスのフィールドを持ち、各フィールド名がインスタンスID、その値が該当インスタンスのメトリクスです。
 例えば既定の区切り文字`:`を使用する場合、次のコマンドで3つのインスタンスのCPUメトリクスが返されることがあります。
@@ -625,7 +655,10 @@ Sink-0
 4.1
 ```
 
-3.2の表にある`ts{sep}...`形式のRedisTimeSeries keyはinstanceごとに分かれたkeyであり、共有metric hashには含みません。
+[表6](#table-metrics-redis-keys-ja)にある`ts{sep}...`形式のRedisTimeSeriesキーはインスタンスごとに分かれたキーであり、共有メトリクスハッシュには含みません。
+
+<a id="table-metric-cleanup-mechanisms-ja"></a>
+**表8：メトリクスのクリーンアップおよび保持機構。**
 
 | Mechanism | 削除対象 | 削除を判定する時点 | 結果 |
 | --- | --- | --- | --- |
@@ -678,6 +711,9 @@ Redisキースペース通知は、キーの変更時にPub/Subイベントを�
 <a id="41-command-line-options"></a>
 ### 4.1. コマンドラインオプション
 
+<a id="table-parameter-config-options-ja"></a>
+**表9：`parameter_config`のコマンドラインオプション。**
+
 | オプション | デフォルト | 説明 |
 | --- | --- | --- |
 | `--parameter-config-uri` | なし | パラメーター設定用Redis URI。空の場合は`--registry-uri`を使用。 |
@@ -689,6 +725,9 @@ Redisクライアントを呼び出すスクリプト、またはRedisクライ�
 付属の`scripts/mq-param.sh`はハッシュパラメーターを書き込むスクリプトの1つですが、対応するすべてのRedisデータ型の例を提供しているわけではありません。
 実装内容と引数の例は[`mq-param.sh`の説明](../scripts/README.ja.md#31-mq-paramsh)を参照してください。
 
+<a id="table-parameter-config-redis-keys-ja"></a>
+**表10：`parameter_config`が使用するRedisキー。**
+
 | キーパターン | Redis型 | フィールド/値 | 書き込み元/読み取り元 | 目的 |
 | --- | --- | --- | --- | --- |
 | `parameters{sep}{id}` | ハッシュ | フィールド：オプション名、値：オプション値の文字列 | Redisクライアントを呼び出すスクリプト、または他のRedisクライアントが書き込み。`parameter_config`が読み取り | インスタンス固有のパラメーターセット。 |
@@ -698,6 +737,9 @@ Redisクライアントを呼び出すスクリプト、またはRedisクライ�
 | `__keyspace@{db}__:{key}` | Pub/Subチャネル | Redisキースペース通知イベント | Redisが発行。`parameter_config`が購読 | インスタンス/グループのパラメーターキーの動的再読み込みを開始。 |
 
 次の例では既定の区切り文字`:`を使用し、追加の構造化RedisキーがFairMQプロパティーへ変換される方法を示します。
+
+<a id="table-redis-property-mapping-ja"></a>
+**表11：RedisコマンドからFairMQプロパティへの対応。**
 
 | Redisコマンド | 生成されるFairMQプロパティ |
 | --- | --- |

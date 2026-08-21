@@ -6,6 +6,9 @@
 
 NestDAQ installs three FairMQ plugins as shared libraries:
 
+<a id="table-available-plugins-en"></a>
+**Table 1: Available plugins and their libraries.**
+
 | Plugin name        | Library                               | Purpose |
 |--------------------|----------------------------------------|---------|
 | `daq_service`      | `libFairMQPlugin_daq_service.so`       | Registers the FairMQ device in Redis, writes health/state and topology/channel data, and handles data acquisition (DAQ) commands. |
@@ -44,7 +47,10 @@ It registers a device instance, refreshes TTLs, writes FairMQ state, health, top
 ### 2.1. Command-Line Options
 
 All command-line options in this document are optional.
-When an option is omitted, the plugin uses the default shown in its table.
+When an option is omitted, the plugin uses the default shown in [Table 2](#table-daq-service-options-en).
+
+<a id="table-daq-service-options-en"></a>
+**Table 2: `daq_service` command-line options.**
 
 | Option                           | Default                    | Description |
 |----------------------------------|----------------------------|-------------|
@@ -84,6 +90,9 @@ Redis operations performed by `daq-webctl` are documented in [`controller/README
 `createdTime`, `updated_time`, `updatedTime`, `start_time`, and `stop_time` are local-time strings in `YYYY-MM-DDTHH:MM:SS` format, with second precision and no time-zone offset.
 `uptime` is the number of elapsed milliseconds since the `daq_service` plugin was created.
 `start_time_ns` and `stop_time_ns` are elapsed nanoseconds from the same starting point, not Unix epoch timestamps.
+
+<a id="table-daq-service-redis-keys-en"></a>
+**Table 3: Redis keys used by `daq_service`.**
 
 | Key pattern | Redis type | Fields / value | Writer / reader | Purpose |
 |-------------|------------|----------------|-----------------|---------|
@@ -211,6 +220,9 @@ For example, `Sampler-2` and `Sink-1` receive the message but ignore it because 
 The `TopologyConfig` object in each `daq_service` plugin reads the topology definition and publishes metadata for that device's channels and sockets.
 The bind side publishes addresses first, and the connect side reads those addresses to configure its FairMQ sockets.
 
+<a id="table-topology-channel-redis-keys-en"></a>
+**Table 4: Redis keys for topology and channel configuration.**
+
 | Key pattern | Redis type | Fields / value | Writer / reader | Purpose |
 |-------------|------------|----------------|-----------------|---------|
 | `daq_service{sep}{service}{sep}{id}{sep}channel{sep}{channel}` | hash | `name`, `type`, `method`, `address`, `transport`, buffer sizes, kernel sizes, `linger`, `rateLogging`, port range, `autoBind`, `num_sockets`, `autoSubChannel`, `bound`, `waitForPeerConnection` | Written by the `TopologyConfig` of the device instance identified by `{service}` and `{id}` for both bind and connect channels. During topology-link resolution, the connect side reads peer bind-channel metadata and its `bound` field. | Stored channel endpoint metadata. |
@@ -239,8 +251,8 @@ Its default is `false`.
 - `autoSubChannel=true` increases `num_sockets` from the discovered peer device instances on both bind and connect endpoints.
   This setting is suitable for n:m topologies in which the process discovers the number of peers or sockets while running.
 
-The following diagram shows how each side's `autoSubChannel` setting changes the number of address-bearing channel sockets when a topology connects two services with different process counts.
-The diagram illustrates socket and subchannel counts, not fixed port assignments or message direction.
+As [Figure 1](#figure-auto-subchannel-sockets-en) shows, each side's `autoSubChannel` setting changes the number of address-bearing channel sockets when a topology connects two services with different process counts.
+[Figure 1](#figure-auto-subchannel-sockets-en) illustrates socket and subchannel counts, not fixed port assignments or message direction.
 Invisible layout links keep `Sampler` on the left and `Sink` on the right; they are not data paths.
 
 ```mermaid
@@ -309,6 +321,9 @@ flowchart LR
     Topology --- CaseTT
 ```
 
+<a id="figure-auto-subchannel-sockets-en"></a>
+**Figure 1: Effect of `autoSubChannel` settings on channel socket counts.**
+
 The plugin normally calculates `num_sockets` from the topology.
 For channels with `autoSubChannel=true`, `num_sockets` grows with the discovered peer device instances so that each FairMQ sub-socket can receive a distinct `address:port` and subchannel index.
 
@@ -332,7 +347,7 @@ The following example defines a pull channel named `in` on the device receiving 
 The top-level key `in` names the channel configured on the device receiving the option, `type` is its FairMQ socket type, and `peer` identifies the remote channel.
 With the default separator `:`, a fully qualified peer reference has the form `{service}:{instance-id}:{channel}[{subindex}]`.
 The `[0]` suffix selects remote subchannel `0`; it is JSON data parsed by `TopologyConfig`, not C++ syntax or syntax used by a topology shell script's `link` command.
-The `{subindex}` text in the Redis key table is a placeholder, whereas `[0]` is an actual suffix in the peer reference.
+The `{subindex}` text in [Table 4](#table-topology-channel-redis-keys-en) is a placeholder, whereas `[0]` is an actual suffix in the peer reference.
 `peer` accepts either one string or an array of strings.
 
 An explicit suffix such as `[0]` selects only that subchannel regardless of `autoSubChannel`.
@@ -342,7 +357,7 @@ The current unindexed `autoSubChannel=true` path does not match the stored `chan
 #### 2.5.3. Bind/Connect Sequence
 
 `TopologyConfig` synchronizes bind and connect endpoints through Redis during FairMQ state transitions.
-`Device`, `TopologyConfig`, and `FairMQ properties` in the following diagram belong to the same NestDAQ device process.
+`Device`, `TopologyConfig`, and `FairMQ properties` in [Figure 2](#figure-bind-connect-sequence-en) belong to the same NestDAQ device process.
 The Redis server and each peer device run in separate processes.
 
 ```mermaid
@@ -436,6 +451,9 @@ sequenceDiagram
     DaqService->>Redis: fair-mq-state = "DEVICE READY"
 ```
 
+<a id="figure-bind-connect-sequence-en"></a>
+**Figure 2: Bind and connect sequence during FairMQ state transitions.**
+
 For each bind channel, `Channel::BindEndpoint()` first attempts the configured address.
 If that attempt fails, the protocol is TCP, and `autoBind=true`, FairMQ selects a random port from the inclusive `portRangeMin` through `portRangeMax` range and retries the bind operation.
 FairMQ makes at most 1000 random-port attempts; a non-TCP endpoint, `autoBind=false`, or exhaustion of all attempts causes bind initialization to fail.
@@ -455,7 +473,7 @@ The virtual `fair::mq::Device::Connect()` lifecycle hook runs after channel atta
 The default is `5` seconds.
 `--ttl-update-interval` controls how often the plugin refreshes TTLs, with a default interval of `3` seconds.
 
-The plugin refreshes Redis keys in two ways:
+[Figure 3](#figure-daq-service-ttl-refresh-en) summarizes the two ways the plugin refreshes Redis keys:
 
 - `presence`, `fair-mq-state`, and `updatedTime` are updated with `SETEX`, which refreshes both the value and the TTL.
 - `health`, `option`, topology channel keys, topology socket keys, and peer list keys are refreshed with `EXPIRE`.
@@ -486,6 +504,9 @@ sequenceDiagram
   end
 ```
 
+<a id="figure-daq-service-ttl-refresh-en"></a>
+**Figure 3: `daq_service` TTL refresh and expiration sequence.**
+
 On normal shutdown, the plugin deletes its registered keys.
 If the process crashes or loses its Redis connection, TTL expiration removes transient registry keys after the refreshes stop.
 
@@ -503,6 +524,9 @@ Memory usage is the current resident set size (RSS) in mebibytes (MiB).
 <a id="31-runtime-options"></a>
 ### 3.1. Command-Line Options
 
+<a id="table-metrics-options-en"></a>
+**Table 5: `metrics` command-line options.**
+
 | Option                        | Default | Description |
 |-------------------------------|---------|-------------|
 | `--proc-stat-update-interval` | `1000`  | Update interval in milliseconds for process CPU and memory metrics. |
@@ -513,10 +537,13 @@ Memory usage is the current resident set size (RSS) in mebibytes (MiB).
 
 ### 3.2. Redis Keys Written or Read
 
-In this table, `metrics` means the plugin instance loaded in each NestDAQ device process.
+In [Table 6](#table-metrics-redis-keys-en), `metrics` means the plugin instance loaded in each NestDAQ device process.
 The writer/reader column lists components in this repository that directly access each key for metrics processing.
 External visualization tools, such as Grafana or SlowDash configured to access Redis, may read these metrics and use them to create dashboards and plots.
 The current `daq-webctl` implementation does not read these metrics keys.
+
+<a id="table-metrics-redis-keys-en"></a>
+**Table 6: Redis keys used by `metrics`.**
 
 | Key pattern | Redis type | Fields / value | Writer / reader | Purpose |
 |-------------|------------|----------------|-----------------|---------|
@@ -542,6 +569,9 @@ The current `daq-webctl` implementation does not read these metrics keys.
 
 The `metrics` plugin adds labels when it explicitly creates a RedisTimeSeries key.
 Visualization tools can filter or group series by these labels.
+
+<a id="table-redistimeseries-labels-en"></a>
+**Table 7: Labels attached to RedisTimeSeries keys.**
 
 | Label | Series | Value |
 |-------|--------|-------|
@@ -590,7 +620,7 @@ Only indexed subchannel records are used for channel throughput metrics.
 
 ### 3.3. TTL and Retention Details (metrics)
 
-In this section, a shared metric hash means one of the `metrics{sep}...` Redis hashes listed in Section 3.2.
+In this section, a shared metric hash means one of the `metrics{sep}...` Redis hashes listed in [Table 6](#table-metrics-redis-keys-en).
 This is a descriptive term used by this document, not a Redis data-type name.
 One hash key stores fields for multiple device instances: each field name is an instance ID, and its value is that instance's metric.
 For example, with the default `:` separator, the following command may return CPU metrics for three instances:
@@ -608,7 +638,10 @@ Sink-0
 4.1
 ```
 
-The `ts{sep}...` RedisTimeSeries keys in Section 3.2 are separate per-instance keys and are not shared metric hashes.
+The `ts{sep}...` RedisTimeSeries keys in [Table 6](#table-metrics-redis-keys-en) are separate per-instance keys and are not shared metric hashes.
+
+<a id="table-metric-cleanup-mechanisms-en"></a>
+**Table 8: Metric cleanup and retention mechanisms.**
 
 | Mechanism | Target | When removal is evaluated | Result |
 |-----------|--------|---------------------------|--------|
@@ -660,6 +693,9 @@ If both keys define the same property, the instance-specific value is applied la
 <a id="41-runtime-options"></a>
 ### 4.1. Command-Line Options
 
+<a id="table-parameter-config-options-en"></a>
+**Table 9: `parameter_config` command-line options.**
+
 | Option                   | Default | Description |
 |--------------------------|---------|-------------|
 | `--parameter-config-uri` | none    | Redis URI for parameter configuration. If empty, `--registry-uri` is used. |
@@ -670,6 +706,9 @@ Scripts that invoke a Redis client, or applications that use a Redis client dire
 The supplied `scripts/mq-param.sh` is one such script for hash parameters, but it does not provide examples for every supported Redis data type.
 See the [`mq-param.sh` documentation](../scripts/README.md#31-mq-paramsh) for its implementation and argument examples.
 
+<a id="table-parameter-config-redis-keys-en"></a>
+**Table 10: Redis keys used by `parameter_config`.**
+
 | Key pattern | Redis type | Fields / value | Writer / reader | Purpose |
 |-------------|------------|----------------|-----------------|---------|
 | `parameters{sep}{id}` | hash | Field: option name; value: option value string | A script invoking a Redis client, or another Redis client, writes; `parameter_config` reads | Instance-specific parameter set. |
@@ -679,6 +718,9 @@ See the [`mq-param.sh` documentation](../scripts/README.md#31-mq-paramsh) for it
 | `__keyspace@{db}__:{key}` | pub/sub channel | Redis keyspace notification events | Redis publishes; `parameter_config` subscribes | Triggers live reload for the instance and group parameter keys. |
 
 The following examples use the default `:` separator and show how additional structured Redis keys become FairMQ properties.
+
+<a id="table-redis-property-mapping-en"></a>
+**Table 11: Mapping from Redis commands to FairMQ properties.**
 
 | Redis command | Resulting FairMQ property |
 |---------------|---------------------------|

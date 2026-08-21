@@ -32,6 +32,11 @@ Composeファイルに設定済みの`:Z`オプションが、SELinuxラベル�
 <a id="2-1-environment-variables"></a>
 ### 2.1. 環境変数
 
+Composeの設定に使用できる環境変数を[表1](#tbl-clickstack-environment-variables-ja)に示します。
+
+<a id="tbl-clickstack-environment-variables-ja"></a>
+**表1：ClickStack Composeの環境変数。**
+
 | 変数 | デフォルト | 説明 |
 | :-- | :-- | :-- |
 | `CLICKSTACK_IMAGE` | `docker.io/clickhouse/clickstack-all-in-one:2` | ClickStack一体型イメージ。 |

@@ -10,6 +10,9 @@ CMakeオプション`NestDAQ_BUILD_EXAMPLES`は、NestDAQのメインビルド�
 <a id="1-example-devices"></a>
 ## 1. デバイス例
 
+<a id="example-devices-table-ja"></a>
+**表1：デバイス例の実行ファイルと用途。**
+
 | 実行ファイル | 用途 |
 | :-- | :-- |
 | `NullDevice` | データチャネルを使用せず、NestDAQ `runDevice.h`エントリーポイントとライフサイクルフックを実行する最小限のFairMQデバイス。 |
@@ -68,6 +71,7 @@ cmake --install ./build-examples
 
 以下のコマンドは、NestDAQが`<install-prefix>`以下へインストールされていると仮定しています。
 
+<a id="local-run-sequence-figure-ja"></a>
 ```mermaid
 flowchart TD
   Otel[A. 必要な場合はOTel Collectorと<br/>telemetry storageを起動]
@@ -83,7 +87,9 @@ flowchart TD
   RunNumber --> StartRun
 ```
 
-この図は一般的なローカル実行sequenceであり、厳密なdependency graphではありません。
+**図1：NestDAQをローカルで実行する一般的な起動シーケンス。**
+
+[図1](#local-run-sequence-figure-ja)は一般的なローカル実行sequenceであり、厳密なdependency graphではありません。
 この節におけるテレメトリー保存先は、OpenSearchなど、Collectorから転送された
 テレメトリーデータを保存するサービスを指します。
 ログ、メトリクス、トレースをエクスポートし、利用可能なCollectorとテレメトリー保存先がまだ
@@ -363,7 +369,7 @@ port、rootless Podmanの注意事項、dashboard設定の詳細は
 <a id="319-component-connection-groups"></a>
 #### 3.1.9. 構成要素の接続グループ
 
-次の図は、ローカル実行例の構成要素を3つのグループに分けて示します。
+[図2](#component-connection-groups-figure-ja)は、ローカル実行例の構成要素を3つのグループに分けて示します。
 実線は通常のデータおよび制御経路、破線は省略可能なテレメトリー、確認用ツール、
 external toolの経路です。
 矢印はクライアントからサーバーへ向けています。
@@ -371,8 +377,9 @@ external toolの経路です。
 接続確立後のデータの向きはプロトコルとソケット型によって決まります。
 FairMQ PUSH/PULL接続のクライアントとサーバーはバインド/接続設定によって変わるため、
 この接続には矢印を付けていません。
-図中のアルファベットは、上記の起動sequenceにあるstep AからHに対応します。
+[図2](#component-connection-groups-figure-ja)中のアルファベットは、上記の起動sequenceにあるstep AからHに対応します。
 
+<a id="component-connection-groups-figure-ja"></a>
 ```mermaid
 flowchart TB
   Browser["Web browser"]
@@ -425,6 +432,8 @@ flowchart TB
   Browser -.->|"HTTP"| Dashboards
 ```
 
+**図2：ローカル実行例の接続グループとデータ、制御、テレメトリー、確認用ツールの経路。**
+
 ウェブブラウザは`daq-webctl`を介してデバイスプロセスを操作し、デバイスまたはRedisへ
 直接接続しません。
 FairMQデータチャネルは`Sampler`から`Sink`へ直接接続し、Redisまたは`daq-webctl`を
@@ -439,6 +448,7 @@ SlowDashとGrafanaは、Redisをデータソースとして設定した場合に
 `daq-webctl`プロセスと共通サービスを停止する前に、`daq-webctl`ウェブUIを使用して
 ユーザーデバイスプロセスを終了します。
 
+<a id="shutdown-order-figure-ja"></a>
 ```mermaid
 flowchart TD
   End[S-A. Web UI: ユーザーデバイスへEND PROCESS]
@@ -450,7 +460,9 @@ flowchart TD
   End --> DeviceFallback --> WebCtl --> Redis --> Otel
 ```
 
-この図は推奨する停止順序を示します。`END PROCESS`後にユーザーデバイスがすでに
+**図3：ユーザーデバイスとローカルサービスの推奨停止順序。**
+
+[図3](#shutdown-order-figure-ja)は推奨する停止順序を示します。`END PROCESS`後にユーザーデバイスがすでに
 終了している場合、端末での代替手順は省略します。
 
 S-A. `daq-webctl` Web UIで対象ユーザーデバイスを選択し、`END PROCESS`をクリックします。
@@ -531,6 +543,9 @@ S-E. OpenTelemetry Collectorとテレメトリー保存先を停止します。�
 
 サンプルはFairMQオプション、NestDAQプラグインオプション、NestDAQテレメトリーオプションも受け付けます。
 完全なオプション一式は各実行ファイルの`--help`で確認してください。
+
+<a id="example-options-table-ja"></a>
+**表2：デバイス例に固有のコマンドラインオプション。**
 
 | 実行ファイル | オプション | 既定値 | 説明 |
 | :-- | :-- | :-- | :-- |
@@ -697,6 +712,9 @@ private:
 処理内容に応じたライフサイクル関数をオーバーライドします。
 `OnData()`はライフサイクル関数のオーバーライドではなくコールバック登録APIであり、通常は
 `InitTask()`から呼び出します。
+
+<a id="lifecycle-functions-table-ja"></a>
+**表3：デバイス例で使用するFairMQライフサイクル関数とAPI。**
 
 | FunctionまたはAPI | 使用場面 |
 | :-- | :-- |

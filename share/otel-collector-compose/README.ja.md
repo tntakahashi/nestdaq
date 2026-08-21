@@ -93,7 +93,10 @@ Podmanでは、同じComposeファイルを`podman compose`で使用してくだ
 NestDAQプロセスを実行する場所に応じて、テレメトリーエンドポイントを選択してください。
 同じ規則がNestDAQデバイスプロセスと`daq-webctl`の両方に適用されます。
 
-最初に、送信元と保存先構成に応じて接続先ホストを選択します。
+最初に、[表1](#tbl-destination-hosts-ja)から送信元と保存先構成に応じた接続先ホストを選択します。
+
+<a id="tbl-destination-hosts-ja"></a>
+**表1：送信元と保存先構成に応じた接続先ホスト。**
 
 | 送信元の場所 | OpenSearch/Victoriaの接続先ホスト | ClickStackの接続先ホスト |
 | :-- | :-- | :-- |
@@ -102,7 +105,10 @@ NestDAQプロセスを実行する場所に応じて、テレメトリーエン�
 | Composeネットワーク外のDockerコンテナー | `host.docker.internal` | `host.docker.internal` |
 | Composeネットワーク外のPodmanコンテナー | `host.containers.internal` | `host.containers.internal` |
 
-次に、使用するプロトコルに対応するポートと形式でエンドポイントを組み立てます。
+次に、[表2](#tbl-otlp-endpoints-ja)に示すプロトコルのポートと形式でエンドポイントを組み立てます。
+
+<a id="tbl-otlp-endpoints-ja"></a>
+**表2：OTLPプロトコルごとのデフォルトポートとエンドポイント形式。**
 
 | プロトコル | デフォルトのポート | エンドポイントの形式 |
 | :-- | :-- | :-- |
