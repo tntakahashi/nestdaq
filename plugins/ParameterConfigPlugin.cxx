@@ -282,10 +282,10 @@ void ParameterConfigPlugin::readParameters()
         }
         auto scan_key = k + fSeparator + "*";
         //LOG(debug) << " parameter read hash done. scanning additional parameters ... : " << scan_key;
-        const auto keys = scan(*fClient, scan_key);
-        if (!keys.empty()) {
+        const auto kKeys = scan(*fClient, scan_key);
+        if (!kKeys.empty()) {
             LOG(debug) << " additional parameters found.";
-            for (const auto & x : keys) {
+            for (const auto & x : kKeys) {
                 auto t = fClient->type(x);
                 LOG(debug) << " key = " << x << ", type = " << t;
                 if (t=="string") {
@@ -403,21 +403,21 @@ void ParameterConfigPlugin::subscribeToParameterChange()
     auto sub = fClient->subscriber();
 
     const auto &server_uri = GetProperty<std::string>(opt::kServerUri.data());
-    const auto db_number = server_uri.substr(server_uri.find_last_of("/")+1);
-    LOG(debug) << " db number = " << db_number;
-    const std::string redis_keyspace_notification_channel = kRedisKeySpacePrefix.data() + db_number + "__:"s + fKey;
-    const std::string redis_keyspace_notification_group_channel = kRedisKeySpacePrefix.data() + db_number + "__:"s + fGroupKey;
-    LOG(debug) << " key-space-notification channel = " << redis_keyspace_notification_channel << ", " << redis_keyspace_notification_group_channel;
+    const auto kDbNumber = server_uri.substr(server_uri.find_last_of("/")+1);
+    LOG(debug) << " db number = " << kDbNumber;
+    const std::string kRedisKeyspaceNotificationChannel = kRedisKeySpacePrefix.data() + kDbNumber + "__:"s + fKey;
+    const std::string kRedisKeyspaceNotificationGroupChannel = kRedisKeySpacePrefix.data() + kDbNumber + "__:"s + fGroupKey;
+    LOG(debug) << " key-space-notification channel = " << kRedisKeyspaceNotificationChannel << ", " << kRedisKeyspaceNotificationGroupChannel;
 
-    sub.on_message([this, &redis_keyspace_notification_channel, &redis_keyspace_notification_group_channel](auto channel, auto /*msg*/) {
+    sub.on_message([this, &kRedisKeyspaceNotificationChannel, &kRedisKeyspaceNotificationGroupChannel](auto channel, auto /*msg*/) {
         //LOG(debug) << kMyClass << " on_message(MESSAGE): channel = " << channel << " msg = " << msg;
-        if (redis_keyspace_notification_channel!=channel && redis_keyspace_notification_group_channel!=channel) {
+        if (kRedisKeyspaceNotificationChannel!=channel && kRedisKeyspaceNotificationGroupChannel!=channel) {
             return;
         }
         readParameters();
     });
 
-    sub.subscribe({redis_keyspace_notification_channel, redis_keyspace_notification_group_channel});
+    sub.subscribe({kRedisKeyspaceNotificationChannel, kRedisKeyspaceNotificationGroupChannel});
 
     while (!fPluginShutdownRequested) {
         try {

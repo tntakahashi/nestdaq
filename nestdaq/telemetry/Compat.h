@@ -21,8 +21,8 @@ inline auto parseDouble(std::string_view token, double& value) -> bool
 #if !defined(__GNUC__) || defined(__clang__) || (__GNUC__ >= 11)
     const auto* first = token.data();
     const auto* last = std::next(first, static_cast<std::ptrdiff_t>(token.size()));
-    const auto result = std::from_chars(first, last, value);
-    return result.ec == std::errc{} && result.ptr == last && std::isfinite(value);
+    const auto kResult = std::from_chars(first, last, value);
+    return kResult.ec == std::errc{} && kResult.ptr == last && std::isfinite(value);
 #else
     auto buffer = std::string {token};
     char* end = nullptr;
@@ -45,8 +45,8 @@ inline auto parseInteger(std::string_view token, Integer& value) -> bool
 #if !defined(__GNUC__) || defined(__clang__) || (__GNUC__ >= 11)
     const auto* first = token.data();
     const auto* last = std::next(first, static_cast<std::ptrdiff_t>(token.size()));
-    const auto result = std::from_chars(first, last, value);
-    return result.ec == std::errc{} && result.ptr == last;
+    const auto kResult = std::from_chars(first, last, value);
+    return kResult.ec == std::errc{} && kResult.ptr == last;
 #else
     if (token.empty()) {
         return false;

@@ -40,7 +40,7 @@ template<class Body, class Allocator, class Send>
 void handleRequest(beast::string_view doc_root, http::request<Body, http::basic_fields<Allocator>>&& req, Send&& send)
 {
     // Returns a bad request response
-    auto const bad_request =
+    auto const kBadRequest =
         [&req](beast::string_view why)
     {
         http::response<http::string_body> res{http::status::bad_request, req.version()};
@@ -53,7 +53,7 @@ void handleRequest(beast::string_view doc_root, http::request<Body, http::basic_
     };
 
     // Returns a not found response
-    auto const not_found =
+    auto const kNotFound =
         [&req](beast::string_view target)
     {
         http::response<http::string_body> res{http::status::not_found, req.version()};
@@ -66,7 +66,7 @@ void handleRequest(beast::string_view doc_root, http::request<Body, http::basic_
     };
 
     // Returns a server error response
-    auto const server_error =
+    auto const kServerError =
         [&req](beast::string_view what)
     {
         http::response<http::string_body> res{http::status::internal_server_error, req.version()};
@@ -81,14 +81,14 @@ void handleRequest(beast::string_view doc_root, http::request<Body, http::basic_
     // Make sure we can handle the method
     if( req.method() != http::verb::get &&
             req.method() != http::verb::head) {
-        return send(bad_request("Unknown HTTP-method"));
+        return send(kBadRequest("Unknown HTTP-method"));
     }
 
     // Request path must be absolute and not contain "..".
     if( req.target().empty() ||
             req.target()[0] != '/' ||
             req.target().find("..") != beast::string_view::npos) {
-        return send(bad_request("Illegal request-target"));
+        return send(kBadRequest("Illegal request-target"));
     }
 
     // Build the path to the requested file
@@ -104,23 +104,23 @@ void handleRequest(beast::string_view doc_root, http::request<Body, http::basic_
 
     // Handle the case where the file doesn't exist
     if(ec == beast::errc::no_such_file_or_directory) {
-        return send(not_found(req.target()));
+        return send(kNotFound(req.target()));
     }
 
     // Handle an unknown error
     if(ec) {
-        return send(server_error(ec.message()));
+        return send(kServerError(ec.message()));
     }
 
     // Cache the size since we need it after the move
-    auto const size = body.size();
+    auto const kSize = body.size();
 
     // Respond to HEAD request
     if(req.method() == http::verb::head) {
         http::response<http::empty_body> res{http::status::ok, req.version()};
         res.set(http::field::server, BOOST_BEAST_VERSION_STRING);
         res.set(http::field::content_type, mimeType(path));
-        res.content_length(size);
+        res.content_length(kSize);
         res.keep_alive(req.keep_alive());
         return send(std::move(res));
     }
@@ -132,7 +132,7 @@ void handleRequest(beast::string_view doc_root, http::request<Body, http::basic_
         std::make_tuple(http::status::ok, req.version())};
     res.set(http::field::server, BOOST_BEAST_VERSION_STRING);
     res.set(http::field::content_type, mimeType(path));
-    res.content_length(size);
+    res.content_length(kSize);
     res.keep_alive(req.keep_alive());
     return send(std::move(res));
 }

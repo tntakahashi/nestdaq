@@ -49,16 +49,16 @@ auto trim(std::string_view value) -> std::string_view;
 
 auto parseProtocolToken(std::string_view protocol, Protocol &out) -> bool
 {
-    const auto normalized = toLower(protocol);
-    if (normalized == "console") {
+    const auto kNormalized = toLower(protocol);
+    if (kNormalized == "console") {
         out = Protocol::Console;
         return true;
     }
-    if (normalized == "otlp-http" || normalized == "http" || normalized == "otlp_http") {
+    if (kNormalized == "otlp-http" || kNormalized == "http" || kNormalized == "otlp_http") {
         out = Protocol::OtlpHttp;
         return true;
     }
-    if (normalized == "otlp-grpc" || normalized == "grpc" || normalized == "otlp_grpc") {
+    if (kNormalized == "otlp-grpc" || kNormalized == "grpc" || kNormalized == "otlp_grpc") {
         out = Protocol::OtlpGrpc;
         return true;
     }
@@ -215,10 +215,10 @@ auto flushFrameworkMetricsIfDirty(uint64_t timeout_ms) -> int
     // Export a snapshot of pending framework samples. Successful flushes erase
     // only the exported prefix and recreate observable instruments so already
     // exported one-shot samples cannot be observed again.
-    const auto ok = framework_meter_provider->ForceFlush(timeoutFromMs(timeout_ms));
+    const auto kOk = framework_meter_provider->ForceFlush(timeoutFromMs(timeout_ms));
     auto should_recreate_provider = false;
     auto &state = runtimeState();
-    if (ok) {
+    if (kOk) {
         std::scoped_lock reconfigure_lock{state.framework_reconfigure_mutex};
         {
             std::scoped_lock lock{state.mutex};
@@ -288,7 +288,7 @@ auto defaultConfig() -> nestdaq_otel_config
 
 auto fairMQMetadataLogBody(const nestdaq_otel_config &config) -> std::string
 {
-    const auto body = nlohmann::json{
+    const auto kBody = nlohmann::json{
         {   "fairmq", {
                 {   "version", {
                         {"string", metadataValue(FAIRMQ_VERSION)},
@@ -311,7 +311,7 @@ auto fairMQMetadataLogBody(const nestdaq_otel_config &config) -> std::string
             }
         },
     };
-    return body.dump();
+    return kBody.dump();
 }
 
 auto installNoopProviders() -> void
@@ -366,7 +366,7 @@ auto metadataValue(std::string_view value) -> std::string
 
 auto nestDAQMetadataLogBody() -> std::string
 {
-    const auto body = nlohmann::json{
+    const auto kBody = nlohmann::json{
         {   "nestdaq", {
                 {   "version", {
                         {"string", metadataValue(NESTDAQ_VERSION)},
@@ -391,7 +391,7 @@ auto nestDAQMetadataLogBody() -> std::string
             }
         },
     };
-    return body.dump();
+    return kBody.dump();
 }
 
 auto parseHeaders(const char *headers) -> opentelemetry::exporter::otlp::OtlpHeaders
@@ -402,16 +402,16 @@ auto parseHeaders(const char *headers) -> opentelemetry::exporter::otlp::OtlpHea
     }
     auto input = std::string_view{headers};
     while (!input.empty()) {
-        const auto comma = input.find(',');
-        auto item = input.substr(0, comma);
-        input = comma == std::string_view::npos ? std::string_view{} :
-                input.substr(comma + 1);
-        const auto equals = item.find('=');
-        if (equals == std::string_view::npos || equals == 0) {
+        const auto kComma = input.find(',');
+        auto item = input.substr(0, kComma);
+        input = kComma == std::string_view::npos ? std::string_view{} :
+                input.substr(kComma + 1);
+        const auto kEquals = item.find('=');
+        if (kEquals == std::string_view::npos || kEquals == 0) {
             continue;
         }
-        auto key = trim(item.substr(0, equals));
-        auto value = trim(item.substr(equals + 1));
+        auto key = trim(item.substr(0, kEquals));
+        auto value = trim(item.substr(kEquals + 1));
         if (!key.empty()) {
             parsed.emplace(std::string{key}, std::string{value});
         }
@@ -426,10 +426,10 @@ auto parseProtocols(const char *protocols, std::vector<Protocol> &out) -> bool
     }
     auto input = std::string_view{protocols};
     while (!input.empty()) {
-        const auto comma = input.find(',');
-        auto token = trim(input.substr(0, comma));
-        input = comma == std::string_view::npos ? std::string_view{} :
-                input.substr(comma + 1);
+        const auto kComma = input.find(',');
+        auto token = trim(input.substr(0, kComma));
+        input = kComma == std::string_view::npos ? std::string_view{} :
+                input.substr(kComma + 1);
         if (token.empty()) {
             continue;
         }

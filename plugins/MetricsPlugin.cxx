@@ -273,13 +273,13 @@ MetricsPlugin::MetricsPlugin(std::string_view name,
 
     SubscribeToDeviceStateChange([this](DeviceState newState) {
         auto pipeline_used{false};
-        const auto state_name = GetStateName(newState);
-        LOG(debug) << kMyClass << " state change: " << state_name;
+        const auto kStateName = GetStateName(newState);
+        LOG(debug) << kMyClass << " state change: " << kStateName;
         {
             std::scoped_lock<std::mutex> lock{fMutex};
             if (fPipe) {
                 fPipe->discard();
-                fPipe->hset(fStateKey,        fId, state_name)
+                fPipe->hset(fStateKey,        fId, kStateName)
                 .hset(fProcKey.state_id, {std::make_pair(fId, static_cast<int>(newState))})
                 .exec();
                 pipeline_used = true;
@@ -386,9 +386,9 @@ bool MetricsPlugin::createSocketTs()
         if (!has_input && !has_output) {
             continue;
         }
-        const auto prefix = join({"ts", fId, name}, fSeparator);
+        const auto kPrefix = join({"ts", fId, name}, fSeparator);
         auto t = replaceAll(fSockKey, std::string(fTopPrefix)+fSeparator.data(), "");
-        auto ts_key = prepend(t, prefix, fSeparator);
+        auto ts_key = prepend(t, kPrefix, fSeparator);
         fTsSockKey[name]    = ts_key;
         auto sum_key = append(ts_key, "sum", "-");
         fTsSockSumKey[name] =  sum_key;
@@ -530,9 +530,9 @@ void MetricsPlugin::deleteTsKeys()
 void MetricsPlugin::initializeSocketProperties()
 {
     // Get parameters of channel configuration as std::map<sstd::tring, std::1string>
-    const auto properties = GetPropertiesAsStringStartingWith("chans.");
+    const auto kProperties = GetPropertiesAsStringStartingWith("chans.");
     fSocketProperties.clear();
-    for (const auto& [k, v] : properties) {
+    for (const auto& [k, v] : kProperties) {
         std::vector<std::string> c;
         boost::split(c, k, boost::is_any_of("."), boost::token_compress_on);
         // k = chans.<channel-name>.<subchannel-index>.<field>
@@ -598,8 +598,8 @@ auto MetricsPlugin::readProcessUsage() const -> ProcessUsageSample
 {
     rusage usage{};
     if (getrusage(RUSAGE_SELF, &usage) != 0) {
-        const auto error = std::error_code{errno, std::generic_category()};
-        LOG(error) << kMyClass << " " << __FUNCTION__ << " getrusage failed: " << error.message();
+        const auto kError = std::error_code{errno, std::generic_category()};
+        LOG(error) << kMyClass << " " << __FUNCTION__ << " getrusage failed: " << kError.message();
         return {.cpu_seconds = fProcessUsage.cpu_seconds, .timestamp = std::chrono::steady_clock::now()};
     }
 
@@ -635,13 +635,13 @@ void MetricsPlugin::sendProcessMetrics()
 
     auto now_process_usage = readProcessUsage();
 
-    const auto cpu_seconds = now_process_usage.cpu_seconds - fProcessUsage.cpu_seconds;
-    const auto wall_seconds =
+    const auto kCpuSeconds = now_process_usage.cpu_seconds - fProcessUsage.cpu_seconds;
+    const auto kWallSeconds =
         std::chrono::duration<double>(now_process_usage.timestamp - fProcessUsage.timestamp).count();
 
     // Top/htop style percent: one fully used CPU core is 100%, two cores are 200%.
-    const auto cpu_usage = wall_seconds > 0.0 ? cpu_seconds / wall_seconds * 100.0 : 0.0;
-    const auto ram_usage = readResidentMemoryMiB();
+    const auto kCpuUsage = kWallSeconds > 0.0 ? kCpuSeconds / kWallSeconds * 100.0 : 0.0;
+    const auto kRamUsage = readResidentMemoryMiB();
 
 //  std::cout << " diff (self) = " << diffSelf
 //             << ", diff (all) = " << diffAll << "\n"
@@ -655,12 +655,12 @@ void MetricsPlugin::sendProcessMetrics()
     auto last_update_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(last_update.time_since_epoch());
     try {
         if (fPipe) {
-            fPipe->hset(fProcKey.cpu, {std::make_pair(fId, cpu_usage)})
-            .hset(fProcKey.ram, {std::make_pair(fId, ram_usage)})
+            fPipe->hset(fProcKey.cpu, {std::make_pair(fId, kCpuUsage)})
+            .hset(fProcKey.ram, {std::make_pair(fId, kRamUsage)})
             .hset(fLastUpdateKey, fId, toDate(last_update))
             .hset(fLastUpdateNsKey, fId, std::to_string(last_update_ns.count()))
-            .command("ts.add", fTsProcKey.cpu,        "*", std::to_string(cpu_usage))
-            .command("ts.add", fTsProcKey.ram,        "*", std::to_string(ram_usage))
+            .command("ts.add", fTsProcKey.cpu,        "*", std::to_string(kCpuUsage))
+            .command("ts.add", fTsProcKey.ram,        "*", std::to_string(kRamUsage))
             .command("ts.add", fTsProcKey.state_id,    "*", std::to_string(state_id));
             //std::cout << " "   << fTsProcKey.cpu       << "\t " << cpu_usage
             //          << "\n " << fTsProcKey.ram       << "\t " << ram_usage
@@ -682,23 +682,23 @@ void MetricsPlugin::sendSocketMetrics(const std::string &content)
     //LOG(debug) << kMyClass << " " << __FUNCTION__;
     //return;
     //std::cout << kMyClass << " content = \n" << content << "\n length = " << content.size() << std::endl;
-    const auto sample = nestdaq::telemetry::parseFairMQThroughputLog(content);
-    if (!sample || !sample->sub_channel_index) {
+    const auto kSample = nestdaq::telemetry::parseFairMQThroughputLog(content);
+    if (!kSample || !kSample->sub_channel_index) {
         return;
     }
     //std::cout << kMyClass << " " << __FUNCTION__ << " (passed) content = \n" << content << std::endl;
 
-    const auto &channel_name = sample->channel_name;
-    const auto sub_channel_index = std::to_string(*sample->sub_channel_index);
-    const auto &sub_channel_name = sample->sub_channel_name;
+    const auto &channel_name = kSample->channel_name;
+    const auto kSubChannelIndex = std::to_string(*kSample->sub_channel_index);
+    const auto &sub_channel_name = kSample->sub_channel_name;
     auto channel_id       = join({fId, sub_channel_name}, fSeparator);
 
     SocketMetrics now;
-    now.msg_in    = sample->messages_per_second_in;
-    now.msg_out   = sample->messages_per_second_out;
+    now.msg_in    = kSample->messages_per_second_in;
+    now.msg_out   = kSample->messages_per_second_out;
     // mega bytes
-    now.bytes_in  = sample->megabytes_per_second_in;
-    now.bytes_out = sample->megabytes_per_second_out;
+    now.bytes_in  = kSample->megabytes_per_second_in;
+    now.bytes_out = kSample->megabytes_per_second_out;
 
     auto& sum = fSocketMetrics[sub_channel_name];
     sum.msg_in    += now.msg_in;
@@ -715,7 +715,7 @@ void MetricsPlugin::sendSocketMetrics(const std::string &content)
 
     try {
         if (fPipe) {
-            const auto &socket_type_key = join({"chans", channel_name, sub_channel_index, "type"},  ".");
+            const auto &socket_type_key = join({"chans", channel_name, kSubChannelIndex, "type"},  ".");
             // std::cout << " channel type key = " << socket_type_key << std::endl;
             std::string socket_type;
             if (PropertyExists(socket_type_key)) {
@@ -731,8 +731,8 @@ void MetricsPlugin::sendSocketMetrics(const std::string &content)
 
             // LOG(debug) << " sub_channel_name = " << sub_channel_name;
 
-            const auto ts_key       = fTsSockKey[sub_channel_name];
-            const auto ts_sum_key    = fTsSockSumKey[sub_channel_name];
+            const auto kTsKey       = fTsSockKey[sub_channel_name];
+            const auto kTsSumKey    = fTsSockSumKey[sub_channel_name];
 
             if (has_input) {
                 fPipe->hset(fSockKey.msg_in,       {std::make_pair(channel_id, msg_in)})
@@ -743,10 +743,10 @@ void MetricsPlugin::sendSocketMetrics(const std::string &content)
                 .hset(fBytesKey,            {std::make_pair(channel_id+".in",  now.bytes_in)})
                 .hset(fNumMessageSumKey,    {std::make_pair(channel_id+".in",  msg_in_sum)})
                 .hset(fBytesSumKey,         {std::make_pair(channel_id+".in",  sum.bytes_in)})
-                .command("ts.add", ts_key.msg_in,         "*", std::to_string(msg_in))
-                .command("ts.add", ts_key.bytes_in,       "*", std::to_string(now.bytes_in))
-                .command("ts.add", ts_sum_key.msg_in,      "*", std::to_string(msg_in_sum))
-                .command("ts.add", ts_sum_key.bytes_in,    "*", std::to_string(sum.bytes_in));
+                .command("ts.add", kTsKey.msg_in,         "*", std::to_string(msg_in))
+                .command("ts.add", kTsKey.bytes_in,       "*", std::to_string(now.bytes_in))
+                .command("ts.add", kTsSumKey.msg_in,      "*", std::to_string(msg_in_sum))
+                .command("ts.add", kTsSumKey.bytes_in,    "*", std::to_string(sum.bytes_in));
                 //std::cout << __LINE__ << " has input: "
                 //          << ts_key.msg_in       << "\t " << msg_in
                 //          << "\n " << ts_key.bytes_in     << "\t " << now.bytes_in
@@ -763,10 +763,10 @@ void MetricsPlugin::sendSocketMetrics(const std::string &content)
                 .hset(fBytesKey,            {std::make_pair(channel_id+".out", now.bytes_out)})
                 .hset(fNumMessageSumKey,    {std::make_pair(channel_id+".out", msg_out_sum)})
                 .hset(fBytesSumKey,         {std::make_pair(channel_id+".out", sum.bytes_out)})
-                .command("ts.add", ts_key.msg_out,         "*", std::to_string(msg_out))
-                .command("ts.add", ts_key.bytes_out,       "*", std::to_string(now.bytes_out))
-                .command("ts.add", ts_sum_key.msg_out,      "*", std::to_string(msg_out_sum))
-                .command("ts.add", ts_sum_key.bytes_out,    "*", std::to_string(sum.bytes_out));
+                .command("ts.add", kTsKey.msg_out,         "*", std::to_string(msg_out))
+                .command("ts.add", kTsKey.bytes_out,       "*", std::to_string(now.bytes_out))
+                .command("ts.add", kTsSumKey.msg_out,      "*", std::to_string(msg_out_sum))
+                .command("ts.add", kTsSumKey.bytes_out,    "*", std::to_string(sum.bytes_out));
                 //std::cout << __LINE__ << " has output: "
                 //          << ts_key.msg_out      << "\t " << msg_out
                 //          << "\n " << ts_key.bytes_out    << "\t " << now.bytes_out

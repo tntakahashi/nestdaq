@@ -27,12 +27,12 @@ HttpWebSocketServer::~HttpWebSocketServer()
 
 void HttpWebSocketServer::run(std::string_view /*scheme*/, std::string_view address, std::string_view port, std::string_view doc_root)
 {
-    const auto doc_root_storage = std::make_shared<std::string>(doc_root);
-    const auto ip_addr = net::ip::make_address(address);
-    const auto port_number = std::stoi(std::string{port});
+    const auto kDocRootStorage = std::make_shared<std::string>(doc_root);
+    const auto kIpAddr = net::ip::make_address(address);
+    const auto kPortNumber = std::stoi(std::string{port});
 
     // Create and launch a listening port
-    fListener = std::make_shared<Listener>(fContext, tcp::endpoint(ip_addr, port_number), doc_root_storage);
+    fListener = std::make_shared<Listener>(fContext, tcp::endpoint(kIpAddr, kPortNumber), kDocRootStorage);
     if (fListener->getStatus()!=Listener::kStatusGood) {
         return;
     }

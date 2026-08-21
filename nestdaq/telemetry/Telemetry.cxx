@@ -104,32 +104,32 @@ auto spdlogAsyncOptionsStorage() -> SpdlogAsyncOptions& {
 } // namespace
 
 auto setSpdlogConsolePattern(std::string_view pattern) -> void {
-    const auto lock = std::scoped_lock{spdlogConsolePatternMutex()};
+    const auto kLock = std::scoped_lock{spdlogConsolePatternMutex()};
     spdlogConsolePatternStorage() = pattern;
 }
 
 auto getSpdlogConsolePattern() -> std::string {
-    const auto lock = std::scoped_lock{spdlogConsolePatternMutex()};
+    const auto kLock = std::scoped_lock{spdlogConsolePatternMutex()};
     return spdlogConsolePatternStorage();
 }
 
 auto setSpdlogNativeConsoleEnabled(bool enabled) -> void {
-    const auto lock = std::scoped_lock{spdlogConsolePatternMutex()};
+    const auto kLock = std::scoped_lock{spdlogConsolePatternMutex()};
     spdlogNativeConsoleEnabledStorage() = enabled;
 }
 
 auto getSpdlogNativeConsoleEnabled() -> bool {
-    const auto lock = std::scoped_lock{spdlogConsolePatternMutex()};
+    const auto kLock = std::scoped_lock{spdlogConsolePatternMutex()};
     return spdlogNativeConsoleEnabledStorage();
 }
 
 auto setSpdlogAsyncOptions(const SpdlogAsyncOptions& options) -> void {
-    const auto lock = std::scoped_lock{spdlogConsolePatternMutex()};
+    const auto kLock = std::scoped_lock{spdlogConsolePatternMutex()};
     spdlogAsyncOptionsStorage() = normalizeSpdlogAsyncOptions(options);
 }
 
 auto getSpdlogAsyncOptions() -> SpdlogAsyncOptions {
-    const auto lock = std::scoped_lock{spdlogConsolePatternMutex()};
+    const auto kLock = std::scoped_lock{spdlogConsolePatternMutex()};
     return spdlogAsyncOptionsStorage();
 }
 
@@ -176,8 +176,8 @@ auto TelemetrySpan::setAttribute(const nestdaq_otel_attribute& attribute) -> boo
 }
 
 auto TelemetrySpan::setAttribute(const Attribute& attribute) -> bool {
-    const auto otel_attribute = attribute.toOtelAttribute();
-    return setAttribute(otel_attribute);
+    const auto kOtelAttribute = attribute.toOtelAttribute();
+    return setAttribute(kOtelAttribute);
 }
 
 Counter::Counter(TelemetryLibrary* library, std::string_view name, std::string_view unit, std::string_view description)
@@ -191,8 +191,8 @@ auto Counter::add(double value, std::initializer_list<Attribute> attributes) con
     if (fLibrary == nullptr) {
         return true;
     }
-    const auto attrs = makeOtelAttributes(attributes);
-    return fLibrary->metricAddDoubleCounter(fName, value, fUnit, fDescription, attrs.data(), attrs.size());
+    const auto kAttrs = makeOtelAttributes(attributes);
+    return fLibrary->metricAddDoubleCounter(fName, value, fUnit, fDescription, kAttrs.data(), kAttrs.size());
 }
 
 Histogram::Histogram(TelemetryLibrary* library, std::string_view name, std::string_view unit, std::string_view description)
@@ -206,8 +206,8 @@ auto Histogram::record(double value, std::initializer_list<Attribute> attributes
     if (fLibrary == nullptr) {
         return true;
     }
-    const auto attrs = makeOtelAttributes(attributes);
-    return fLibrary->metricRecordDoubleHistogram(fName, value, fUnit, fDescription, attrs.data(), attrs.size());
+    const auto kAttrs = makeOtelAttributes(attributes);
+    return fLibrary->metricRecordDoubleHistogram(fName, value, fUnit, fDescription, kAttrs.data(), kAttrs.size());
 }
 
 Gauge::Gauge(TelemetryLibrary* library, std::string_view name, std::string_view unit, std::string_view description)
@@ -221,8 +221,8 @@ auto Gauge::record(double value, std::initializer_list<Attribute> attributes) co
     if (fLibrary == nullptr) {
         return true;
     }
-    const auto attrs = makeOtelAttributes(attributes);
-    return fLibrary->metricRecordDoubleGauge(fName, value, fUnit, fDescription, attrs.data(), attrs.size());
+    const auto kAttrs = makeOtelAttributes(attributes);
+    return fLibrary->metricRecordDoubleGauge(fName, value, fUnit, fDescription, kAttrs.data(), kAttrs.size());
 }
 
 Telemetry::Telemetry(TelemetryLibrary& library) noexcept
@@ -306,8 +306,8 @@ auto Telemetry::startSpan(std::string_view name, std::initializer_list<Attribute
     if (fLibrary == nullptr) {
         return {};
     }
-    const auto attrs = makeOtelAttributes(attributes);
-    return TelemetrySpan{*fLibrary, fLibrary->spanStart(name, attrs.data(), attrs.size())};
+    const auto kAttrs = makeOtelAttributes(attributes);
+    return TelemetrySpan{*fLibrary, fLibrary->spanStart(name, kAttrs.data(), kAttrs.size())};
 }
 
 namespace {

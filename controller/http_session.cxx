@@ -20,12 +20,12 @@ HttpSession::Queue::Queue(HttpSession& self)
 bool HttpSession::Queue::onWrite()
 {
     BOOST_ASSERT(! fItems.empty());
-    auto const was_full = isFull();
+    auto const kWasFull = isFull();
     fItems.erase(fItems.begin());
     if(! fItems.empty()) {
         (*fItems.front())();
     }
-    return was_full;
+    return kWasFull;
 }
 
 //=============================================================================
@@ -117,8 +117,8 @@ void HttpSession::doClose()
     // Send a TCP shutdown
     beast::error_code ec;
     LOG(debug) << "boost::beast http session: Send a TCP shutdown";
-    const auto shutdown_result = fStream.socket().shutdown(tcp::socket::shutdown_send, ec);
-    boost::ignore_unused(shutdown_result);
+    const auto kShutdownResult = fStream.socket().shutdown(tcp::socket::shutdown_send, ec);
+    boost::ignore_unused(kShutdownResult);
 
     // At this point the connection is closed gracefully
 }

@@ -21,7 +21,7 @@
 namespace {
 
 auto clearTelemetryEnvironment() -> void {
-    const auto names = std::array{
+    const auto kNames = std::array{
         "NESTDAQ_OTEL_LIBRARY",
         "NESTDAQ_OTEL_LOG_PROTOCOL",
         "NESTDAQ_OTEL_METRIC_PROTOCOL",
@@ -45,7 +45,7 @@ auto clearTelemetryEnvironment() -> void {
         "NESTDAQ_SPDLOG_ASYNC_OVERFLOW_POLICY",
     };
 
-    for (const auto* name : names) {
+    for (const auto* name : kNames) {
         unsetenv(name); // NOLINT(concurrency-mt-unsafe)
     }
 }
@@ -90,22 +90,22 @@ auto readWithBoostOptions(std::vector<std::string> arguments,
 TEST_CASE("telemetry options keep unified otel library default", "[telemetry]") {
     clearTelemetryEnvironment();
 
-    const auto options = parse({"test"});
+    const auto kOptions = parse({"test"});
 
-    CHECK(options.library == "libnestdaq_otel.so");
-    CHECK(options.log_protocol == "console");
-    CHECK(options.metric_protocol.empty());
-    CHECK(options.trace_protocol.empty());
-    CHECK(options.metric_export_interval_ms == 1000);
-    CHECK(options.spdlog_console_pattern == nestdaq::telemetry::kDefaultSpdlogConsolePattern);
-    CHECK(options.spdlog_native_console);
-    CHECK_FALSE(options.spdlog_async);
-    CHECK(options.spdlog_async_queue_size == nestdaq::telemetry::kDefaultSpdlogAsyncQueueSize);
-    CHECK(options.spdlog_async_thread_count == nestdaq::telemetry::kDefaultSpdlogAsyncThreadCount);
-    CHECK(options.spdlog_async_overflow_policy == nestdaq::telemetry::kDefaultSpdlogAsyncOverflowPolicy);
+    CHECK(kOptions.library == "libnestdaq_otel.so");
+    CHECK(kOptions.log_protocol == "console");
+    CHECK(kOptions.metric_protocol.empty());
+    CHECK(kOptions.trace_protocol.empty());
+    CHECK(kOptions.metric_export_interval_ms == 1000);
+    CHECK(kOptions.spdlog_console_pattern == nestdaq::telemetry::kDefaultSpdlogConsolePattern);
+    CHECK(kOptions.spdlog_native_console);
+    CHECK_FALSE(kOptions.spdlog_async);
+    CHECK(kOptions.spdlog_async_queue_size == nestdaq::telemetry::kDefaultSpdlogAsyncQueueSize);
+    CHECK(kOptions.spdlog_async_thread_count == nestdaq::telemetry::kDefaultSpdlogAsyncThreadCount);
+    CHECK(kOptions.spdlog_async_overflow_policy == nestdaq::telemetry::kDefaultSpdlogAsyncOverflowPolicy);
 
-    const auto config = nestdaq::telemetry::makeConfig(options);
-    CHECK(config.metric_export_interval_ms == 1000);
+    const auto kConfig = nestdaq::telemetry::makeConfig(kOptions);
+    CHECK(kConfig.metric_export_interval_ms == 1000);
 }
 
 TEST_CASE("spdlog async options follow command line and environment", "[telemetry]") {
@@ -116,13 +116,13 @@ TEST_CASE("spdlog async options follow command line and environment", "[telemetr
     setenv("NESTDAQ_SPDLOG_ASYNC_THREAD_COUNT", "2", 1); // NOLINT(concurrency-mt-unsafe)
     setenv("NESTDAQ_SPDLOG_ASYNC_OVERFLOW_POLICY", "overrun_oldest", 1); // NOLINT(concurrency-mt-unsafe)
 
-    const auto env_options = parse({"test"});
-    CHECK(env_options.spdlog_async);
-    CHECK(env_options.spdlog_async_queue_size == 1024);
-    CHECK(env_options.spdlog_async_thread_count == 2);
-    CHECK(env_options.spdlog_async_overflow_policy == "overrun_oldest");
+    const auto kEnvOptions = parse({"test"});
+    CHECK(kEnvOptions.spdlog_async);
+    CHECK(kEnvOptions.spdlog_async_queue_size == 1024);
+    CHECK(kEnvOptions.spdlog_async_thread_count == 2);
+    CHECK(kEnvOptions.spdlog_async_overflow_policy == "overrun_oldest");
 
-    const auto cli_options = parse({
+    const auto kCliOptions = parse({
         "test",
         "--spdlog-async=false",
         "--spdlog-async-queue-size",
@@ -130,10 +130,10 @@ TEST_CASE("spdlog async options follow command line and environment", "[telemetr
         "--spdlog-async-thread-count=3",
         "--spdlog-async-overflow-policy=discard_new",
     });
-    CHECK_FALSE(cli_options.spdlog_async);
-    CHECK(cli_options.spdlog_async_queue_size == 2048);
-    CHECK(cli_options.spdlog_async_thread_count == 3);
-    CHECK(cli_options.spdlog_async_overflow_policy == "discard_new");
+    CHECK_FALSE(kCliOptions.spdlog_async);
+    CHECK(kCliOptions.spdlog_async_queue_size == 2048);
+    CHECK(kCliOptions.spdlog_async_thread_count == 3);
+    CHECK(kCliOptions.spdlog_async_overflow_policy == "discard_new");
 
     clearTelemetryEnvironment();
 }
@@ -141,30 +141,30 @@ TEST_CASE("spdlog async options follow command line and environment", "[telemetr
 TEST_CASE("spdlog async options normalize invalid values", "[telemetry]") {
     clearTelemetryEnvironment();
 
-    const auto options = parse({
+    const auto kOptions = parse({
         "test",
         "--spdlog-async-queue-size=0",
         "--spdlog-async-thread-count=0",
         "--spdlog-async-overflow-policy=drop_everything",
     });
 
-    CHECK(options.spdlog_async_queue_size == nestdaq::telemetry::kDefaultSpdlogAsyncQueueSize);
-    CHECK(options.spdlog_async_thread_count == nestdaq::telemetry::kDefaultSpdlogAsyncThreadCount);
-    CHECK(options.spdlog_async_overflow_policy == nestdaq::telemetry::kDefaultSpdlogAsyncOverflowPolicy);
+    CHECK(kOptions.spdlog_async_queue_size == nestdaq::telemetry::kDefaultSpdlogAsyncQueueSize);
+    CHECK(kOptions.spdlog_async_thread_count == nestdaq::telemetry::kDefaultSpdlogAsyncThreadCount);
+    CHECK(kOptions.spdlog_async_overflow_policy == nestdaq::telemetry::kDefaultSpdlogAsyncOverflowPolicy);
 }
 
 TEST_CASE("spdlog native console option follows command line and environment", "[telemetry]") {
     clearTelemetryEnvironment();
 
-    const auto cli_options = parse({"test", "--spdlog-native-console=false"});
-    CHECK_FALSE(cli_options.spdlog_native_console);
+    const auto kCliOptions = parse({"test", "--spdlog-native-console=false"});
+    CHECK_FALSE(kCliOptions.spdlog_native_console);
 
     setenv("NESTDAQ_SPDLOG_NATIVE_CONSOLE", "off", 1); // NOLINT(concurrency-mt-unsafe)
-    const auto env_options = parse({"test"});
-    CHECK_FALSE(env_options.spdlog_native_console);
+    const auto kEnvOptions = parse({"test"});
+    CHECK_FALSE(kEnvOptions.spdlog_native_console);
 
-    const auto override_options = parse({"test", "--spdlog-native-console", "true"});
-    CHECK(override_options.spdlog_native_console);
+    const auto kOverrideOptions = parse({"test", "--spdlog-native-console", "true"});
+    CHECK(kOverrideOptions.spdlog_native_console);
 
     clearTelemetryEnvironment();
 }
@@ -172,15 +172,15 @@ TEST_CASE("spdlog native console option follows command line and environment", "
 TEST_CASE("spdlog console pattern follows command line and environment", "[telemetry]") {
     clearTelemetryEnvironment();
 
-    const auto cli_options = parse({"test", "--spdlog-console-pattern=[%n] %v"});
-    CHECK(cli_options.spdlog_console_pattern == "[%n] %v");
+    const auto kCliOptions = parse({"test", "--spdlog-console-pattern=[%n] %v"});
+    CHECK(kCliOptions.spdlog_console_pattern == "[%n] %v");
 
     setenv("NESTDAQ_SPDLOG_CONSOLE_PATTERN", "%l:%v", 1); // NOLINT(concurrency-mt-unsafe)
-    const auto env_options = parse({"test"});
-    CHECK(env_options.spdlog_console_pattern == "%l:%v");
+    const auto kEnvOptions = parse({"test"});
+    CHECK(kEnvOptions.spdlog_console_pattern == "%l:%v");
 
-    const auto override_options = parse({"test", "--spdlog-console-pattern", "%v"});
-    CHECK(override_options.spdlog_console_pattern == "%v");
+    const auto kOverrideOptions = parse({"test", "--spdlog-console-pattern", "%v"});
+    CHECK(kOverrideOptions.spdlog_console_pattern == "%v");
 
     clearTelemetryEnvironment();
 }
@@ -209,24 +209,24 @@ TEST_CASE("spdlog async facade stores process setting", "[telemetry]") {
         .overflow_policy = "discard_new",
     });
 
-    const auto enabled_options = nestdaq::telemetry::getSpdlogAsyncOptions();
-    CHECK(enabled_options.enabled);
-    CHECK(enabled_options.queue_size == 4096);
-    CHECK(enabled_options.thread_count == 2);
-    CHECK(enabled_options.overflow_policy == "discard_new");
+    const auto kEnabledOptions = nestdaq::telemetry::getSpdlogAsyncOptions();
+    CHECK(kEnabledOptions.enabled);
+    CHECK(kEnabledOptions.queue_size == 4096);
+    CHECK(kEnabledOptions.thread_count == 2);
+    CHECK(kEnabledOptions.overflow_policy == "discard_new");
 
     nestdaq::telemetry::setSpdlogAsyncOptions({});
-    const auto default_options = nestdaq::telemetry::getSpdlogAsyncOptions();
-    CHECK_FALSE(default_options.enabled);
-    CHECK(default_options.queue_size == nestdaq::telemetry::kDefaultSpdlogAsyncQueueSize);
-    CHECK(default_options.thread_count == nestdaq::telemetry::kDefaultSpdlogAsyncThreadCount);
-    CHECK(default_options.overflow_policy == nestdaq::telemetry::kDefaultSpdlogAsyncOverflowPolicy);
+    const auto kDefaultOptions = nestdaq::telemetry::getSpdlogAsyncOptions();
+    CHECK_FALSE(kDefaultOptions.enabled);
+    CHECK(kDefaultOptions.queue_size == nestdaq::telemetry::kDefaultSpdlogAsyncQueueSize);
+    CHECK(kDefaultOptions.thread_count == nestdaq::telemetry::kDefaultSpdlogAsyncThreadCount);
+    CHECK(kDefaultOptions.overflow_policy == nestdaq::telemetry::kDefaultSpdlogAsyncOverflowPolicy);
 }
 
 TEST_CASE("spdlog async options are read through Boost options", "[telemetry]") {
     clearTelemetryEnvironment();
 
-    const auto options = readWithBoostOptions({
+    const auto kOptions = readWithBoostOptions({
         "test",
         "--spdlog-async=true",
         "--spdlog-async-queue-size=512",
@@ -234,10 +234,10 @@ TEST_CASE("spdlog async options are read through Boost options", "[telemetry]") 
         "--spdlog-async-overflow-policy=overrun_oldest",
     }, "boost-default");
 
-    CHECK(options.spdlog_async);
-    CHECK(options.spdlog_async_queue_size == 512);
-    CHECK(options.spdlog_async_thread_count == 2);
-    CHECK(options.spdlog_async_overflow_policy == "overrun_oldest");
+    CHECK(kOptions.spdlog_async);
+    CHECK(kOptions.spdlog_async_queue_size == 512);
+    CHECK(kOptions.spdlog_async_thread_count == 2);
+    CHECK(kOptions.spdlog_async_overflow_policy == "overrun_oldest");
 }
 
 TEST_CASE("spdlog async environment survives Boost option defaults", "[telemetry]") {
@@ -248,12 +248,12 @@ TEST_CASE("spdlog async environment survives Boost option defaults", "[telemetry
     setenv("NESTDAQ_SPDLOG_ASYNC_THREAD_COUNT", "2", 1); // NOLINT(concurrency-mt-unsafe)
     setenv("NESTDAQ_SPDLOG_ASYNC_OVERFLOW_POLICY", "discard_new", 1); // NOLINT(concurrency-mt-unsafe)
 
-    const auto options = readWithBoostOptions({"daq-webctl"}, "daq-webctl");
+    const auto kOptions = readWithBoostOptions({"daq-webctl"}, "daq-webctl");
 
-    CHECK(options.spdlog_async);
-    CHECK(options.spdlog_async_queue_size == 1024);
-    CHECK(options.spdlog_async_thread_count == 2);
-    CHECK(options.spdlog_async_overflow_policy == "discard_new");
+    CHECK(kOptions.spdlog_async);
+    CHECK(kOptions.spdlog_async_queue_size == 1024);
+    CHECK(kOptions.spdlog_async_thread_count == 2);
+    CHECK(kOptions.spdlog_async_overflow_policy == "discard_new");
 
     clearTelemetryEnvironment();
 }
@@ -261,7 +261,7 @@ TEST_CASE("spdlog async environment survives Boost option defaults", "[telemetry
 TEST_CASE("telemetry command line options populate multi-signal config", "[telemetry]") {
     clearTelemetryEnvironment();
 
-    const auto options = parse({
+    const auto kOptions = parse({
         "test",
         "--otel-library=/tmp/libnestdaq_otel.so",
         "--otel-log-protocol=console,otlp-http",
@@ -284,28 +284,28 @@ TEST_CASE("telemetry command line options populate multi-signal config", "[telem
         "--otel-trace-http-json=false",
     });
 
-    CHECK(options.library == "/tmp/libnestdaq_otel.so");
-    CHECK(options.log_protocol == "console,otlp-http");
-    CHECK(options.metric_protocol == "otlp-http");
-    CHECK(options.trace_protocol == "otlp-grpc");
+    CHECK(kOptions.library == "/tmp/libnestdaq_otel.so");
+    CHECK(kOptions.log_protocol == "console,otlp-http");
+    CHECK(kOptions.metric_protocol == "otlp-http");
+    CHECK(kOptions.trace_protocol == "otlp-grpc");
 
-    const auto config = nestdaq::telemetry::makeConfig(options);
-    CHECK(config.size == sizeof(nestdaq_otel_config));
-    CHECK(std::string_view{config.logs.protocol} == "console,otlp-http");
-    CHECK(std::string_view{config.metrics.protocol} == "otlp-http");
-    CHECK(std::string_view{config.traces.protocol} == "otlp-grpc");
-    CHECK(std::string_view{config.logs.endpoint_http} == "http://collector:4318/v1/logs");
-    CHECK(std::string_view{config.metrics.endpoint_http} == "http://collector:4318/v1/metrics");
-    CHECK(std::string_view{config.traces.endpoint_grpc} == "collector:4317");
-    CHECK(std::string_view{config.logs.headers} == "log-key=log-value");
-    CHECK(std::string_view{config.metrics.headers} == "metric-key=metric-value");
-    CHECK(std::string_view{config.traces.headers} == "trace-key=trace-value");
-    CHECK(config.min_severity == static_cast<int32_t>(fair::Severity::warn));
-    CHECK(config.timeout_ms == 1234);
-    CHECK(config.metric_export_interval_ms == 5678);
-    CHECK(config.logs.otlp_http_json == 0);
-    CHECK(config.metrics.otlp_http_json == 1);
-    CHECK(config.traces.otlp_http_json == 0);
+    const auto kConfig = nestdaq::telemetry::makeConfig(kOptions);
+    CHECK(kConfig.size == sizeof(nestdaq_otel_config));
+    CHECK(std::string_view{kConfig.logs.protocol} == "console,otlp-http");
+    CHECK(std::string_view{kConfig.metrics.protocol} == "otlp-http");
+    CHECK(std::string_view{kConfig.traces.protocol} == "otlp-grpc");
+    CHECK(std::string_view{kConfig.logs.endpoint_http} == "http://collector:4318/v1/logs");
+    CHECK(std::string_view{kConfig.metrics.endpoint_http} == "http://collector:4318/v1/metrics");
+    CHECK(std::string_view{kConfig.traces.endpoint_grpc} == "collector:4317");
+    CHECK(std::string_view{kConfig.logs.headers} == "log-key=log-value");
+    CHECK(std::string_view{kConfig.metrics.headers} == "metric-key=metric-value");
+    CHECK(std::string_view{kConfig.traces.headers} == "trace-key=trace-value");
+    CHECK(kConfig.min_severity == static_cast<int32_t>(fair::Severity::warn));
+    CHECK(kConfig.timeout_ms == 1234);
+    CHECK(kConfig.metric_export_interval_ms == 5678);
+    CHECK(kConfig.logs.otlp_http_json == 0);
+    CHECK(kConfig.metrics.otlp_http_json == 1);
+    CHECK(kConfig.traces.otlp_http_json == 0);
 }
 
 TEST_CASE("telemetry log severity parsing follows FairLogger severity names", "[telemetry]") {
@@ -319,116 +319,116 @@ TEST_CASE("telemetry log severity parsing follows FairLogger severity names", "[
     CHECK(severityToFairLoggerValue("fatal") == static_cast<int32_t>(fair::Severity::fatal));
     CHECK(severityToFairLoggerValue("NOLOG") == static_cast<int32_t>(fair::Severity::nolog));
 
-    const auto unknown_severity = parseFairLoggerSeverity("unknown");
-    CHECK(unknown_severity.used_fallback);
-    CHECK(unknown_severity.value == static_cast<int32_t>(fair::Severity::info));
+    const auto kUnknownSeverity = parseFairLoggerSeverity("unknown");
+    CHECK(kUnknownSeverity.used_fallback);
+    CHECK(kUnknownSeverity.value == static_cast<int32_t>(fair::Severity::info));
     CHECK(severityToFairLoggerValue("unknown") == static_cast<int32_t>(fair::Severity::info));
 }
 
 TEST_CASE("telemetry service name follows DAQ service option for devices", "[telemetry]") {
     clearTelemetryEnvironment();
 
-    const auto options_with_equals = parse({"test", "--service-name=Sampler"});
-    const auto config_with_equals = nestdaq::telemetry::makeConfig(options_with_equals);
+    const auto kOptionsWithEquals = parse({"test", "--service-name=Sampler"});
+    const auto kConfigWithEquals = nestdaq::telemetry::makeConfig(kOptionsWithEquals);
 
-    CHECK(std::string_view{config_with_equals.service_name} == "sampler");
+    CHECK(std::string_view{kConfigWithEquals.service_name} == "sampler");
 
-    const auto options_with_space = parse({"test", "--service-name", "Processor"});
-    const auto config_with_space = nestdaq::telemetry::makeConfig(options_with_space);
+    const auto kOptionsWithSpace = parse({"test", "--service-name", "Processor"});
+    const auto kConfigWithSpace = nestdaq::telemetry::makeConfig(kOptionsWithSpace);
 
-    CHECK(std::string_view{config_with_space.service_name} == "processor");
+    CHECK(std::string_view{kConfigWithSpace.service_name} == "processor");
 }
 
 TEST_CASE("explicit telemetry service name overrides DAQ service option", "[telemetry]") {
     clearTelemetryEnvironment();
 
-    const auto options_after = parse({"test", "--service-name=Sampler", "--otel-service-name=NullDevice"});
-    const auto config_after = nestdaq::telemetry::makeConfig(options_after);
+    const auto kOptionsAfter = parse({"test", "--service-name=Sampler", "--otel-service-name=NullDevice"});
+    const auto kConfigAfter = nestdaq::telemetry::makeConfig(kOptionsAfter);
 
-    CHECK(std::string_view{config_after.service_name} == "nulldevice");
+    CHECK(std::string_view{kConfigAfter.service_name} == "nulldevice");
 
-    const auto options_before = parse({"test", "--otel-service-name=explicit", "--service-name=Sampler"});
-    const auto config_before = nestdaq::telemetry::makeConfig(options_before);
+    const auto kOptionsBefore = parse({"test", "--otel-service-name=explicit", "--service-name=Sampler"});
+    const auto kConfigBefore = nestdaq::telemetry::makeConfig(kOptionsBefore);
 
-    CHECK(std::string_view{config_before.service_name} == "explicit");
+    CHECK(std::string_view{kConfigBefore.service_name} == "explicit");
 }
 
 TEST_CASE("telemetry service name keeps daq-webctl default through Boost options", "[telemetry]") {
     clearTelemetryEnvironment();
 
-    const auto options = readWithBoostOptions({"daq-webctl"}, "daq-webctl");
-    const auto config = nestdaq::telemetry::makeConfig(options);
+    const auto kOptions = readWithBoostOptions({"daq-webctl"}, "daq-webctl");
+    const auto kConfig = nestdaq::telemetry::makeConfig(kOptions);
 
-    CHECK(std::string_view{config.service_name} == "daq-webctl");
+    CHECK(std::string_view{kConfig.service_name} == "daq-webctl");
 }
 
 TEST_CASE("telemetry service name falls back to executable basename for devices", "[telemetry]") {
     clearTelemetryEnvironment();
 
-    const auto options = parse({"/opt/nestdaq/bin/Sink"});
-    const auto config = nestdaq::telemetry::makeConfig(options);
+    const auto kOptions = parse({"/opt/nestdaq/bin/Sink"});
+    const auto kConfig = nestdaq::telemetry::makeConfig(kOptions);
 
-    CHECK(std::string_view{config.service_name} == "sink");
+    CHECK(std::string_view{kConfig.service_name} == "sink");
 }
 
 TEST_CASE("telemetry service namespace defaults to nestdaq", "[telemetry]") {
     clearTelemetryEnvironment();
 
-    const auto options = parse({"test"});
-    const auto config = nestdaq::telemetry::makeConfig(options);
+    const auto kOptions = parse({"test"});
+    const auto kConfig = nestdaq::telemetry::makeConfig(kOptions);
 
-    CHECK(std::string_view{config.service_namespace} == "nestdaq");
+    CHECK(std::string_view{kConfig.service_namespace} == "nestdaq");
 }
 
 TEST_CASE("explicit telemetry service namespace overrides default", "[telemetry]") {
     clearTelemetryEnvironment();
 
-    const auto options = parse({"test", "--otel-service-namespace=custom"});
-    const auto config = nestdaq::telemetry::makeConfig(options);
+    const auto kOptions = parse({"test", "--otel-service-namespace=custom"});
+    const auto kConfig = nestdaq::telemetry::makeConfig(kOptions);
 
-    CHECK(std::string_view{config.service_namespace} == "custom");
+    CHECK(std::string_view{kConfig.service_namespace} == "custom");
 }
 
 TEST_CASE("telemetry service namespace defaults to nestdaq through Boost options", "[telemetry]") {
     clearTelemetryEnvironment();
 
-    const auto options = readWithBoostOptions({"daq-webctl"}, "daq-webctl");
-    const auto config = nestdaq::telemetry::makeConfig(options);
+    const auto kOptions = readWithBoostOptions({"daq-webctl"}, "daq-webctl");
+    const auto kConfig = nestdaq::telemetry::makeConfig(kOptions);
 
-    CHECK(std::string_view{config.service_namespace} == "nestdaq");
+    CHECK(std::string_view{kConfig.service_namespace} == "nestdaq");
 }
 
 TEST_CASE("telemetry service instance id defaults to a generated uuid", "[telemetry]") {
     clearTelemetryEnvironment();
 
-    const auto options = parse({"test"});
-    const auto config = nestdaq::telemetry::makeConfig(options);
+    const auto kOptions = parse({"test"});
+    const auto kConfig = nestdaq::telemetry::makeConfig(kOptions);
 
-    CHECK(options.generated_service_instance_id);
-    REQUIRE_FALSE(options.service_instance_id.empty());
-    CHECK(isUuidString(options.service_instance_id));
-    CHECK(std::string_view{config.service_instance_id} == options.service_instance_id);
+    CHECK(kOptions.generated_service_instance_id);
+    REQUIRE_FALSE(kOptions.service_instance_id.empty());
+    CHECK(isUuidString(kOptions.service_instance_id));
+    CHECK(std::string_view{kConfig.service_instance_id} == kOptions.service_instance_id);
 }
 
 TEST_CASE("telemetry NestDAQ instance id resource starts unresolved", "[telemetry]") {
     clearTelemetryEnvironment();
 
-    const auto options = parse({"test"});
-    const auto config = nestdaq::telemetry::makeConfig(options);
+    const auto kOptions = parse({"test"});
+    const auto kConfig = nestdaq::telemetry::makeConfig(kOptions);
 
-    CHECK(std::string_view{config.nestdaq_instance_id}.empty());
-    CHECK(std::string_view{config.nestdaq_instance_id_status} == "unresolved");
+    CHECK(std::string_view{kConfig.nestdaq_instance_id}.empty());
+    CHECK(std::string_view{kConfig.nestdaq_instance_id_status} == "unresolved");
 }
 
 TEST_CASE("telemetry host name resource is detected by default", "[telemetry]") {
     clearTelemetryEnvironment();
 
-    const auto options = parse({"test"});
-    const auto config = nestdaq::telemetry::makeConfig(options);
+    const auto kOptions = parse({"test"});
+    const auto kConfig = nestdaq::telemetry::makeConfig(kOptions);
 
-    CHECK(std::string_view{config.host_name} == options.host_name);
+    CHECK(std::string_view{kConfig.host_name} == kOptions.host_name);
     if (!nestdaq::telemetry::detectHostName().empty()) {
-        CHECK_FALSE(options.host_name.empty());
+        CHECK_FALSE(kOptions.host_name.empty());
     }
 }
 
@@ -436,43 +436,43 @@ TEST_CASE("telemetry service instance id follows plugin uuid option", "[telemetr
     clearTelemetryEnvironment();
 
     constexpr auto kUuid = std::string_view{"123e4567-e89b-12d3-a456-426614174000"};
-    const auto options_with_equals = parse({"test", "--uuid=123e4567-e89b-12d3-a456-426614174000"});
-    const auto config_with_equals = nestdaq::telemetry::makeConfig(options_with_equals);
+    const auto kOptionsWithEquals = parse({"test", "--uuid=123e4567-e89b-12d3-a456-426614174000"});
+    const auto kConfigWithEquals = nestdaq::telemetry::makeConfig(kOptionsWithEquals);
 
-    CHECK_FALSE(options_with_equals.generated_service_instance_id);
-    CHECK(std::string_view{config_with_equals.service_instance_id} == kUuid);
+    CHECK_FALSE(kOptionsWithEquals.generated_service_instance_id);
+    CHECK(std::string_view{kConfigWithEquals.service_instance_id} == kUuid);
 
-    const auto options_with_space = parse({"test", "--uuid", "123e4567-e89b-12d3-a456-426614174000"});
-    const auto config_with_space = nestdaq::telemetry::makeConfig(options_with_space);
+    const auto kOptionsWithSpace = parse({"test", "--uuid", "123e4567-e89b-12d3-a456-426614174000"});
+    const auto kConfigWithSpace = nestdaq::telemetry::makeConfig(kOptionsWithSpace);
 
-    CHECK_FALSE(options_with_space.generated_service_instance_id);
-    CHECK(std::string_view{config_with_space.service_instance_id} == kUuid);
+    CHECK_FALSE(kOptionsWithSpace.generated_service_instance_id);
+    CHECK(std::string_view{kConfigWithSpace.service_instance_id} == kUuid);
 }
 
 TEST_CASE("explicit telemetry service instance id overrides plugin uuid option", "[telemetry]") {
     clearTelemetryEnvironment();
 
-    const auto options = parse({
+    const auto kOptions = parse({
         "test",
         "--uuid=123e4567-e89b-12d3-a456-426614174000",
         "--otel-service-instance-id=explicit-instance",
     });
-    const auto config = nestdaq::telemetry::makeConfig(options);
+    const auto kConfig = nestdaq::telemetry::makeConfig(kOptions);
 
-    CHECK_FALSE(options.generated_service_instance_id);
-    CHECK(std::string_view{config.service_instance_id} == "explicit-instance");
+    CHECK_FALSE(kOptions.generated_service_instance_id);
+    CHECK(std::string_view{kConfig.service_instance_id} == "explicit-instance");
 }
 
 TEST_CASE("telemetry service instance id is generated through Boost options", "[telemetry]") {
     clearTelemetryEnvironment();
 
-    const auto options = readWithBoostOptions({"daq-webctl"}, "daq-webctl");
-    const auto config = nestdaq::telemetry::makeConfig(options);
+    const auto kOptions = readWithBoostOptions({"daq-webctl"}, "daq-webctl");
+    const auto kConfig = nestdaq::telemetry::makeConfig(kOptions);
 
-    CHECK(options.generated_service_instance_id);
-    REQUIRE_FALSE(options.service_instance_id.empty());
-    CHECK(isUuidString(options.service_instance_id));
-    CHECK(std::string_view{config.service_instance_id} == options.service_instance_id);
+    CHECK(kOptions.generated_service_instance_id);
+    REQUIRE_FALSE(kOptions.service_instance_id.empty());
+    CHECK(isUuidString(kOptions.service_instance_id));
+    CHECK(std::string_view{kConfig.service_instance_id} == kOptions.service_instance_id);
 }
 
 TEST_CASE("generated telemetry uuid populates missing FairMQ uuid property", "[telemetry]") {
@@ -503,23 +503,23 @@ TEST_CASE("generated telemetry uuid does not overwrite FairMQ uuid property", "[
 TEST_CASE("empty telemetry protocol disables the selected signal", "[telemetry]") {
     clearTelemetryEnvironment();
 
-    const auto options = parse({
+    const auto kOptions = parse({
         "test",
         "--otel-log-protocol",
         "--otel-metric-protocol",
         "--otel-trace-protocol",
     });
 
-    const auto config = nestdaq::telemetry::makeConfig(options);
-    CHECK(std::string_view{config.logs.protocol}.empty());
-    CHECK(std::string_view{config.metrics.protocol}.empty());
-    CHECK(std::string_view{config.traces.protocol}.empty());
+    const auto kConfig = nestdaq::telemetry::makeConfig(kOptions);
+    CHECK(std::string_view{kConfig.logs.protocol}.empty());
+    CHECK(std::string_view{kConfig.metrics.protocol}.empty());
+    CHECK(std::string_view{kConfig.traces.protocol}.empty());
 }
 
 TEST_CASE("removed otel-log-library option is ignored", "[telemetry]") {
     clearTelemetryEnvironment();
 
-    const auto options = parse({"test", "--otel-log-library=/tmp/old.so"});
+    const auto kOptions = parse({"test", "--otel-log-library=/tmp/old.so"});
 
-    CHECK(options.library == "libnestdaq_otel.so");
+    CHECK(kOptions.library == "libnestdaq_otel.so");
 }

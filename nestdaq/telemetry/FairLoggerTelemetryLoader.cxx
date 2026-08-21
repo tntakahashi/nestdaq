@@ -229,11 +229,11 @@ auto assignOption(TelemetryOptions& options, std::string_view key, std::string_v
 }
 
 auto basename(std::string_view path) -> std::string_view {
-    const auto slash = path.find_last_of("/\\");
-    if (slash == std::string_view::npos) {
+    const auto kSlash = path.find_last_of("/\\");
+    if (kSlash == std::string_view::npos) {
         return path;
     }
-    return path.substr(slash + 1);
+    return path.substr(kSlash + 1);
 }
 
 auto env(const char* name) -> const char* {
@@ -355,8 +355,8 @@ auto parseTelemetryOptions(int argc, char* argv[], // NOLINT(cppcoreguidelines-a
         return options;
     }
     if (argc > 0) {
-        if (const auto executable = basename(argv[0]); !executable.empty()) { // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
-            options.service_name = executable;
+        if (const auto kExecutable = basename(argv[0]); !kExecutable.empty()) { // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+            options.service_name = kExecutable;
         }
     }
     applyEnvironment(options);
@@ -364,17 +364,17 @@ auto parseTelemetryOptions(int argc, char* argv[], // NOLINT(cppcoreguidelines-a
     auto explicit_telemetry_service_instance_id = false;
 
     for (int i = 1; i < argc; ++i) {
-        const std::string_view arg{argv[i]}; // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
-        if (arg.rfind("--", 0) != 0) {
+        const std::string_view kArg{argv[i]}; // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+        if (kArg.rfind("--", 0) != 0) {
             continue;
         }
 
-        auto key = arg.substr(2);
+        auto key = kArg.substr(2);
         std::string_view value;
-        const auto equals = key.find('=');
-        if (equals != std::string_view::npos) {
-            value = key.substr(equals + 1);
-            key = key.substr(0, equals);
+        const auto kEquals = key.find('=');
+        if (kEquals != std::string_view::npos) {
+            value = key.substr(kEquals + 1);
+            key = key.substr(0, kEquals);
         } else if ((key.rfind("otel-", 0) == 0 || key.rfind("spdlog-", 0) == 0 || key == "service-name" || key == "uuid") && i + 1 < argc &&
                    std::string_view{argv[i + 1]}.rfind("--", 0) != 0) { // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
             value = argv[++i]; // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
@@ -412,10 +412,10 @@ auto parseTelemetryOptions(int argc, char* argv[], // NOLINT(cppcoreguidelines-a
 }
 
 auto parseFairLoggerSeverity(std::string_view severity) -> SeverityParseResult {
-    if (const auto it = fair::Logger::fSeverityMap.find(severity);
-            it != fair::Logger::fSeverityMap.end()) {
+    if (const auto kIt = fair::Logger::fSeverityMap.find(severity);
+            kIt != fair::Logger::fSeverityMap.end()) {
         return SeverityParseResult{
-            .value = static_cast<int32_t>(it->second),
+            .value = static_cast<int32_t>(kIt->second),
             .used_fallback = false,
         };
     }
@@ -439,35 +439,35 @@ auto readTelemetryOptions(const boost::program_options::variables_map& vm,
     options.service_name = default_service_name;
     applyEnvironment(options);
 
-    const auto read_string = [&vm, &options](std::string_view key) {
-        const auto name = std::string{key};
-        if (vm.count(name) != 0 && !vm[name].defaulted()) {
-            assignOption(options, key, vm[name].as<std::string>());
+    const auto kReadString = [&vm, &options](std::string_view key) {
+        const auto kName = std::string{key};
+        if (vm.count(kName) != 0 && !vm[kName].defaulted()) {
+            assignOption(options, key, vm[kName].as<std::string>());
         }
     };
 
-    read_string("otel-library");
-    read_string("otel-log-protocol");
-    read_string("otel-metric-protocol");
-    read_string("otel-trace-protocol");
-    read_string("otel-log-endpoint-http");
-    read_string("otel-log-endpoint-grpc");
-    read_string("otel-metric-endpoint-http");
-    read_string("otel-metric-endpoint-grpc");
-    read_string("otel-trace-endpoint-http");
-    read_string("otel-trace-endpoint-grpc");
-    read_string("otel-log-headers");
-    read_string("otel-metric-headers");
-    read_string("otel-trace-headers");
-    read_string("otel-log-severity");
-    read_string("otel-service-name");
-    read_string("otel-service-namespace");
-    read_string("otel-service-instance-id");
-    read_string("otel-fairmq-id");
-    read_string("otel-fairmq-device");
-    read_string("otel-fairmq-session");
-    read_string("otel-fairmq-transport");
-    read_string("spdlog-console-pattern");
+    kReadString("otel-library");
+    kReadString("otel-log-protocol");
+    kReadString("otel-metric-protocol");
+    kReadString("otel-trace-protocol");
+    kReadString("otel-log-endpoint-http");
+    kReadString("otel-log-endpoint-grpc");
+    kReadString("otel-metric-endpoint-http");
+    kReadString("otel-metric-endpoint-grpc");
+    kReadString("otel-trace-endpoint-http");
+    kReadString("otel-trace-endpoint-grpc");
+    kReadString("otel-log-headers");
+    kReadString("otel-metric-headers");
+    kReadString("otel-trace-headers");
+    kReadString("otel-log-severity");
+    kReadString("otel-service-name");
+    kReadString("otel-service-namespace");
+    kReadString("otel-service-instance-id");
+    kReadString("otel-fairmq-id");
+    kReadString("otel-fairmq-device");
+    kReadString("otel-fairmq-session");
+    kReadString("otel-fairmq-transport");
+    kReadString("spdlog-console-pattern");
 
     if (vm.count("spdlog-native-console") != 0 && !vm["spdlog-native-console"].defaulted()) {
         options.spdlog_native_console = vm["spdlog-native-console"].as<bool>();
@@ -481,7 +481,7 @@ auto readTelemetryOptions(const boost::program_options::variables_map& vm,
     if (vm.count("spdlog-async-thread-count") != 0 && !vm["spdlog-async-thread-count"].defaulted()) {
         options.spdlog_async_thread_count = vm["spdlog-async-thread-count"].as<uint32_t>();
     }
-    read_string("spdlog-async-overflow-policy");
+    kReadString("spdlog-async-overflow-policy");
     if (vm.count("otel-log-required") != 0 && !vm["otel-log-required"].defaulted()) {
         options.required = vm["otel-log-required"].as<bool>();
     }
@@ -525,11 +525,11 @@ auto setGeneratedUuidProperty(fair::mq::ProgOptions& config,
     if (!options.generated_service_instance_id || options.service_instance_id.empty()) {
         return;
     }
-    const auto property_key = std::string{key};
-    if (config.Count(property_key) != 0) {
+    const auto kPropertyKey = std::string{key};
+    if (config.Count(kPropertyKey) != 0) {
         return;
     }
-    config.SetProperty<std::string>(property_key, options.service_instance_id);
+    config.SetProperty<std::string>(kPropertyKey, options.service_instance_id);
 }
 
 TelemetryLibrary::~TelemetryLibrary() {
@@ -547,8 +547,8 @@ auto TelemetryLibrary::initializeWith(const nestdaq_otel_config& config) -> bool
     if (!fInitialize) {
         return false;
     }
-    const auto rc = fInitialize(&config);
-    if (rc != 0) {
+    const auto kRc = fInitialize(&config);
+    if (kRc != 0) {
         if (fLastErrorFunction) {
             if (const auto* error = fLastErrorFunction()) {
                 fLastError = error;
@@ -580,8 +580,8 @@ auto TelemetryLibrary::recordFrameworkFairMQState(int64_t state_id, std::string_
     if (!fRecordFrameworkFairMQState) {
         return;
     }
-    const auto value = std::string{state_name};
-    fRecordFrameworkFairMQState(state_id, value.data());
+    const auto kValue = std::string{state_name};
+    fRecordFrameworkFairMQState(state_id, kValue.data());
 }
 
 auto TelemetryLibrary::metricAddDoubleCounter(std::string_view name,
@@ -695,8 +695,8 @@ auto TelemetryLibrary::setNestdaqInstanceId(std::string_view instance_id) -> boo
     if (!fSetNestdaqInstanceId) {
         return false;
     }
-    const auto value = std::string{instance_id};
-    return storeResult(fSetNestdaqInstanceId(value.data()));
+    const auto kValue = std::string{instance_id};
+    return storeResult(fSetNestdaqInstanceId(kValue.data()));
 }
 
 auto TelemetryLibrary::spanStart(std::string_view name,
@@ -705,30 +705,30 @@ auto TelemetryLibrary::spanStart(std::string_view name,
     if (!fSpanStart) {
         return 0;
     }
-    const auto span_handle = fSpanStart(name.data(), attributes, attribute_count);
-    if (span_handle == 0) {
+    const auto kSpanHandle = fSpanStart(name.data(), attributes, attribute_count);
+    if (kSpanHandle == 0) {
         storeResult(NESTDAQ_OTEL_ERROR);
     } else {
         fLastError.clear();
     }
-    return span_handle;
+    return kSpanHandle;
 }
 
 auto TelemetryLibrary::setMinSeverity(std::string_view severity) -> bool {
-    const auto parsed_severity = parseFairLoggerSeverity(severity);
-    const auto updated = setMinSeverity(parsed_severity.value);
-    if (updated && parsed_severity.used_fallback) {
+    const auto kParsedSeverity = parseFairLoggerSeverity(severity);
+    const auto kUpdated = setMinSeverity(kParsedSeverity.value);
+    if (kUpdated && kParsedSeverity.used_fallback) {
         warnUnknownSeverityFallback(severity);
     }
-    return updated;
+    return kUpdated;
 }
 
 auto TelemetryLibrary::setMinSeverity(int32_t severity) -> bool {
     if (!fSetMinSeverity) {
         return false;
     }
-    const auto rc = fSetMinSeverity(severity);
-    if (rc != 0) {
+    const auto kRc = fSetMinSeverity(severity);
+    if (kRc != 0) {
         if (fLastErrorFunction) {
             if (const auto* error = fLastErrorFunction()) {
                 fLastError = error;

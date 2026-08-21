@@ -46,7 +46,7 @@ auto makeOverflowPolicy(std::string_view value) -> spdlog::async_overflow_policy
 }
 
 auto getOrCreateThreadPool(const SpdlogAsyncOptions& options) -> std::shared_ptr<spdlog::details::thread_pool> {
-    const auto lock = std::scoped_lock{threadPoolMutex()};
+    const auto kLock = std::scoped_lock{threadPoolMutex()};
     for (const auto& entry : threadPools()) {
         if (entry.queue_size == options.queue_size && entry.thread_count == options.thread_count) {
             return entry.pool;
@@ -73,14 +73,14 @@ auto createSpdlogLogger(std::string_view name) -> std::shared_ptr<spdlog::logger
     if (auto otel_sink = createActiveSpdlogSink()) {
         sinks.emplace_back(std::move(otel_sink));
     }
-    const auto async_options = getSpdlogAsyncOptions();
-    if (async_options.enabled) {
+    const auto kAsyncOptions = getSpdlogAsyncOptions();
+    if (kAsyncOptions.enabled) {
         return std::make_shared<spdlog::async_logger>(
                    std::string{name},
                    sinks.begin(),
                    sinks.end(),
-                   getOrCreateThreadPool(async_options),
-                   makeOverflowPolicy(async_options.overflow_policy));
+                   getOrCreateThreadPool(kAsyncOptions),
+                   makeOverflowPolicy(kAsyncOptions.overflow_policy));
     }
     return std::make_shared<spdlog::logger>(std::string{name}, sinks.begin(), sinks.end());
 }

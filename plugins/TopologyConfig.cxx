@@ -88,9 +88,9 @@ const std::string toChannelConfig(const nestdaq::daq::service::SocketProperty& p
     if (p.address.find(",")!=std::string::npos) {
         std::vector<std::string> res;
         boost::split(res, p.address, boost::is_any_of(","));
-        const auto num_sockets = static_cast<std::vector<std::string>::size_type>(p.num_sockets);
-        if (res.size()<num_sockets) {
-            auto n = num_sockets - res.size();
+        const auto kNumSockets = static_cast<std::vector<std::string>::size_type>(p.num_sockets);
+        if (res.size()<kNumSockets) {
+            auto n = kNumSockets - res.size();
             for (auto i=0u; i<n; ++i) {
                 res.push_back("unspecified");
             }
@@ -494,9 +494,9 @@ void TopologyConfig::configConnect()
         auto properties = fair::mq::SuboptParser(channel_config_options, fServiceName);
         for (const auto & [k, v] : properties) {
 
-            const auto s = fair::mq::PropertyHelper::ConvertPropertyToString(v);
-            fCustomChannelProperties[k] = s;
-            LOG(debug) << " id = " << fId << " set property : " << k << " " << s;
+            const auto kPropertyValue = fair::mq::PropertyHelper::ConvertPropertyToString(v);
+            fCustomChannelProperties[k] = kPropertyValue;
+            LOG(debug) << " id = " << fId << " set property : " << k << " " << kPropertyValue;
         }
 
         setProperties(properties);
@@ -584,7 +584,7 @@ void TopologyConfig::initialize()
         for (const auto& child : pt) {
             // child.first is string
             //LOG(info) << " channel name = " << child.first;
-            const auto my_channel_name = child.first;
+            const auto kMyChannelName = child.first;
 
             std::unordered_map<std::string, std::string> cont;
             for (const auto &k : {
@@ -595,7 +595,7 @@ void TopologyConfig::initialize()
                 }
             }
             auto sp = toSocketProperty(cont);
-            sp.name = my_channel_name;
+            sp.name = kMyChannelName;
             sp.method = "connect"s;
             fConnectChannels.emplace(sp.name, sp);
         }
@@ -604,25 +604,25 @@ void TopologyConfig::initialize()
     auto endpoints = readEndpoints();
 
     for (const auto& k : endpoints) {
-        const auto sp = readEndpointProperty(k);
-        if (sp.method=="bind") {
-            fBindChannels.emplace(sp.name, sp);
-        } else if (sp.method=="connect") {
-            fConnectChannels.emplace(sp.name, sp);
+        const auto kSocketProperty = readEndpointProperty(k);
+        if (kSocketProperty.method=="bind") {
+            fBindChannels.emplace(kSocketProperty.name, kSocketProperty);
+        } else if (kSocketProperty.method=="connect") {
+            fConnectChannels.emplace(kSocketProperty.name, kSocketProperty);
         } else {
-            LOG(error) << "MQ channel name = " << sp.name <<  ": unknown method = " << (sp.method.empty() ? "(empty)" : sp.method);
+            LOG(error) << "MQ channel name = " << kSocketProperty.name <<  ": unknown method = " << (kSocketProperty.method.empty() ? "(empty)" : kSocketProperty.method);
         }
     }
 
     auto links = readLinks();
     for (const auto& k : links) {
-        const auto lp = readLinkProperty(k);
-        const auto kk = lp.my_service + fSeparator + lp.my_channel + "," + lp.peer_service + fSeparator + lp.peer_channel;
-        LOG(debug) << " link = " << kk;
-        if (fLinks.count(kk)) {
-            fLinks[kk].options += "," + lp.options;
+        const auto kLinkProperty = readLinkProperty(k);
+        const auto kLinkKey = kLinkProperty.my_service + fSeparator + kLinkProperty.my_channel + "," + kLinkProperty.peer_service + fSeparator + kLinkProperty.peer_channel;
+        LOG(debug) << " link = " << kLinkKey;
+        if (fLinks.count(kLinkKey)) {
+            fLinks[kLinkKey].options += "," + kLinkProperty.options;
         } else {
-            fLinks[kk] = lp;
+            fLinks[kLinkKey] = kLinkProperty;
         }
     }
 
@@ -851,14 +851,14 @@ const LinkProperty TopologyConfig::readLinkProperty(std::string_view key)
     std::ostringstream ss;
     ss << " link = " << socket_pair_name;
     LinkProperty lp;
-    const auto comma     = socket_pair_name.find_first_of(",");
-    const auto first_sep  = socket_pair_name.find_last_of(fSeparator, comma);
-    const auto second_sep = socket_pair_name.find_last_of(fSeparator);
+    const auto kComma     = socket_pair_name.find_first_of(",");
+    const auto kFirstSep  = socket_pair_name.find_last_of(fSeparator, kComma);
+    const auto kSecondSep = socket_pair_name.find_last_of(fSeparator);
     //  LOG(debug) << " 1st sep = " << first_sep << ", comma = " << comma << ", 2nd sep = " << second_sep;
-    const auto &service_l = socket_pair_name.substr(0, first_sep);
-    const auto &channel_l = socket_pair_name.substr(first_sep+1, comma-(first_sep+1));
-    const auto &service_r = socket_pair_name.substr(comma+1, second_sep-(comma+1));
-    const auto &channel_r = socket_pair_name.substr(second_sep+1);
+    const auto &service_l = socket_pair_name.substr(0, kFirstSep);
+    const auto &channel_l = socket_pair_name.substr(kFirstSep+1, kComma-(kFirstSep+1));
+    const auto &service_r = socket_pair_name.substr(kComma+1, kSecondSep-(kComma+1));
+    const auto &channel_r = socket_pair_name.substr(kSecondSep+1);
 
     // LOG(debug) << " LinkProperty parse result = " << service_l << " " << channel_l << " " << service_r << " " << channel_r;
 
@@ -1087,33 +1087,33 @@ void TopologyConfig::resolveConnectAddress()
             const auto &peer_property = toSocketProperty(h);
 
             LOG(debug) << "id = " << fId << " numSocket (me) = " << sp.num_sockets << ", (peer) = " << peer_property.num_sockets;
-            const auto address = readPeerAddress(p); //peer_health_key, *peer_ip, peer_channel);
-            const auto my_address_index = static_cast<decltype(address)::size_type>(my_index);
+            const auto kAddress = readPeerAddress(p); //peer_health_key, *peer_ip, peer_channel);
+            const auto kMyAddressIndex = static_cast<decltype(kAddress)::size_type>(my_index);
             if ((sp.num_sockets<=1) && (peer_property.num_sockets<=1)) {
                 is1to1 = true;
                 // 1:1 or fan-in/fan-out
                 LOG(debug) << kMyClass << " " << __FUNCTION__ << ":" << __LINE__ << " id = " << fId << " 1:1 or fan-in/fan-out ";
                 LOG(debug) << kMyClass << " " << __FUNCTION__ << ":" << __LINE__  << " id = " << fId
                            << " peer size = " << peers.size() << " my_index = " << my_index << " peer_index = " << peer_index
-                           << " address.size() = " << address.size();
+                           << " address.size() = " << kAddress.size();
                 if ((my_index==peer_index) || (peers.size()==1)) {
-                    res.address = address[0];
+                    res.address = kAddress[0];
                     break;
                 }
             } else if ((sp.num_sockets<=1) && (peer_property.num_sockets>1)) {
                 // 1:m
                 LOG(debug) << kMyClass << " " << __FUNCTION__ << ":" << __LINE__ << " id = " << fId << " 1:m ";
-                res.address = address[my_address_index];
+                res.address = kAddress[kMyAddressIndex];
             } else if ((sp.num_sockets>1) && (peer_property.num_sockets<=1)) {
                 // n:1
                 LOG(debug) << kMyClass << " " << __FUNCTION__ << ":" << __LINE__ << " id = " << fId << " n:1 ";
-                assert(address.size()==1);
-                res.address += (res.address.empty()) ? address[0] : ("," + address[0]);
+                assert(kAddress.size()==1);
+                res.address += (res.address.empty()) ? kAddress[0] : ("," + kAddress[0]);
             } else if ((sp.num_sockets>1) && (peer_property.num_sockets>1)) {
                 // n:m
                 LOG(debug) << kMyClass << " " << __FUNCTION__ << ":" << __LINE__ << " id = " << fId << " n:m ";
-                assert(address.size()>my_address_index);
-                res.address += (res.address.empty()) ? address[my_address_index] : ("," + address[my_address_index]);
+                assert(kAddress.size()>kMyAddressIndex);
+                res.address += (res.address.empty()) ? kAddress[kMyAddressIndex] : ("," + kAddress[kMyAddressIndex]);
             }
             ++peer_index;
         }
@@ -1133,9 +1133,9 @@ void TopologyConfig::resolveConnectAddress()
         for (const auto& [name, channel_config] : options) {
             auto properties = fair::mq::SuboptParser(channel_config, fServiceName);
             for (const auto & [k, v] : properties) {
-                const auto s = fair::mq::PropertyHelper::ConvertPropertyToString(v);
-                fCustomChannelProperties[k] = s;
-                LOG(debug) << " id = " << fId << " set property : " << k << " " << s;
+                const auto kPropertyValue = fair::mq::PropertyHelper::ConvertPropertyToString(v);
+                fCustomChannelProperties[k] = kPropertyValue;
+                LOG(debug) << " id = " << fId << " set property : " << k << " " << kPropertyValue;
             }
 
             setProperties(properties);

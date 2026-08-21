@@ -64,15 +64,15 @@ void WebSocketSession::onRead(beast::error_code ec, std::size_t bytes_transferre
     fWebSocket.text(fWebSocket.got_text());
     if (bytes_transferred>0) {
         if (fWebSocket.got_text()) {
-            const std::string m(beast::buffers_to_string(fBuffer.data()));
+            const std::string kM(beast::buffers_to_string(fBuffer.data()));
 //      std::cout << "received message: got_text() ? " << fWebSocket.got_text()
-//                << " buffer (size = " << m.size() << " bytes): " << m << std::endl;
+//                << " buffer (size = " << kM.size() << " bytes): " << kM << std::endl;
             fBuffer.consume(fBuffer.size());
-            handleWebSocketRead(fId, m);
+            handleWebSocketRead(fId, kM);
 
         } else {
-            const auto m = beast::buffers_to_string(fBuffer.data());
-            std::vector<char> buf(m.begin(), m.end());
+            const auto kM = beast::buffers_to_string(fBuffer.data());
+            std::vector<char> buf(kM.begin(), kM.end());
 //      std::cout << "received message: got_text() ? " << fWebSocket.got_text() << "\n"
 //                << " buffer (" << fBuffer.size() << " bytes, "
 //                << " transferred: " << bytes_transferred << " bytes)\n";

@@ -51,20 +51,28 @@ CheckOptions:
     value: '1'
   - key: readability-identifier-naming.ClassCase
     value: CamelCase
+  - key: readability-identifier-naming.ClassIgnoredRegexp
+    value: '^(logger|options_description|sink|variables_map)$'
   - key: readability-identifier-naming.StructCase
     value: CamelCase
+  - key: readability-identifier-naming.StructIgnoredRegexp
+    value: '^nestdaq_otel_.*$'
   - key: readability-identifier-naming.UnionCase
     value: CamelCase
   - key: readability-identifier-naming.EnumCase
     value: CamelCase
+  - key: readability-identifier-naming.EnumIgnoredRegexp
+    value: '^nestdaq_otel_.*$'
   - key: readability-identifier-naming.TypedefCase
     value: CamelCase
+  - key: readability-identifier-naming.TypedefIgnoredRegexp
+    value: '^nestdaq_otel_.*$'
   - key: readability-identifier-naming.NamespaceCase
     value: lower_case
   - key: readability-identifier-naming.FunctionCase
     value: camelBack
   - key: readability-identifier-naming.FunctionIgnoredRegexp
-    value: '^[A-Z][a-zA-Z0-9]*$'
+    value: '(^[A-Z][a-zA-Z0-9]*$|^nestdaq_otel_.*$)'
   - key: readability-identifier-naming.VariableCase
     value: lower_case
   - key: readability-identifier-naming.VariableIgnoredRegexp

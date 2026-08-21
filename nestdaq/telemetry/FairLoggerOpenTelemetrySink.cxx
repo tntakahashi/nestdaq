@@ -82,15 +82,15 @@ auto toStringView(std::string_view value) noexcept -> opentelemetry::nostd::stri
 constexpr auto convertSeverity(fair::Severity severity) noexcept -> opentelemetry::logs::Severity
 {
     using opentelemetry::logs::Severity;
-    const auto value = static_cast<int32_t>(severity);
-    if (value < 0) {
+    const auto kValue = static_cast<int32_t>(severity);
+    if (kValue < 0) {
         return Severity::kInvalid;
     }
-    const auto index = static_cast<size_t>(value);
-    if (index >= kSeverityMap.size()) {
+    const auto kIndex = static_cast<size_t>(kValue);
+    if (kIndex >= kSeverityMap.size()) {
         return Severity::kInvalid;
     }
-    return kSeverityMap.at(index);
+    return kSeverityMap.at(kIndex);
 }
 
 static_assert(kSeverityMap.size() == fair::Logger::fSeverityNames.size());
@@ -120,12 +120,12 @@ auto currentThreadId() noexcept -> uint64_t
     // Use the native Linux TID instead of std::this_thread::get_id() so logs can be correlated
     // with /proc, top -H, debuggers, and profilers. This matches spdlog's Linux thread id behavior.
     // NOLINTNEXTLINE(cppcoreguidelines-pro-type-vararg)
-    static thread_local const auto gTid = static_cast<uint64_t>(::syscall(SYS_gettid));
-    return gTid;
+    static thread_local const auto kGTid = static_cast<uint64_t>(::syscall(SYS_gettid));
+    return kGTid;
 #else
-    static thread_local const auto gTid =
+    static thread_local const auto kGTid =
         static_cast<uint64_t>(std::hash<std::thread::id> {}(std::this_thread::get_id()));
-    return gTid;
+    return kGTid;
 #endif
 }
 
@@ -150,9 +150,9 @@ auto emitLogRecord(const std::string &content, const fair::LogMetaData &metadata
             return;
         }
 
-        const auto timestamp = std::chrono::system_clock::time_point{
+        const auto kTimestamp = std::chrono::system_clock::time_point{
             std::chrono::seconds{metadata.timestamp} + metadata.us};
-        log_record->SetTimestamp(opentelemetry::common::SystemTimestamp{timestamp});
+        log_record->SetTimestamp(opentelemetry::common::SystemTimestamp{kTimestamp});
         log_record->SetObservedTimestamp(opentelemetry::common::SystemTimestamp{std::chrono::system_clock::now()});
         // SetSeverity records the OpenTelemetry-defined SeverityNumber and SeverityText.
         // The FairLogger original level is kept below as fairlogger.severity.* attributes.
@@ -174,9 +174,9 @@ auto emitLogRecord(const std::string &content, const fair::LogMetaData &metadata
         }
         if (!instance_id.empty()) {
             log_record->SetAttribute("nestdaq.instance.id", toStringView(instance_id));
-            if (const auto parsed = parseInstanceIndex(instance_id)) {
-                log_record->SetAttribute("nestdaq.instance.name", toStringView(parsed->first));
-                log_record->SetAttribute("nestdaq.instance.index", parsed->second);
+            if (const auto kParsed = parseInstanceIndex(instance_id)) {
+                log_record->SetAttribute("nestdaq.instance.name", toStringView(kParsed->first));
+                log_record->SetAttribute("nestdaq.instance.index", kParsed->second);
             }
         }
         if (!metadata.process_name.empty()) {
@@ -185,9 +185,9 @@ auto emitLogRecord(const std::string &content, const fair::LogMetaData &metadata
         if (!metadata.file.empty()) {
             log_record->SetAttribute(opentelemetry::semconv::code::kCodeFilePath, toStringView(metadata.file));
         }
-        const auto line = parseLine(metadata.line);
-        if (line > 0) {
-            log_record->SetAttribute(opentelemetry::semconv::code::kCodeLineNumber, line);
+        const auto kLine = parseLine(metadata.line);
+        if (kLine > 0) {
+            log_record->SetAttribute(opentelemetry::semconv::code::kCodeLineNumber, kLine);
         }
         if (!metadata.func.empty()) {
             log_record->SetAttribute(opentelemetry::semconv::code::kCodeFunctionName, toStringView(metadata.func));
@@ -204,11 +204,11 @@ auto emitLogRecord(const std::string &content, const fair::LogMetaData &metadata
 
 auto fairLoggerSeverityName(fair::Severity severity) noexcept -> std::string_view
 {
-    const auto value = static_cast<int32_t>(severity);
-    if (value < 0) {
+    const auto kValue = static_cast<int32_t>(severity);
+    if (kValue < 0) {
         return {};
     }
-    if (static_cast<size_t>(value) >= fair::Logger::fSeverityNames.size()) {
+    if (static_cast<size_t>(kValue) >= fair::Logger::fSeverityNames.size()) {
         return {};
     }
     return fair::Logger::SeverityName(severity);
@@ -234,17 +234,17 @@ auto minSeverity() -> std::atomic<int32_t>&
 
 auto parseInstanceIndex(std::string_view instance_id) -> std::optional<std::pair<std::string_view, int64_t>>
 {
-    const auto separator = instance_id.rfind('-');
-    if (separator == std::string_view::npos || separator == 0 || separator + 1 == instance_id.size()) {
+    const auto kSeparator = instance_id.rfind('-');
+    if (kSeparator == std::string_view::npos || kSeparator == 0 || kSeparator + 1 == instance_id.size()) {
         return std::nullopt;
     }
 
     auto index = int64_t{0};
-    const auto suffix = instance_id.substr(separator + 1);
-    if (!telemetry::compat::parseInteger(suffix, index)) {
+    const auto kSuffix = instance_id.substr(kSeparator + 1);
+    if (!telemetry::compat::parseInteger(kSuffix, index)) {
         return std::nullopt;
     }
-    return std::pair{instance_id.substr(0, separator), index};
+    return std::pair{instance_id.substr(0, kSeparator), index};
 }
 
 auto parseLine(std::string_view line) -> int64_t
@@ -258,8 +258,8 @@ auto parseLine(std::string_view line) -> int64_t
 
 auto shouldEmit(fair::Severity severity) noexcept -> bool
 {
-    const auto min_severity = static_cast<fair::Severity>(minSeverity().load(std::memory_order_relaxed));
-    return min_severity != fair::Severity::nolog && severity >= min_severity;
+    const auto kMinSeverity = static_cast<fair::Severity>(minSeverity().load(std::memory_order_relaxed));
+    return kMinSeverity != fair::Severity::nolog && severity >= kMinSeverity;
 }
 
 auto sinkRegistered() -> std::atomic<bool>&

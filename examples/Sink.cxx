@@ -47,8 +47,8 @@ std::unique_ptr<fair::mq::Device> getDevice(const fair::mq::ProgOptions& /*confi
 
 void printConfig(const fair::mq::ProgOptions* config, std::string_view name, std::string_view function_name)
 {
-    const auto prefix = std::string{name};
-    auto properties = config->GetPropertiesAsStringStartingWith(prefix);
+    const auto kPrefix = std::string{name};
+    auto properties = config->GetPropertiesAsStringStartingWith(kPrefix);
     std::ostringstream message;
     message << function_name << "\n\t " << name << "\n";
     for (const auto &[key, value] : properties) {
@@ -66,8 +66,8 @@ bool Sink::handleData(fair::mq::MessagePtr &msg, int index)
         {"message.multipart", false}
     });
     static_cast<void>(span);
-    const auto ptr = static_cast<char*>(msg->GetData());
-    std::string payload(ptr, msg->GetSize());
+    const auto kPtr = static_cast<char*>(msg->GetData());
+    std::string payload(kPtr, msg->GetSize());
     LOG(debug) << __FUNCTION__ << " received = " << payload << " [" << index << "] " << fNumMessages;
     fMessagesReceived.add(1, {{"fairmq.channel.name", fInputChannelName},
         {"fairmq.channel.index", index},
@@ -101,8 +101,8 @@ bool Sink::handleMultipartData(fair::mq::Parts &msg_parts, int index)
             {"message.multipart", true}
         });
         static_cast<void>(part_span);
-        const auto ptr = static_cast<char*>(msg->GetData());
-        std::string payload(ptr, msg->GetSize());
+        const auto kPtr = static_cast<char*>(msg->GetData());
+        std::string payload(kPtr, msg->GetSize());
         LOG(debug) << __FUNCTION__ << " received = " << payload << " [" << index << "] " << fNumMessages;
         LOG(debug) << payload;
         fMessagesReceived.add(1, {{"fairmq.channel.name", fInputChannelName},

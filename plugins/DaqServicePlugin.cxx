@@ -179,15 +179,15 @@ Plugin::Plugin(std::string_view name,
         }
     } else if (PropertyExists("network-interface")) {
         LOG(debug) << " find my ip address by network-interface";
-        const auto default_nic = fair::mq::tools::getDefaultRouteNetworkInterface();
+        const auto kDefaultNic = fair::mq::tools::getDefaultRouteNetworkInterface();
         auto nic = GetProperty<std::string>("network-interface");
         if (nic!="default") {
             fHealth->ip_address = fair::mq::tools::getInterfaceIP(nic);
         }
         if (fHealth->ip_address.empty()) {
-            LOG(debug) << " use default route NIC = " << default_nic;
-            fHealth->ip_address = fair::mq::tools::getInterfaceIP(default_nic);
-            SetProperty<std::string>("network-interface", default_nic);
+            LOG(debug) << " use default route NIC = " << kDefaultNic;
+            fHealth->ip_address = fair::mq::tools::getInterfaceIP(kDefaultNic);
+            SetProperty<std::string>("network-interface", kDefaultNic);
         }
     }
 
@@ -656,19 +656,19 @@ void Plugin::readRunNumber()
     auto key = join({std::string{kRunInfoPrefix}, std::string{kRunNumber}}, fSeparator);
 
     // LOG(debug) << " run number key = " << key;
-    const auto run_number = fClient->get(key);
-    if (!run_number) {
+    const auto kFetchedRunNumber = fClient->get(key);
+    if (!kFetchedRunNumber) {
         LOG(error) << " could not find run-number key in redis = " << key;
         return;
     }
-    LOG(debug) << kMyClass << " run number (from redis) = " << *run_number;
+    LOG(debug) << kMyClass << " run number (from redis) = " << *kFetchedRunNumber;
     std::string my_run_number;
     if (PropertyExists(std::string{kRunNumber})) {
         my_run_number = GetProperty<std::string>(std::string{kRunNumber});
     }
-    if (my_run_number!=*run_number) {
-        LOG(warn) << kMyClass << " update run number " << *run_number << " (old = " << my_run_number << ")";
-        SetProperty(std::string{kRunNumber}, *run_number);
+    if (my_run_number!=*kFetchedRunNumber) {
+        LOG(warn) << kMyClass << " update run number " << *kFetchedRunNumber << " (old = " << my_run_number << ")";
+        SetProperty(std::string{kRunNumber}, *kFetchedRunNumber);
     } else {
         // LOG(debug) << kMyClass << " same run number " << *run_number << " (old = " << my_run_number << ")";
     }
@@ -1035,9 +1035,9 @@ void Plugin::subscribeToDaqCommand()
                 return;
             }
             bool is_single_command = false; // TO DO
-            const std::string long_instance_id = nestdaq::daq::service::join({fServiceName, fId}, fSeparator);
+            const std::string kLongInstanceId = nestdaq::daq::service::join({fServiceName, fId}, fSeparator);
             if ((services.count("all")>0) ||
-                    ((services.count(fServiceName)>0) && ((instances.count("all")>0) || (instances.count(long_instance_id)>0)))) {
+                    ((services.count(fServiceName)>0) && ((instances.count("all")>0) || (instances.count(kLongInstanceId)>0)))) {
                 if (is_single_command) {
                     changeDeviceStateBySingleCommand(*val);
                 } else {

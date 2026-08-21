@@ -207,9 +207,9 @@ void WebGui::pollState()
     while (true) {
 
         auto t_now = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-        const auto elapsed = static_cast<uint64_t>(t_now - t_prev);
-        if (elapsed < fPollIntervalMs) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(fPollIntervalMs - elapsed));
+        const auto kElapsed = static_cast<uint64_t>(t_now - t_prev);
+        if (kElapsed < fPollIntervalMs) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(fPollIntervalMs - kElapsed));
             continue;
         }
         t_prev = t_now;
@@ -310,29 +310,29 @@ void WebGui::processExpiredKey(std::string_view key)
     LOG(trace) << __func__ << ":" << __LINE__ << " " << key;
     try {
         if (key.find("presence")!=std::string_view::npos) {
-            const auto service_begin = key.find(':');
-            if (service_begin == std::string_view::npos) {
+            const auto kServiceBegin = key.find(':');
+            if (kServiceBegin == std::string_view::npos) {
                 return;
             }
-            const auto instance_begin = key.find(':', service_begin + 1);
-            if (instance_begin == std::string_view::npos) {
+            const auto kInstanceBegin = key.find(':', kServiceBegin + 1);
+            if (kInstanceBegin == std::string_view::npos) {
                 return;
             }
-            const auto presence_begin = key.find(':', instance_begin + 1);
-            if (presence_begin == std::string_view::npos) {
+            const auto kPresenceBegin = key.find(':', kInstanceBegin + 1);
+            if (kPresenceBegin == std::string_view::npos) {
                 return;
             }
-            const auto service_name = std::string{key.substr(service_begin + 1, instance_begin - service_begin - 1)};
-            const auto inst_name    = key.substr(instance_begin + 1, presence_begin - instance_begin - 1);
-            const auto index_begin  = inst_name.find('-');
-            if (index_begin == std::string_view::npos) {
+            const auto kServiceName = std::string{key.substr(kServiceBegin + 1, kInstanceBegin - kServiceBegin - 1)};
+            const auto kInstName    = key.substr(kInstanceBegin + 1, kPresenceBegin - kInstanceBegin - 1);
+            const auto kIndexBegin  = kInstName.find('-');
+            if (kIndexBegin == std::string_view::npos) {
                 return;
             }
-            const auto inst_index   = std::string{inst_name.substr(index_begin + 1)};
+            const auto kInstIndex   = std::string{kInstName.substr(kIndexBegin + 1)};
             {
-                const auto& instance_index_key = nestdaq::daq::service::join({nestdaq::daq::service::kTopPrefix.data(), nestdaq::daq::service::kServiceInstanceIndexPrefix.data(), service_name}, fSeparator);
-                fClient->hdel(instance_index_key, inst_index);
-                LOG(warn) << " delete instance index: key = " << instance_index_key << ", field = " << inst_index;
+                const auto& instance_index_key = nestdaq::daq::service::join({nestdaq::daq::service::kTopPrefix.data(), nestdaq::daq::service::kServiceInstanceIndexPrefix.data(), kServiceName}, fSeparator);
+                fClient->hdel(instance_index_key, kInstIndex);
+                LOG(warn) << " delete instance index: key = " << instance_index_key << ", field = " << kInstIndex;
             }
         }
     } catch (const std::exception &e) {
@@ -519,15 +519,15 @@ void WebGui::redisSet(unsigned int conn_id, const boost::property_tree::ptree &a
 
 void WebGui::sendStateSummary(const std::map<std::string, ServiceState> & summary_table)
 {
-    static std::map<std::string, ServiceState> prev_table;
+    static std::map<std::string, ServiceState> gPrevTable;
     bool service_list_changed = false;
     bool instance_list_changed = false;
-    if (prev_table.size() != summary_table.size()) {
+    if (gPrevTable.size() != summary_table.size()) {
         service_list_changed = true;
         instance_list_changed = true;
     } else {
         for (const auto& [k, v] : summary_table) {
-            if (prev_table.count(k)==0) {
+            if (gPrevTable.count(k)==0) {
                 service_list_changed = true;
                 instance_list_changed = true;
                 break;
@@ -535,7 +535,7 @@ void WebGui::sendStateSummary(const std::map<std::string, ServiceState> & summar
         }
         if (!service_list_changed) {
             for (const auto& [k, v] : summary_table) {
-                const auto& srv = prev_table[k];
+                const auto& srv = gPrevTable[k];
                 if (srv.instances.size()!=v.instances.size()) {
                     instance_list_changed = true;
                     break;
@@ -552,7 +552,7 @@ void WebGui::sendStateSummary(const std::map<std::string, ServiceState> & summar
             }
         }
     }
-    prev_table = summary_table;
+    gPrevTable = summary_table;
     try {
         boost::property_tree::ptree obj;
         obj.put("type", "state-summary-table");

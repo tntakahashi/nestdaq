@@ -82,8 +82,8 @@ auto observeFairMQThroughput(opentelemetry::metrics::ObserverResult observer, bo
         return;
     }
 
-    const auto result = opentelemetry::nostd::get<DoubleObserver>(observer);
-    if (!result) {
+    const auto kResult = opentelemetry::nostd::get<DoubleObserver>(observer);
+    if (!kResult) {
         return;
     }
 
@@ -106,7 +106,7 @@ auto observeFairMQThroughput(opentelemetry::metrics::ObserverResult observer, bo
             attributes.emplace_back("fairmq.channel.index",
                                     static_cast<int64_t>(*measurement.sub_channel_index));
         }
-        result->Observe(observe_megabytes ? measurement.megabytes_per_second : measurement.messages_per_second,
+        kResult->Observe(observe_megabytes ? measurement.megabytes_per_second : measurement.messages_per_second,
                         attributes);
     }
 }
@@ -118,8 +118,8 @@ auto observeProcessCpuTime(opentelemetry::metrics::ObserverResult observer, void
         return;
     }
 
-    const auto result = opentelemetry::nostd::get<DoubleObserver>(observer);
-    if (!result) {
+    const auto kResult = opentelemetry::nostd::get<DoubleObserver>(observer);
+    if (!kResult) {
         return;
     }
 
@@ -134,12 +134,12 @@ auto observeProcessCpuTime(opentelemetry::metrics::ObserverResult observer, void
         auto user_attributes =
             std::vector<std::pair<opentelemetry::nostd::string_view, opentelemetry::common::AttributeValue>> {};
         user_attributes.emplace_back("cpu.mode", opentelemetry::nostd::string_view{"user"});
-        result->Observe(measurement.cpu_user_seconds, user_attributes);
+        kResult->Observe(measurement.cpu_user_seconds, user_attributes);
 
         auto system_attributes =
             std::vector<std::pair<opentelemetry::nostd::string_view, opentelemetry::common::AttributeValue>> {};
         system_attributes.emplace_back("cpu.mode", opentelemetry::nostd::string_view{"system"});
-        result->Observe(measurement.cpu_system_seconds, system_attributes);
+        kResult->Observe(measurement.cpu_system_seconds, system_attributes);
     }
 }
 
@@ -151,8 +151,8 @@ auto observeProcessCpuUtilization(opentelemetry::metrics::ObserverResult observe
         return;
     }
 
-    const auto result = opentelemetry::nostd::get<DoubleObserver>(observer);
-    if (!result) {
+    const auto kResult = opentelemetry::nostd::get<DoubleObserver>(observer);
+    if (!kResult) {
         return;
     }
 
@@ -165,7 +165,7 @@ auto observeProcessCpuUtilization(opentelemetry::metrics::ObserverResult observe
 
     for (const auto &measurement : measurements) {
         if (measurement.cpu_utilization) {
-            result->Observe(*measurement.cpu_utilization);
+            kResult->Observe(*measurement.cpu_utilization);
         }
     }
 }
@@ -177,8 +177,8 @@ auto observeProcessMemoryUsage(opentelemetry::metrics::ObserverResult observer, 
         return;
     }
 
-    const auto result = opentelemetry::nostd::get<DoubleObserver>(observer);
-    if (!result) {
+    const auto kResult = opentelemetry::nostd::get<DoubleObserver>(observer);
+    if (!kResult) {
         return;
     }
 
@@ -190,7 +190,7 @@ auto observeProcessMemoryUsage(opentelemetry::metrics::ObserverResult observer, 
     }
 
     for (const auto &measurement : measurements) {
-        result->Observe(measurement.memory_usage_bytes);
+        kResult->Observe(measurement.memory_usage_bytes);
     }
 }
 
@@ -201,8 +201,8 @@ auto observeUserDoubleGauge(opentelemetry::metrics::ObserverResult observer, voi
         return;
     }
 
-    const auto result = opentelemetry::nostd::get<DoubleObserver>(observer);
-    if (!result) {
+    const auto kResult = opentelemetry::nostd::get<DoubleObserver>(observer);
+    if (!kResult) {
         return;
     }
 
@@ -245,7 +245,7 @@ auto observeUserDoubleGauge(opentelemetry::metrics::ObserverResult observer, voi
                 break;
             }
         }
-        result->Observe(measurement.value, attributes);
+        kResult->Observe(measurement.value, attributes);
     }
 }
 
@@ -256,8 +256,8 @@ auto observeFairMQState(opentelemetry::metrics::ObserverResult observer, void * 
         return;
     }
 
-    const auto result = opentelemetry::nostd::get<DoubleObserver>(observer);
-    if (!result) {
+    const auto kResult = opentelemetry::nostd::get<DoubleObserver>(observer);
+    if (!kResult) {
         return;
     }
 
@@ -272,14 +272,14 @@ auto observeFairMQState(opentelemetry::metrics::ObserverResult observer, void * 
         auto attributes =
             std::vector<std::pair<opentelemetry::nostd::string_view, opentelemetry::common::AttributeValue>> {};
         attributes.emplace_back("fairmq.state.name", opentelemetry::nostd::string_view{measurement.state_name});
-        result->Observe(static_cast<double>(measurement.state_id), attributes);
+        kResult->Observe(static_cast<double>(measurement.state_id), attributes);
     }
 }
 
 auto readAvailableCpuCount() noexcept -> double
 {
-    const auto cpu_count = sysconf(_SC_NPROCESSORS_ONLN);
-    return cpu_count > 0 ? static_cast<double>(cpu_count) : 0.0;
+    const auto kCpuCount = sysconf(_SC_NPROCESSORS_ONLN);
+    return kCpuCount > 0 ? static_cast<double>(kCpuCount) : 0.0;
 }
 
 auto readProcessCpuUsage() noexcept -> std::optional<ProcessCpuUsageSample>
@@ -406,8 +406,8 @@ auto configureFrameworkMetricsProvider(RuntimeState &state) -> void
 
     auto config = state.framework_metric_config.toConfig();
     config.metric_export_interval_ms = kFrameworkMetricReaderIntervalMs;
-    for (const auto protocol : state.framework_metric_protocols) {
-        state.framework_meter_provider->AddMetricReader(createMetricReader(createMetricExporter(config, protocol), config));
+    for (const auto kProtocol : state.framework_metric_protocols) {
+        state.framework_meter_provider->AddMetricReader(createMetricReader(createMetricExporter(config, kProtocol), config));
     }
 
     state.framework_meter = state.framework_meter_provider->GetMeter("nestdaq.framework", std::string{NESTDAQ_VERSION});
@@ -495,32 +495,32 @@ auto startProcessMetricsThread(uint32_t interval_ms) -> void
                     available_cpu_count = runtime.available_cpu_count;
                 }
 
-                const auto current_cpu = readProcessCpuUsage();
-                const auto current_memory_usage = readProcessMemoryUsageBytes(page_size);
-                if (!current_cpu || !current_memory_usage) {
+                const auto kCurrentCpu = readProcessCpuUsage();
+                const auto kCurrentMemoryUsage = readProcessMemoryUsageBytes(page_size);
+                if (!kCurrentCpu || !kCurrentMemoryUsage) {
                     continue;
                 }
 
                 auto cpu_utilization = std::optional<double> {};
                 if (previous_cpu && available_cpu_count > 0.0) {
-                    const auto elapsed_seconds =
-                        std::chrono::duration<double> {current_cpu->timestamp - previous_cpu->timestamp}.count();
-                    if (elapsed_seconds > 0.0) {
-                        const auto cpu_seconds =
-                            (current_cpu->user_seconds + current_cpu->system_seconds) -
+                    const auto kElapsedSeconds =
+                        std::chrono::duration<double> {kCurrentCpu->timestamp - previous_cpu->timestamp}.count();
+                    if (kElapsedSeconds > 0.0) {
+                        const auto kCpuSeconds =
+                            (kCurrentCpu->user_seconds + kCurrentCpu->system_seconds) -
                             (previous_cpu->user_seconds + previous_cpu->system_seconds);
-                        cpu_utilization = cpu_seconds / elapsed_seconds / available_cpu_count;
+                        cpu_utilization = kCpuSeconds / kElapsedSeconds / available_cpu_count;
                     }
                 }
                 {
                     auto &runtime = runtimeState();
                     std::scoped_lock lock{runtime.mutex};
-                    runtime.process_cpu_usage_sample = current_cpu;
+                    runtime.process_cpu_usage_sample = kCurrentCpu;
                 }
-                nestdaq::OpenTelemetryInitializer::recordFrameworkProcessUsage(current_cpu->user_seconds,
-                        current_cpu->system_seconds,
+                nestdaq::OpenTelemetryInitializer::recordFrameworkProcessUsage(kCurrentCpu->user_seconds,
+                        kCurrentCpu->system_seconds,
                         cpu_utilization,
-                        *current_memory_usage);
+                        *kCurrentMemoryUsage);
             }
         }};
 }

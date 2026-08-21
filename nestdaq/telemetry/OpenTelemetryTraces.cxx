@@ -130,10 +130,10 @@ auto OpenTelemetryInitializer::spanStart(const char *name,
         return 0;
     }
     auto span = state.tracer->StartSpan(name, attrs.values);
-    const auto handle = state.next_span_handle.fetch_add(1, std::memory_order_relaxed);
-    state.spans.emplace(handle, std::move(span));
+    const auto kHandle = state.next_span_handle.fetch_add(1, std::memory_order_relaxed);
+    state.spans.emplace(kHandle, std::move(span));
     state.last_error.clear();
-    return handle;
+    return kHandle;
 }
 
 } // namespace nestdaq

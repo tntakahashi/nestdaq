@@ -38,8 +38,8 @@ std::unique_ptr<fair::mq::Device> getDevice(const fair::mq::ProgOptions& /*confi
 
 void printConfig(const fair::mq::ProgOptions* config, std::string_view name, std::string_view function_name)
 {
-    const auto prefix = std::string{name};
-    auto properties = config->GetPropertiesAsStringStartingWith(prefix);
+    const auto kPrefix = std::string{name};
+    auto properties = config->GetPropertiesAsStringStartingWith(kPrefix);
     std::ostringstream message;
     message << function_name << "\n\t " << name << "\n";
     for (const auto &[key, value] : properties) {

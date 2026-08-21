@@ -25,7 +25,7 @@ static constexpr std::string_view kMyClass{"NullDevice"};
 
 namespace bpo = boost::program_options;
 
-void addCustomOptions(bpo::options_description &options)
+void addCustomOptions([[maybe_unused]] bpo::options_description& options)
 {
 }
 

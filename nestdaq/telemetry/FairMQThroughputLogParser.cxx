@@ -44,16 +44,16 @@ auto consumeSpaces(std::string_view &input) noexcept -> void
 auto parseDoubleToken(std::string_view &input, double &value) -> bool
 {
     consumeSpaces(input);
-    const auto token_end = input.find_first_of(" )");
-    if (token_end == 0 || token_end == std::string_view::npos) {
+    const auto kTokenEnd = input.find_first_of(" )");
+    if (kTokenEnd == 0 || kTokenEnd == std::string_view::npos) {
         return false;
     }
 
-    const auto token = input.substr(0, token_end);
-    if (!compat::parseDouble(token, value) || value < 0.0) {
+    const auto kToken = input.substr(0, kTokenEnd);
+    if (!compat::parseDouble(kToken, value) || value < 0.0) {
         return false;
     }
-    input.remove_prefix(token_end);
+    input.remove_prefix(kTokenEnd);
     return true;
 }
 
@@ -82,23 +82,23 @@ auto parseChannel(std::string_view value, FairMQThroughputSample &sample) -> boo
         return true;
     }
 
-    const auto open_bracket = value.rfind('[');
-    if (open_bracket == std::string_view::npos || open_bracket == 0 || open_bracket + 1 >= value.size() - 1) {
+    const auto kOpenBracket = value.rfind('[');
+    if (kOpenBracket == std::string_view::npos || kOpenBracket == 0 || kOpenBracket + 1 >= value.size() - 1) {
         return false;
     }
 
-    const auto channel_name = trim(value.substr(0, open_bracket));
-    if (channel_name.empty()) {
+    const auto kChannelName = trim(value.substr(0, kOpenBracket));
+    if (kChannelName.empty()) {
         return false;
     }
 
-    const auto index_token = value.substr(open_bracket + 1, value.size() - open_bracket - 2);
+    const auto kIndexToken = value.substr(kOpenBracket + 1, value.size() - kOpenBracket - 2);
     uint64_t index = 0;
-    if (!compat::parseInteger(index_token, index)) {
+    if (!compat::parseInteger(kIndexToken, index)) {
         return false;
     }
 
-    sample.channel_name = std::string{channel_name};
+    sample.channel_name = std::string{kChannelName};
     sample.sub_channel_index = index;
     return true;
 }
@@ -108,14 +108,14 @@ auto parseChannel(std::string_view value, FairMQThroughputSample &sample) -> boo
 auto parseFairMQThroughputLog(std::string_view line) -> std::optional<FairMQThroughputSample>
 {
     line = trim(line);
-    const auto channel_delimiter = line.find(": in:");
-    if (channel_delimiter == std::string_view::npos) {
+    const auto kChannelDelimiter = line.find(": in:");
+    if (kChannelDelimiter == std::string_view::npos) {
         return std::nullopt;
     }
 
-    auto input = line.substr(channel_delimiter + 2);
+    auto input = line.substr(kChannelDelimiter + 2);
     auto sample = FairMQThroughputSample{};
-    if (!parseChannel(line.substr(0, channel_delimiter), sample)) {
+    if (!parseChannel(line.substr(0, kChannelDelimiter), sample)) {
         return std::nullopt;
     }
 

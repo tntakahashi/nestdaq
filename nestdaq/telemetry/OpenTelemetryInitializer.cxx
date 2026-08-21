@@ -102,8 +102,8 @@ auto OpenTelemetryInitializer::initialize(const nestdaq_otel_config *config) -> 
 
         if (!log_protocols.empty()) {
             auto processors = std::vector<std::unique_ptr<opentelemetry::sdk::logs::LogRecordProcessor>> {};
-            for (const auto protocol : log_protocols) {
-                processors.emplace_back(createLogProcessor(createLogExporter(local_config, protocol), protocol));
+            for (const auto kProtocol : log_protocols) {
+                processors.emplace_back(createLogProcessor(createLogExporter(local_config, kProtocol), kProtocol));
             }
             logger_provider = std::shared_ptr<opentelemetry::sdk::logs::LoggerProvider> {
                 opentelemetry::sdk::logs::LoggerProviderFactory::Create(std::move(processors), resource)
@@ -115,15 +115,15 @@ auto OpenTelemetryInitializer::initialize(const nestdaq_otel_config *config) -> 
             meter_provider = std::shared_ptr<opentelemetry::sdk::metrics::MeterProvider> {
                 opentelemetry::sdk::metrics::MeterProviderFactory::Create(std::move(views), resource)
             };
-            for (const auto protocol : metric_protocols) {
-                meter_provider->AddMetricReader(createMetricReader(createMetricExporter(local_config, protocol), local_config));
+            for (const auto kProtocol : metric_protocols) {
+                meter_provider->AddMetricReader(createMetricReader(createMetricExporter(local_config, kProtocol), local_config));
             }
         }
 
         if (!trace_protocols.empty()) {
             auto processors = std::vector<std::unique_ptr<opentelemetry::sdk::trace::SpanProcessor>> {};
-            for (const auto protocol : trace_protocols) {
-                processors.emplace_back(createSpanProcessor(createSpanExporter(local_config, protocol), protocol));
+            for (const auto kProtocol : trace_protocols) {
+                processors.emplace_back(createSpanProcessor(createSpanExporter(local_config, kProtocol), kProtocol));
             }
             tracer_provider = std::shared_ptr<opentelemetry::sdk::trace::TracerProvider> {
                 opentelemetry::sdk::trace::TracerProviderFactory::Create(std::move(processors), resource)
