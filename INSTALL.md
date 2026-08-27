@@ -4,6 +4,8 @@
 
 [Top: NestDAQ](README.md) | [Next: Examples](examples/README.md)
 
+In this guide, the **upstream repository** is [github.com/spadi-alliance/nestdaq](https://github.com/spadi-alliance/nestdaq).
+
 ## Installation flow
 
 <a id="installation-flow-figure-en"></a>
@@ -159,8 +161,6 @@ apt install -y \
 ```
 
 `pkg-config` is included in the common Debian and Ubuntu list because the dependency build requires it on Ubuntu 22.04.
-
-In this guide, the **upstream repository** is [github.com/spadi-alliance/nestdaq](https://github.com/spadi-alliance/nestdaq).
 
 ### Code-quality tools for contributors
 

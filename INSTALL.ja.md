@@ -4,6 +4,8 @@
 
 [トップ: NestDAQ](README.ja.md) | [次へ: サンプル](examples/README.ja.md)
 
+このガイドで**上流リポジトリ**とは、[github.com/spadi-alliance/nestdaq](https://github.com/spadi-alliance/nestdaq)を指します。
+
 <a id="installation-flow"></a>
 ## インストールの流れ
 
@@ -165,8 +167,6 @@ apt install -y \
 ```
 
 Ubuntu 22.04で依存関係をビルドする際に必要となるため、`pkg-config`をDebianおよびUbuntu共通の一覧に含めています。
-
-このガイドで**上流リポジトリ**とは、[github.com/spadi-alliance/nestdaq](https://github.com/spadi-alliance/nestdaq)を指します。
 
 <a id="code-quality-tools-for-contributors"></a>
 ### 上流リポジトリの開発に貢献する人向けのコード品質ツール
