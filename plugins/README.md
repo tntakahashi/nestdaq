@@ -384,13 +384,19 @@ only one chosen subchannel, implement a manual receive loop with
 any `OnData()` callback on that device, because registering one switches the
 device to the callback-based input path instead of its manual run loop.
 
-Subchannel assignment is fixed from the peer set present in Redis when the
-device processes `INIT DEVICE`. The assignment is not updated automatically
-after the device reaches `DeviceReady`. After adding, removing, or renaming a
-peer, return all affected devices to `Idle` with `RESET DEVICE`, make the peer
-set and topology definitions consistent in Redis, and run `INIT DEVICE` again.
-`RESET TASK`, which returns a device from `Ready` to `DeviceReady`, does not
-rebuild the topology.
+Before issuing `INIT DEVICE`, start every required peer process and confirm
+that all of their presence keys have been registered in Redis. When every
+device sees the same peer-key set and the same topology definitions, topology
+discovery uses the same string-sort order and reproduces the same subchannel
+assignment. Subchannel assignment is fixed from that peer set when the device
+processes `INIT DEVICE`; it is not updated automatically after the device
+reaches `DeviceReady`.
+
+After adding, removing, or renaming a peer, return all affected devices to
+`Idle` with `RESET DEVICE`, start the complete required peer set, confirm its
+presence registration in Redis, and run `INIT DEVICE` again. `RESET TASK`,
+which returns a device from `Ready` to `DeviceReady`, does not rebuild the
+topology.
 
 Topology discovery sorts the peer keys before assigning subchannels. Treat an
 index as a local runtime position and query the current count; do not persist

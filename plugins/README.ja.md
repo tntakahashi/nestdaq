@@ -381,8 +381,11 @@ FairMQは準備できたローカルsubchannelから受信し、そのローカ�
 1つのsubchannelだけから受信する場合は、`ConditionalRun()`または`Run()`で`Receive(..., channel, index)`を呼ぶ手動受信loopを実装します。
 `OnData()`を1つでも登録すると、デバイスは手動実行loopではなくcallback方式の入力処理へ切り替わるため、そのデバイスでは`OnData()` callbackを登録しないでください。
 
-subchannelの割り当ては、デバイスが`INIT DEVICE`を処理した時点でRedisに存在するpeer集合に基づいて固定され、`DeviceReady`へ到達した後は自動更新されません。
-peerを追加、削除、または名前変更した場合は、影響するすべてのデバイスを`RESET DEVICE`で`Idle`へ戻し、Redis内のpeer集合とトポロジー定義を一致させてから、`INIT DEVICE`を再度実行してください。
+`INIT DEVICE`を発行する前に、必要な全peerプロセスを起動し、それらすべてのpresenceキーがRedisへ登録されたことを確認してください。
+すべてのデバイスが同じpeerキー集合と同じトポロジー定義を参照すれば、トポロジー検出は同じ文字列ソート順を使用し、同じsubchannel割り当てを再現します。
+subchannelの割り当ては、デバイスが`INIT DEVICE`を処理した時点のpeer集合に基づいて固定され、`DeviceReady`へ到達した後は自動更新されません。
+
+peerを追加、削除、または名前変更した場合は、影響するすべてのデバイスを`RESET DEVICE`で`Idle`へ戻し、必要な全peerプロセスを起動してpresenceキーがRedisへ登録されたことを確認してから、`INIT DEVICE`を再度実行してください。
 デバイスを`Ready`から`DeviceReady`へ戻す`RESET TASK`では、トポロジーを再構築しません。
 
 トポロジー検出はpeerキーをソートしてからsubchannelを割り当てます。
