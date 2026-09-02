@@ -366,7 +366,9 @@ PUSH/PULLは、すべてのconsumerへ各メッセージを複製する方式で
 ユーザーコードでローカルsubchannelを明示的に選択するか、`fairmq-splitter`のようなコンポーネントでラウンドロビンを実装できます。
 
 1つのpublisherからすべてのsubscriberへ各メッセージをbroadcastする場合は、別のPUB/SUB設定を使用します。
-publisherには1つのPUB subchannel、各subscriberには1つのSUB subchannelを維持し、すべてのsubscriberを同じPUBソケットへ接続して、必要なSUB購読フィルターを設定します。
+publisherには1つのPUB subchannel、各subscriberには1つのSUB subchannelを維持し、すべてのsubscriberを同じPUB socketへ接続します。
+ここで使用するFairMQ channel設定には、SUB購読filterを指定する項目はありません。
+ZeroMQ transportでは、FairMQが`sub` socketの生成時に空の購読条件を設定するため、すべてのtopicを受信します。
 
 ```bash
 # 1対N broadcast: Publisherを1プロセス、SubscriberをNプロセス起動する。

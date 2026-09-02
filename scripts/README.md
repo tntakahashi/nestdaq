@@ -399,7 +399,10 @@ selection.
 When one publisher must broadcast each message to all subscribers, use a
 separate PUB/SUB recipe. Keep one PUB subchannel on the publisher and one SUB
 subchannel on each subscriber so all subscribers connect to the same PUB
-socket, then configure the required SUB subscription filters:
+socket. The FairMQ channel configuration used here does not expose a SUB
+subscription-filter setting. With the ZeroMQ transport, FairMQ installs an
+empty subscription when it creates a `sub` socket, so the socket receives all
+topics:
 
 ```bash
 # 1:N broadcast: run one Publisher process and N Subscriber processes.
