@@ -360,8 +360,21 @@ The selected side must have that many local subchannels. In topology-managed
 configurations, set `autoSubChannel=true` on the side whose device code needs
 one local subchannel per discovered peer. [Table 2 in the scripts
 documentation](../scripts/README.md#table-topology-cardinality-en) gives the
-settings for 1:N, N:1, and N:M connections. A fixed FairMQ channel
-configuration may instead set its socket count explicitly.
+settings for 1:N, N:1, and N:M connections.
+
+Without using automatic configuration through the Redis topology, FairMQ's
+`--channel-config` alone can fix both the local subchannel count and addresses.
+[Table 5](#table-channel-configuration-modes-en) distinguishes this fixed mode
+from Redis topology configuration and from a mixed configuration.
+
+<a id="table-channel-configuration-modes-en"></a>
+**Table 5: FairMQ and Redis topology channel-configuration modes.**
+
+| Configuration mode | Local subchannel count | Addresses | Operational constraint |
+|--------------------|------------------------|-----------|------------------------|
+| FairMQ fixed configuration | Set with `--channel-config` using `numSockets` or repeated `address` fields. | Set directly with `address` fields. | Does not use Redis topology discovery or address resolution. Update the command-line configuration when the topology changes. |
+| Redis topology configuration | Derived from topology endpoint `num_sockets` or discovered peers when `autoSubChannel=true`. | Resolved from bind-side records in Redis. | Requires matching topology endpoints and links. |
+| Mixed configuration | FairMQ and Redis counts must be kept consistent explicitly. | Redis can resolve addresses when matching endpoints and links exist. | Configuration ownership is split between two sources; prefer one of the first two modes unless the deployment requires this combination. |
 
 `OnData(channel, callback)` registers the callback for the whole named channel;
 it does not select one subchannel. FairMQ receives from whichever local
@@ -581,7 +594,7 @@ Memory usage is the current resident set size (RSS) in mebibytes (MiB).
 ### 3.1. Command-Line Options
 
 <a id="table-metrics-options-en"></a>
-**Table 5: `metrics` command-line options.**
+**Table 6: `metrics` command-line options.**
 
 | Option                        | Default | Description |
 |-------------------------------|---------|-------------|
@@ -593,13 +606,13 @@ Memory usage is the current resident set size (RSS) in mebibytes (MiB).
 
 ### 3.2. Redis Keys Written or Read
 
-In [Table 6](#table-metrics-redis-keys-en), `metrics` means the plugin instance loaded in each NestDAQ device process.
+In [Table 7](#table-metrics-redis-keys-en), `metrics` means the plugin instance loaded in each NestDAQ device process.
 The writer/reader column lists components in this repository that directly access each key for metrics processing.
 External visualization tools, such as Grafana or SlowDash configured to access Redis, may read these metrics and use them to create dashboards and plots.
 The current `daq-webctl` implementation does not read these metrics keys.
 
 <a id="table-metrics-redis-keys-en"></a>
-**Table 6: Redis keys used by `metrics`.**
+**Table 7: Redis keys used by `metrics`.**
 
 | Key pattern | Redis type | Fields / value | Writer / reader | Purpose |
 |-------------|------------|----------------|-----------------|---------|
@@ -627,7 +640,7 @@ The `metrics` plugin adds labels when it explicitly creates a RedisTimeSeries ke
 Visualization tools can filter or group series by these labels.
 
 <a id="table-redistimeseries-labels-en"></a>
-**Table 7: Labels attached to RedisTimeSeries keys.**
+**Table 8: Labels attached to RedisTimeSeries keys.**
 
 | Label | Series | Value |
 |-------|--------|-------|
@@ -676,7 +689,7 @@ Only indexed subchannel records are used for channel throughput metrics.
 
 ### 3.3. TTL and Retention Details (metrics)
 
-In this section, a shared metric hash means one of the `metrics{sep}...` Redis hashes listed in [Table 6](#table-metrics-redis-keys-en).
+In this section, a shared metric hash means one of the `metrics{sep}...` Redis hashes listed in [Table 7](#table-metrics-redis-keys-en).
 This is a descriptive term used by this document, not a Redis data-type name.
 One hash key stores fields for multiple device instances: each field name is an instance ID, and its value is that instance's metric.
 For example, with the default `:` separator, the following command may return CPU metrics for three instances:
@@ -694,10 +707,10 @@ Sink-0
 4.1
 ```
 
-The `ts{sep}...` RedisTimeSeries keys in [Table 6](#table-metrics-redis-keys-en) are separate per-instance keys and are not shared metric hashes.
+The `ts{sep}...` RedisTimeSeries keys in [Table 7](#table-metrics-redis-keys-en) are separate per-instance keys and are not shared metric hashes.
 
 <a id="table-metric-cleanup-mechanisms-en"></a>
-**Table 8: Metric cleanup and retention mechanisms.**
+**Table 9: Metric cleanup and retention mechanisms.**
 
 | Mechanism | Target | When removal is evaluated | Result |
 |-----------|--------|---------------------------|--------|
@@ -750,7 +763,7 @@ If both keys define the same property, the instance-specific value is applied la
 ### 4.1. Command-Line Options
 
 <a id="table-parameter-config-options-en"></a>
-**Table 9: `parameter_config` command-line options.**
+**Table 10: `parameter_config` command-line options.**
 
 | Option                   | Default | Description |
 |--------------------------|---------|-------------|
@@ -763,7 +776,7 @@ The supplied `scripts/mq-param.sh` is one such script for hash parameters, but i
 See the [`mq-param.sh` documentation](../scripts/README.md#31-mq-paramsh) for its implementation and argument examples.
 
 <a id="table-parameter-config-redis-keys-en"></a>
-**Table 10: Redis keys used by `parameter_config`.**
+**Table 11: Redis keys used by `parameter_config`.**
 
 | Key pattern | Redis type | Fields / value | Writer / reader | Purpose |
 |-------------|------------|----------------|-----------------|---------|
@@ -776,7 +789,7 @@ See the [`mq-param.sh` documentation](../scripts/README.md#31-mq-paramsh) for it
 The following examples use the default `:` separator and show how additional structured Redis keys become FairMQ properties.
 
 <a id="table-redis-property-mapping-en"></a>
-**Table 11: Mapping from Redis commands to FairMQ properties.**
+**Table 12: Mapping from Redis commands to FairMQ properties.**
 
 | Redis command | Resulting FairMQ property |
 |---------------|---------------------------|

@@ -363,7 +363,18 @@ if (Receive(message, "in", static_cast<int>(kSubchannel)) < 0) {
 選択する側には、そのindexまでのローカルsubchannelが必要です。
 トポロジーで管理する構成では、接続相手ごとのローカルsubchannelをユーザーコードから選ぶ側に`autoSubChannel=true`を設定します。
 1対N、N対1、N対Mの設定は、[scripts文書の表2](../scripts/README.ja.md#table-topology-cardinality-ja)に示します。
-固定したFairMQチャネル設定では、代わりにソケット数を明示できます。
+
+Redis topologyによる自動構成を使わず、FairMQの`--channel-config`だけでローカルsubchannel数とアドレスを固定することもできます。
+[表5](#table-channel-configuration-modes-ja)は、この固定設定をRedis topology設定および混合設定と区別して示します。
+
+<a id="table-channel-configuration-modes-ja"></a>
+**表5：FairMQとRedis topologyによるチャネル設定方式。**
+
+| 設定方式 | ローカルsubchannel数 | アドレス | 運用上の制約 |
+|----------|----------------------|----------|--------------|
+| FairMQ固定設定 | `--channel-config`の`numSockets`または複数の`address`フィールドで指定します。 | `address`フィールドで直接指定します。 | Redis topologyによるpeer検出とアドレス解決を使用しません。トポロジーを変更する場合はコマンドライン設定も変更します。 |
+| Redis topology設定 | topology endpointの`num_sockets`、または`autoSubChannel=true`の場合は検出したpeerから導出します。 | Redisに保存されたbind側の情報から解決します。 | 対応するtopology endpointとlinkが必要です。 |
+| 混合設定 | FairMQとRedisのsubchannel数を明示的に一致させます。 | 対応するendpointとlinkがあればRedisで解決できます。 | 設定元が2つに分かれます。この組合せが必要な場合を除き、前の2方式のどちらか一方を使用してください。 |
 
 `OnData(channel, callback)`は、指定した名前のチャネル全体にcallbackを登録するものであり、1つのsubchannelを選択しません。
 FairMQは準備できたローカルsubchannelから受信し、そのローカルindexをcallbackへ渡します。
@@ -586,7 +597,7 @@ memory usageはmebibytes (MiB) 単位のcurrent resident set size (RSS) です�
 ### 3.1. コマンドラインオプション
 
 <a id="table-metrics-options-ja"></a>
-**表5：`metrics`のコマンドラインオプション。**
+**表6：`metrics`のコマンドラインオプション。**
 
 | オプション | デフォルト | 説明 |
 | --- | --- | --- |
@@ -599,13 +610,13 @@ memory usageはmebibytes (MiB) 単位のcurrent resident set size (RSS) です�
 <a id="32-redis-keys-written-or-read"></a>
 ### 3.2. 書き込みまたは読み取りを行うRedisキー
 
-[表6](#table-metrics-redis-keys-ja)の`metrics`は、各NestDAQデバイスプロセスへ読み込まれたプラグインインスタンスを指します。
+[表7](#table-metrics-redis-keys-ja)の`metrics`は、各NestDAQデバイスプロセスへ読み込まれたプラグインインスタンスを指します。
 書き込み元/読み取り元の列には、メトリクス処理のために各キーへ直接アクセスする、このリポジトリ内の構成要素を記載します。
 Redisへ接続するように設定したGrafanaやSlowDashなどの外部可視化ツールは、これらのメトリクスを読み取り、ダッシュボードやグラフの表示に利用できます。
 現在の`daq-webctl`実装は、これらのメトリクスキーを読み取りません。
 
 <a id="table-metrics-redis-keys-ja"></a>
-**表6：`metrics`が使用するRedisキー。**
+**表7：`metrics`が使用するRedisキー。**
 
 | キーパターン | Redis型 | フィールド/値 | 書き込み元/読み取り元 | 目的 |
 | --- | --- | --- | --- | --- |
@@ -634,7 +645,7 @@ Redisへ接続するように設定したGrafanaやSlowDashなどの外部可視
 可視化ツールは、これらのラベルを使って時系列の絞り込みやグループ化を行えます。
 
 <a id="table-redistimeseries-labels-ja"></a>
-**表7：RedisTimeSeriesキーに付与するラベル。**
+**表8：RedisTimeSeriesキーに付与するラベル。**
 
 | ラベル | 対象時系列 | 値 |
 | --- | --- | --- |
@@ -684,7 +695,7 @@ FairMQチャネルは片方向にデータを転送する場合が多いため�
 <a id="33-ttl-and-retention-details-metrics"></a>
 ### 3.3. TTLと保持期間の詳細 (metrics)
 
-この節で共有メトリクスハッシュと呼ぶものは、[表6](#table-metrics-redis-keys-ja)にある`metrics{sep}...`形式のRedisハッシュです。
+この節で共有メトリクスハッシュと呼ぶものは、[表7](#table-metrics-redis-keys-ja)にある`metrics{sep}...`形式のRedisハッシュです。
 これはRedis data typeの名称ではなく、この文書で構造を説明するために使用する表現です。
 1つのハッシュキーが複数のデバイスインスタンスのフィールドを持ち、各フィールド名がインスタンスID、その値が該当インスタンスのメトリクスです。
 例えば既定の区切り文字`:`を使用する場合、次のコマンドで3つのインスタンスのCPUメトリクスが返されることがあります。
@@ -702,10 +713,10 @@ Sink-0
 4.1
 ```
 
-[表6](#table-metrics-redis-keys-ja)にある`ts{sep}...`形式のRedisTimeSeriesキーはインスタンスごとに分かれたキーであり、共有メトリクスハッシュには含みません。
+[表7](#table-metrics-redis-keys-ja)にある`ts{sep}...`形式のRedisTimeSeriesキーはインスタンスごとに分かれたキーであり、共有メトリクスハッシュには含みません。
 
 <a id="table-metric-cleanup-mechanisms-ja"></a>
-**表8：メトリクスのクリーンアップおよび保持機構。**
+**表9：メトリクスのクリーンアップおよび保持機構。**
 
 | Mechanism | 削除対象 | 削除を判定する時点 | 結果 |
 | --- | --- | --- | --- |
@@ -759,7 +770,7 @@ Redisキースペース通知は、キーの変更時にPub/Subイベントを�
 ### 4.1. コマンドラインオプション
 
 <a id="table-parameter-config-options-ja"></a>
-**表9：`parameter_config`のコマンドラインオプション。**
+**表10：`parameter_config`のコマンドラインオプション。**
 
 | オプション | デフォルト | 説明 |
 | --- | --- | --- |
@@ -773,7 +784,7 @@ Redisクライアントを呼び出すスクリプト、またはRedisクライ�
 実装内容と引数の例は[`mq-param.sh`の説明](../scripts/README.ja.md#31-mq-paramsh)を参照してください。
 
 <a id="table-parameter-config-redis-keys-ja"></a>
-**表10：`parameter_config`が使用するRedisキー。**
+**表11：`parameter_config`が使用するRedisキー。**
 
 | キーパターン | Redis型 | フィールド/値 | 書き込み元/読み取り元 | 目的 |
 | --- | --- | --- | --- | --- |
@@ -786,7 +797,7 @@ Redisクライアントを呼び出すスクリプト、またはRedisクライ�
 次の例では既定の区切り文字`:`を使用し、追加の構造化RedisキーがFairMQプロパティーへ変換される方法を示します。
 
 <a id="table-redis-property-mapping-ja"></a>
-**表11：RedisコマンドからFairMQプロパティへの対応。**
+**表12：RedisコマンドからFairMQプロパティへの対応。**
 
 | Redisコマンド | 生成されるFairMQプロパティ |
 | --- | --- |
