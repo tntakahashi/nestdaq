@@ -314,21 +314,59 @@ redis-cli -u redis://127.0.0.1:6379 FLUSHALL
 bind endpointで`autoSubChannel=true`が必要なのは、peerごとに異なるローカルsubchannelとaddressを設ける場合です。
 `autoSubChannel=false`の1つのbind socketでは、複数peerからの接続を受けられます。
 
-<a id="table-topology-cardinality-ja"></a>
-**表2：接続数およびbind/connectの向きごとのPUSH/PULL用`autoSubChannel`設定。**
+PUSHとPULLのendpointには`autoSubChannel`を独立して設定するため、組合せは32通りです。
+内訳は、4つの接続形態、2つのbind/connectの向き、4つの`(PUSH, PULL)`真偽値の組です。
+[表2A](#table-topology-cardinality-push-bind-ja)と[表2B](#table-topology-cardinality-push-connect-ja)では、`F`を`false`、`T`を`true`と表記します。
+socket数の列はpeer検出後の実効ローカルPUSH/PULL socket数であり、`numSockets=0`から作られる既定の1 socketも`1`と表記します。
+N対Mの行では、 _N_ と _M_ はともに2以上です。
 
-| 接続形態 | PUSH method | PULL method | PUSHの`autoSubChannel` | PULLの`autoSubChannel` | ローカルsubchannelの構成 |
-|----------|-------------|-------------|-------------------------|-------------------------|----------------------------|
-| 並列1対1 | `bind` | `connect` | `false` | `false` | 各プロセスに1つ。ソート後の順番が同じプロセス同士を接続します。 |
-| 並列1対1 | `connect` | `bind` | `false` | `false` | 各プロセスに1つ。ソート後の順番が同じプロセス同士を接続します。 |
-| 1対N | `bind` | `connect` | `false` | `false` | すべてのconsumerがproducerの1つのbind socketへ接続します。送信先はZeroMQが選択し、producerのユーザーコードからsubchannel indexでconsumerを選択できません。 |
-| 1対N | `bind` | `connect` | `true` | `false` | producerにはconsumerごとのbind subchannelを設け、subchannel indexでconsumerを選択できます。各consumerは1つのaddressへ接続します。 |
-| 1対N | `connect` | `bind` | `true` | `false` | producerはN個のconsumerのbind addressへ接続し、各consumerは1つのbind socketを使用します。 |
-| N対1 | `bind` | `connect` | `false` | `true` | consumerはN個のproducerのbind addressへ接続し、各producerは1つのbind socketを使用します。 |
-| N対1 | `connect` | `bind` | `false` | `false` | すべてのproducerが1つのconsumerのbind socketへ接続します。 |
-| N対M | `bind` | `connect` | `false` | `true` | 各consumerがN個すべてのproducerのbind socketへ接続します。送信ごとにZeroMQがconsumerを選択し、producerのユーザーコードからsubchannel indexでconsumerを選択できません。 |
-| N対M | `bind` | `connect` | `true` | `true` | 各producerにconsumerごとのbind subchannelを設け、各consumerがすべてのproducerのbind addressを解決します。 |
-| N対M | `connect` | `bind` | `true` | `false` | 各producerがM個のconsumerのbind addressへ接続し、各consumerは1つのbind socketですべてのproducerを受け入れます。 |
+<a id="table-topology-cardinality-ja"></a>
+<a id="table-topology-cardinality-push-bind-ja"></a>
+**表2A：PUSH=`bind`、PULL=`connect`での全`autoSubChannel`組合せ。**
+
+| 接続形態 | Auto (PUSH/PULL) | Socket数 (PUSH/PULL) | 実際の接続 | peerの選択または識別 |
+|----------|------------------|------------------------|------------|-----------------------|
+| 並列1対1 | F/F | 1/1 | 文字列順の同じindex同士を接続し、意図した並列1対1になります。 | どちら側もindexでpeerを選択しません。 |
+| 並列1対1 | T/F | _N_/1 | 全PULLが文字列順で最後のPUSHにある自身専用socketだけへ接続し、それ以前のPUSHは未接続になります。 | 最後のPUSHだけがPULLを選択できます。 |
+| 並列1対1 | F/T | 1/_N_ | 各PULLが全PUSHへ接続するため、並列1対1ではなくall-to-allになります。 | PULLはPUSHを識別・選択でき、PUSHの送信先はZeroMQが選択します。 |
+| 並列1対1 | T/T | _N_/_N_ | 各PULLが全PUSHへ接続するため、並列1対1ではなくall-to-allになります。 | 両側にpeerごとのローカルsubchannelがあります。 |
+| 1対N | F/F | 1/1 | 全PULLが1つのPUSH socketへ接続し、意図した1対Nになります。 | PUSHの送信先はZeroMQが選択し、PUSHからindexで選択できません。 |
+| 1対N | T/F | _N_/1 | 各PULLが自身専用のPUSH socketへ接続し、意図した1対Nになります。 | PUSHはindexでPULLを選択できます。 |
+| 1対N | F/T | 1/1 | 各PULLが検出するPUSHは1つだけなので、F/Fと同じです。 | PUSHの送信先はZeroMQが選択します。 |
+| 1対N | T/T | _N_/1 | 各PULLが検出するPUSHは1つだけなので、T/Fと同じです。 | PUSHはindexでPULLを選択できます。 |
+| N対1 | F/F | 1/1 | PULLは文字列順で最初のPUSHだけへ接続し、残りのPUSHは未接続になります。 | peerを選択できません。 |
+| N対1 | T/F | 1/1 | 各PUSHが検出するPULLは1つだけなのでF/Fと同じです。 | peerを選択できません。 |
+| N対1 | F/T | 1/_N_ | PULLが全PUSHへ接続し、意図したN対1になります。 | PULLはindexでPUSHを識別・選択できます。 |
+| N対1 | T/T | 1/_N_ | 各PUSHが検出するPULLは1つだけなのでF/Tと同じです。 | PULLはindexでPUSHを識別・選択できます。 |
+| N対M | F/F | 1/1 | 文字列順の同じindexにある`min(N,M)`組だけが接続し、余ったprocessは未接続になります。 | どちら側もindexでpeerを選択しません。 |
+| N対M | T/F | _M_/1 | 全PULLが文字列順で最後のPUSHにある自身専用socketだけへ接続し、それ以前のPUSHは未接続になります。 | 最後のPUSHだけがPULLを選択できます。 |
+| N対M | F/T | 1/_N_ | 各PULLが全PUSHへ接続し、意図したall-to-allのN対Mになります。 | PULLはPUSHを識別・選択でき、PUSHの送信先はZeroMQが選択します。 |
+| N対M | T/T | _M_/_N_ | 各PULLが全PUSHへ接続し、意図したall-to-allのN対Mになります。 | 両側にpeerごとのローカルsubchannelがあります。 |
+
+<a id="table-topology-cardinality-push-connect-ja"></a>
+**表2B：PUSH=`connect`、PULL=`bind`での全`autoSubChannel`組合せ。**
+
+| 接続形態 | Auto (PUSH/PULL) | Socket数 (PUSH/PULL) | 実際の接続 | peerの選択または識別 |
+|----------|------------------|------------------------|------------|-----------------------|
+| 並列1対1 | F/F | 1/1 | 文字列順の同じindex同士を接続し、意図した並列1対1になります。 | どちら側もindexでpeerを選択しません。 |
+| 並列1対1 | T/F | _N_/1 | 各PUSHが全PULLへ接続するため、並列1対1ではなくall-to-allになります。 | PUSHはPULLを選択でき、PULLは1 socketですべてのPUSHから受信します。 |
+| 並列1対1 | F/T | 1/_N_ | 全PUSHが文字列順で最後のPULLにある自身専用socketだけへ接続し、それ以前のPULLは未接続になります。 | 最後のPULLだけがPUSHを識別・選択できます。 |
+| 並列1対1 | T/T | _N_/_N_ | 各PUSHが全PULLへ接続するため、並列1対1ではなくall-to-allになります。 | 両側にpeerごとのローカルsubchannelがあります。 |
+| 1対N | F/F | 1/1 | PUSHは文字列順で最初のPULLだけへ接続し、残りのPULLは未接続になります。 | peerを選択できません。 |
+| 1対N | T/F | _N_/1 | PUSHが全PULLへ接続し、意図した1対Nになります。 | PUSHはindexでPULLを選択できます。 |
+| 1対N | F/T | 1/1 | 各PULLが検出するPUSHは1つだけなのでF/Fと同じです。 | peerを選択できません。 |
+| 1対N | T/T | _N_/1 | 各PULLが検出するPUSHは1つだけなのでT/Fと同じです。 | PUSHはindexでPULLを選択できます。 |
+| N対1 | F/F | 1/1 | 全PUSHが1つのPULL bind socketへ接続し、意図したN対1になります。 | PULLはsubchannel indexでPUSHを識別できません。 |
+| N対1 | T/F | 1/1 | 各PUSHが検出するPULLは1つだけなのでF/Fと同じです。 | PULLはsubchannel indexでPUSHを識別できません。 |
+| N対1 | F/T | 1/_N_ | 各PUSHが自身専用のPULL socketへ接続し、意図したN対1になります。 | PULLはindexでPUSHを識別・選択できます。 |
+| N対1 | T/T | 1/_N_ | 各PUSHが検出するPULLは1つだけなのでF/Tと同じです。 | PULLはindexでPUSHを識別・選択できます。 |
+| N対M | F/F | 1/1 | 文字列順の同じindexにある`min(N,M)`組だけが接続し、余ったprocessは未接続になります。 | どちら側もindexでpeerを選択しません。 |
+| N対M | T/F | _M_/1 | 各PUSHが全PULLへ接続し、意図したall-to-allのN対Mになります。 | PUSHはPULLを選択でき、各PULLは1 socketですべてのPUSHから受信します。 |
+| N対M | F/T | 1/_N_ | 全PUSHが文字列順で最後のPULLにある自身専用socketだけへ接続し、それ以前のPULLは未接続になります。 | 最後のPULLだけがPUSHを識別・選択できます。 |
+| N対M | T/T | _M_/_N_ | 各PUSHが全PULLへ接続し、意図したall-to-allのN対Mになります。 | 両側にpeerごとのローカルsubchannelがあります。 |
+
+ここで「最初」と「最後」は、現在のRedis peer keyの`std::string`文字列ソート順を表します。
+processが未接続になる組合せと、並列1対1がall-to-allになる組合せは、要求した接続形態を実現しないため、通常は使用しないでください。
 
 次の例では、最初に`PUSH=bind`、`PULL=connect`を使用します。
 

@@ -342,21 +342,63 @@ when it requires a separate local subchannel and address for each peer. With
 `autoSubChannel=false`, one bind socket can accept connections from multiple
 peers.
 
-<a id="table-topology-cardinality-en"></a>
-**Table 2: PUSH/PULL `autoSubChannel` settings by connection cardinality and bind/connect orientation.**
+There are 32 combinations because `autoSubChannel` is set independently on
+the PUSH and PULL endpoints: four cardinalities, two bind/connect orientations,
+and four `(PUSH, PULL)` Boolean pairs. In [Table 2A](#table-topology-cardinality-push-bind-en)
+and [Table 2B](#table-topology-cardinality-push-connect-en), `F` means `false`
+and `T` means `true`. The socket-count column gives the effective local PUSH/PULL
+counts after peer discovery; `1` includes the default single socket when
+`numSockets=0`. _N_ and _M_ are greater than one in the N:M rows.
 
-| Connection | PUSH method | PULL method | PUSH `autoSubChannel` | PULL `autoSubChannel` | Resulting local subchannels |
-|------------|-------------|-------------|-----------------------|-----------------------|-----------------------------|
-| Parallel 1:1 | `bind` | `connect` | `false` | `false` | One on each process; processes are paired by their sorted ordinal positions. |
-| Parallel 1:1 | `connect` | `bind` | `false` | `false` | One on each process; processes are paired by their sorted ordinal positions. |
-| 1:N | `bind` | `connect` | `false` | `false` | All consumers connect to one producer bind socket. ZeroMQ selects the destination; producer code cannot select a consumer by subchannel index. |
-| 1:N | `bind` | `connect` | `true` | `false` | The producer has one bind subchannel per consumer and can select a consumer by subchannel index; each consumer connects to one address. |
-| 1:N | `connect` | `bind` | `true` | `false` | The producer connects to _N_ consumer bind addresses; each consumer uses one bind socket. |
-| N:1 | `bind` | `connect` | `false` | `true` | The consumer connects to _N_ producer bind addresses; each producer has one bind socket. |
-| N:1 | `connect` | `bind` | `false` | `false` | All producers connect to the single consumer bind socket. |
-| N:M | `bind` | `connect` | `false` | `true` | Every consumer connects to all _N_ producer bind sockets. ZeroMQ selects a consumer for each send; producer code cannot select one by subchannel index. |
-| N:M | `bind` | `connect` | `true` | `true` | Each producer has one bind subchannel per consumer, and each consumer resolves all producer bind addresses. |
-| N:M | `connect` | `bind` | `true` | `false` | Each producer connects to _M_ consumer bind addresses; each consumer accepts all producers on one bind socket. |
+<a id="table-topology-cardinality-en"></a>
+<a id="table-topology-cardinality-push-bind-en"></a>
+**Table 2A: PUSH=`bind`, PULL=`connect` behavior for every `autoSubChannel` pair.**
+
+| Connection | Auto (PUSH/PULL) | Sockets (PUSH/PULL) | Actual connections | Peer selection or identification |
+|------------|------------------|---------------------|--------------------|----------------------------------|
+| Parallel 1:1 | F/F | 1/1 | Sorted ordinal pairs; the intended parallel 1:1 topology. | Neither side selects a peer by index. |
+| Parallel 1:1 | T/F | _N_/1 | Every PULL connects only to its dedicated socket on the last sorted PUSH; earlier PUSH processes are unconnected. | Only the last PUSH can select a PULL. |
+| Parallel 1:1 | F/T | 1/_N_ | Every PULL connects to every PUSH; this is all-to-all, not parallel 1:1. | PULL can identify/select PUSH; PUSH leaves destination selection to ZeroMQ. |
+| Parallel 1:1 | T/T | _N_/_N_ | Every PULL connects to every PUSH; this is all-to-all, not parallel 1:1. | Both sides have one local subchannel per peer. |
+| 1:N | F/F | 1/1 | All PULL processes connect to the one PUSH socket; the intended 1:N topology. | ZeroMQ selects the PULL destination; PUSH cannot select it by index. |
+| 1:N | T/F | _N_/1 | Each PULL connects to its dedicated PUSH socket; the intended 1:N topology. | PUSH can select a PULL by index. |
+| 1:N | F/T | 1/1 | Same as F/F because each PULL discovers only one PUSH. | ZeroMQ selects the PULL destination. |
+| 1:N | T/T | _N_/1 | Same as T/F because each PULL discovers only one PUSH. | PUSH can select a PULL by index. |
+| N:1 | F/F | 1/1 | PULL connects only to the first sorted PUSH; the remaining PUSH processes are unconnected. | No peer selection. |
+| N:1 | T/F | 1/1 | Same as F/F because each PUSH discovers only one PULL. | No peer selection. |
+| N:1 | F/T | 1/_N_ | PULL connects to every PUSH; the intended N:1 topology. | PULL can identify/select PUSH by index. |
+| N:1 | T/T | 1/_N_ | Same as F/T because each PUSH discovers only one PULL. | PULL can identify/select PUSH by index. |
+| N:M | F/F | 1/1 | Only `min(N,M)` sorted ordinal pairs connect; excess processes are unconnected. | Neither side selects a peer by index. |
+| N:M | T/F | _M_/1 | Every PULL connects only to its dedicated socket on the last sorted PUSH; earlier PUSH processes are unconnected. | Only the last PUSH can select a PULL. |
+| N:M | F/T | 1/_N_ | Every PULL connects to every PUSH; the intended all-to-all N:M topology. | PULL can identify/select PUSH; PUSH leaves destination selection to ZeroMQ. |
+| N:M | T/T | _M_/_N_ | Every PULL connects to every PUSH; the intended all-to-all N:M topology. | Both sides have one local subchannel per peer. |
+
+<a id="table-topology-cardinality-push-connect-en"></a>
+**Table 2B: PUSH=`connect`, PULL=`bind` behavior for every `autoSubChannel` pair.**
+
+| Connection | Auto (PUSH/PULL) | Sockets (PUSH/PULL) | Actual connections | Peer selection or identification |
+|------------|------------------|---------------------|--------------------|----------------------------------|
+| Parallel 1:1 | F/F | 1/1 | Sorted ordinal pairs; the intended parallel 1:1 topology. | Neither side selects a peer by index. |
+| Parallel 1:1 | T/F | _N_/1 | Every PUSH connects to every PULL; this is all-to-all, not parallel 1:1. | PUSH can select PULL; PULL receives all PUSH peers on one socket. |
+| Parallel 1:1 | F/T | 1/_N_ | Every PUSH connects only to its dedicated socket on the last sorted PULL; earlier PULL processes are unconnected. | Only the last PULL can identify/select PUSH. |
+| Parallel 1:1 | T/T | _N_/_N_ | Every PUSH connects to every PULL; this is all-to-all, not parallel 1:1. | Both sides have one local subchannel per peer. |
+| 1:N | F/F | 1/1 | PUSH connects only to the first sorted PULL; the remaining PULL processes are unconnected. | No peer selection. |
+| 1:N | T/F | _N_/1 | PUSH connects to every PULL; the intended 1:N topology. | PUSH can select PULL by index. |
+| 1:N | F/T | 1/1 | Same as F/F because each PULL discovers only one PUSH. | No peer selection. |
+| 1:N | T/T | _N_/1 | Same as T/F because each PULL discovers only one PUSH. | PUSH can select PULL by index. |
+| N:1 | F/F | 1/1 | Every PUSH connects to the one PULL bind socket; the intended N:1 topology. | PULL cannot identify PUSH by subchannel index. |
+| N:1 | T/F | 1/1 | Same as F/F because each PUSH discovers only one PULL. | PULL cannot identify PUSH by subchannel index. |
+| N:1 | F/T | 1/_N_ | Every PUSH connects to its dedicated PULL socket; the intended N:1 topology. | PULL can identify/select PUSH by index. |
+| N:1 | T/T | 1/_N_ | Same as F/T because each PUSH discovers only one PULL. | PULL can identify/select PUSH by index. |
+| N:M | F/F | 1/1 | Only `min(N,M)` sorted ordinal pairs connect; excess processes are unconnected. | Neither side selects a peer by index. |
+| N:M | T/F | _M_/1 | Every PUSH connects to every PULL; the intended all-to-all N:M topology. | PUSH can select PULL; each PULL receives all PUSH peers on one socket. |
+| N:M | F/T | 1/_N_ | Every PUSH connects only to its dedicated socket on the last sorted PULL; earlier PULL processes are unconnected. | Only the last PULL can identify/select PUSH. |
+| N:M | T/T | _M_/_N_ | Every PUSH connects to every PULL; the intended all-to-all N:M topology. | Both sides have one local subchannel per peer. |
+
+The "first" and "last" peers above refer to the current `std::string` sort
+order of Redis peer keys. Cases that leave processes unconnected, and cases
+that turn parallel 1:1 into all-to-all, do not realize the requested
+cardinality and should normally be avoided.
 
 The following examples first use `PUSH=bind` and `PULL=connect`:
 
