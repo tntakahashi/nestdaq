@@ -349,10 +349,12 @@ peers.
 |------------|-------------|-------------|-----------------------|-----------------------|-----------------------------|
 | Parallel 1:1 | `bind` | `connect` | `false` | `false` | One on each process; processes are paired by their sorted ordinal positions. |
 | Parallel 1:1 | `connect` | `bind` | `false` | `false` | One on each process; processes are paired by their sorted ordinal positions. |
-| 1:N | `bind` | `connect` | `true` | `false` | The producer has one bind subchannel per consumer; each consumer connects to one address. |
+| 1:N | `bind` | `connect` | `false` | `false` | All consumers connect to one producer bind socket. ZeroMQ selects the destination; producer code cannot select a consumer by subchannel index. |
+| 1:N | `bind` | `connect` | `true` | `false` | The producer has one bind subchannel per consumer and can select a consumer by subchannel index; each consumer connects to one address. |
 | 1:N | `connect` | `bind` | `true` | `false` | The producer connects to _N_ consumer bind addresses; each consumer uses one bind socket. |
 | N:1 | `bind` | `connect` | `false` | `true` | The consumer connects to _N_ producer bind addresses; each producer has one bind socket. |
 | N:1 | `connect` | `bind` | `false` | `false` | All producers connect to the single consumer bind socket. |
+| N:M | `bind` | `connect` | `false` | `true` | Every consumer connects to all _N_ producer bind sockets. ZeroMQ selects a consumer for each send; producer code cannot select one by subchannel index. |
 | N:M | `bind` | `connect` | `true` | `true` | Each producer has one bind subchannel per consumer, and each consumer resolves all producer bind addresses. |
 | N:M | `connect` | `bind` | `true` | `false` | Each producer connects to _M_ consumer bind addresses; each consumer accepts all producers on one bind socket. |
 
@@ -364,7 +366,12 @@ endpoint Producer out type push method bind    autoSubChannel false
 endpoint Consumer in  type pull method connect autoSubChannel false
 link Producer out Consumer in
 
-# 1:N: run one Producer process and N Consumer processes.
+# 1:N with ZeroMQ destination selection: run one Producer process and N Consumer processes.
+endpoint Producer out type push method bind    autoSubChannel false
+endpoint Consumer in  type pull method connect autoSubChannel false
+link Producer out Consumer in
+
+# 1:N with explicit destination selection by the Producer.
 endpoint Producer out type push method bind    autoSubChannel true
 endpoint Consumer in  type pull method connect autoSubChannel false
 link Producer out Consumer in

@@ -321,10 +321,12 @@ bind endpointで`autoSubChannel=true`が必要なのは、peerごとに異なる
 |----------|-------------|-------------|-------------------------|-------------------------|----------------------------|
 | 並列1対1 | `bind` | `connect` | `false` | `false` | 各プロセスに1つ。ソート後の順番が同じプロセス同士を接続します。 |
 | 並列1対1 | `connect` | `bind` | `false` | `false` | 各プロセスに1つ。ソート後の順番が同じプロセス同士を接続します。 |
-| 1対N | `bind` | `connect` | `true` | `false` | producerにはconsumerごとのbind subchannelを設け、各consumerは1つのaddressへ接続します。 |
+| 1対N | `bind` | `connect` | `false` | `false` | すべてのconsumerがproducerの1つのbind socketへ接続します。送信先はZeroMQが選択し、producerのユーザーコードからsubchannel indexでconsumerを選択できません。 |
+| 1対N | `bind` | `connect` | `true` | `false` | producerにはconsumerごとのbind subchannelを設け、subchannel indexでconsumerを選択できます。各consumerは1つのaddressへ接続します。 |
 | 1対N | `connect` | `bind` | `true` | `false` | producerはN個のconsumerのbind addressへ接続し、各consumerは1つのbind socketを使用します。 |
 | N対1 | `bind` | `connect` | `false` | `true` | consumerはN個のproducerのbind addressへ接続し、各producerは1つのbind socketを使用します。 |
 | N対1 | `connect` | `bind` | `false` | `false` | すべてのproducerが1つのconsumerのbind socketへ接続します。 |
+| N対M | `bind` | `connect` | `false` | `true` | 各consumerがN個すべてのproducerのbind socketへ接続します。送信ごとにZeroMQがconsumerを選択し、producerのユーザーコードからsubchannel indexでconsumerを選択できません。 |
 | N対M | `bind` | `connect` | `true` | `true` | 各producerにconsumerごとのbind subchannelを設け、各consumerがすべてのproducerのbind addressを解決します。 |
 | N対M | `connect` | `bind` | `true` | `false` | 各producerがM個のconsumerのbind addressへ接続し、各consumerは1つのbind socketですべてのproducerを受け入れます。 |
 
@@ -336,7 +338,12 @@ endpoint Producer out type push method bind    autoSubChannel false
 endpoint Consumer in  type pull method connect autoSubChannel false
 link Producer out Consumer in
 
-# 1対N: Producerを1プロセス、ConsumerをNプロセス起動する。
+# 1対N、ZeroMQが送信先を選択: Producerを1プロセス、ConsumerをNプロセス起動する。
+endpoint Producer out type push method bind    autoSubChannel false
+endpoint Consumer in  type pull method connect autoSubChannel false
+link Producer out Consumer in
+
+# 1対N、Producerが送信先を明示的に選択する。
 endpoint Producer out type push method bind    autoSubChannel true
 endpoint Consumer in  type pull method connect autoSubChannel false
 link Producer out Consumer in
