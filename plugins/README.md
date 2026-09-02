@@ -384,12 +384,19 @@ only one chosen subchannel, implement a manual receive loop with
 any `OnData()` callback on that device, because registering one switches the
 device to the callback-based input path instead of its manual run loop.
 
-Topology discovery sorts the current peer keys before assigning subchannels,
-but adding, removing, or renaming a peer can change the resulting indices.
-Treat an index as a local runtime position and query the current count; do not
-persist an assumption that index _N_ always identifies a particular peer
-instance. For large peer sets, do not infer numeric ordering from instance-name
-suffixes either.
+Subchannel assignment is fixed from the peer set present in Redis when the
+device processes `INIT DEVICE`. The assignment is not updated automatically
+after the device reaches `DeviceReady`. After adding, removing, or renaming a
+peer, return all affected devices to `Idle` with `RESET DEVICE`, make the peer
+set and topology definitions consistent in Redis, and run `INIT DEVICE` again.
+`RESET TASK`, which returns a device from `Ready` to `DeviceReady`, does not
+rebuild the topology.
+
+Topology discovery sorts the peer keys before assigning subchannels. Treat an
+index as a local runtime position and query the current count; do not persist
+an assumption that index _N_ always identifies a particular peer instance. For
+large peer sets, do not infer numeric ordering from instance-name suffixes
+either.
 
 The `[N]` suffix in `--connect-config` has a different scope: it selects
 subchannel _N_ of the remote bind channel while resolving an address. The index
