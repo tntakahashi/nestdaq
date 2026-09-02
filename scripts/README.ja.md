@@ -302,12 +302,77 @@ redis-cli -u redis://127.0.0.1:6379 FLUSHALL
 `link SERVICE CHANNEL PEER_SERVICE PEER_CHANNEL`は2つのエンドポイント定義間の論理接続を書き込みます。
 各デバイスの起動時にトポロジープラグインが定義を読み、具体的なFairMQチャネルプロパティーへ変換します。
 
+<a id="211-connection-cardinality-recipes"></a>
+#### 2.1.1. 接続数ごとの設定
+
+[表2](#table-topology-cardinality-ja)は、接続相手ごとのローカルsubchannelを必要とするPUSH/PULLトポロジーについて、producerとconsumerのプロセス数に対応する両エンドポイントの`autoSubChannel`設定を示します。
+ここで _N_ と _M_ は、2つのサービスで実行するインスタンス数です。
+通常はプラグインが`numSockets`を導出するため、次の設定では指定しません。
+
+<a id="table-topology-cardinality-ja"></a>
+**表2：接続数ごとのPUSH/PULL用`autoSubChannel`設定。**
+
+| 接続形態 | producer数 | consumer数 | producerの`autoSubChannel` | consumerの`autoSubChannel` | ローカルsubchannel |
+|----------|------------|------------|-----------------------------|-----------------------------|---------------------|
+| 並列1対1 | _N_ | _N_ | `false` | `false` | 各プロセスに1つ。ソート後の順番が同じプロセス同士を接続します。 |
+| 1対N | 1 | _N_ | `true` | `false` | producerにはconsumerごとに1つ、各consumerには1つ作成します。 |
+| N対1 | _N_ | 1 | `false` | `true` | 各producerには1つ、consumerにはproducerごとに1つ作成します。 |
+| N対M | _N_ | _M_ | `true` | `true` | 検出した接続相手プロセスに基づくsubchannelを各プロセスに作成します。 |
+
+4種類ともendpointとlinkの形式は同じです。
+プロセス数と2つの`autoSubChannel`値だけが異なります。
+
+```bash
+# 並列1対1: ProducerとConsumerをそれぞれNプロセス起動する。
+endpoint Producer out type push method bind    autoSubChannel false
+endpoint Consumer in  type pull method connect autoSubChannel false
+link Producer out Consumer in
+
+# 1対N: Producerを1プロセス、ConsumerをNプロセス起動する。
+endpoint Producer out type push method bind    autoSubChannel true
+endpoint Consumer in  type pull method connect autoSubChannel false
+link Producer out Consumer in
+
+# N対1: ProducerをNプロセス、Consumerを1プロセス起動する。
+endpoint Producer out type push method bind    autoSubChannel false
+endpoint Consumer in  type pull method connect autoSubChannel true
+link Producer out Consumer in
+
+# N対M: ProducerをNプロセス、ConsumerをMプロセス起動する。
+endpoint Producer out type push method bind    autoSubChannel true
+endpoint Consumer in  type pull method connect autoSubChannel true
+link Producer out Consumer in
+```
+
+これらの設定はPUSH/PULL接続を作成しますが、ユーザーコードがメッセージをローカルsubchannelへどのように振り分けるかは定義しません。
+PUSH/PULLは、すべてのconsumerへ各メッセージを複製する方式ではありません。
+ユーザーコードでローカルsubchannelを明示的に選択するか、`fairmq-splitter`のようなコンポーネントでラウンドロビンを実装できます。
+
+1つのpublisherからすべてのsubscriberへ各メッセージをbroadcastする場合は、別のPUB/SUB設定を使用します。
+publisherには1つのPUB subchannel、各subscriberには1つのSUB subchannelを維持し、すべてのsubscriberを同じPUBソケットへ接続して、必要なSUB購読フィルターを設定します。
+
+```bash
+# 1対N broadcast: Publisherを1プロセス、SubscriberをNプロセス起動する。
+endpoint Publisher  out type pub method bind    autoSubChannel false
+endpoint Subscriber in  type sub method connect autoSubChannel false
+link Publisher out Subscriber in
+```
+
+このbroadcast設定は、[表2](#table-topology-cardinality-ja)の1対N行についてソケット型だけを変更したものではありません。
+publisherにsubscriberごとのPUB subchannelを作成した場合、1回の`Send(..., index)`が送信するのは、選択したローカルPUBソケットだけです。
+
+並列1対1では、検出したインスタンスとチャネルのキーをソートし、同じ順番にあるプロセス同士を接続します。
+小規模で固定された集合では、末尾が`-0`、`-1`のような名前は通常期待どおりに対応しますが、トポロジーコードはsuffixを数値IDとして解析しません。
+自動割り当てされたsubchannel indexを永続的なpeer IDとして扱わないでください。
+ユーザーコードからの選択方法とindexの安定性については、
+[`plugins/README.ja.md#selecting-local-subchannels-ja`](../plugins/README.ja.md#selecting-local-subchannels-ja)を参照してください。
+
 <a id="22-topology-1-1sh"></a>
 ### 2.2. topology-1-1.sh
 
 このスクリプトは、 **Sampler** と **Sink** を接続する単純な **PUSH-PULL** トポロジーを定義します。
 _N_ 個のSamplerと _N_ 個のSinkを起動すると、 _N_ 組のSampler/Sinkペアを形成します。
-各Samplerは、同じインスタンスインデックスを持つ1つのSinkへデータを送信します。
+各Samplerは、ソート後の順番が同じ1つのSinkへデータを送信します。
 
 ```bash
   # 1対1のSampler/Sink topologyをRedisへ登録する。
@@ -324,7 +389,7 @@ link Sampler data Sink in
 ```
 
 `Sampler:data`はPUSHソケットをバインドし、`Sink:in`はPULLソケットへ接続します。
-リンクは[図2](#figure-one-to-one-topology-ja)に示すように、`Sampler-0`と`Sink-0`のようなインスタンスインデックスが一致するデバイスをペアにします。
+リンクは[図2](#figure-one-to-one-topology-ja)に示すように、小規模で固定された集合では`Sampler-0`と`Sink-0`のような、ソート後の順番が同じデバイスをペアにします。
 
 ```mermaid
 graph LR
@@ -340,7 +405,7 @@ graph LR
 ### 2.3. topology-n-n-m.sh
 
 このスクリプトは、 _N_ 個のSampler、 _N_ 個のfairmq-splitter、 _M_ 個のSinkを接続する単純な **PUSH-PULL** トポロジーを定義します。
-各Samplerは同じインスタンスインデックスのfairmq-splitterへデータを送り、fairmq-splitterがSinkへデータを送ります。
+各Samplerはソート後の順番が同じfairmq-splitterへデータを送り、fairmq-splitterがSinkへデータを送ります。
 `autoSubChannel true`フラグは、各サブソケットに異なる`address:port`を設定し、インデックスで区別できるようにします。
 fairmq-splitterは送信済みメッセージ数を用いたラウンドロビンで送信先を決定します。
 
@@ -361,7 +426,7 @@ link Sampler         data     fairmq-splitter data-in
 link fairmq-splitter data-out Sink            in
 ```
 
-最初のリンクは各Samplerを同じインデックスのスプリッターインスタンスとペアにします。
+最初のリンクは各Samplerをソート後の順番が同じスプリッターインスタンスとペアにします。
 2番目のリンクは`autoSubChannel true`を使用し、[図3](#figure-splitter-fan-out-topology-ja)に示すようにスプリッターの出力サブチャネルから複数のSinkインスタンスへファンアウトできるようにします。
 
 ```mermaid
@@ -465,12 +530,12 @@ param Sink multipart true
 
 - `--output DIR`、`--processing-mode MODE`、`--no-poll LIST`のようにプレースホルダーを表示するオプションは、`--key value`形式で値が必要です。
 - `--force`、`--single-output`、`--no-dqm-channel`のようにプレースホルダーのないオプションは、指定の有無だけを表すフラグです。
-  [表2](#table-generator-options-ja)の動作を適用するにはフラグだけを指定し、既定値を維持するには省略します。
+  [表3](#table-generator-options-ja)の動作を適用するにはフラグだけを指定し、既定値を維持するには省略します。
 
 指定の有無だけを表すフラグはブール値を受け取りません。
 例えば`--no-dqm-channel true`ではなく`--no-dqm-channel`を使用し、`--no-dqm-channel false`と書く代わりにフラグを省略します。
 フラグを繰り返しても状態は再度切り替わりません。
-[表2](#table-generator-options-ja)の`off`はフラグ未指定を意味します。
+[表3](#table-generator-options-ja)の`off`はフラグ未指定を意味します。
 `--no-*`フラグが`off`の場合、対象機能は既定で有効です。
 
 ```bash
@@ -482,10 +547,10 @@ param Sink multipart true
   --single-output
 ```
 
-ジェネレーターオプションを[表2](#table-generator-options-ja)に示します。
+ジェネレーターオプションを[表3](#table-generator-options-ja)に示します。
 
 <a id="table-generator-options-ja"></a>
-**表2：デバイススケルトンジェネレーターのオプション。**
+**表3：デバイススケルトンジェネレーターのオプション。**
 
 | オプション | デフォルト | 説明 |
 | :-- | :-- | :-- |
@@ -509,10 +574,10 @@ param Sink multipart true
 | `--no-drain-input` | オフ | `PostRun()`の入力排出コードを生成しない。 |
 | `--no-poll LIST` | なし | FairMQのポーリングから除外するチャネル種別のコンマ区切り一覧：`input`、`output`、`dqm`。 |
 
-処理モードを[表3](#table-processing-modes-ja)に示します。
+処理モードを[表4](#table-processing-modes-ja)に示します。
 
 <a id="table-processing-modes-ja"></a>
-**表3：デバイススケルトンジェネレーターが生成する処理モード。**
+**表4：デバイススケルトンジェネレーターが生成する処理モード。**
 
 | モード | 生成される動作 |
 | :-- | :-- |
@@ -612,14 +677,14 @@ DQMは即時送信できない場合にサンプルを破棄します。
 単一メッセージの例にはジェネレーターオプション`--single-output`または`--single-dqm`を使用します。
 `SendOutputMessage()`と`SendDQMMessage()`は、生成された`fair::mq::Parts&`または`fair::mq::MessagePtr&`ペイロードを受け取り、チャネルの準備状態、`Send()`、成功/失敗確認だけを処理します。
 
-[表2](#table-generator-options-ja)のオプションはジェネレーターを制御するものであり、生成したデバイスのコマンドラインオプションではありません。
+[表3](#table-generator-options-ja)のオプションはジェネレーターを制御するものであり、生成したデバイスのコマンドラインオプションではありません。
 生成C++コードはカスタムオプションを文字列として登録します。
 `InitTask()`は文字列を変換してから数値メンバーへ代入します。
 
-生成デバイスのオプションを[表4](#table-generated-device-options-ja)に示します。
+生成デバイスのオプションを[表5](#table-generated-device-options-ja)に示します。
 
 <a id="table-generated-device-options-ja"></a>
-**表4：生成デバイスが登録するコマンドラインオプション。**
+**表5：生成デバイスが登録するコマンドラインオプション。**
 
 | 生成されるデバイスのコマンドラインオプション | デフォルト | 説明 |
 | :-- | :-- | :-- |
@@ -630,11 +695,11 @@ DQMは即時送信できない場合にサンプルを破棄します。
 入力チャネルがある場合、既定で`PostRun()`へ入力排出コードを生成します。
 無効化には`--no-drain-input`を使用します。
 
-ジェネレーターは[表5](#table-device-skeleton-templates-ja)の組み込みテンプレートを読み、デバイス固有のプレースホルダーを置換し、生成ファイルを出力ディレクトリへ書き込みます。
+ジェネレーターは[表6](#table-device-skeleton-templates-ja)の組み込みテンプレートを読み、デバイス固有のプレースホルダーを置換し、生成ファイルを出力ディレクトリへ書き込みます。
 主要な置換には`@CLASS_NAME@`、`@HEADER_FILE@`、`@SOURCE_FILE@`と、メンバー、オプション、処理メソッド、送信ヘルパー、排出コード用の生成C++ブロックがあります。
 
 <a id="table-device-skeleton-templates-ja"></a>
-**表5：組み込みテンプレートと生成ファイル。**
+**表6：組み込みテンプレートと生成ファイル。**
 
 | テンプレート | `MyDevice`用生成ファイル |
 | :-- | :-- |

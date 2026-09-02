@@ -66,7 +66,7 @@ TTLの扱いはプラグインごとに異なります。
 | `--ttl-update-interval` | `3` | TTL更新間隔 (秒)。 |
 | `--startup-state` | `idle` | 起動時にプラグインがデバイスを`Idle`から自動的に進めるFairMQ状態：`idle`、`initializing-device`、`initialized`、`bound`、`device-ready`、`ready`、`running`。 |
 | `--enable-uds` | `true` | すべての接続相手の`hostIp`がこのプロセスと同じZeroMQバインドチャネルだけにUnixドメインソケット (UDS) アドレスを追加します。`true`または`1`で有効になります。 |
-| `--connect-config` | なし | 一時メッセージキュー (MQ) チャネル接続パラメーターを記述するJavaScript Object Notation (JSON) 文字列。2.5.2節で構造と接続相手の記法を説明します。 |
+| `--connect-config` | なし | 一時メッセージキュー (MQ) チャネル接続パラメーターを記述するJavaScript Object Notation (JSON) 文字列。2.5.3節で構造と接続相手の記法を説明します。 |
 | `--max-retry-to-resolve-address` | `10` | 接続アドレス解決の最大再試行回数。 |
 
 <a id="22-daq-service-identity-defaults"></a>
@@ -332,8 +332,55 @@ flowchart LR
 プラグインは通常、トポロジーから`num_sockets`を計算します。
 `autoSubChannel=true`のチャネルでは、検出したピアデバイスインスタンスに応じて`num_sockets`が増え、各FairMQサブソケットへ異なる`address:port`とサブチャネルインデックスを設定できます。
 
-<a id="252-connect-config"></a>
-#### 2.5.2. `--connect-config`
+<a id="selecting-local-subchannels-ja"></a>
+#### 2.5.2. ユーザーコードでのローカルsubchannel選択
+
+`Send()`と`Receive()`は、peerのサービスまたはインスタンスを直接選ぶのではなく、ローカルチャネルvectorの要素を選びます。
+indexを指定する前に`GetNumSubChannels()`で現在の要素数を取得し、範囲外の値を拒否してください。
+indexを省略するとローカルsubchannel `0`を選択します。
+
+```cpp
+const auto kChannel = std::string{"data"};
+const auto kSubchannel = std::size_t{2};
+const auto kCount = GetNumSubChannels(kChannel);
+if (kSubchannel >= kCount) {
+    throw std::out_of_range{"configured subchannel does not exist"};
+}
+
+if (Send(message, kChannel, static_cast<int>(kSubchannel)) < 0) {
+    LOG(error) << "failed to send on subchannel " << kSubchannel;
+}
+```
+
+受信するsubchannelを明示する場合は、対応するoverloadを使用します。
+
+```cpp
+if (Receive(message, "in", static_cast<int>(kSubchannel)) < 0) {
+    LOG(error) << "failed to receive on subchannel " << kSubchannel;
+}
+```
+
+選択する側には、そのindexまでのローカルsubchannelが必要です。
+トポロジーで管理する構成では、接続相手ごとのローカルsubchannelをユーザーコードから選ぶ側に`autoSubChannel=true`を設定します。
+1対N、N対1、N対Mの設定は、[scripts文書の表2](../scripts/README.ja.md#table-topology-cardinality-ja)に示します。
+固定したFairMQチャネル設定では、代わりにソケット数を明示できます。
+
+`OnData(channel, callback)`は、指定した名前のチャネル全体にcallbackを登録するものであり、1つのsubchannelを選択しません。
+FairMQは準備できたローカルsubchannelから受信し、そのローカルindexをcallbackへ渡します。
+1つのsubchannelだけから受信する場合は、`ConditionalRun()`または`Run()`で`Receive(..., channel, index)`を呼ぶ手動受信loopを実装します。
+`OnData()`を1つでも登録すると、デバイスは手動実行loopではなくcallback方式の入力処理へ切り替わるため、そのデバイスでは`OnData()` callbackを登録しないでください。
+
+トポロジー検出は現在のpeerキーをソートしてからsubchannelを割り当てますが、peerの追加、削除、名前変更によってindexは変わり得ます。
+indexは実行時のローカル位置として扱い、現在の要素数を確認してください。
+index _N_ が常に特定のpeerインスタンスを表すという仮定を保存しないでください。
+接続相手が多い場合は、インスタンス名の数値suffixから並び順を推測することも避けてください。
+
+`--connect-config`の`[N]` suffixは、アドレス解決時にリモートのbindチャネルにあるsubchannel _N_ を選択します。
+一方、`Send()`または`Receive()`へ渡すindexはローカルチャネルvectorの要素を選択します。
+両者のindexが同じ値になるとは限りません。
+
+<a id="253-connect-config"></a>
+#### 2.5.3. `--connect-config`
 
 `--connect-config`は、このオプションを受け取るデバイスプロセスの接続チャネルおよび接続相手をJSON文字列で直接定義します。
 `TopologyConfig`は、このJSONの各最上位チャネルへ`method=connect`を設定します。
@@ -362,8 +409,8 @@ suffixを省略して`autoSubChannel=false`を設定した場合、`TopologyConf
 現在の実装では、suffixを省略して`autoSubChannel=true`を設定する経路が保存済みの`chans.{channel}.{subindex}` key patternと確実には一致しません。
 明示的な`[N]`接尾辞、またはトポロジーのエンドポイント/リンク設定を使用してください。
 
-<a id="253-bindconnect-sequence"></a>
-#### 2.5.3. bind/connectシーケンス
+<a id="254-bindconnect-sequence"></a>
+#### 2.5.4. bind/connectシーケンス
 
 `TopologyConfig`はFairMQ状態遷移中にRedisを通じてバインドエンドポイントと接続エンドポイントを同期します。
 [図2](#figure-bind-connect-sequence-ja)の`Device`、`TopologyConfig`、`FairMQプロパティ`は、同じNestDAQデバイスプロセスに属します。

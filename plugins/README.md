@@ -64,7 +64,7 @@ When an option is omitted, the plugin uses the default shown in [Table 2](#table
 | `--ttl-update-interval`          | `3`                        | TTL refresh interval in seconds. |
 | `--startup-state`                | `idle`                     | FairMQ state to which the plugin automatically advances the device from `Idle` during startup: `idle`, `initializing-device`, `initialized`, `bound`, `device-ready`, `ready`, or `running`. |
 | `--enable-uds`                   | `true`                     | Adds Unix domain socket (UDS) addresses only to ZeroMQ bind channels whose peers all have the same `hostIp` as this process. `true` and `1` enable it. |
-| `--connect-config`               | none                       | JavaScript Object Notation (JSON) string describing temporary message queue (MQ) channel connection parameters. Section 2.5.2 describes its structure and peer syntax. |
+| `--connect-config`               | none                       | JavaScript Object Notation (JSON) string describing temporary message queue (MQ) channel connection parameters. Section 2.5.3 describes its structure and peer syntax. |
 | `--max-retry-to-resolve-address` | `10`                       | Maximum retry count for resolving connect addresses. |
 
 ### 2.2. DAQ Service Identity Defaults
@@ -327,7 +327,63 @@ flowchart LR
 The plugin normally calculates `num_sockets` from the topology.
 For channels with `autoSubChannel=true`, `num_sockets` grows with the discovered peer device instances so that each FairMQ sub-socket can receive a distinct `address:port` and subchannel index.
 
-#### 2.5.2. `--connect-config`
+<a id="selecting-local-subchannels-en"></a>
+#### 2.5.2. Selecting local subchannels in device code
+
+`Send()` and `Receive()` select an element of the local channel vector, not a
+peer service or instance directly. Before selecting an index, obtain the
+current count with `GetNumSubChannels()` and reject an out-of-range value.
+Omitting the index selects local subchannel `0`.
+
+```cpp
+const auto kChannel = std::string{"data"};
+const auto kSubchannel = std::size_t{2};
+const auto kCount = GetNumSubChannels(kChannel);
+if (kSubchannel >= kCount) {
+    throw std::out_of_range{"configured subchannel does not exist"};
+}
+
+if (Send(message, kChannel, static_cast<int>(kSubchannel)) < 0) {
+    LOG(error) << "failed to send on subchannel " << kSubchannel;
+}
+```
+
+For explicit receive selection, use the corresponding overload:
+
+```cpp
+if (Receive(message, "in", static_cast<int>(kSubchannel)) < 0) {
+    LOG(error) << "failed to receive on subchannel " << kSubchannel;
+}
+```
+
+The selected side must have that many local subchannels. In topology-managed
+configurations, set `autoSubChannel=true` on the side whose device code needs
+one local subchannel per discovered peer. [Table 2 in the scripts
+documentation](../scripts/README.md#table-topology-cardinality-en) gives the
+settings for 1:N, N:1, and N:M connections. A fixed FairMQ channel
+configuration may instead set its socket count explicitly.
+
+`OnData(channel, callback)` registers the callback for the whole named channel;
+it does not select one subchannel. FairMQ receives from whichever local
+subchannel is ready and passes that local index to the callback. To receive
+only one chosen subchannel, implement a manual receive loop with
+`Receive(..., channel, index)` in `ConditionalRun()` or `Run()`. Do not register
+any `OnData()` callback on that device, because registering one switches the
+device to the callback-based input path instead of its manual run loop.
+
+Topology discovery sorts the current peer keys before assigning subchannels,
+but adding, removing, or renaming a peer can change the resulting indices.
+Treat an index as a local runtime position and query the current count; do not
+persist an assumption that index _N_ always identifies a particular peer
+instance. For large peer sets, do not infer numeric ordering from instance-name
+suffixes either.
+
+The `[N]` suffix in `--connect-config` has a different scope: it selects
+subchannel _N_ of the remote bind channel while resolving an address. The index
+passed to `Send()` or `Receive()` selects a local channel-vector element. These
+two indices need not have the same value.
+
+#### 2.5.3. `--connect-config`
 
 `--connect-config` defines connect channels on the device process and their peers directly in a JSON string.
 `TopologyConfig` sets `method=connect` for every top-level channel in this JSON.
@@ -354,7 +410,7 @@ An explicit suffix such as `[0]` selects only that subchannel regardless of `aut
 If the suffix is omitted and `autoSubChannel=false`, `TopologyConfig` selects subchannel `0`.
 The current unindexed `autoSubChannel=true` path does not match the stored `chans.{channel}.{subindex}` key pattern reliably; use explicit `[N]` suffixes or topology endpoint/link configuration instead.
 
-#### 2.5.3. Bind/Connect Sequence
+#### 2.5.4. Bind/Connect Sequence
 
 `TopologyConfig` synchronizes bind and connect endpoints through Redis during FairMQ state transitions.
 `Device`, `TopologyConfig`, and `FairMQ properties` in [Figure 2](#figure-bind-connect-sequence-en) belong to the same NestDAQ device process.

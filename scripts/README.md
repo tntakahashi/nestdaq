@@ -325,10 +325,84 @@ setup.
 between two endpoint definitions. The topology plugin reads these definitions
 when each device starts and turns them into concrete FairMQ channel properties.
 
+#### 2.1.1. Connection cardinality recipes
+
+[Table 2](#table-topology-cardinality-en) maps the number of producer and
+consumer processes to the `autoSubChannel` setting on each endpoint when a
+PUSH/PULL topology needs one local subchannel per discovered peer.
+Here, _N_ and _M_ are the numbers of running instances of the two services.
+The plugin normally derives `numSockets`, so these recipes do not set it.
+
+<a id="table-topology-cardinality-en"></a>
+**Table 2: PUSH/PULL `autoSubChannel` settings for each connection cardinality.**
+
+| Connection | Producer processes | Consumer processes | Producer `autoSubChannel` | Consumer `autoSubChannel` | Local subchannels |
+|------------|--------------------|--------------------|---------------------------|---------------------------|-------------------|
+| Parallel 1:1 | _N_ | _N_ | `false` | `false` | One on each process; processes are paired by their sorted ordinal positions. |
+| 1:N | 1 | _N_ | `true` | `false` | The producer gets one subchannel per consumer; each consumer keeps one. |
+| N:1 | _N_ | 1 | `false` | `true` | Each producer keeps one subchannel; the consumer gets one per producer. |
+| N:M | _N_ | _M_ | `true` | `true` | Each process gets subchannels derived from the discovered peer processes. |
+
+All four cases use the same endpoint and link form; only the process counts and
+the two `autoSubChannel` values change:
+
+```bash
+# Parallel 1:1: run N Producer processes and N Consumer processes.
+endpoint Producer out type push method bind    autoSubChannel false
+endpoint Consumer in  type pull method connect autoSubChannel false
+link Producer out Consumer in
+
+# 1:N: run one Producer process and N Consumer processes.
+endpoint Producer out type push method bind    autoSubChannel true
+endpoint Consumer in  type pull method connect autoSubChannel false
+link Producer out Consumer in
+
+# N:1: run N Producer processes and one Consumer process.
+endpoint Producer out type push method bind    autoSubChannel false
+endpoint Consumer in  type pull method connect autoSubChannel true
+link Producer out Consumer in
+
+# N:M: run N Producer processes and M Consumer processes.
+endpoint Producer out type push method bind    autoSubChannel true
+endpoint Consumer in  type pull method connect autoSubChannel true
+link Producer out Consumer in
+```
+
+These settings create PUSH/PULL connections; they do not define how device code
+distributes messages over the local subchannels. PUSH/PULL does not copy every
+message to every consumer. Device code may select a local subchannel
+explicitly, and a component such as `fairmq-splitter` may implement round-robin
+selection.
+
+When one publisher must broadcast each message to all subscribers, use a
+separate PUB/SUB recipe. Keep one PUB subchannel on the publisher and one SUB
+subchannel on each subscriber so all subscribers connect to the same PUB
+socket, then configure the required SUB subscription filters:
+
+```bash
+# 1:N broadcast: run one Publisher process and N Subscriber processes.
+endpoint Publisher  out type pub method bind    autoSubChannel false
+endpoint Subscriber in  type sub method connect autoSubChannel false
+link Publisher out Subscriber in
+```
+
+This broadcast recipe is not obtained by changing only the socket types in the
+1:N row of [Table 2](#table-topology-cardinality-en). If the publisher instead
+has one PUB subchannel per subscriber, one `Send(..., index)` call reaches only
+the selected local PUB socket.
+
+With parallel 1:1, pairing uses the sorted ordinal positions of the discovered
+instance/channel keys. Names ending in `-0`, `-1`, and so on normally pair as
+expected for small fixed sets, but topology code does not parse the suffix as a
+numeric identity. Do not treat an automatically assigned subchannel index as a
+persistent peer identifier. See
+[`plugins/README.md#selecting-local-subchannels-en`](../plugins/README.md#selecting-local-subchannels-en)
+for user-code selection and index-stability constraints.
+
 ### 2.2. topology-1-1.sh
 This script defines a simple **PUSH-PULL** topology between **Sampler** and **Sink**.
 When _N_ Samplers and _N_ Sinks start, they form _N_ Sampler/Sink pairs.
-Each Sampler sends data to the Sink with the same instance index.
+Each Sampler sends data to the Sink at the same sorted ordinal position.
 
 ```bash
   # Register the one-to-one Sampler/Sink topology in Redis.
@@ -345,8 +419,9 @@ link Sampler data Sink in
 ```
 
 `Sampler:data` binds a PUSH socket, `Sink:in` connects a PULL socket, and the
-link pairs devices with matching instance indexes such as `Sampler-0` to
-`Sink-0`, as shown in [Figure 2](#figure-one-to-one-topology-en).
+link pairs devices at matching sorted ordinal positions, such as `Sampler-0`
+to `Sink-0` in a small fixed set, as shown in
+[Figure 2](#figure-one-to-one-topology-en).
 
 ```mermaid
 graph LR
@@ -360,7 +435,7 @@ graph LR
 
 ### 2.3. topology-n-n-m.sh
 This script defines a **PUSH-PULL** topology with _N_ **Sampler** processes, _N_ **fairmq-splitter** processes, and _M_ **Sink** processes.
-Each Sampler sends data to the fairmq-splitter with the same instance index, and the fairmq-splitter forwards the data to the Sinks.
+Each Sampler sends data to the fairmq-splitter at the same sorted ordinal position, and the fairmq-splitter forwards the data to the Sinks.
 The `autoSubChannel true` flag gives each sub-socket a different `address:port` and distinguishes the sub-sockets by index.
 The fairmq-splitter selects destinations in round-robin order according to the number of messages sent.
 
@@ -381,8 +456,8 @@ link Sampler         data     fairmq-splitter data-in
 link fairmq-splitter data-out Sink            in
 ```
 
-The first link keeps each sampler paired with the splitter instance of the same
-index. The second link uses `autoSubChannel true` so splitter output
+The first link keeps each sampler paired with the splitter instance at the same
+sorted ordinal position. The second link uses `autoSubChannel true` so splitter output
 subchannels can fan out to multiple sink instances, as shown in
 [Figure 3](#figure-splitter-fan-out-topology-en).
 
@@ -500,13 +575,13 @@ Generator options have two command-line forms:
   `--key value` form.
 - Options shown without a placeholder, such as `--force`, `--single-output`,
   or `--no-dqm-channel`, are presence-only flags. Specify the flag by itself
-  to apply the behavior described in [Table 2](#table-generator-options-en); omit
+  to apply the behavior described in [Table 3](#table-generator-options-en); omit
   it to keep the default.
 
 Presence-only flags do not accept Boolean values. For example, use
 `--no-dqm-channel`, not `--no-dqm-channel true`, and omit the flag instead of
 writing `--no-dqm-channel false`. Repeating a flag does not toggle its state
-back. In [Table 2](#table-generator-options-en), `off` means that the flag is not
+back. In [Table 3](#table-generator-options-en), `off` means that the flag is not
 specified. For a `--no-*`
 flag, `off` means that the named feature remains enabled by default.
 
@@ -519,10 +594,10 @@ flag, `off` means that the named feature remains enabled by default.
   --single-output
 ```
 
-Generator options are listed in [Table 2](#table-generator-options-en).
+Generator options are listed in [Table 3](#table-generator-options-en).
 
 <a id="table-generator-options-en"></a>
-**Table 2: Device skeleton generator options.**
+**Table 3: Device skeleton generator options.**
 
 | Option | Default | Description |
 | :-- | :-- | :-- |
@@ -546,10 +621,10 @@ Generator options are listed in [Table 2](#table-generator-options-en).
 | `--no-drain-input` | off | Do not generate `PostRun()` input drain code. |
 | `--no-poll LIST` | none | Comma-separated channel kinds to exclude from FairMQ polling: `input`, `output`, `dqm`. |
 
-The processing modes are listed in [Table 3](#table-processing-modes-en).
+The processing modes are listed in [Table 4](#table-processing-modes-en).
 
 <a id="table-processing-modes-en"></a>
-**Table 3: Processing modes generated by the device skeleton generator.**
+**Table 4: Processing modes generated by the device skeleton generator.**
 
 | Mode | Generated behavior |
 | :-- | :-- |
@@ -659,14 +734,14 @@ to generate single-message examples instead. `SendOutputMessage()` and
 payload and only handle channel readiness, `Send()`, and success/failure
 checks.
 
-The options in [Table 2](#table-generator-options-en) control the generator; they are not command-line options for the generated device.
+The options in [Table 3](#table-generator-options-en) control the generator; they are not command-line options for the generated device.
 The generated C++ code registers custom options as strings.
 `InitTask()` converts the strings before assigning numeric members.
 
-The generated device options are listed in [Table 4](#table-generated-device-options-en).
+The generated device options are listed in [Table 5](#table-generated-device-options-en).
 
 <a id="table-generated-device-options-en"></a>
-**Table 4: Command-line options registered by the generated device.**
+**Table 5: Command-line options registered by the generated device.**
 
 | Generated device command-line option | Default | Description |
 | :-- | :-- | :-- |
@@ -678,14 +753,14 @@ Input drain code is generated in `PostRun()` by default when an input channel
 is present; disable it with `--no-drain-input`.
 
 The generator reads the built-in templates listed in
-[Table 5](#table-device-skeleton-templates-en), substitutes the device-specific
+[Table 6](#table-device-skeleton-templates-en), substitutes the device-specific
 placeholders, and writes the resulting files to the output directory. The main
 substitutions include `@CLASS_NAME@`,
 `@HEADER_FILE@`, `@SOURCE_FILE@`, and generated C++ blocks for members,
 options, processing methods, send helpers, and drain code.
 
 <a id="table-device-skeleton-templates-en"></a>
-**Table 5: Built-in templates and their generated files.**
+**Table 6: Built-in templates and their generated files.**
 
 | Template | Generated file for `MyDevice` |
 | :-- | :-- |
