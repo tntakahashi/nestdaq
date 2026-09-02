@@ -256,6 +256,10 @@ FairMQでは、同じ名前のチャネルを`std::vector<fair::mq::Channel>`と
 - `autoSubChannel=true`は、バインドエンドポイントと接続エンドポイントの両方で、検出したピアデバイスインスタンスから`num_sockets`を増やします。
   プロセス動作中に接続相手またはソケット数を検出するn:mトポロジーに適します。
 
+connect endpointが複数のpeerすべてのbind addressを解決して接続する場合は、ユーザーコードがsubchannel indexでpeerを区別しなくても、connect側へ`autoSubChannel=true`を設定します。
+bind endpointでは、peerごとに異なるローカルsubchannelとbind addressが必要な場合に`autoSubChannel=true`を設定します。
+peerをローカルsubchannelで区別する必要がなければ、`autoSubChannel=false`の1つのbind socketで複数peerからの接続を受けられます。
+
 [図1](#figure-auto-subchannel-sockets-ja)は、プロセス数が異なる2つのサービスをトポロジーが接続するとき、各側の`autoSubChannel`設定によってアドレスを持つチャネルソケット数がどう変わるかを示します。
 [図1](#figure-auto-subchannel-sockets-ja)はソケットおよびサブチャネル数の例であり、固定ポート番号の割り当てやメッセージ方向を示すものではありません。
 非表示の配置用リンクは`Sampler`を左、`Sink`を右に保つためのものであり、データ経路ではありません。
@@ -394,7 +398,8 @@ if (Receive(message, "in", static_cast<int>(kSubchannel)) < 0) {
 
 選択する側には、そのindexまでのローカルsubchannelが必要です。
 トポロジーで管理する構成では、接続相手ごとのローカルsubchannelをユーザーコードから選ぶ側に`autoSubChannel=true`を設定します。
-1対N、N対1、N対Mの設定は、[scripts文書の表2](../scripts/README.ja.md#table-topology-cardinality-ja)に示します。
+connect endpointが複数のpeerすべてのbind addressを解決して接続する場合も、ユーザーコードからpeerを明示的に選択するかどうかに関係なく、`autoSubChannel=true`が必要です。
+bind/connectの向きを含む1対N、N対1、N対Mの設定は、[scripts文書の表2](../scripts/README.ja.md#table-topology-cardinality-ja)に示します。
 
 `OnData(channel, callback)`は、指定した名前のチャネル全体にcallbackを登録するものであり、1つのsubchannelを選択しません。
 FairMQは準備できたローカルsubchannelから受信し、そのローカルindexをcallbackへ渡します。

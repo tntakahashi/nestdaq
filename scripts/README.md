@@ -328,23 +328,35 @@ when each device starts and turns them into concrete FairMQ channel properties.
 #### 2.1.1. Connection cardinality recipes
 
 [Table 2](#table-topology-cardinality-en) maps the number of producer and
-consumer processes to the `autoSubChannel` setting on each endpoint when a
-PUSH/PULL topology needs one local subchannel per discovered peer.
+consumer processes and the bind/connect orientation to the `autoSubChannel`
+setting on each endpoint.
 Here, _N_ and _M_ are the numbers of running instances of the two services.
 The plugin normally derives `numSockets`, so these recipes do not set it.
+
+In the current topology plugin, a connect endpoint needs
+`autoSubChannel=true` to resolve and connect to all of multiple peer bind
+addresses. This remains
+necessary when device code receives from any ready subchannel without using the
+index to distinguish peers. A bind endpoint needs `autoSubChannel=true` only
+when it requires a separate local subchannel and address for each peer. With
+`autoSubChannel=false`, one bind socket can accept connections from multiple
+peers.
 
 <a id="table-topology-cardinality-en"></a>
 **Table 2: PUSH/PULL `autoSubChannel` settings for each connection cardinality.**
 
-| Connection | Producer processes | Consumer processes | Producer `autoSubChannel` | Consumer `autoSubChannel` | Local subchannels |
-|------------|--------------------|--------------------|---------------------------|---------------------------|-------------------|
-| Parallel 1:1 | _N_ | _N_ | `false` | `false` | One on each process; processes are paired by their sorted ordinal positions. |
-| 1:N | 1 | _N_ | `true` | `false` | The producer gets one subchannel per consumer; each consumer keeps one. |
-| N:1 | _N_ | 1 | `false` | `true` | Each producer keeps one subchannel; the consumer gets one per producer. |
-| N:M | _N_ | _M_ | `true` | `true` | Each process gets subchannels derived from the discovered peer processes. |
+| Connection | PUSH method | PULL method | PUSH `autoSubChannel` | PULL `autoSubChannel` | Resulting local subchannels |
+|------------|-------------|-------------|-----------------------|-----------------------|-----------------------------|
+| Parallel 1:1 | `bind` | `connect` | `false` | `false` | One on each process; processes are paired by their sorted ordinal positions. |
+| Parallel 1:1 | `connect` | `bind` | `false` | `false` | One on each process; processes are paired by their sorted ordinal positions. |
+| 1:N | `bind` | `connect` | `true` | `false` | The producer has one bind subchannel per consumer; each consumer connects to one address. |
+| 1:N | `connect` | `bind` | `true` | `false` | The producer connects to _N_ consumer bind addresses; each consumer uses one bind socket. |
+| N:1 | `bind` | `connect` | `false` | `true` | The consumer connects to _N_ producer bind addresses; each producer has one bind socket. |
+| N:1 | `connect` | `bind` | `false` | `false` | All producers connect to the single consumer bind socket. |
+| N:M | `bind` | `connect` | `true` | `true` | Each producer has one bind subchannel per consumer, and each consumer resolves all producer bind addresses. |
+| N:M | `connect` | `bind` | `true` | `false` | Each producer connects to _M_ consumer bind addresses; each consumer accepts all producers on one bind socket. |
 
-All four cases use the same endpoint and link form; only the process counts and
-the two `autoSubChannel` values change:
+The following examples first use `PUSH=bind` and `PULL=connect`:
 
 ```bash
 # Parallel 1:1: run N Producer processes and N Consumer processes.
@@ -365,6 +377,16 @@ link Producer out Consumer in
 # N:M: run N Producer processes and M Consumer processes.
 endpoint Producer out type push method bind    autoSubChannel true
 endpoint Consumer in  type pull method connect autoSubChannel true
+link Producer out Consumer in
+```
+
+If consumers do not need one local subchannel per producer, reverse the N:M
+bind/connect orientation. Each consumer then accepts all producers on one bind
+socket:
+
+```bash
+endpoint Producer out type push method connect autoSubChannel true
+endpoint Consumer in  type pull method bind    autoSubChannel false
 link Producer out Consumer in
 ```
 

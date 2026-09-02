@@ -305,22 +305,30 @@ redis-cli -u redis://127.0.0.1:6379 FLUSHALL
 <a id="211-connection-cardinality-recipes"></a>
 #### 2.1.1. 接続数ごとの設定
 
-[表2](#table-topology-cardinality-ja)は、接続相手ごとのローカルsubchannelを必要とするPUSH/PULLトポロジーについて、producerとconsumerのプロセス数に対応する両エンドポイントの`autoSubChannel`設定を示します。
+[表2](#table-topology-cardinality-ja)は、producerとconsumerのプロセス数およびbind/connectの向きに対応する両endpointの`autoSubChannel`設定を示します。
 ここで _N_ と _M_ は、2つのサービスで実行するインスタンス数です。
 通常はプラグインが`numSockets`を導出するため、次の設定では指定しません。
+
+現在のトポロジーpluginでは、connect endpointが複数のpeerすべてのbind addressを解決して接続する場合、`autoSubChannel=true`が必要です。
+ユーザーコードが準備できた任意のsubchannelから受信し、indexでpeerを区別しない場合も、この条件は変わりません。
+bind endpointで`autoSubChannel=true`が必要なのは、peerごとに異なるローカルsubchannelとaddressを設ける場合です。
+`autoSubChannel=false`の1つのbind socketでは、複数peerからの接続を受けられます。
 
 <a id="table-topology-cardinality-ja"></a>
 **表2：接続数ごとのPUSH/PULL用`autoSubChannel`設定。**
 
-| 接続形態 | producer数 | consumer数 | producerの`autoSubChannel` | consumerの`autoSubChannel` | ローカルsubchannel |
-|----------|------------|------------|-----------------------------|-----------------------------|---------------------|
-| 並列1対1 | _N_ | _N_ | `false` | `false` | 各プロセスに1つ。ソート後の順番が同じプロセス同士を接続します。 |
-| 1対N | 1 | _N_ | `true` | `false` | producerにはconsumerごとに1つ、各consumerには1つ作成します。 |
-| N対1 | _N_ | 1 | `false` | `true` | 各producerには1つ、consumerにはproducerごとに1つ作成します。 |
-| N対M | _N_ | _M_ | `true` | `true` | 検出した接続相手プロセスに基づくsubchannelを各プロセスに作成します。 |
+| 接続形態 | PUSH method | PULL method | PUSHの`autoSubChannel` | PULLの`autoSubChannel` | ローカルsubchannelの構成 |
+|----------|-------------|-------------|-------------------------|-------------------------|----------------------------|
+| 並列1対1 | `bind` | `connect` | `false` | `false` | 各プロセスに1つ。ソート後の順番が同じプロセス同士を接続します。 |
+| 並列1対1 | `connect` | `bind` | `false` | `false` | 各プロセスに1つ。ソート後の順番が同じプロセス同士を接続します。 |
+| 1対N | `bind` | `connect` | `true` | `false` | producerにはconsumerごとのbind subchannelを設け、各consumerは1つのaddressへ接続します。 |
+| 1対N | `connect` | `bind` | `true` | `false` | producerはN個のconsumerのbind addressへ接続し、各consumerは1つのbind socketを使用します。 |
+| N対1 | `bind` | `connect` | `false` | `true` | consumerはN個のproducerのbind addressへ接続し、各producerは1つのbind socketを使用します。 |
+| N対1 | `connect` | `bind` | `false` | `false` | すべてのproducerが1つのconsumerのbind socketへ接続します。 |
+| N対M | `bind` | `connect` | `true` | `true` | 各producerにconsumerごとのbind subchannelを設け、各consumerがすべてのproducerのbind addressを解決します。 |
+| N対M | `connect` | `bind` | `true` | `false` | 各producerがM個のconsumerのbind addressへ接続し、各consumerは1つのbind socketですべてのproducerを受け入れます。 |
 
-4種類ともendpointとlinkの形式は同じです。
-プロセス数と2つの`autoSubChannel`値だけが異なります。
+次の例では、最初に`PUSH=bind`、`PULL=connect`を使用します。
 
 ```bash
 # 並列1対1: ProducerとConsumerをそれぞれNプロセス起動する。
@@ -341,6 +349,15 @@ link Producer out Consumer in
 # N対M: ProducerをNプロセス、ConsumerをMプロセス起動する。
 endpoint Producer out type push method bind    autoSubChannel true
 endpoint Consumer in  type pull method connect autoSubChannel true
+link Producer out Consumer in
+```
+
+consumerがproducerごとのローカルsubchannelを必要としない場合は、N対Mのbind/connectを逆にします。
+各consumerは、1つのbind socketですべてのproducerからの接続を受けます。
+
+```bash
+endpoint Producer out type push method connect autoSubChannel true
+endpoint Consumer in  type pull method bind    autoSubChannel false
 link Producer out Consumer in
 ```
 

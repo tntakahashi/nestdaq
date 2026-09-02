@@ -251,6 +251,13 @@ Its default is `false`.
 - `autoSubChannel=true` increases `num_sockets` from the discovered peer device instances on both bind and connect endpoints.
   This setting is suitable for n:m topologies in which the process discovers the number of peers or sockets while running.
 
+Set `autoSubChannel=true` on a connect endpoint when it must resolve and connect
+to all of multiple peer bind addresses, even if device code does not distinguish
+the peers by subchannel index. On a bind endpoint, use it when a separate local
+subchannel and bind address are required for each peer. A single bind socket can
+instead accept connections from multiple peers with `autoSubChannel=false` when
+the application does not need to distinguish those peers by local subchannel.
+
 As [Figure 1](#figure-auto-subchannel-sockets-en) shows, each side's `autoSubChannel` setting changes the number of address-bearing channel sockets when a topology connects two services with different process counts.
 [Figure 1](#figure-auto-subchannel-sockets-en) illustrates socket and subchannel counts, not fixed port assignments or message direction.
 Invisible layout links keep `Sampler` on the left and `Sink` on the right; they are not data paths.
@@ -400,9 +407,11 @@ if (Receive(message, "in", static_cast<int>(kSubchannel)) < 0) {
 
 The selected side must have that many local subchannels. In topology-managed
 configurations, set `autoSubChannel=true` on the side whose device code needs
-one local subchannel per discovered peer. [Table 2 in the scripts
+one local subchannel per discovered peer. A connect endpoint also needs
+`autoSubChannel=true` to resolve and connect to all of multiple peer bind
+addresses even when device code does not select the peers explicitly. [Table 2 in the scripts
 documentation](../scripts/README.md#table-topology-cardinality-en) gives the
-settings for 1:N, N:1, and N:M connections.
+settings for 1:N, N:1, and N:M connections for both bind/connect orientations.
 
 `OnData(channel, callback)` registers the callback for the whole named channel;
 it does not select one subchannel. FairMQ receives from whichever local
