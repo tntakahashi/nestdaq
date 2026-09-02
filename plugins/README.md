@@ -397,11 +397,20 @@ After adding, removing, or renaming a peer, return all affected devices to
 and run `INIT DEVICE` again. `RESET TASK`, which returns a device from `Ready`
 to `DeviceReady`, does not rebuild the topology.
 
-Topology discovery sorts the peer keys before assigning subchannels. Treat an
-index as a local runtime position and query the current count; do not persist
-an assumption that index _N_ always identifies a particular peer instance. For
-large peer sets, do not infer numeric ordering from instance-name suffixes
-either.
+In the current implementation, topology discovery sorts peer keys in
+`std::string` order before assigning local subchannel indices. Numeric suffixes
+are not compared as numbers. For example, the peer keys `Sink-1`, `Sink-10`,
+and `Sink-2` are ordered as shown below:
+
+```text
+subchannel 0 -> Sink-1
+subchannel 1 -> Sink-10
+subchannel 2 -> Sink-2
+```
+
+Treat an index as a local runtime position and query the current count. Do not
+persist an assumption that index _N_ identifies the peer whose instance name
+ends in `-N`.
 
 The `[N]` suffix in `--connect-config` has a different scope: it selects
 subchannel _N_ of the remote bind channel while resolving an address. The index

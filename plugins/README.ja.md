@@ -388,10 +388,18 @@ subchannelの割り当ては、デバイスが`INIT DEVICE`を処理した時点
 peerを追加、削除、または名前変更した場合は、影響するすべてのデバイスを`RESET DEVICE`で`Idle`へ戻し、変更後のpeer集合がRedisに反映されたことを確認してから、`INIT DEVICE`を再度実行してください。
 デバイスを`Ready`から`DeviceReady`へ戻す`RESET TASK`では、トポロジーを再構築しません。
 
-トポロジー検出はpeerキーをソートしてからsubchannelを割り当てます。
+現在の実装では、トポロジー検出はpeerキーを`std::string`の文字列順でソートしてから、ローカルsubchannel indexを割り当てます。
+数値suffixは数値として比較されません。
+例えば、peerキーが`Sink-1`、`Sink-10`、`Sink-2`の場合、次の順序で割り当てます。
+
+```text
+subchannel 0 -> Sink-1
+subchannel 1 -> Sink-10
+subchannel 2 -> Sink-2
+```
+
 indexは実行時のローカル位置として扱い、現在の要素数を確認してください。
-index _N_ が常に特定のpeerインスタンスを表すという仮定を保存しないでください。
-接続相手が多い場合は、インスタンス名の数値suffixから並び順を推測することも避けてください。
+index _N_ が、インスタンス名の末尾に`-N`を持つpeerを表すという仮定を保存しないでください。
 
 `--connect-config`の`[N]` suffixは、アドレス解決時にリモートのbindチャネルにあるsubchannel _N_ を選択します。
 一方、`Send()`または`Receive()`へ渡すindexはローカルチャネルvectorの要素を選択します。
