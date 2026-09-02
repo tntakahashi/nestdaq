@@ -332,6 +332,38 @@ flowchart LR
 プラグインは通常、トポロジーから`num_sockets`を計算します。
 `autoSubChannel=true`のチャネルでは、検出したピアデバイスインスタンスに応じて`num_sockets`が増え、各FairMQサブソケットへ異なる`address:port`とサブチャネルインデックスを設定できます。
 
+Redis topologyによる自動構成を使わず、FairMQの`--channel-config`だけでローカルsubchannel数とアドレスを固定することもできます。
+[表5](#table-channel-configuration-modes-ja)は、この固定設定をRedis topology設定および混合設定と区別して示します。
+
+<a id="table-channel-configuration-modes-ja"></a>
+**表5：FairMQとRedis topologyによるチャネル設定方式。**
+
+| 設定方式 | ローカルsubchannel数 | アドレス | 運用上の制約 |
+|----------|----------------------|----------|--------------|
+| FairMQ固定設定 | `--channel-config`の`numSockets`または複数の`address`フィールドで指定します。 | `address`フィールドで直接指定します。 | Redis topologyによるpeer検出とアドレス解決を使用しません。トポロジーを変更する場合はコマンドライン設定も変更します。 |
+| Redis topology設定 | topology endpointの`num_sockets`、または`autoSubChannel=true`の場合は検出したpeerから導出します。 | Redisに保存されたbind側の情報から解決します。 | 対応するtopology endpointとlinkが必要です。 |
+| 混合設定 | FairMQとRedisのsubchannel数を明示的に一致させます。 | 対応するendpointとlinkがあればRedisで解決できます。 | 設定元が2つに分かれます。この組合せが必要な場合を除き、前の2方式のどちらか一方を使用してください。 |
+
+`INIT DEVICE`を発行する前に、必要な全peerプロセスを起動し、それらすべてのpresenceキーがRedisへ登録されたことを確認してください。
+すべてのデバイスが同じpeerキー集合と同じトポロジー定義を参照すれば、トポロジー検出は同じ文字列ソート順を使用し、同じsubchannel割り当てを再現します。
+subchannelの割り当ては、デバイスが`INIT DEVICE`を処理した時点のpeer集合に基づいて固定され、`DeviceReady`へ到達した後は自動更新されません。
+
+peerを追加、削除、または名前変更した場合は、影響するすべてのデバイスを`RESET DEVICE`で`Idle`へ戻し、変更後のpeer集合がRedisに反映されたことを確認してから、`INIT DEVICE`を再度実行してください。
+デバイスを`Ready`から`DeviceReady`へ戻す`RESET TASK`では、トポロジーを再構築しません。
+
+現在の実装では、トポロジー検出はpeerキーを`std::string`の文字列順でソートしてから、ローカルsubchannel indexを割り当てます。
+数値suffixは数値として比較されません。
+例えば、peerキーが`Sink-1`、`Sink-10`、`Sink-2`の場合、次の順序で割り当てます。
+
+```text
+subchannel 0 -> Sink-1
+subchannel 1 -> Sink-10
+subchannel 2 -> Sink-2
+```
+
+indexは実行時のローカル位置として扱い、現在の要素数を確認してください。
+index _N_ が、インスタンス名の末尾に`-N`を持つpeerを表すという仮定を保存しないでください。
+
 <a id="selecting-local-subchannels-ja"></a>
 #### 2.5.2. ユーザーコードでのローカルsubchannel選択
 
@@ -364,46 +396,10 @@ if (Receive(message, "in", static_cast<int>(kSubchannel)) < 0) {
 トポロジーで管理する構成では、接続相手ごとのローカルsubchannelをユーザーコードから選ぶ側に`autoSubChannel=true`を設定します。
 1対N、N対1、N対Mの設定は、[scripts文書の表2](../scripts/README.ja.md#table-topology-cardinality-ja)に示します。
 
-Redis topologyによる自動構成を使わず、FairMQの`--channel-config`だけでローカルsubchannel数とアドレスを固定することもできます。
-[表5](#table-channel-configuration-modes-ja)は、この固定設定をRedis topology設定および混合設定と区別して示します。
-
-<a id="table-channel-configuration-modes-ja"></a>
-**表5：FairMQとRedis topologyによるチャネル設定方式。**
-
-| 設定方式 | ローカルsubchannel数 | アドレス | 運用上の制約 |
-|----------|----------------------|----------|--------------|
-| FairMQ固定設定 | `--channel-config`の`numSockets`または複数の`address`フィールドで指定します。 | `address`フィールドで直接指定します。 | Redis topologyによるpeer検出とアドレス解決を使用しません。トポロジーを変更する場合はコマンドライン設定も変更します。 |
-| Redis topology設定 | topology endpointの`num_sockets`、または`autoSubChannel=true`の場合は検出したpeerから導出します。 | Redisに保存されたbind側の情報から解決します。 | 対応するtopology endpointとlinkが必要です。 |
-| 混合設定 | FairMQとRedisのsubchannel数を明示的に一致させます。 | 対応するendpointとlinkがあればRedisで解決できます。 | 設定元が2つに分かれます。この組合せが必要な場合を除き、前の2方式のどちらか一方を使用してください。 |
-
 `OnData(channel, callback)`は、指定した名前のチャネル全体にcallbackを登録するものであり、1つのsubchannelを選択しません。
 FairMQは準備できたローカルsubchannelから受信し、そのローカルindexをcallbackへ渡します。
 1つのsubchannelだけから受信する場合は、`ConditionalRun()`または`Run()`で`Receive(..., channel, index)`を呼ぶ手動受信loopを実装します。
 `OnData()`を1つでも登録すると、デバイスは手動実行loopではなくcallback方式の入力処理へ切り替わるため、そのデバイスでは`OnData()` callbackを登録しないでください。
-
-`INIT DEVICE`を発行する前に、必要な全peerプロセスを起動し、それらすべてのpresenceキーがRedisへ登録されたことを確認してください。
-すべてのデバイスが同じpeerキー集合と同じトポロジー定義を参照すれば、トポロジー検出は同じ文字列ソート順を使用し、同じsubchannel割り当てを再現します。
-subchannelの割り当ては、デバイスが`INIT DEVICE`を処理した時点のpeer集合に基づいて固定され、`DeviceReady`へ到達した後は自動更新されません。
-
-peerを追加、削除、または名前変更した場合は、影響するすべてのデバイスを`RESET DEVICE`で`Idle`へ戻し、変更後のpeer集合がRedisに反映されたことを確認してから、`INIT DEVICE`を再度実行してください。
-デバイスを`Ready`から`DeviceReady`へ戻す`RESET TASK`では、トポロジーを再構築しません。
-
-現在の実装では、トポロジー検出はpeerキーを`std::string`の文字列順でソートしてから、ローカルsubchannel indexを割り当てます。
-数値suffixは数値として比較されません。
-例えば、peerキーが`Sink-1`、`Sink-10`、`Sink-2`の場合、次の順序で割り当てます。
-
-```text
-subchannel 0 -> Sink-1
-subchannel 1 -> Sink-10
-subchannel 2 -> Sink-2
-```
-
-indexは実行時のローカル位置として扱い、現在の要素数を確認してください。
-index _N_ が、インスタンス名の末尾に`-N`を持つpeerを表すという仮定を保存しないでください。
-
-`--connect-config`の`[N]` suffixは、アドレス解決時にリモートのbindチャネルにあるsubchannel _N_ を選択します。
-一方、`Send()`または`Receive()`へ渡すindexはローカルチャネルvectorの要素を選択します。
-両者のindexが同じ値になるとは限りません。
 
 <a id="253-connect-config"></a>
 #### 2.5.3. `--connect-config`
@@ -429,6 +425,10 @@ index _N_ が、インスタンス名の末尾に`-N`を持つpeerを表すと�
 これは`TopologyConfig`が解釈するJSONデータであり、C++の構文やトポロジー用シェルスクリプトの`link`コマンドに記述する構文ではありません。
 [表4](#table-topology-channel-redis-keys-ja)の`{subindex}`はプレースホルダーですが、`[0]`はピア参照に記述する実際の接尾辞です。
 `peer`には1つの文字列または文字列配列を指定できます。
+
+`--connect-config`の`[N]` suffixは、`Send()`または`Receive()`へ渡すindexとは対象が異なります。
+suffixはアドレス解決時にリモートのbindチャネルにあるsubchannel _N_ を選択し、C++ APIのindexはローカルチャネルvectorの要素を選択します。
+両者のindexが同じ値になるとは限りません。
 
 `[0]`のようにsuffixを明示した場合は、`autoSubChannel`に関係なく、そのsubchannelだけを選択します。
 suffixを省略して`autoSubChannel=false`を設定した場合、`TopologyConfig`はsubchannel `0`を選択します。

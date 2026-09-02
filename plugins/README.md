@@ -327,6 +327,48 @@ flowchart LR
 The plugin normally calculates `num_sockets` from the topology.
 For channels with `autoSubChannel=true`, `num_sockets` grows with the discovered peer device instances so that each FairMQ sub-socket can receive a distinct `address:port` and subchannel index.
 
+Without using automatic configuration through the Redis topology, FairMQ's
+`--channel-config` alone can fix both the local subchannel count and addresses.
+[Table 5](#table-channel-configuration-modes-en) distinguishes this fixed mode
+from Redis topology configuration and from a mixed configuration.
+
+<a id="table-channel-configuration-modes-en"></a>
+**Table 5: FairMQ and Redis topology channel-configuration modes.**
+
+| Configuration mode | Local subchannel count | Addresses | Operational constraint |
+|--------------------|------------------------|-----------|------------------------|
+| FairMQ fixed configuration | Set with `--channel-config` using `numSockets` or repeated `address` fields. | Set directly with `address` fields. | Does not use Redis topology discovery or address resolution. Update the command-line configuration when the topology changes. |
+| Redis topology configuration | Derived from topology endpoint `num_sockets` or discovered peers when `autoSubChannel=true`. | Resolved from bind-side records in Redis. | Requires matching topology endpoints and links. |
+| Mixed configuration | FairMQ and Redis counts must be kept consistent explicitly. | Redis can resolve addresses when matching endpoints and links exist. | Configuration ownership is split between two sources; prefer one of the first two modes unless the deployment requires this combination. |
+
+Before issuing `INIT DEVICE`, start every required peer process and confirm
+that all of their presence keys have been registered in Redis. When every
+device sees the same peer-key set and the same topology definitions, topology
+discovery uses the same string-sort order and reproduces the same subchannel
+assignment. Subchannel assignment is fixed from that peer set when the device
+processes `INIT DEVICE`; it is not updated automatically after the device
+reaches `DeviceReady`.
+
+After adding, removing, or renaming a peer, return all affected devices to
+`Idle` with `RESET DEVICE`, confirm that Redis reflects the changed peer set,
+and run `INIT DEVICE` again. `RESET TASK`, which returns a device from `Ready`
+to `DeviceReady`, does not rebuild the topology.
+
+In the current implementation, topology discovery sorts peer keys in
+`std::string` order before assigning local subchannel indices. Numeric suffixes
+are not compared as numbers. For example, the peer keys `Sink-1`, `Sink-10`,
+and `Sink-2` are ordered as shown below:
+
+```text
+subchannel 0 -> Sink-1
+subchannel 1 -> Sink-10
+subchannel 2 -> Sink-2
+```
+
+Treat an index as a local runtime position and query the current count. Do not
+persist an assumption that index _N_ identifies the peer whose instance name
+ends in `-N`.
+
 <a id="selecting-local-subchannels-en"></a>
 #### 2.5.2. Selecting local subchannels in device code
 
@@ -362,20 +404,6 @@ one local subchannel per discovered peer. [Table 2 in the scripts
 documentation](../scripts/README.md#table-topology-cardinality-en) gives the
 settings for 1:N, N:1, and N:M connections.
 
-Without using automatic configuration through the Redis topology, FairMQ's
-`--channel-config` alone can fix both the local subchannel count and addresses.
-[Table 5](#table-channel-configuration-modes-en) distinguishes this fixed mode
-from Redis topology configuration and from a mixed configuration.
-
-<a id="table-channel-configuration-modes-en"></a>
-**Table 5: FairMQ and Redis topology channel-configuration modes.**
-
-| Configuration mode | Local subchannel count | Addresses | Operational constraint |
-|--------------------|------------------------|-----------|------------------------|
-| FairMQ fixed configuration | Set with `--channel-config` using `numSockets` or repeated `address` fields. | Set directly with `address` fields. | Does not use Redis topology discovery or address resolution. Update the command-line configuration when the topology changes. |
-| Redis topology configuration | Derived from topology endpoint `num_sockets` or discovered peers when `autoSubChannel=true`. | Resolved from bind-side records in Redis. | Requires matching topology endpoints and links. |
-| Mixed configuration | FairMQ and Redis counts must be kept consistent explicitly. | Redis can resolve addresses when matching endpoints and links exist. | Configuration ownership is split between two sources; prefer one of the first two modes unless the deployment requires this combination. |
-
 `OnData(channel, callback)` registers the callback for the whole named channel;
 it does not select one subchannel. FairMQ receives from whichever local
 subchannel is ready and passes that local index to the callback. To receive
@@ -383,39 +411,6 @@ only one chosen subchannel, implement a manual receive loop with
 `Receive(..., channel, index)` in `ConditionalRun()` or `Run()`. Do not register
 any `OnData()` callback on that device, because registering one switches the
 device to the callback-based input path instead of its manual run loop.
-
-Before issuing `INIT DEVICE`, start every required peer process and confirm
-that all of their presence keys have been registered in Redis. When every
-device sees the same peer-key set and the same topology definitions, topology
-discovery uses the same string-sort order and reproduces the same subchannel
-assignment. Subchannel assignment is fixed from that peer set when the device
-processes `INIT DEVICE`; it is not updated automatically after the device
-reaches `DeviceReady`.
-
-After adding, removing, or renaming a peer, return all affected devices to
-`Idle` with `RESET DEVICE`, confirm that Redis reflects the changed peer set,
-and run `INIT DEVICE` again. `RESET TASK`, which returns a device from `Ready`
-to `DeviceReady`, does not rebuild the topology.
-
-In the current implementation, topology discovery sorts peer keys in
-`std::string` order before assigning local subchannel indices. Numeric suffixes
-are not compared as numbers. For example, the peer keys `Sink-1`, `Sink-10`,
-and `Sink-2` are ordered as shown below:
-
-```text
-subchannel 0 -> Sink-1
-subchannel 1 -> Sink-10
-subchannel 2 -> Sink-2
-```
-
-Treat an index as a local runtime position and query the current count. Do not
-persist an assumption that index _N_ identifies the peer whose instance name
-ends in `-N`.
-
-The `[N]` suffix in `--connect-config` has a different scope: it selects
-subchannel _N_ of the remote bind channel while resolving an address. The index
-passed to `Send()` or `Receive()` selects a local channel-vector element. These
-two indices need not have the same value.
 
 #### 2.5.3. `--connect-config`
 
@@ -439,6 +434,12 @@ With the default separator `:`, a fully qualified peer reference has the form `{
 The `[0]` suffix selects remote subchannel `0`; it is JSON data parsed by `TopologyConfig`, not C++ syntax or syntax used by a topology shell script's `link` command.
 The `{subindex}` text in [Table 4](#table-topology-channel-redis-keys-en) is a placeholder, whereas `[0]` is an actual suffix in the peer reference.
 `peer` accepts either one string or an array of strings.
+
+The `[N]` suffix in `--connect-config` has a different scope from the index
+passed to `Send()` or `Receive()`. The suffix selects subchannel _N_ of the
+remote bind channel while resolving an address, whereas the C++ API index
+selects a local channel-vector element. These two indices need not have the
+same value.
 
 An explicit suffix such as `[0]` selects only that subchannel regardless of `autoSubChannel`.
 If the suffix is omitted and `autoSubChannel=false`, `TopologyConfig` selects subchannel `0`.
