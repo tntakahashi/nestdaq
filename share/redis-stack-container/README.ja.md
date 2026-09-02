@@ -228,7 +228,7 @@ REDIS_VOLUME_MODE=volume ./run-redis-stack.sh
 | `REDIS_DATA_DIR` | スクリプトの隣のデータディレクトリ | `/data/`にバインドマウントするホストディレクトリ。`bind`モードだけで使用します。 |
 | `REDIS_INSIGHT_DATA_DIR` | スクリプト固有のRedisInsightデータディレクトリ | `/redisinsight/`にバインドマウントするホストディレクトリ。RedisInsightを含む補助スクリプトの`bind`モードだけで使用します。 |
 | `REDIS_VOLUME_LABEL` | `Z` | SELinuxバインドマウントラベルオプション。`bind`モードだけで使用します。共有ラベル付けには`z`、無効にするには空の値を使用します。 |
-| `REDIS_ARGS` | 空 | 追加のRedisサーバー引数。Redis Stackイメージではイメージの`REDIS_ARGS`環境変数を通して渡され、公式Redis 8.2.7補助スクリプトではコマンド引数として渡されます。 |
+| `REDIS_ARGS` | 空文字列（`""`） | 追加のRedisサーバー引数。Redis Stackイメージではイメージの`REDIS_ARGS`環境変数を通して渡され、公式Redis 8.2.7補助スクリプトではコマンド引数として渡されます。 |
 | `REDIS_ARGS_MODE` | `env`または`argv` | `run-redis-stack-server.sh`が使用する引数の受け渡しモード。Redis Stackイメージには`env`、公式Redisイメージには`argv`を使用します。 |
 
 例:

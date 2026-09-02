@@ -345,37 +345,39 @@ The alias has the same `fair::Severity` value as `warn`, `10`.
 | ------ | ------- | ------- | ------- |
 | `--otel-library` | `NESTDAQ_OTEL_LIBRARY` | `libnestdaq_otel.so` | Shared library path or soname loaded with `dlopen()`. |
 | `--otel-log-protocol` | `NESTDAQ_OTEL_LOG_PROTOCOL` | `console` | Comma-separated log exporters; empty disables logs. |
-| `--otel-metric-protocol` | `NESTDAQ_OTEL_METRIC_PROTOCOL` | empty | Comma-separated metric exporters; empty disables metrics. |
-| `--otel-trace-protocol` | `NESTDAQ_OTEL_TRACE_PROTOCOL` | empty | Comma-separated trace exporters; empty disables traces. |
+| `--otel-metric-protocol` | `NESTDAQ_OTEL_METRIC_PROTOCOL` | empty string (`""`) | Comma-separated metric exporters; an empty string disables metrics. |
+| `--otel-trace-protocol` | `NESTDAQ_OTEL_TRACE_PROTOCOL` | empty string (`""`) | Comma-separated trace exporters; an empty string disables traces. |
 | `--otel-log-endpoint-http` | `NESTDAQ_OTEL_LOG_ENDPOINT_HTTP` | `http://localhost:4318/v1/logs` | OTLP HTTP logs endpoint. |
 | `--otel-log-endpoint-grpc` | `NESTDAQ_OTEL_LOG_ENDPOINT_GRPC` | `localhost:4317` | OTLP gRPC logs endpoint. |
 | `--otel-metric-endpoint-http` | `NESTDAQ_OTEL_METRIC_ENDPOINT_HTTP` | `http://localhost:4318/v1/metrics` | OTLP HTTP metrics endpoint. |
 | `--otel-metric-endpoint-grpc` | `NESTDAQ_OTEL_METRIC_ENDPOINT_GRPC` | `localhost:4317` | OTLP gRPC metrics endpoint. |
 | `--otel-trace-endpoint-http` | `NESTDAQ_OTEL_TRACE_ENDPOINT_HTTP` | `http://localhost:4318/v1/traces` | OTLP HTTP traces endpoint. |
 | `--otel-trace-endpoint-grpc` | `NESTDAQ_OTEL_TRACE_ENDPOINT_GRPC` | `localhost:4317` | OTLP gRPC traces endpoint. |
-| `--otel-log-headers` | `NESTDAQ_OTEL_LOG_HEADERS` | empty | Comma-separated `key=value` log exporter headers. |
-| `--otel-metric-headers` | `NESTDAQ_OTEL_METRIC_HEADERS` | empty | Comma-separated `key=value` metric exporter headers. |
-| `--otel-trace-headers` | `NESTDAQ_OTEL_TRACE_HEADERS` | empty | Comma-separated `key=value` trace exporter headers. |
+| `--otel-log-headers` | `NESTDAQ_OTEL_LOG_HEADERS` | empty string (`""`) | Comma-separated `key=value` log exporter headers. |
+| `--otel-metric-headers` | `NESTDAQ_OTEL_METRIC_HEADERS` | empty string (`""`) | Comma-separated `key=value` metric exporter headers. |
+| `--otel-trace-headers` | `NESTDAQ_OTEL_TRACE_HEADERS` | empty string (`""`) | Comma-separated `key=value` trace exporter headers. |
 | `--otel-log-severity` | `NESTDAQ_OTEL_LOG_SEVERITY` | `info` | Minimum FairLogger severity exported. |
 | `--otel-log-required` | `NESTDAQ_OTEL_LOG_REQUIRED` | `false` | Fail startup if telemetry cannot load or initialize. |
-| `--otel-timeout-ms` | none | `5000` | Force-flush, shutdown, and exporter timeout in milliseconds. |
+| `--otel-timeout-ms` | — | `5000` | Force-flush, shutdown, and exporter timeout in milliseconds. |
 | `--spdlog-console-pattern` | `NESTDAQ_SPDLOG_CONSOLE_PATTERN` | `[%Y-%m-%d %H:%M:%S.%e] [%n] [%l] %v` | spdlog native console sink pattern. |
 | `--spdlog-native-console` | `NESTDAQ_SPDLOG_NATIVE_CONSOLE` | `true` | Enable spdlog native console output independently from the OTel spdlog sink. |
 | `--spdlog-async` | `NESTDAQ_SPDLOG_ASYNC` | `false` | Use `spdlog::async_logger` for NestDAQ helper loggers. |
 | `--spdlog-async-queue-size` | `NESTDAQ_SPDLOG_ASYNC_QUEUE_SIZE` | `8192` | Number of items that the async spdlog helper queue can hold; this is not a byte count. |
 | `--spdlog-async-thread-count` | `NESTDAQ_SPDLOG_ASYNC_THREAD_COUNT` | `1` | Worker thread count for async spdlog helper loggers. |
 | `--spdlog-async-overflow-policy` | `NESTDAQ_SPDLOG_ASYNC_OVERFLOW_POLICY` | `block` | Queue overflow policy. See Section 7.7 for the behavior of each value. |
-| `--otel-metric-export-interval-ms` | none | `1000` | Periodic metric export interval in milliseconds. |
-| `--otel-log-http-json` | none | `true` | Use JavaScript Object Notation (JSON) content type for OTLP HTTP logs. |
-| `--otel-metric-http-json` | none | `true` | Use JSON content type for OTLP HTTP metrics. |
-| `--otel-trace-http-json` | none | `true` | Use JSON content type for OTLP HTTP traces. |
-| `--otel-service-name` | none | caller default | `service.name` resource attribute. FairMQ device wrappers default this to `--service-name`, or to the executable basename when `--service-name` is unset. NestDAQ converts ASCII uppercase letters to lowercase because collector pipelines may use this value in OpenSearch index names. |
-| `--otel-service-namespace` | none | `nestdaq` | `service.namespace` resource attribute. |
-| `--otel-service-instance-id` | none | generated universally unique identifier (UUID) | `service.instance.id` resource attribute. FairMQ device wrappers use `--uuid` when this option is unset; otherwise they generate a UUID. |
-| `--otel-fairmq-id` | none | empty | `fairmq.id` resource attribute. |
-| `--otel-fairmq-device` | none | empty | `fairmq.device` resource attribute. |
-| `--otel-fairmq-session` | none | empty | `fairmq.session` resource attribute. |
-| `--otel-fairmq-transport` | none | empty | `fairmq.transport` resource attribute. |
+| `--otel-metric-export-interval-ms` | — | `1000` | Periodic metric export interval in milliseconds. |
+| `--otel-log-http-json` | — | `true` | Use JavaScript Object Notation (JSON) content type for OTLP HTTP logs. |
+| `--otel-metric-http-json` | — | `true` | Use JSON content type for OTLP HTTP metrics. |
+| `--otel-trace-http-json` | — | `true` | Use JSON content type for OTLP HTTP traces. |
+| `--otel-service-name` | — | caller default | `service.name` resource attribute. FairMQ device wrappers default this to `--service-name`, or to the executable basename when `--service-name` is unset. NestDAQ converts ASCII uppercase letters to lowercase because collector pipelines may use this value in OpenSearch index names. |
+| `--otel-service-namespace` | — | `nestdaq` | `service.namespace` resource attribute. |
+| `--otel-service-instance-id` | — | generated universally unique identifier (UUID) | `service.instance.id` resource attribute. FairMQ device wrappers use `--uuid` when this option is unset; otherwise they generate a UUID. |
+| `--otel-fairmq-id` | — | empty string (`""`) | `fairmq.id` resource attribute. |
+| `--otel-fairmq-device` | — | empty string (`""`) | `fairmq.device` resource attribute. |
+| `--otel-fairmq-session` | — | empty string (`""`) | `fairmq.session` resource attribute. |
+| `--otel-fairmq-transport` | — | empty string (`""`) | `fairmq.transport` resource attribute. |
+
+`—` means that the option has no corresponding environment variable.
 
 Severity names are `nolog`, `trace`, `debug4`, `debug3`, `debug2`, `debug1`, `debug`, `detail`, `info`, `state`, `warn`, `warning`, `important`, `alarm`, `error`, `critical`, and `fatal`.
 

@@ -110,7 +110,7 @@ OpenTelemetryオプションの一覧は[`nestdaq/telemetry/README.ja.md`](../ne
 
 | オプション | 既定値 | 説明 |
 | :-- | :-- | :-- |
-| `--help`, `-h` | なし | コマンドラインヘルプを表示して終了します。 |
+| `--help`, `-h` | 未指定（フラグなし） | コマンドラインヘルプを表示して終了します。 |
 | `--http-uri` | `http://0.0.0.0:8080` | `daq-webctl`がHTTP接続を待ち受けるエンドポイント。`scheme://address:port`形式で指定します。 |
 | `--threads` | `1` | HTTPサーバーのワーカースレッド数。 |
 | `--doc-root` | インストール済み`daq-webctl`のドキュメントルート | `daq-webctl`がHTML、JavaScript、CSSファイルを配信するディレクトリ。 |
@@ -121,7 +121,7 @@ OpenTelemetryオプションの一覧は[`nestdaq/telemetry/README.ja.md`](../ne
 | `--redis-uri` | `tcp://127.0.0.1:6379` | RedisサーバーのURI。URIの末尾に`/N`を追加するとデータベース`N`を選択し、省略するとデータベース`0`を使用します。 |
 | `--separator` | `:` | Redisキーパス構成時の区切り文字。 |
 | `--poll-interval` | `500` | ミリ秒単位の状態ポーリング間隔。 |
-| `--log-to-file` | 空文字列 (未指定) | FairLoggerの出力ファイル。空でないパスを指定するとファイルへのロギングを有効にし、コンソールへのロギングを無効にします。 |
+| `--log-to-file` | 空文字列（`""`） | FairLoggerの出力ファイル。空でないパスを指定するとファイルへのロギングを有効にし、コンソールへのロギングを無効にします。 |
 | `--file-severity` | `info` | FairLoggerのファイル出力の重大度。 |
 | `--severity` | `info` | FairLoggerのコンソール出力の重大度。コンソールへのログ出力を停止するには、`nolog`を指定します。 |
 | `--verbosity` | `medium` | FairLoggerの詳細度。 |
@@ -150,8 +150,8 @@ OpenTelemetryオプションの一覧は[`nestdaq/telemetry/README.ja.md`](../ne
 | `--otel-service-namespace` | `nestdaq` | OpenTelemetryの`service.namespace`リソース属性。 |
 | `--otel-service-instance-id` | 生成したUUID | OpenTelemetryの`service.instance.id`リソース属性。 |
 | `--otel-timeout-ms` | `5000` | ミリ秒単位の強制フラッシュ、シャットダウン、エクスポーターのタイムアウト。 |
-| `--otel-metric-protocol` | 空 | メトリクスエクスポーター。空の場合はメトリクスを無効にします。`console`はデバッグに利用できます。 |
-| `--otel-trace-protocol` | 空 | トレースエクスポーター。空の場合はトレースを無効にします。`console`はデバッグに利用できます。 |
+| `--otel-metric-protocol` | 空文字列（`""`） | メトリクスエクスポーター。空文字列の場合はメトリクスを無効にします。`console`はデバッグに利用できます。 |
+| `--otel-trace-protocol` | 空文字列（`""`） | トレースエクスポーター。空文字列の場合はトレースを無効にします。`console`はデバッグに利用できます。 |
 
 次の例は、ローカルOpenTelemetry CollectorへOTLP gRPCで`daq-webctl`のログを送信します。
 

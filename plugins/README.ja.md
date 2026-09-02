@@ -56,7 +56,7 @@ TTLの扱いはプラグインごとに異なります。
 
 | オプション | デフォルト | 説明 |
 | --- | --- | --- |
-| `--service-name` | 空の場合は実行ファイルのベース名 | Redisキーパスおよびヘルス情報の`serviceName`フィールドで使用する、このNestDAQデバイスプロセスのサービス名。 |
+| `--service-name` | 未設定（オプションなし）、その後に実行ファイルのベース名 | Redisキーパスおよびヘルス情報の`serviceName`フィールドで使用する、このNestDAQデバイスプロセスのサービス名。 |
 | `--uuid` | 生成 | このNestDAQデバイスプロセスのUUID。この値は、`--otel-service-instance-id`を設定しない限り、テレメトリーの`service.instance.id`のデフォルト値になります。`--uuid`を省略すると、標準FairMQデバイスラッパーは生成したテレメトリーUUIDをこのプロパティへコピーします。このプロパティが存在しない場合、プラグインがUUIDを生成します。 |
 | `--host-ip` | 検出値/設定値 | ヘルス情報の`hostIp`フィールドへ保存する、このNestDAQデバイスプロセスのアドレス。名前解決可能なホスト名も指定できます。省略した場合、プラグインは設定されたネットワークインターフェースを使用し、取得できなければデフォルトルートのインターフェースを使用します。 |
 | `--hostname` | 検出値/設定値 | ヘルス情報の`hostName`フィールドへ保存するホスト名。省略した場合、プラグインはオペレーティングシステムのホスト名を使用します。 |
@@ -66,7 +66,7 @@ TTLの扱いはプラグインごとに異なります。
 | `--ttl-update-interval` | `3` | TTL更新間隔 (秒)。 |
 | `--startup-state` | `idle` | 起動時にプラグインがデバイスを`Idle`から自動的に進めるFairMQ状態：`idle`、`initializing-device`、`initialized`、`bound`、`device-ready`、`ready`、`running`。 |
 | `--enable-uds` | `true` | すべての接続相手の`hostIp`がこのプロセスと同じZeroMQバインドチャネルだけにUnixドメインソケット (UDS) アドレスを追加します。`true`または`1`で有効になります。 |
-| `--connect-config` | なし | 一時メッセージキュー (MQ) チャネル接続パラメーターを記述するJavaScript Object Notation (JSON) 文字列。2.5.3節で構造と接続相手の記法を説明します。 |
+| `--connect-config` | 未設定（オプションなし） | 一時メッセージキュー (MQ) チャネル接続パラメーターを記述するJavaScript Object Notation (JSON) 文字列。2.5.3節で構造と接続相手の記法を説明します。 |
 | `--max-retry-to-resolve-address` | `10` | 接続アドレス解決の最大再試行回数。 |
 
 <a id="22-daq-service-identity-defaults"></a>
@@ -622,7 +622,7 @@ memory usageはmebibytes (MiB) 単位のcurrent resident set size (RSS) です�
 | オプション | デフォルト | 説明 |
 | --- | --- | --- |
 | `--proc-stat-update-interval` | `1000` | プロセスのCPU/メモリーメトリクスの更新間隔 (ミリ秒)。 |
-| `--metrics-uri` | なし | メトリクス用Redis URI。空の場合は`--registry-uri`を使用。 |
+| `--metrics-uri` | 未設定（`--registry-uri`を使用） | メトリクス用Redis URI。省略時は`--registry-uri`を使用し、空文字列を明示するとメトリクス用Redis接続を無効にします。 |
 | `--retention` | `0` | RedisTimeSeries内の最大タイムスタンプを基準としたサンプルの最大経過時間 (ミリ秒)。`0`は保持期間による削除を無効にします。 |
 | `--recreate-ts` | `true` | `Ready`への遷移時に登録済みRedisTimeSeriesキーを削除し、`Running`への遷移時に設定済み保持期間とラベルを持つキーを作成します。 |
 | `--metrics-max-ttl` | `3000` | プラグイン起動時に1回だけ行う古いフィールドのクリーンアップで使用する経過時間 (ミリ秒)。0以下の場合、このクリーンアップを無効にします。 |
@@ -794,7 +794,7 @@ Redisキースペース通知は、キーの変更時にPub/Subイベントを�
 
 | オプション | デフォルト | 説明 |
 | --- | --- | --- |
-| `--parameter-config-uri` | なし | パラメーター設定用Redis URI。空の場合は`--registry-uri`を使用。 |
+| `--parameter-config-uri` | 未設定（`--registry-uri`を使用） | パラメーター設定用Redis URI。省略時は`--registry-uri`を使用し、空文字列を明示するとパラメーター用Redis接続を無効にします。 |
 
 <a id="42-redis-keys-read-or-subscribed"></a>
 ### 4.2. 読み取りまたは購読するRedisキー

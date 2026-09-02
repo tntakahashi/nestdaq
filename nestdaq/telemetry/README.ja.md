@@ -353,37 +353,39 @@ spdlogのフィルター処理は、引き続きspdlogロガーおよびシン�
 | --- | --- | --- | --- |
 | `--otel-library` | `NESTDAQ_OTEL_LIBRARY` | `libnestdaq_otel.so` | `dlopen()`で読み込む共有ライブラリのパスまたはsoname。 |
 | `--otel-log-protocol` | `NESTDAQ_OTEL_LOG_PROTOCOL` | `console` | コンマ区切りのログエクスポーター。空ならログを無効化。 |
-| `--otel-metric-protocol` | `NESTDAQ_OTEL_METRIC_PROTOCOL` | 空 | コンマ区切りのメトリクスエクスポーター。空ならメトリクスを無効化。 |
-| `--otel-trace-protocol` | `NESTDAQ_OTEL_TRACE_PROTOCOL` | 空 | コンマ区切りのトレースエクスポーター。空ならトレースを無効化。 |
+| `--otel-metric-protocol` | `NESTDAQ_OTEL_METRIC_PROTOCOL` | 空文字列（`""`） | コンマ区切りのメトリクスエクスポーター。空文字列ならメトリクスを無効化。 |
+| `--otel-trace-protocol` | `NESTDAQ_OTEL_TRACE_PROTOCOL` | 空文字列（`""`） | コンマ区切りのトレースエクスポーター。空文字列ならトレースを無効化。 |
 | `--otel-log-endpoint-http` | `NESTDAQ_OTEL_LOG_ENDPOINT_HTTP` | `http://localhost:4318/v1/logs` | OTLP HTTPログエンドポイント。 |
 | `--otel-log-endpoint-grpc` | `NESTDAQ_OTEL_LOG_ENDPOINT_GRPC` | `localhost:4317` | OTLP gRPCログエンドポイント。 |
 | `--otel-metric-endpoint-http` | `NESTDAQ_OTEL_METRIC_ENDPOINT_HTTP` | `http://localhost:4318/v1/metrics` | OTLP HTTPメトリクスエンドポイント。 |
 | `--otel-metric-endpoint-grpc` | `NESTDAQ_OTEL_METRIC_ENDPOINT_GRPC` | `localhost:4317` | OTLP gRPCメトリクスエンドポイント。 |
 | `--otel-trace-endpoint-http` | `NESTDAQ_OTEL_TRACE_ENDPOINT_HTTP` | `http://localhost:4318/v1/traces` | OTLP HTTPトレースエンドポイント。 |
 | `--otel-trace-endpoint-grpc` | `NESTDAQ_OTEL_TRACE_ENDPOINT_GRPC` | `localhost:4317` | OTLP gRPCトレースエンドポイント。 |
-| `--otel-log-headers` | `NESTDAQ_OTEL_LOG_HEADERS` | 空 | コンマ区切りの`key=value`ログエクスポーターヘッダー。 |
-| `--otel-metric-headers` | `NESTDAQ_OTEL_METRIC_HEADERS` | 空 | コンマ区切りの`key=value`メトリクスエクスポーターヘッダー。 |
-| `--otel-trace-headers` | `NESTDAQ_OTEL_TRACE_HEADERS` | 空 | コンマ区切りの`key=value`トレースエクスポーターヘッダー。 |
+| `--otel-log-headers` | `NESTDAQ_OTEL_LOG_HEADERS` | 空文字列（`""`） | コンマ区切りの`key=value`ログエクスポーターヘッダー。 |
+| `--otel-metric-headers` | `NESTDAQ_OTEL_METRIC_HEADERS` | 空文字列（`""`） | コンマ区切りの`key=value`メトリクスエクスポーターヘッダー。 |
+| `--otel-trace-headers` | `NESTDAQ_OTEL_TRACE_HEADERS` | 空文字列（`""`） | コンマ区切りの`key=value`トレースエクスポーターヘッダー。 |
 | `--otel-log-severity` | `NESTDAQ_OTEL_LOG_SEVERITY` | `info` | エクスポートするFairLoggerの最低重大度。 |
 | `--otel-log-required` | `NESTDAQ_OTEL_LOG_REQUIRED` | `false` | テレメトリーを読み込めないか初期化できない場合に起動失敗とする。 |
-| `--otel-timeout-ms` | なし | `5000` | 強制フラッシュ、シャットダウン、エクスポーターのタイムアウト (ミリ秒)。 |
+| `--otel-timeout-ms` | — | `5000` | 強制フラッシュ、シャットダウン、エクスポーターのタイムアウト (ミリ秒)。 |
 | `--spdlog-console-pattern` | `NESTDAQ_SPDLOG_CONSOLE_PATTERN` | `[%Y-%m-%d %H:%M:%S.%e] [%n] [%l] %v` | spdlogネイティブコンソールシンクのパターン。 |
 | `--spdlog-native-console` | `NESTDAQ_SPDLOG_NATIVE_CONSOLE` | `true` | OTel spdlogシンクとは独立してspdlogネイティブコンソール出力を有効化。 |
 | `--spdlog-async` | `NESTDAQ_SPDLOG_ASYNC` | `false` | NestDAQヘルパーロガーに`spdlog::async_logger`を使用。 |
 | `--spdlog-async-queue-size` | `NESTDAQ_SPDLOG_ASYNC_QUEUE_SIZE` | `8192` | 非同期spdlogヘルパーロガーのキューへ保持できる項目数。バイト数ではありません。 |
 | `--spdlog-async-thread-count` | `NESTDAQ_SPDLOG_ASYNC_THREAD_COUNT` | `1` | 非同期spdlogヘルパーロガーのワーカースレッド数。 |
 | `--spdlog-async-overflow-policy` | `NESTDAQ_SPDLOG_ASYNC_OVERFLOW_POLICY` | `block` | キューのオーバーフローポリシー。各値の動作は7.7節を参照してください。 |
-| `--otel-metric-export-interval-ms` | なし | `1000` | 定期的なメトリクスのエクスポート間隔 (ミリ秒)。 |
-| `--otel-log-http-json` | なし | `true` | OTLP HTTPログでJavaScript Object Notation (JSON) コンテントタイプを使用。 |
-| `--otel-metric-http-json` | なし | `true` | OTLP HTTPメトリクスでJSONコンテントタイプを使用。 |
-| `--otel-trace-http-json` | なし | `true` | OTLP HTTPトレースでJSONコンテントタイプを使用。 |
-| `--otel-service-name` | なし | 呼び出し側の既定値 | `service.name`リソース属性。FairMQデバイスラッパーは`--service-name`を既定値とし、`--service-name`未設定時は実行ファイルのベース名を使用します。コレクターパイプラインがOpenSearchのインデックス名にこの値を使用する場合があるため、NestDAQはASCII大文字を小文字へ変換します。 |
-| `--otel-service-namespace` | なし | `nestdaq` | `service.namespace`リソース属性。 |
-| `--otel-service-instance-id` | なし | 生成した汎用一意識別子 (UUID) | `service.instance.id`リソース属性。FairMQデバイスラッパーは、このオプション未設定時に`--uuid`を使用し、それ以外の場合はUUIDを生成します。 |
-| `--otel-fairmq-id` | なし | 空 | `fairmq.id`リソース属性。 |
-| `--otel-fairmq-device` | なし | 空 | `fairmq.device`リソース属性。 |
-| `--otel-fairmq-session` | なし | 空 | `fairmq.session`リソース属性。 |
-| `--otel-fairmq-transport` | なし | 空 | `fairmq.transport`リソース属性。 |
+| `--otel-metric-export-interval-ms` | — | `1000` | 定期的なメトリクスのエクスポート間隔 (ミリ秒)。 |
+| `--otel-log-http-json` | — | `true` | OTLP HTTPログでJavaScript Object Notation (JSON) コンテントタイプを使用。 |
+| `--otel-metric-http-json` | — | `true` | OTLP HTTPメトリクスでJSONコンテントタイプを使用。 |
+| `--otel-trace-http-json` | — | `true` | OTLP HTTPトレースでJSONコンテントタイプを使用。 |
+| `--otel-service-name` | — | 呼び出し側の既定値 | `service.name`リソース属性。FairMQデバイスラッパーは`--service-name`を既定値とし、`--service-name`未設定時は実行ファイルのベース名を使用します。コレクターパイプラインがOpenSearchのインデックス名にこの値を使用する場合があるため、NestDAQはASCII大文字を小文字へ変換します。 |
+| `--otel-service-namespace` | — | `nestdaq` | `service.namespace`リソース属性。 |
+| `--otel-service-instance-id` | — | 生成した汎用一意識別子 (UUID) | `service.instance.id`リソース属性。FairMQデバイスラッパーは、このオプション未設定時に`--uuid`を使用し、それ以外の場合はUUIDを生成します。 |
+| `--otel-fairmq-id` | — | 空文字列（`""`） | `fairmq.id`リソース属性。 |
+| `--otel-fairmq-device` | — | 空文字列（`""`） | `fairmq.device`リソース属性。 |
+| `--otel-fairmq-session` | — | 空文字列（`""`） | `fairmq.session`リソース属性。 |
+| `--otel-fairmq-transport` | — | 空文字列（`""`） | `fairmq.transport`リソース属性。 |
+
+`—`は対応する環境変数がないことを示します。
 
 重大度名は`nolog`、`trace`、`debug4`、`debug3`、`debug2`、`debug1`、`debug`、`detail`、`info`、`state`、`warn`、`warning`、`important`、`alarm`、`error`、`critical`、`fatal`です。
 

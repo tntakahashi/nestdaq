@@ -106,7 +106,7 @@ See [`nestdaq/telemetry/README.md`](../nestdaq/telemetry/README.md) for the comp
 
 | Option | Default | Description |
 | :-- | :-- | :-- |
-| `--help`, `-h` | none | Print command-line help and exit. |
+| `--help`, `-h` | not specified (flag absent) | Print command-line help and exit. |
 | `--http-uri` | `http://0.0.0.0:8080` | Endpoint on which `daq-webctl` listens for HTTP connections, in `scheme://address:port` form. |
 | `--threads` | `1` | Number of HTTP server worker threads. |
 | `--doc-root` | installed `daq-webctl` document root | Directory from which `daq-webctl` serves HTML, JavaScript, and CSS files. |
@@ -117,7 +117,7 @@ See [`nestdaq/telemetry/README.md`](../nestdaq/telemetry/README.md) for the comp
 | `--redis-uri` | `tcp://127.0.0.1:6379` | Redis server URI. Append `/N` to the URI to select database `N`; omitting it selects database `0`. |
 | `--separator` | `:` | Separator used when composing Redis key paths. |
 | `--poll-interval` | `500` | State polling interval in milliseconds. |
-| `--log-to-file` | empty string (not specified) | FairLogger output file. A non-empty path enables file logging and disables console logging. |
+| `--log-to-file` | empty string (`""`) | FairLogger output file. A non-empty path enables file logging and disables console logging. |
 | `--file-severity` | `info` | FairLogger file severity. |
 | `--severity` | `info` | FairLogger console severity. Set it to `nolog` to stop log output to the console. |
 | `--verbosity` | `medium` | FairLogger verbosity. |
@@ -145,8 +145,8 @@ Common `daq-webctl` telemetry options are:
 | `--otel-service-namespace` | `nestdaq` | OpenTelemetry `service.namespace` resource attribute. |
 | `--otel-service-instance-id` | generated UUID | OpenTelemetry `service.instance.id` resource attribute. |
 | `--otel-timeout-ms` | `5000` | Force-flush, shutdown, and exporter timeout in milliseconds. |
-| `--otel-metric-protocol` | empty | Metric exporters; empty disables metrics. Useful for `console` debugging. |
-| `--otel-trace-protocol` | empty | Trace exporters; empty disables traces. Useful for `console` debugging. |
+| `--otel-metric-protocol` | empty string (`""`) | Metric exporters; an empty string disables metrics. Useful for `console` debugging. |
+| `--otel-trace-protocol` | empty string (`""`) | Trace exporters; an empty string disables traces. Useful for `console` debugging. |
 
 The following example sends `daq-webctl` logs to a local OpenTelemetry Collector by OTLP gRPC:
 

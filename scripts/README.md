@@ -343,7 +343,7 @@ when it requires a separate local subchannel and address for each peer. With
 peers.
 
 <a id="table-topology-cardinality-en"></a>
-**Table 2: PUSH/PULL `autoSubChannel` settings for each connection cardinality.**
+**Table 2: PUSH/PULL `autoSubChannel` settings by connection cardinality and bind/connect orientation.**
 
 | Connection | PUSH method | PULL method | PUSH `autoSubChannel` | PULL `autoSubChannel` | Resulting local subchannels |
 |------------|-------------|-------------|-----------------------|-----------------------|-----------------------------|
@@ -606,9 +606,9 @@ Generator options have two command-line forms:
 Presence-only flags do not accept Boolean values. For example, use
 `--no-dqm-channel`, not `--no-dqm-channel true`, and omit the flag instead of
 writing `--no-dqm-channel false`. Repeating a flag does not toggle its state
-back. In [Table 3](#table-generator-options-en), `off` means that the flag is not
-specified. For a `--no-*`
-flag, `off` means that the named feature remains enabled by default.
+back. [Table 3](#table-generator-options-en) shows `false` (flag omitted) for
+these flags. For a `--no-*` flag, this means that the named feature remains
+enabled by default.
 
 ```bash
 # Generate a conditional-run device with one single-message output and no DQM channel.
@@ -627,24 +627,24 @@ Generator options are listed in [Table 3](#table-generator-options-en).
 | Option | Default | Description |
 | :-- | :-- | :-- |
 | `--output DIR`, `-o DIR` | `./CLASS_NAME/` | Write generated files under `DIR`. |
-| `--force` | off | Overwrite existing generated files. |
-| `--dry-run` | off | Print the files that would be generated without writing them. |
-| `--interactive` | off | Prompt for generation choices instead of specifying all options on the command line. |
-| `--no-cmake` | off | Do not generate `CMakeLists.txt`; use this when integrating the device into an existing build system. |
-| `--no-readme` | off | Do not generate `README.md`; use this when the generated device will be documented elsewhere. |
-| `--no-namespace` | off | Generate the device class in the global namespace instead of `namespace nestdaq`. |
+| `--force` | `false` (flag omitted) | Overwrite existing generated files. |
+| `--dry-run` | `false` (flag omitted) | Print the files that would be generated without writing them. |
+| `--interactive` | `false` (flag omitted) | Prompt for generation choices instead of specifying all options on the command line. |
+| `--no-cmake` | `false` (flag omitted) | Do not generate `CMakeLists.txt`; use this when integrating the device into an existing build system. |
+| `--no-readme` | `false` (flag omitted) | Do not generate `README.md`; use this when the generated device will be documented elsewhere. |
+| `--no-namespace` | `false` (flag omitted) | Generate the device class in the global namespace instead of `namespace nestdaq`. |
 | `--processing-mode MODE` | `conditional-run` | Select the generated processing entry point: `conditional-run`, `run`, or `on-data`. |
 | `--input-channel SPEC` | `in-chan-name:in` | Override the generated input channel. `SPEC` is `KEY:DEFAULT_NAME`, `:DEFAULT_NAME`, or `DEFAULT_NAME`. |
-| `--no-input-channel` | off | Do not generate input-channel code. |
+| `--no-input-channel` | `false` (flag omitted) | Do not generate input-channel code. |
 | `--output-channel SPEC` | `out-chan-name:out` | Override the generated output channel. `SPEC` uses the same format as `--input-channel`. |
-| `--no-output-channel` | off | Do not generate output-channel code. |
+| `--no-output-channel` | `false` (flag omitted) | Do not generate output-channel code. |
 | `--dqm-channel SPEC` | `dqm-chan-name:dqm` | Override the generated data quality monitor (DQM) channel. `SPEC` uses the same format as `--input-channel`. |
-| `--no-dqm-channel` | off | Do not generate DQM-channel code. |
-| `--multipart-input` | off | Generate multipart receive/`OnData()` examples for the input channel. Cannot be combined with `--no-input-channel`. |
-| `--single-output` | off | Generate single-message output examples. Output is multipart by default. |
-| `--single-dqm` | off | Generate single-message DQM examples. DQM is multipart by default. |
-| `--no-drain-input` | off | Do not generate `PostRun()` input drain code. |
-| `--no-poll LIST` | none | Comma-separated channel kinds to exclude from FairMQ polling: `input`, `output`, `dqm`. |
+| `--no-dqm-channel` | `false` (flag omitted) | Do not generate DQM-channel code. |
+| `--multipart-input` | `false` (flag omitted) | Generate multipart receive/`OnData()` examples for the input channel. Cannot be combined with `--no-input-channel`. |
+| `--single-output` | `false` (flag omitted) | Generate single-message output examples. Output is multipart by default. |
+| `--single-dqm` | `false` (flag omitted) | Generate single-message DQM examples. DQM is multipart by default. |
+| `--no-drain-input` | `false` (flag omitted) | Do not generate `PostRun()` input drain code. |
+| `--no-poll LIST` | `""` (no excluded channels) | Comma-separated channel kinds to exclude from FairMQ polling: `input`, `output`, `dqm`. |
 
 The processing modes are listed in [Table 4](#table-processing-modes-en).
 

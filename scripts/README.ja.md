@@ -315,7 +315,7 @@ bind endpointで`autoSubChannel=true`が必要なのは、peerごとに異なる
 `autoSubChannel=false`の1つのbind socketでは、複数peerからの接続を受けられます。
 
 <a id="table-topology-cardinality-ja"></a>
-**表2：接続数ごとのPUSH/PULL用`autoSubChannel`設定。**
+**表2：接続数およびbind/connectの向きごとのPUSH/PULL用`autoSubChannel`設定。**
 
 | 接続形態 | PUSH method | PULL method | PUSHの`autoSubChannel` | PULLの`autoSubChannel` | ローカルsubchannelの構成 |
 |----------|-------------|-------------|-------------------------|-------------------------|----------------------------|
@@ -554,8 +554,8 @@ param Sink multipart true
 指定の有無だけを表すフラグはブール値を受け取りません。
 例えば`--no-dqm-channel true`ではなく`--no-dqm-channel`を使用し、`--no-dqm-channel false`と書く代わりにフラグを省略します。
 フラグを繰り返しても状態は再度切り替わりません。
-[表3](#table-generator-options-ja)の`off`はフラグ未指定を意味します。
-`--no-*`フラグが`off`の場合、対象機能は既定で有効です。
+[表3](#table-generator-options-ja)では、これらのフラグを`false`（フラグ未指定）と表記します。
+`--no-*`フラグが未指定の場合、対象機能は既定で有効です。
 
 ```bash
 # DQMチャネルを持たず単一メッセージ出力を持つconditional-runデバイスを生成する。
@@ -574,24 +574,24 @@ param Sink multipart true
 | オプション | デフォルト | 説明 |
 | :-- | :-- | :-- |
 | `--output DIR`, `-o DIR` | `./CLASS_NAME/` | 生成ファイルを`DIR`配下へ書き込み。 |
-| `--force` | off | 既存の生成ファイルを上書き。 |
-| `--dry-run` | off | 書き込まず生成予定ファイルを表示。 |
-| `--interactive` | オフ | コマンドラインですべて指定する代わりに生成内容を対話入力。 |
-| `--no-cmake` | off | `CMakeLists.txt`を生成しない。既存ビルドシステムへ統合するときに使用。 |
-| `--no-readme` | off | `README.md`を生成しない。生成デバイスを別の場所で文書化するときに使用。 |
-| `--no-namespace` | オフ | デバイスクラスを`namespace nestdaq`ではなくグローバル名前空間へ生成。 |
+| `--force` | `false`（フラグ未指定） | 既存の生成ファイルを上書き。 |
+| `--dry-run` | `false`（フラグ未指定） | 書き込まず生成予定ファイルを表示。 |
+| `--interactive` | `false`（フラグ未指定） | コマンドラインですべて指定する代わりに生成内容を対話入力。 |
+| `--no-cmake` | `false`（フラグ未指定） | `CMakeLists.txt`を生成しない。既存ビルドシステムへ統合するときに使用。 |
+| `--no-readme` | `false`（フラグ未指定） | `README.md`を生成しない。生成デバイスを別の場所で文書化するときに使用。 |
+| `--no-namespace` | `false`（フラグ未指定） | デバイスクラスを`namespace nestdaq`ではなくグローバル名前空間へ生成。 |
 | `--processing-mode MODE` | `conditional-run` | 生成する処理エントリーポイントを`conditional-run`、`run`、`on-data`から選択。 |
 | `--input-channel SPEC` | `in-chan-name:in` | 生成する入力チャネルを上書き。`SPEC`は`KEY:DEFAULT_NAME`、`:DEFAULT_NAME`、`DEFAULT_NAME`。 |
-| `--no-input-channel` | オフ | 入力チャネルのコードを生成しない。 |
+| `--no-input-channel` | `false`（フラグ未指定） | 入力チャネルのコードを生成しない。 |
 | `--output-channel SPEC` | `out-chan-name:out` | 生成する出力チャネルを上書き。`SPEC`は`--input-channel`と同形式。 |
-| `--no-output-channel` | オフ | 出力チャネルのコードを生成しない。 |
+| `--no-output-channel` | `false`（フラグ未指定） | 出力チャネルのコードを生成しない。 |
 | `--dqm-channel SPEC` | `dqm-chan-name:dqm` | 生成するDQMチャネルを上書き。`SPEC`は`--input-channel`と同形式。 |
-| `--no-dqm-channel` | オフ | DQMチャネルのコードを生成しない。 |
-| `--multipart-input` | オフ | 入力チャネル用のマルチパート受信/`OnData()`の例を生成。`--no-input-channel`と同時指定不可。 |
-| `--single-output` | オフ | 単一メッセージ出力の例を生成。既定の出力はマルチパート。 |
-| `--single-dqm` | オフ | 単一メッセージDQMの例を生成。既定のDQMはマルチパート。 |
-| `--no-drain-input` | オフ | `PostRun()`の入力排出コードを生成しない。 |
-| `--no-poll LIST` | なし | FairMQのポーリングから除外するチャネル種別のコンマ区切り一覧：`input`、`output`、`dqm`。 |
+| `--no-dqm-channel` | `false`（フラグ未指定） | DQMチャネルのコードを生成しない。 |
+| `--multipart-input` | `false`（フラグ未指定） | 入力チャネル用のマルチパート受信/`OnData()`の例を生成。`--no-input-channel`と同時指定不可。 |
+| `--single-output` | `false`（フラグ未指定） | 単一メッセージ出力の例を生成。既定の出力はマルチパート。 |
+| `--single-dqm` | `false`（フラグ未指定） | 単一メッセージDQMの例を生成。既定のDQMはマルチパート。 |
+| `--no-drain-input` | `false`（フラグ未指定） | `PostRun()`の入力排出コードを生成しない。 |
+| `--no-poll LIST` | `""`（除外チャネルなし） | FairMQのポーリングから除外するチャネル種別のコンマ区切り一覧：`input`、`output`、`dqm`。 |
 
 処理モードを[表4](#table-processing-modes-ja)に示します。
 

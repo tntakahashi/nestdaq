@@ -217,7 +217,7 @@ Runtime environment variables are described in [Table 2](#tbl-runtime-environmen
 | `REDIS_DATA_DIR` | Data directory next to the script | Host directory bind-mounted to `/data/`; used only in `bind` mode. |
 | `REDIS_INSIGHT_DATA_DIR` | Script-specific RedisInsight data directory | Host directory bind-mounted to `/redisinsight/`; used only by RedisInsight-enabled helpers in `bind` mode. |
 | `REDIS_VOLUME_LABEL` | `Z` | SELinux bind-mount label option; used only in `bind` mode. Use `z` for shared labeling or an empty value to disable. |
-| `REDIS_ARGS` | empty | Extra Redis server arguments. Redis Stack images receive this through the image `REDIS_ARGS` environment variable; the official Redis 8.2.7 helper passes it as command arguments. |
+| `REDIS_ARGS` | empty string (`""`) | Extra Redis server arguments. Redis Stack images receive this through the image `REDIS_ARGS` environment variable; the official Redis 8.2.7 helper passes it as command arguments. |
 | `REDIS_ARGS_MODE` | `env` or `argv` | Argument passing mode used by `run-redis-stack-server.sh`. Use `env` for Redis Stack images and `argv` for official Redis images. |
 
 Example:

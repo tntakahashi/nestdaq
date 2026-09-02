@@ -54,7 +54,7 @@ When an option is omitted, the plugin uses the default shown in [Table 2](#table
 
 | Option                           | Default                    | Description |
 |----------------------------------|----------------------------|-------------|
-| `--service-name`                 | executable basename when empty | Service name of this NestDAQ device process, used in Redis key paths and the health `serviceName` field. |
+| `--service-name`                 | not set (option absent), then executable basename | Service name of this NestDAQ device process, used in Redis key paths and the health `serviceName` field. |
 | `--uuid`                         | generated                  | UUID of this NestDAQ device process. This value supplies the default telemetry `service.instance.id` unless `--otel-service-instance-id` is set. When `--uuid` is omitted, the standard FairMQ device wrapper copies its generated telemetry UUID to this property; if the property is absent, the plugin generates a UUID. |
 | `--host-ip`                      | detected/configured value  | Address of this NestDAQ device process, stored in the health `hostIp` field. A resolvable hostname is accepted. If omitted, the plugin uses the configured network interface or the default-route interface. |
 | `--hostname`                     | detected/configured value  | Host name stored in the health `hostName` field. If omitted, the plugin uses the operating system hostname. |
@@ -64,7 +64,7 @@ When an option is omitted, the plugin uses the default shown in [Table 2](#table
 | `--ttl-update-interval`          | `3`                        | TTL refresh interval in seconds. |
 | `--startup-state`                | `idle`                     | FairMQ state to which the plugin automatically advances the device from `Idle` during startup: `idle`, `initializing-device`, `initialized`, `bound`, `device-ready`, `ready`, or `running`. |
 | `--enable-uds`                   | `true`                     | Adds Unix domain socket (UDS) addresses only to ZeroMQ bind channels whose peers all have the same `hostIp` as this process. `true` and `1` enable it. |
-| `--connect-config`               | none                       | JavaScript Object Notation (JSON) string describing temporary message queue (MQ) channel connection parameters. Section 2.5.3 describes its structure and peer syntax. |
+| `--connect-config`               | not set (option absent)    | JavaScript Object Notation (JSON) string describing temporary message queue (MQ) channel connection parameters. Section 2.5.3 describes its structure and peer syntax. |
 | `--max-retry-to-resolve-address` | `10`                       | Maximum retry count for resolving connect addresses. |
 
 ### 2.2. DAQ Service Identity Defaults
@@ -630,7 +630,7 @@ Memory usage is the current resident set size (RSS) in mebibytes (MiB).
 | Option                        | Default | Description |
 |-------------------------------|---------|-------------|
 | `--proc-stat-update-interval` | `1000`  | Update interval in milliseconds for process CPU and memory metrics. |
-| `--metrics-uri`               | none    | Redis URI for metrics. If empty, `--registry-uri` is used. |
+| `--metrics-uri`               | not set (uses `--registry-uri`) | Redis URI for metrics. When omitted, `--registry-uri` is used; an explicitly empty value disables the metrics Redis connection. |
 | `--retention`                 | `0`     | Maximum RedisTimeSeries sample age in milliseconds relative to the series' greatest timestamp. `0` disables retention-based trimming. |
 | `--recreate-ts`               | `true`  | Delete registered RedisTimeSeries keys on transition to `Ready` and create them with the configured retention and labels on transition to `Running`. |
 | `--metrics-max-ttl`           | `3000`  | Age threshold in milliseconds for the one-time stale-field cleanup performed when the plugin starts. A value of zero or less disables this cleanup. |
@@ -798,7 +798,7 @@ If both keys define the same property, the instance-specific value is applied la
 
 | Option                   | Default | Description |
 |--------------------------|---------|-------------|
-| `--parameter-config-uri` | none    | Redis URI for parameter configuration. If empty, `--registry-uri` is used. |
+| `--parameter-config-uri` | not set (uses `--registry-uri`) | Redis URI for parameter configuration. When omitted, `--registry-uri` is used; an explicitly empty value disables the parameter Redis connection. |
 
 ### 4.2. Redis Keys Read or Subscribed
 
