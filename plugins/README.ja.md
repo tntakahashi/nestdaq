@@ -385,7 +385,7 @@ FairMQは準備できたローカルsubchannelから受信し、そのローカ�
 すべてのデバイスが同じpeerキー集合と同じトポロジー定義を参照すれば、トポロジー検出は同じ文字列ソート順を使用し、同じsubchannel割り当てを再現します。
 subchannelの割り当ては、デバイスが`INIT DEVICE`を処理した時点のpeer集合に基づいて固定され、`DeviceReady`へ到達した後は自動更新されません。
 
-peerを追加、削除、または名前変更した場合は、影響するすべてのデバイスを`RESET DEVICE`で`Idle`へ戻し、必要な全peerプロセスを起動してpresenceキーがRedisへ登録されたことを確認してから、`INIT DEVICE`を再度実行してください。
+peerを追加、削除、または名前変更した場合は、影響するすべてのデバイスを`RESET DEVICE`で`Idle`へ戻し、変更後のpeer集合がRedisに反映されたことを確認してから、`INIT DEVICE`を再度実行してください。
 デバイスを`Ready`から`DeviceReady`へ戻す`RESET TASK`では、トポロジーを再構築しません。
 
 トポロジー検出はpeerキーをソートしてからsubchannelを割り当てます。

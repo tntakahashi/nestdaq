@@ -393,10 +393,9 @@ processes `INIT DEVICE`; it is not updated automatically after the device
 reaches `DeviceReady`.
 
 After adding, removing, or renaming a peer, return all affected devices to
-`Idle` with `RESET DEVICE`, start the complete required peer set, confirm its
-presence registration in Redis, and run `INIT DEVICE` again. `RESET TASK`,
-which returns a device from `Ready` to `DeviceReady`, does not rebuild the
-topology.
+`Idle` with `RESET DEVICE`, confirm that Redis reflects the changed peer set,
+and run `INIT DEVICE` again. `RESET TASK`, which returns a device from `Ready`
+to `DeviceReady`, does not rebuild the topology.
 
 Topology discovery sorts the peer keys before assigning subchannels. Treat an
 index as a local runtime position and query the current count; do not persist
